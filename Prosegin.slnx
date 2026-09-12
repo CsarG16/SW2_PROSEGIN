@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Prosegin.Data/Prosegin.Data.csproj" />
+  <Project Path="Prosegin.Web/Prosegin.Web.csproj" />
+</Solution>

@@ -1,0 +1,51 @@
+# ==========================================
+# .gitignore para .NET 8 / ASP.NET Core
+# Proyecto: PROSEGIN (TRIVILIN EPP)
+# ==========================================
+
+# 1. Compilación y binarios (.NET)
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+*.trx
+*.publish.xml
+
+# 2. Entorno y archivos de configuración local
+.env
+.env.*
+!.env.example
+appsettings.local.json
+appsettings.Development.local.json
+
+# 3. Visual Studio y editores
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.idea/
+
+# Configuración de VS Code (ignora temporales, preserva configuración compartida)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# 4. Logs y trazas de depuración
+*.log
+[Ll]ogs/
+[Tt]est[Rr]esult*/
+
+# 5. Archivos generados y uploads temporales
+# (Ignora archivos subidos en tiempo de ejecución pero conserva la estructura)
+wwwroot/uploads/*
+!wwwroot/uploads/.gitkeep
+
+# 6. Archivos del sistema operativo (Windows / macOS / Linux)
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+*.tmp

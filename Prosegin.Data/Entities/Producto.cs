@@ -1,0 +1,16 @@
+namespace Prosegin.Data.Entities;
+
+public class Producto
+{
+    public int Id { get; set; }
+    public string Sku { get; set; } = string.Empty;
+    public string Nombre { get; set; } = string.Empty;
+    public string Descripcion { get; set; } = string.Empty;
+    public string Categoria { get; set; } = string.Empty;
+    public string UnidadMedida { get; set; } = "UND";
+    public decimal CostoReferencial { get; set; }
+    public string? RutaFichaTecnicaPdf { get; set; }
+    public string? NombreArchivoPdf { get; set; }
+    public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+    public bool Activo { get; set; } = true;
+}
