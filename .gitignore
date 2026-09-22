@@ -13,7 +13,6 @@
 
 # 2. Entorno y archivos de configuración local
 .env
-.env.*
 !.env.example
 appsettings.local.json
 appsettings.Development.local.json
