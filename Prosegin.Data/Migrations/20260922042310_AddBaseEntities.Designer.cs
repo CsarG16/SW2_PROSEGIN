@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Prosegin.Data;
 
@@ -11,9 +12,11 @@ using Prosegin.Data;
 namespace Prosegin.Data.Migrations
 {
     [DbContext(typeof(ProseginDbContext))]
-    partial class ProseginDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260922042310_AddBaseEntities")]
+    partial class AddBaseEntities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

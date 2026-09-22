@@ -13,4 +13,8 @@ public class Producto
     public string? NombreArchivoPdf { get; set; }
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     public bool Activo { get; set; } = true;
+
+    // Navegación
+    public ICollection<CotizacionDetalle> CotizacionDetalles { get; set; } = new List<CotizacionDetalle>();
+    public ICollection<OrdenCompraDetalle> OrdenCompraDetalles { get; set; } = new List<OrdenCompraDetalle>();
 }

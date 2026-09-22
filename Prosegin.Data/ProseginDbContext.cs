@@ -11,6 +11,15 @@ public class ProseginDbContext : DbContext
 
     public DbSet<Cliente> Clientes { get; set; }
     public DbSet<Producto> Productos { get; set; }
+    public DbSet<PuntoEntrega> PuntosEntrega { get; set; }
+    public DbSet<ContactoCliente> ContactosCliente { get; set; }
+    public DbSet<Cotizacion> Cotizaciones { get; set; }
+    public DbSet<CotizacionDetalle> CotizacionDetalles { get; set; }
+    public DbSet<OrdenVenta> OrdenesVenta { get; set; }
+    public DbSet<Proveedor> Proveedores { get; set; }
+    public DbSet<OrdenCompra> OrdenesCompra { get; set; }
+    public DbSet<OrdenCompraDetalle> OrdenCompraDetalles { get; set; }
+    public DbSet<Factura> Facturas { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -41,5 +50,47 @@ public class ProseginDbContext : DbContext
             entity.Property(e => e.RutaFichaTecnicaPdf).HasMaxLength(300);
             entity.Property(e => e.NombreArchivoPdf).HasMaxLength(150);
         });
+
+        modelBuilder.Entity<Cotizacion>(entity =>
+        {
+            entity.ToTable("Cotizaciones");
+            entity.Property(e => e.Subtotal).HasPrecision(18, 2);
+            entity.Property(e => e.Igv).HasPrecision(18, 2);
+            entity.Property(e => e.Total).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<CotizacionDetalle>(entity =>
+        {
+            entity.ToTable("CotizacionDetalles");
+            entity.Property(e => e.CostoProveedorReferencial).HasPrecision(18, 2);
+            entity.Property(e => e.MargenDeseado).HasPrecision(18, 2);
+            entity.Property(e => e.PrecioVentaCalculado).HasPrecision(18, 2);
+            entity.Property(e => e.Subtotal).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<OrdenCompra>(entity =>
+        {
+            entity.ToTable("OrdenesCompra");
+            entity.Property(e => e.Total).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<OrdenCompraDetalle>(entity =>
+        {
+            entity.ToTable("OrdenCompraDetalles");
+            entity.Property(e => e.CostoUnitario).HasPrecision(18, 2);
+            entity.Property(e => e.Subtotal).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<Factura>(entity =>
+        {
+            entity.ToTable("Facturas");
+            entity.Property(e => e.Total).HasPrecision(18, 2);
+        });
+        
+        // Relación 1 a 1 de Cotizacion y OrdenVenta
+        modelBuilder.Entity<Cotizacion>()
+            .HasOne(c => c.OrdenVenta)
+            .WithOne(o => o.Cotizacion)
+            .HasForeignKey<OrdenVenta>(o => o.CotizacionId);
     }
 }
