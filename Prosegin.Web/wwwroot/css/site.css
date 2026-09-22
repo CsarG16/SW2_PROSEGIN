@@ -1,28 +1,61 @@
 /* ============================================================
-   PROSEGIN - STYLES & WELCOME THEME
+   PROSEGIN CORE - SISTEMA DE DISEÑO (DESIGN TOKENS & COMPONENTES)
+   Variables globales y componentes reutilizables para el equipo.
+   (Nota: La estructura de sidebar y layout se encuentra en sidebar.css)
    ============================================================ */
 
 :root {
-  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Tipografía */
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Paleta Corporativa Principal */
+  --prosegin-orange: #f59e0b;       /* Naranja/Ámbar PROSEGIN */
+  --prosegin-orange-hover: #d97706; /* Hover Naranja */
+  --prosegin-orange-light: #fef3c7; /* Fondo sutil naranja */
+  --prosegin-orange-text: #b45309;
+
+  /* Fondo de la barra lateral (Sidebar Oscuro) */
+  --sidebar-bg: #0c1322;
+  --sidebar-surface: #111a2e;
+  --sidebar-border: rgba(255, 255, 255, 0.07);
+  --sidebar-text: #94a3b8;
+  --sidebar-text-active: #ffffff;
+  --sidebar-hover: rgba(255, 255, 255, 0.05);
+
+  /* Fondos del Área de Contenido (Canvas Claro Enterprise) */
+  --bg-canvas: #f4f6f9;
+  --bg-card: #ffffff;
+  --bg-card-subtle: #f8fafc;
   
-  --bg-body: #0a0f1d;
-  --bg-surface: #11192e;
-  --bg-card: #151e33;
-  --bg-card-inner: #0f1626;
-  
-  --primary: #f59e0b;
-  --primary-hover: #d97706;
-  
-  --accent-emerald: #10b981;
-  
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-highlight: rgba(245, 158, 11, 0.3);
-  
-  --shadow-card: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+  /* Textos */
+  --text-dark: #0f172a;       /* Títulos y textos principales */
+  --text-body: #334155;       /* Texto general */
+  --text-muted: #64748b;      /* Textos secundarios / etiquetas */
+  --text-subtle: #94a3b8;     /* Placeholders y detalles */
+
+  /* Bordes y Sombras */
+  --border-card: #e2e8f0;
+  --border-light: #f1f5f9;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --shadow-hover: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+
+  /* Estados y Acentos (SLA, SUNAT, Despachos) */
+  --state-success: #16a34a;
+  --state-success-bg: #dcfce7;
+  --state-success-text: #15803d;
+
+  --state-warning: #f59e0b;
+  --state-warning-bg: #fef3c7;
+  --state-warning-text: #b45309;
+
+  --state-danger: #ef4444;
+  --state-danger-bg: #fee2e2;
+  --state-danger-text: #b91c1c;
+
+  --state-info: #0284c7;
+  --state-info-bg: #e0f2fe;
+  --state-info-text: #0369a1;
 }
 
 * {
@@ -31,176 +64,266 @@
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--bg-body);
-  color: var(--text-primary);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  background-color: var(--bg-canvas);
+  color: var(--text-body);
   margin: 0;
-  background-image: 
-    radial-gradient(at 20% 20%, rgba(245, 158, 11, 0.05) 0px, transparent 60%),
-    radial-gradient(at 80% 80%, rgba(14, 165, 233, 0.04) 0px, transparent 60%);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
-main {
-  flex: 1;
-}
+/* ============================================================
+   COMPONENTES ESTÁNDAR REUTILIZABLES (PARA LOS 8 DESARROLLADORES)
+   ============================================================ */
 
-/* Navbar */
-.prosegin-navbar {
-  background: var(--bg-surface);
-  border-bottom: 1px solid var(--border-subtle);
-  padding: 0.9rem 1.5rem;
-}
-
-.brand-icon-box {
-  width: 44px;
-  height: 44px;
-  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #0b1120;
-  font-size: 1.4rem;
-  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
-}
-
-.brand-title {
-  display: block;
-  font-weight: 800;
-  font-size: 1.25rem;
-  letter-spacing: 0.08em;
-  color: #ffffff;
-  line-height: 1.1;
-}
-
-.brand-subtitle {
-  display: block;
-  font-size: 0.65rem;
-  letter-spacing: 0.12em;
-  color: var(--primary);
-  font-weight: 700;
-}
-
-/* Status Indicator */
-.status-indicator {
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  padding: 0.35rem 0.85rem;
-  border-radius: 20px;
-}
-
-.pulse-dot {
-  width: 8px;
-  height: 8px;
-  background-color: var(--accent-emerald);
-  border-radius: 50%;
-  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-  animation: pulse 1.8s infinite;
-}
-
-@keyframes pulse {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-}
-
-.status-text {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--accent-emerald);
-}
-
-/* Welcome Card */
-.welcome-pure-card {
+/* 1. Tarjetas Blancas Corporativas */
+.prosegin-card {
   background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: 24px;
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
   box-shadow: var(--shadow-card);
-  position: relative;
-  overflow: hidden;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.welcome-pure-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #f59e0b, #ea580c);
+.prosegin-card:hover {
+  box-shadow: var(--shadow-hover);
 }
 
-.welcome-icon-wrapper {
-  display: inline-block;
-}
-
-.welcome-icon-circle {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(234, 88, 12, 0.1) 100%);
-  border: 1px solid rgba(245, 158, 11, 0.4);
-  color: var(--primary);
-  font-size: 2.4rem;
+.prosegin-card-header {
+  padding: 1.15rem 1.5rem;
+  border-bottom: 1px solid var(--border-card);
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin: 0 auto;
-  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.15);
+  justify-content: space-between;
+  background-color: #ffffff;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
 }
 
-.badge-tag {
+.prosegin-card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.prosegin-card-body {
+  padding: 1.5rem;
+}
+
+/* 2. Botones Estándar */
+/* Botón Principal (Naranja PROSEGIN) */
+.btn-prosegin-primary {
+  background-color: var(--prosegin-orange);
+  border: 1px solid var(--prosegin-orange);
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  color: var(--primary);
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.3);
+  text-decoration: none;
+}
+
+.btn-prosegin-primary:hover {
+  background-color: var(--prosegin-orange-hover);
+  border-color: var(--prosegin-orange-hover);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(245, 158, 11, 0.4);
+}
+
+/* Botón Secundario (Blanco con Borde) */
+.btn-prosegin-secondary {
+  background-color: #ffffff;
+  border: 1px solid var(--border-card);
+  color: var(--text-dark);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-prosegin-secondary:hover {
+  background-color: var(--bg-card-subtle);
+  border-color: #cbd5e1;
+  color: var(--text-dark);
+}
+
+/* Botón Oscuro / Acción Especial */
+.btn-prosegin-dark {
+  background-color: #0f172a;
+  border: 1px solid #0f172a;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+.btn-prosegin-dark:hover {
+  background-color: #1e293b;
+  color: #ffffff;
+}
+
+/* 3. Campos de Formulario (Inputs Limpios) */
+.form-control-prosegin {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.92rem;
+  color: var(--text-dark);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control-prosegin:focus {
+  border-color: var(--prosegin-orange);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+  outline: none;
+}
+
+.form-label-prosegin {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 0.35rem;
+}
+
+/* 4. Badges / Pastillas de Estado (Según Screenshot) */
+.badge-prosegin {
+  font-size: 0.74rem;
   font-weight: 700;
-  font-size: 0.75rem;
-  padding: 0.35rem 0.85rem;
-  border-radius: 50px;
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  letter-spacing: 0.02em;
+}
+
+.badge-prosegin-success {
+  background-color: var(--state-success-bg);
+  color: var(--state-success-text);
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+.badge-prosegin-warning {
+  background-color: var(--state-warning-bg);
+  color: var(--state-warning-text);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-prosegin-danger {
+  background-color: var(--state-danger-bg);
+  color: var(--state-danger-text);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.badge-prosegin-info {
+  background-color: var(--state-info-bg);
+  color: var(--state-info-text);
+  border: 1px solid rgba(2, 132, 199, 0.25);
+}
+
+.badge-prosegin-neutral {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+/* 5. Tarjetas de Estadísticas (KPI Cards de la Imagen) */
+.kpi-stat-card {
+  background: #ffffff;
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: var(--shadow-card);
+}
+
+.kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.kpi-title {
+  font-size: 0.72rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  color: var(--text-muted);
 }
 
-.welcome-heading {
-  font-size: 2.2rem;
+.kpi-icon-pill {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.kpi-value {
+  font-size: 1.75rem;
   font-weight: 800;
-  color: #ffffff;
-  letter-spacing: -0.02em;
+  color: var(--text-dark);
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
 }
 
-.welcome-heading span {
-  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
-  --webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.kpi-footer {
+  font-size: 0.78rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
-.welcome-message {
-  color: var(--text-secondary);
-  font-size: 1.1rem;
-  line-height: 1.7;
-  max-width: 620px;
-  margin: 0 auto;
+/* 6. Tablas Estándar */
+.table-prosegin {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
-.project-info-card {
-  background: var(--bg-card-inner);
-  border: 1px solid var(--border-subtle);
-  border-radius: 16px;
+.table-prosegin thead th {
+  background-color: #f8fafc;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-card);
 }
 
-@media (min-width: 576px) {
-  .border-end-sm {
-    border-right: 1px solid var(--border-subtle);
-  }
+.table-prosegin tbody td {
+  padding: 1rem;
+  font-size: 0.88rem;
+  color: var(--text-body);
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: middle;
 }
 
-/* Footer */
-.prosegin-footer {
-  background: var(--bg-surface);
-  border-top: 1px solid var(--border-subtle);
+.table-prosegin tbody tr:hover {
+  background-color: #f8fafc;
 }

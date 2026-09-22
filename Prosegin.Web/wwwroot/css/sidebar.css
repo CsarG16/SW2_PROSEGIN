@@ -1,0 +1,343 @@
+/* ============================================================
+   PROSEGIN CORE - ESTRUCTURA DE SIDEBAR & LAYOUT
+   ============================================================ */
+
+/* Contenedor General de la Aplicación */
+.prosegin-app-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+}
+
+/* ============================================================
+   SIDEBAR (MENÚ LATERAL)
+   ============================================================ */
+
+.prosegin-sidebar {
+  width: 260px;
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1045;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+}
+
+.prosegin-sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+.prosegin-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+/* Marca en Sidebar */
+.sidebar-brand {
+  padding: 1.25rem 1.25rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--sidebar-border);
+}
+
+.brand-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+}
+
+.brand-logo-badge {
+  background: #ffffff;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.brand-logo-badge i {
+  color: var(--prosegin-orange);
+  font-size: 1.2rem;
+}
+
+.brand-logo-badge .brand-name {
+  color: #0f172a;
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.brand-subtitle-tag {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--prosegin-orange);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sidebar-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--sidebar-text);
+  font-size: 1.2rem;
+  padding: 0.25rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.sidebar-toggle-btn:hover {
+  color: #ffffff;
+}
+
+/* Menú de Navegación */
+.sidebar-menu-wrapper {
+  padding: 1rem 0.85rem;
+  flex: 1;
+}
+
+.menu-section-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  padding: 0.5rem 0.75rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.sidebar-nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sidebar-nav-item {
+  width: 100%;
+}
+
+.sidebar-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.65rem 0.85rem;
+  color: var(--sidebar-text);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.sidebar-nav-link i {
+  font-size: 1.1rem;
+  color: #64748b;
+  transition: color 0.2s ease;
+}
+
+.sidebar-nav-link:hover {
+  background: var(--sidebar-hover);
+  color: #ffffff;
+}
+
+.sidebar-nav-link:hover i {
+  color: var(--prosegin-orange);
+}
+
+.sidebar-nav-link.active {
+  background: rgba(245, 158, 11, 0.12);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.sidebar-nav-link.active i {
+  color: var(--prosegin-orange);
+}
+
+/* Footer del Sidebar */
+.sidebar-footer {
+  padding: 1rem 1rem 1.25rem;
+  border-top: 1px solid var(--sidebar-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.sunat-status-badge {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.sunat-dot {
+  width: 7px;
+  height: 7px;
+  background-color: #10b981;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #10b981;
+}
+
+.user-profile-widget {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.25rem;
+}
+
+.user-profile-info {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.user-avatar-circle {
+  width: 34px;
+  height: 34px;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 1rem;
+}
+
+.user-name {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.user-role {
+  font-size: 0.7rem;
+  color: #64748b;
+  line-height: 1;
+}
+
+.btn-logout {
+  color: #64748b;
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  padding: 0.2rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.btn-logout:hover {
+  color: #ef4444;
+}
+
+/* ============================================================
+   CONTENEDOR PRINCIPAL Y TOPBAR
+   ============================================================ */
+
+.prosegin-main-wrapper {
+  margin-left: 260px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: calc(100% - 260px);
+  background-color: var(--bg-canvas);
+}
+
+.prosegin-topbar {
+  background: #ffffff;
+  border-bottom: 1px solid var(--border-card);
+  padding: 0.85rem 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+}
+
+.topbar-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+}
+
+.crumb-root {
+  color: var(--text-muted);
+  font-weight: 500;
+  text-decoration: none;
+}
+.crumb-root:hover {
+  color: var(--prosegin-orange);
+}
+
+.crumb-sep {
+  font-size: 0.7rem;
+  color: var(--text-subtle);
+}
+
+.crumb-current {
+  color: var(--text-dark);
+  font-weight: 700;
+}
+
+.prosegin-content-body {
+  flex: 1;
+  padding: 1.75rem;
+}
+
+/* ============================================================
+   RESPONSIVIDAD MÓVIL DEL SIDEBAR
+   ============================================================ */
+
+@media (max-width: 991.98px) {
+  .prosegin-sidebar {
+    transform: translateX(-100%);
+    width: 270px;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+  }
+
+  .prosegin-sidebar.show {
+    transform: translateX(0);
+  }
+
+  .prosegin-main-wrapper {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(2px);
+    z-index: 1040;
+  }
+
+  .sidebar-backdrop.show {
+    display: block;
+  }
+}

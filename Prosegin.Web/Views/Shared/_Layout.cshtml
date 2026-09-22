@@ -14,45 +14,112 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     
-    <!-- Custom Site Styles -->
+    <!-- Custom Site Styles (Design System) -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/sidebar.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Prosegin.Web.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <!-- Navbar simple y elegante PROSEGIN -->
-    <header>
-        <nav class="navbar navbar-dark prosegin-navbar">
-            <div class="container d-flex justify-content-between align-items-center">
-                <a class="navbar-brand d-flex align-items-center gap-3 m-0" asp-area="" asp-controller="Home" asp-action="Index">
-                    <div class="brand-icon-box">
-                        <i class="bi bi-shield-shaded"></i>
+<div class="prosegin-app-container">
+    <!-- Backdrop móvil -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- Sidebar Navegación Lateral -->
+    <aside class="prosegin-sidebar" id="proseginSidebar">
+        <!-- Logo / Marca -->
+        <div class="sidebar-brand">
+            <a asp-controller="Home" asp-action="Index" class="brand-link">
+                <div class="brand-logo-badge">
+                    <i class="bi bi-shield-shaded"></i>
+                    <div>
+                        <span class="brand-name">PROSEGIN</span>
+                        <span class="brand-subtitle-tag">PREVENCIÓN INTEGRAL</span>
+                    </div>
+                </div>
+            </a>
+            <button type="button" class="sidebar-toggle-btn d-lg-none" id="btnSidebarClose" aria-label="Cerrar menú">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <!-- Menú de Operaciones -->
+        <div class="sidebar-menu-wrapper">
+            <div class="menu-section-title">Operaciones EPP</div>
+            <ul class="sidebar-nav">
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" href="#">
+                        <i class="bi bi-grid"></i>
+                        <span>Catálogo de EPP</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" href="#">
+                        <i class="bi bi-people"></i>
+                        <span>Búsqueda de Clientes</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" href="#">
+                        <i class="bi bi-tag"></i>
+                        <span>Edición de Precios</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" href="#">
+                        <i class="bi bi-truck"></i>
+                        <span>Gestión de Pedidos</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Clientes" ? "active" : "")" asp-controller="Clientes" asp-action="Create">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <span>Datos Tributarios</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Footer del Sidebar: Usuario -->
+        <div class="sidebar-footer">
+            <div class="user-profile-widget">
+                <div class="user-profile-info">
+                    <div class="user-avatar-circle">
+                        <i class="bi bi-person-fill"></i>
                     </div>
                     <div>
-                        <span class="brand-title">PROSEGIN</span>
-                        <span class="brand-subtitle">EQUIPOS DE PROTECCIÓN PERSONAL</span>
+                        <div class="user-name">Carlos M.</div>
+                        <div class="user-role">Asesor Comercial</div>
                     </div>
-                </a>
+                </div>
+                <button type="button" class="btn-logout" title="Cerrar Sesión">
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
 
-                <div class="status-indicator d-flex align-items-center gap-2">
-                    <span class="pulse-dot"></span>
-                    <span class="status-text">Entorno Listo</span>
+    <!-- Área de Contenido Principal -->
+    <div class="prosegin-main-wrapper">
+        <!-- Topbar limpia -->
+        <header class="prosegin-topbar">
+            <div class="d-flex align-items-center gap-3">
+                <button type="button" class="btn btn-sm btn-outline-secondary d-lg-none" id="btnSidebarToggle">
+                    <i class="bi bi-list fs-5"></i>
+                </button>
+                <div class="topbar-breadcrumbs">
+                    <a asp-controller="Home" asp-action="Index" class="crumb-root">Operaciones EPP</a>
+                    <i class="bi bi-chevron-right crumb-sep"></i>
+                    <span class="crumb-current">@ViewData["Title"]</span>
                 </div>
             </div>
-        </nav>
-    </header>
+        </header>
 
-    <main role="main" class="d-flex align-items-center justify-content-center py-5">
-        @RenderBody()
-    </main>
-
-    <!-- Footer Corporativo Mínimo -->
-    <footer class="prosegin-footer py-3 text-center">
-        <div class="container">
-            <span class="text-muted small">
-                © 2026 <strong>PROSEGIN S.A.C.</strong> • C.C. Boulevard Ferretero, Las Malvinas (Lima, Perú)
-            </span>
-        </div>
-    </footer>
+        <!-- Cuerpo de Vista -->
+        <main role="main" class="prosegin-content-body">
+            @RenderBody()
+        </main>
+    </div>
+</div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

@@ -4,6 +4,7 @@ Este repositorio contiene la solución empresarial **Prosegin Core**, un sistema
 
 El contexto completo y detallado del negocio, procesos AS-IS vs TO-BE y mapa de módulos se encuentra en:
 👉 [Contexto Completo del Proyecto](file:///c:/Users/Jualo/Desktop/TRIVILIN%20EPP/.agents/rules/project_context.md)
+👉 [Sistema de Diseño y Guía UI (Design System)](file:///c:/Users/Jualo/Desktop/TRIVILIN%20EPP/.agents/rules/ui_guidelines.md)
 
 ---
 
@@ -40,3 +41,13 @@ El contexto completo y detallado del negocio, procesos AS-IS vs TO-BE y mapa de 
 - Nomenclatura en C#: PascalCase para Clases, Métodos y Propiedades; camelCase para parámetros y `_camelCase` para campos privados inyectados.
 - Tipado fuerte, métodos asíncronos (`async`/`await`) con `CancellationToken` en operaciones de I/O y base de datos.
 - Validaciones en capa Core / Servicios antes de persistir cambios.
+
+---
+
+## 🎨 Reglas de Diseño UI / Frontend (Obligatorio)
+- **Design Tokens**: Usar variables CSS de `site.css` (`--prosegin-orange`, `--sidebar-bg: #0c1322`, `--bg-canvas: #f4f6f9`, `--bg-card: #ffffff`, `--text-dark: #0f172a`, etc.).
+- **Estructura de Vistas**: Todas las vistas deben montarse sobre tarjetas blancas `.prosegin-card` con títulos `.prosegin-card-title`.
+- **Botones**: Acción principal `.btn-prosegin-primary` (naranja corporativo), botón secundario `.btn-prosegin-secondary`.
+- **Formularios**: Controles `.form-control-prosegin` con labels `.form-label-prosegin`.
+- **Detalle completo y snippets**: [ui_guidelines.md](file:///c:/Users/Jualo/Desktop/TRIVILIN%20EPP/.agents/rules/ui_guidelines.md).
+
