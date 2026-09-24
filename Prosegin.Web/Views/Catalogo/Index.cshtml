@@ -100,7 +100,7 @@
         <div class="prosegin-card-header d-flex justify-content-between align-items-center">
             <h2 class="prosegin-card-title"><i class="bi bi-boxes"></i> Productos en Catálogo</h2>
             <span class="badge-prosegin badge-prosegin-neutral">
-                @Model.Productos.Count @(Model.Productos.Count == 1 ? "producto" : "productos")
+                @(Model.Productos?.Count ?? 0) @((Model.Productos?.Count ?? 0) == 1 ? "producto" : "productos")
             </span>
         </div>
 
@@ -130,7 +130,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var prod in Model.Productos)
+                            @foreach (var prod in Model.Productos ?? Enumerable.Empty<Prosegin.Web.ViewModels.Catalogo.ProductoCatalogoItemViewModel>())
                             {
                                 <tr>
                                     <td>
