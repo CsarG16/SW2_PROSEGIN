@@ -1,0 +1,174 @@
+@model ProductoCreateViewModel
+
+@{
+    ViewData["Title"] = "Registro de productos";
+}
+
+<div class="container-fluid px-0">
+    <div class="prosegin-card">
+        <div class="prosegin-card-header">
+            <div>
+                <h2 class="prosegin-card-title"><i class="bi bi-box-seam"></i> Registro de productos</h2>
+                <p class="text-muted small mb-0 mt-1">Completa la información del equipo de protección personal.</p>
+            </div>
+            <a asp-controller="Catalogo" asp-action="Index" class="btn-prosegin-secondary">
+                <i class="bi bi-arrow-left"></i> Volver al catálogo
+            </a>
+        </div>
+        <div class="prosegin-card-body">
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success d-flex align-items-center gap-2" role="alert">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>@TempData["SuccessMessage"]</span>
+                </div>
+            }
+
+            <form asp-controller="Catalogo" asp-action="RegistroProductos" method="post" enctype="multipart/form-data" id="formRegistroProducto">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Sku" class="form-label-prosegin"></label>
+                        <input asp-for="Sku" class="form-control form-control-prosegin" placeholder="Ej. EPP-CAS-001" autocomplete="off" />
+                        <span asp-validation-for="Sku" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Nombre" class="form-label-prosegin"></label>
+                        <input asp-for="Nombre" class="form-control form-control-prosegin" placeholder="Ej. Casco de seguridad" autocomplete="off" />
+                        <span asp-validation-for="Nombre" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Categoria" class="form-label-prosegin"></label>
+                        <select asp-for="Categoria" class="form-select form-control-prosegin">
+                            <option value="">Seleccione una categoría</option>
+                            <option value="Protección de cabeza">Protección de cabeza</option>
+                            <option value="Protección ocular">Protección ocular</option>
+                            <option value="Protección respiratoria">Protección respiratoria</option>
+                            <option value="Protección auditiva">Protección auditiva</option>
+                            <option value="Protección de manos">Protección de manos</option>
+                            <option value="Protección de pies">Protección de pies</option>
+                            <option value="Protección corporal">Protección corporal</option>
+                        </select>
+                        <span asp-validation-for="Categoria" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="CostoBaseAdquisicion" class="form-label-prosegin"></label>
+                        <div class="input-group">
+                            <span class="input-group-text">S/</span>
+                            <input asp-for="CostoBaseAdquisicion" class="form-control form-control-prosegin" placeholder="0.00" min="0.01" step="0.01" inputmode="decimal" />
+                        </div>
+                        <span asp-validation-for="CostoBaseAdquisicion" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="ProveedorAutorizado" class="form-label-prosegin"></label>
+                        <input asp-for="ProveedorAutorizado" class="form-control form-control-prosegin" placeholder="Razón social del proveedor autorizado" autocomplete="organization" />
+                        <span asp-validation-for="ProveedorAutorizado" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <div class="border-top pt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label asp-for="FichaTecnica" class="form-label-prosegin text-uppercase mb-0">
+                                    <i class="bi bi-file-earmark-pdf text-danger me-1"></i> 3. Documentación y ficha técnica <span class="text-danger">*</span>
+                                </label>
+                                <span class="text-muted small text-uppercase fw-bold">Auditoría SST &amp; requisito SUNAT</span>
+                            </div>
+
+                            <div class="row g-3 align-items-stretch">
+                                <div class="col-lg-6">
+                                    <label for="FichaTecnica" class="d-flex flex-column justify-content-center align-items-center text-center border border-2 border-secondary-subtle border-dashed rounded-2 h-100 p-4 bg-light" style="cursor: pointer; min-height: 145px;">
+                                        <i class="bi bi-cloud-arrow-up fs-1 text-secondary"></i>
+                                        <span class="fw-bold text-dark mt-2">Arrastrar archivo PDF aquí o explorar equipo</span>
+                                        <small class="text-muted mt-1">PDF (Máx. 5MB) - Documento auditado</small>
+                                    </label>
+                                    <input asp-for="FichaTecnica" type="file" accept="application/pdf,.pdf" class="visually-hidden" />
+                                    <span asp-validation-for="FichaTecnica" class="text-danger small d-block mt-1"></span>
+                                </div>
+
+                                <div class="col-lg-6">
+                                    <div id="fichaTecnicaPreview" class="border rounded-2 p-3 h-100 d-flex align-items-start gap-3 bg-white d-none">
+                                        <div class="border border-danger-subtle bg-danger-subtle text-danger fw-bold px-2 py-2 small">PDF</div>
+                                        <div class="flex-grow-1 min-width-0">
+                                            <div class="fw-bold text-dark text-break" id="fichaTecnicaNombre"></div>
+                                            <div class="small text-muted" id="fichaTecnicaTamano"></div>
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle mt-2">
+                                                <i class="bi bi-check-lg"></i> Archivo validado
+                                            </span>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" id="btnEliminarFicha" title="Eliminar ficha técnica">
+                                            <i class="bi bi-trash"></i><span class="visually-hidden">Eliminar</span>
+                                        </button>
+                                    </div>
+                                    <div id="fichaTecnicaVacia" class="border rounded-2 p-3 h-100 d-flex align-items-center text-muted small">
+                                        <i class="bi bi-file-earmark text-secondary fs-4 me-2"></i>
+                                        Archivo cargado actualmente
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap justify-content-end gap-2 mt-4">
+                    <a asp-controller="Catalogo" asp-action="Index" class="btn-prosegin-secondary">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn-prosegin-primary">
+                        <i class="bi bi-check2-circle"></i> Registrar producto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const input = document.getElementById('FichaTecnica');
+            const preview = document.getElementById('fichaTecnicaPreview');
+            const empty = document.getElementById('fichaTecnicaVacia');
+            const fileName = document.getElementById('fichaTecnicaNombre');
+            const fileSize = document.getElementById('fichaTecnicaTamano');
+            const removeButton = document.getElementById('btnEliminarFicha');
+            const maxBytes = 5 * 1024 * 1024;
+
+            function resetFile() {
+                input.value = '';
+                preview.classList.add('d-none');
+                empty.classList.remove('d-none');
+                fileName.textContent = '';
+                fileSize.textContent = '';
+            }
+
+            input.addEventListener('change', function () {
+                const file = input.files[0];
+                if (!file) {
+                    resetFile();
+                    return;
+                }
+
+                if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+                    alert('Solo se permiten archivos PDF.');
+                    resetFile();
+                    return;
+                }
+
+                if (file.size > maxBytes) {
+                    alert('La ficha técnica no puede superar los 5 MB.');
+                    resetFile();
+                    return;
+                }
+
+                fileName.textContent = file.name;
+                fileSize.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+                preview.classList.remove('d-none');
+                empty.classList.add('d-none');
+            });
+
+            removeButton.addEventListener('click', resetFile);
+        });
+    </script>
+}
