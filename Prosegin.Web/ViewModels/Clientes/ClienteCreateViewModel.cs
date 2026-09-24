@@ -27,5 +27,27 @@ namespace Prosegin.Web.ViewModels.Clientes
         [StringLength(100, ErrorMessage = "El correo no puede exceder los 100 caracteres.")]
         [Display(Name = "Correo Electrónico")]
         public string? CorreoElectronico { get; set; }
+
+        [StringLength(100)]
+        [Display(Name = "Departamento")]
+        public string? Departamento { get; set; }
+
+        [StringLength(100)]
+        [Display(Name = "Provincia")]
+        public string? Provincia { get; set; }
+
+        [StringLength(100)]
+        [Display(Name = "Distrito")]
+        public string? Distrito { get; set; }
+
+        [StringLength(6, ErrorMessage = "El código de Ubigeo debe tener 6 dígitos.")]
+        [Display(Name = "Código Ubigeo")]
+        public string? Ubigeo { get; set; }
+
+        [Display(Name = "Estado SUNAT")]
+        public string EstadoSunat { get; set; } = "ACTIVO";
+
+        [Display(Name = "Condición SUNAT")]
+        public string CondicionSunat { get; set; } = "HABIDO";
     }
 }
