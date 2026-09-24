@@ -1,0 +1,116 @@
+@model Prosegin.Web.ViewModels.Catalogo.CatalogoIndexViewModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Catálogo de EPP";
+    var hasResults = Model.Productos.Any();
+    var noResultsMessage = !string.IsNullOrWhiteSpace(Model.MensajeSinResultados) ? Model.MensajeSinResultados : null;
+}
+
+<div class="container-fluid px-0">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h4 class="fw-bold text-dark mb-1">
+                <i class="bi bi-search text-warning me-2"></i> CONSULTA RÁPIDA DE CATÁLOGO EPP
+            </h4>
+            <p class="text-muted small mb-0">Filtre por código, nombre o categoría para encontrar productos, precios y fichas técnicas.</p>
+        </div>
+    </div>
+
+    <div class="prosegin-card mb-4">
+        <div class="prosegin-card-body p-4">
+            <form method="get" asp-action="Index" asp-controller="Catalogo" class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label-prosegin" for="codigoProducto">Código o nombre del producto</label>
+                    <input id="codigoProducto" name="codigoProducto" value="@Model.CodigoProducto" class="form-control form-control-prosegin" placeholder="Ej.: EPP-1001 o Casco" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label-prosegin" for="categoria">Categoría</label>
+                    <select id="categoria" name="categoria" class="form-select form-control-prosegin">
+                        <option value="">Todas las categorías</option>
+                        @foreach (var categoria in Model.Categorias)
+                        {
+                            if (categoria == Model.CategoriaSeleccionada)
+                            {
+                                <option value="@categoria" selected>@categoria</option>
+                            }
+                            else
+                            {
+                                <option value="@categoria">@categoria</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <button type="submit" class="btn-prosegin-primary w-100">
+                        <i class="bi bi-search"></i> BUSCAR
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(noResultsMessage))
+    {
+        <div class="alert alert-warning border-warning rounded-3 shadow-sm mb-4">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            @noResultsMessage
+        </div>
+    }
+
+    @if (hasResults)
+    {
+        <div class="prosegin-card">
+            <div class="prosegin-card-header">
+                <h5 class="prosegin-card-title mb-0">
+                    <i class="bi bi-list-ul text-warning me-2"></i> RESULTADOS ENCONTRADOS (@Model.Productos.Count)
+                </h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Categoría</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                            <th class="text-center">Ficha técnica</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var producto in Model.Productos)
+                        {
+                            <tr>
+                                <td class="fw-bold text-dark">@producto.Sku</td>
+                                <td>@producto.Nombre</td>
+                                <td>
+                                    <span class="badge badge-prosegin badge-prosegin-neutral">@producto.Categoria</span>
+                                </td>
+                                <td class="fw-bold text-success">@producto.Precio.ToString("C", new CultureInfo("es-PE"))</td>
+                                <td>
+                                    <span class="@(producto.StockDisponible > 0 ? "badge-prosegin badge-prosegin-success" : "badge-prosegin badge-prosegin-danger")">
+                                        @producto.StockDisponible
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    @if (!string.IsNullOrWhiteSpace(producto.RutaFichaTecnicaPdf))
+                                    {
+                                        <a class="btn btn-sm btn-outline-primary rounded-circle" target="_blank" rel="noopener noreferrer" asp-controller="Catalogo" asp-action="VerFicha" asp-route-id="@producto.Id" title="Abrir ficha técnica">
+                                            <i class="bi bi-file-earmark-pdf"></i>
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">-</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
