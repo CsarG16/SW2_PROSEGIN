@@ -16,14 +16,13 @@ public static class DependencyInjection
         var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD");
 
         string connectionString;
+        // Priorizar appsettings.json para desarrollo local
+        connectionString = configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
+        
+        // Si hay variables de entorno configuradas, usarlas (para producción)
         if (!string.IsNullOrEmpty(dbHost) && !string.IsNullOrEmpty(dbName) && !string.IsNullOrEmpty(dbUser))
         {
             connectionString = $"Server={dbHost};Port={dbPort};Database={dbName};User={dbUser};Password={dbPassword};";
-        }
-        else
-        {
-            // 2. Fallback a appsettings.json si no hay variables de entorno
-            connectionString = configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
         }
 
         if (!string.IsNullOrEmpty(connectionString))

@@ -8,13 +8,39 @@
   /* Tipografía */
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-  /* Paleta Corporativa Principal */
+  /* Paleta Corporativa Principal - Industrial EPP */
   --prosegin-orange: #f59e0b;       /* Naranja/Ámbar PROSEGIN */
   --prosegin-orange-hover: #d97706; /* Hover Naranja */
   --prosegin-orange-light: #fef3c7; /* Fondo sutil naranja */
   --prosegin-orange-text: #b45309;
 
-  /* Fondo de la barra lateral (Sidebar Oscuro) */
+  /* Colores de Seguridad Industrial */
+  --safety-yellow: #FFD700;         /* Amarillo Seguridad - Alertas y destacados */
+  --safety-yellow-hover: #FFC000;
+  --safety-yellow-light: #FFF9C4;
+  --safety-yellow-text: #F57F17;
+
+  --industrial-blue: #1E3A5F;       /* Azul Oscuro Industrial - Elementos serios */
+  --industrial-blue-hover: #152B45;
+  --industrial-blue-light: #E3F2FD;
+  --industrial-blue-text: #0D47A1;
+
+  --safety-green: #2E7D32;         /* Verde Seguridad - Estados positivos/stock */
+  --safety-green-hover: #1B5E20;
+  --safety-green-light: #E8F5E9;
+  --safety-green-text: #1B5E20;
+
+  --danger-red: #D32F2F;           /* Rojo Peligro - Alertas críticas */
+  --danger-red-hover: #B71C1C;
+  --danger-red-light: #FFEBEE;
+  --danger-red-text: #B71C1C;
+
+  --metallic-gray: #607D8B;        /* Gris Metalizado - Elementos estructurales */
+  --metallic-gray-hover: #455A64;
+  --metallic-gray-light: #ECEFF1;
+  --metallic-gray-text: #37474F;
+
+  /* Fondo de la barra lateral (Sidebar Oscuro Industrial) */
   --sidebar-bg: #0c1322;
   --sidebar-surface: #111a2e;
   --sidebar-border: rgba(255, 255, 255, 0.07);
@@ -26,36 +52,37 @@
   --bg-canvas: #f4f6f9;
   --bg-card: #ffffff;
   --bg-card-subtle: #f8fafc;
-  
+
   /* Textos */
   --text-dark: #0f172a;       /* Títulos y textos principales */
   --text-body: #334155;       /* Texto general */
   --text-muted: #64748b;      /* Textos secundarios / etiquetas */
   --text-subtle: #94a3b8;     /* Placeholders y detalles */
 
-  /* Bordes y Sombras */
+  /* Bordes y Sombras Industriales */
   --border-card: #e2e8f0;
   --border-light: #f1f5f9;
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
-  --shadow-hover: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-industrial: 0 8px 16px rgba(30, 58, 95, 0.15);
 
   /* Estados y Acentos (SLA, SUNAT, Despachos) */
-  --state-success: #16a34a;
-  --state-success-bg: #dcfce7;
-  --state-success-text: #15803d;
+  --state-success: #2E7D32;
+  --state-success-bg: #E8F5E9;
+  --state-success-text: #1B5E20;
 
-  --state-warning: #f59e0b;
-  --state-warning-bg: #fef3c7;
-  --state-warning-text: #b45309;
+  --state-warning: #FFD700;
+  --state-warning-bg: #FFF9C4;
+  --state-warning-text: #F57F17;
 
-  --state-danger: #ef4444;
-  --state-danger-bg: #fee2e2;
-  --state-danger-text: #b91c1c;
+  --state-danger: #D32F2F;
+  --state-danger-bg: #FFEBEE;
+  --state-danger-text: #B71C1C;
 
-  --state-info: #0284c7;
-  --state-info-bg: #e0f2fe;
-  --state-info-text: #0369a1;
+  --state-info: #1E3A5F;
+  --state-info-bg: #E3F2FD;
+  --state-info-text: #0D47A1;
 }
 
 * {
@@ -75,13 +102,13 @@ body {
    COMPONENTES ESTÁNDAR REUTILIZABLES (PARA LOS 8 DESARROLLADORES)
    ============================================================ */
 
-/* 1. Tarjetas Blancas Corporativas */
+/* 1. Tarjetas Blancas Corporativas - Simplificadas */
 .prosegin-card {
   background: var(--bg-card);
   border: 1px solid var(--border-card);
   border-radius: 12px;
   box-shadow: var(--shadow-card);
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: box-shadow 0.2s ease;
 }
 
 .prosegin-card:hover {
@@ -113,7 +140,7 @@ body {
   padding: 1.5rem;
 }
 
-/* 2. Botones Estándar */
+/* 2. Botones Estándar - Simplificados */
 /* Botón Principal (Naranja PROSEGIN) */
 .btn-prosegin-primary {
   background-color: var(--prosegin-orange);
@@ -127,17 +154,13 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.3);
+  transition: background-color 0.2s ease;
   text-decoration: none;
 }
 
 .btn-prosegin-primary:hover {
   background-color: var(--prosegin-orange-hover);
   border-color: var(--prosegin-orange-hover);
-  color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 3px 6px rgba(245, 158, 11, 0.4);
 }
 
 /* Botón Secundario (Blanco con Borde) */
@@ -153,17 +176,16 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
   text-decoration: none;
 }
 
 .btn-prosegin-secondary:hover {
   background-color: var(--bg-card-subtle);
   border-color: #cbd5e1;
-  color: var(--text-dark);
 }
 
-/* Botón Oscuro / Acción Especial */
+/* Botón Oscuro */
 .btn-prosegin-dark {
   background-color: #0f172a;
   border: 1px solid #0f172a;
@@ -175,14 +197,15 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.2s ease;
-}
-.btn-prosegin-dark:hover {
-  background-color: #1e293b;
-  color: #ffffff;
+  transition: background-color 0.2s ease;
+  text-decoration: none;
 }
 
-/* 3. Campos de Formulario (Inputs Limpios) */
+.btn-prosegin-dark:hover {
+  background-color: #1e293b;
+}
+
+/* 3. Campos de Formulario - Simplificados */
 .form-control-prosegin {
   background-color: #ffffff;
   border: 1px solid #cbd5e1;
@@ -190,7 +213,7 @@ body {
   padding: 0.65rem 0.9rem;
   font-size: 0.92rem;
   color: var(--text-dark);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s ease;
 }
 
 .form-control-prosegin:focus {
@@ -206,7 +229,7 @@ body {
   margin-bottom: 0.35rem;
 }
 
-/* 4. Badges / Pastillas de Estado (Según Screenshot) */
+/* 4. Badges / Pastillas de Estado - Simplificados */
 .badge-prosegin {
   font-size: 0.74rem;
   font-weight: 700;
@@ -246,6 +269,25 @@ body {
   background-color: #f1f5f9;
   color: #475569;
   border: 1px solid #e2e8f0;
+}
+
+/* Badges de Stock Simples */
+.badge-stock-high {
+  background-color: var(--state-success-bg);
+  color: var(--state-success-text);
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+.badge-stock-medium {
+  background-color: var(--state-warning-bg);
+  color: var(--state-warning-text);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-stock-low {
+  background-color: var(--state-danger-bg);
+  color: var(--state-danger-text);
+  border: 1px solid rgba(239, 68, 68, 0.25);
 }
 
 /* 5. Tarjetas de Estadísticas (KPI Cards de la Imagen) */
@@ -326,4 +368,334 @@ body {
 
 .table-prosegin tbody tr:hover {
   background-color: #f8fafc;
+  transform: scale(1.01);
+  transition: all 0.2s ease;
+}
+
+/* 7. Dashboard Components */
+.dashboard-header {
+  background: linear-gradient(135deg, var(--industrial-blue), #152B45);
+  color: #ffffff;
+  padding: 2rem;
+  border-radius: 16px;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-industrial);
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.dashboard-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  border: 2px solid var(--border-card);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-card);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--prosegin-orange), var(--safety-yellow));
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--industrial-blue);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-trend {
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+}
+
+.stat-trend.positive {
+  color: var(--safety-green);
+}
+
+.stat-trend.negative {
+  color: var(--danger-red);
+}
+
+/* 8. Product Grid View */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.product-card {
+  background: #ffffff;
+  border: 2px solid var(--border-card);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.product-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--prosegin-orange);
+}
+
+.product-image {
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(135deg, var(--metallic-gray-light), #e0e0e0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.product-image::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(0, 0, 0, 0.03) 10px,
+    rgba(0, 0, 0, 0.03) 20px
+  );
+}
+
+.product-icon {
+  font-size: 4rem;
+  color: var(--metallic-gray);
+  z-index: 1;
+}
+
+.product-info {
+  padding: 1.5rem;
+}
+
+.product-sku {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.product-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 0.5rem;
+  line-height: 1.3;
+}
+
+.product-category {
+  font-size: 0.8rem;
+  color: var(--industrial-blue);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.product-price {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--prosegin-orange);
+  margin-bottom: 0.5rem;
+}
+
+.product-stock {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.product-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* 9. Empty States Mejorados */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, #f8fafc, #ffffff);
+  border-radius: 16px;
+  border: 2px dashed var(--border-card);
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  color: var(--metallic-gray);
+  margin-bottom: 1.5rem;
+  opacity: 0.5;
+}
+
+.empty-state-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 0.5rem;
+}
+
+.empty-state-description {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+/* 10. Loading States */
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--metallic-gray-light);
+  border-top: 4px solid var(--prosegin-orange);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 2rem auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* 11. Responsive Optimizations */
+@media (max-width: 768px) {
+  .dashboard-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .table-prosegin {
+    font-size: 0.8rem;
+  }
+
+  .prosegin-card {
+    border-radius: 12px;
+  }
+
+  .btn-prosegin-primary,
+  .btn-prosegin-secondary,
+  .btn-prosegin-safety,
+  .btn-prosegin-dark {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .stat-value {
+    font-size: 2rem;
+  }
+
+  .product-card {
+    border-radius: 12px;
+  }
+
+  .empty-state {
+    padding: 2rem 1rem;
+  }
+}
+
+/* 12. Industrial Accents */
+.industrial-border-left {
+  border-left: 4px solid var(--safety-yellow);
+}
+
+.industrial-border-right {
+  border-right: 4px solid var(--safety-yellow);
+}
+
+.safety-pattern {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(255, 215, 0, 0.05) 10px,
+    rgba(255, 215, 0, 0.05) 20px
+  );
+}
+
+.certificate-badge {
+  background: linear-gradient(135deg, var(--industrial-blue), #152B45);
+  color: #ffffff;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 }

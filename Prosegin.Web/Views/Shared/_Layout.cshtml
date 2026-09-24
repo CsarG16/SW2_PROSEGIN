@@ -47,7 +47,13 @@
             <div class="menu-section-title">Operaciones EPP</div>
             <ul class="sidebar-nav">
                 <li class="sidebar-nav-item">
-                    <a class="sidebar-nav-link" href="#">
+                    <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")" asp-controller="Dashboard" asp-action="Index">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Productos" ? "active" : "")" asp-controller="Productos" asp-action="Index">
                         <i class="bi bi-grid"></i>
                         <span>Catálogo de EPP</span>
                     </a>

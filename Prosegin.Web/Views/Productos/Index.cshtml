@@ -1,0 +1,265 @@
+@model Prosegin.Web.ViewModels.Productos.ProductoBusquedaViewModel
+
+@{
+    ViewData["Title"] = "Catálogo de EPP";
+}
+
+<div class="container-fluid px-0">
+    <!-- Encabezado Principal con Iconografía EPP -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h4 class="fw-bold text-dark mb-1" style="letter-spacing: -0.01em;">
+                <i class="bi bi-shield-shaded text-warning me-2"></i> CATÁLOGO DE EQUIPOS DE PROTECCIÓN PERSONAL
+            </h4>
+            <p class="text-muted small mb-0">
+                <i class="bi bi-info-circle me-1"></i> Consulte el catálogo de EPP filtrando por código, nombre o categoría para encontrar rápidamente productos, precios y fichas técnicas.
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <span class="certificate-badge">
+                <i class="bi bi-patch-check"></i> ISO 9001
+            </span>
+            <span class="certificate-badge">
+                <i class="bi bi-shield-check"></i> Seguridad Industrial
+            </span>
+        </div>
+    </div>
+
+    <!-- Tarjeta de Búsqueda con Iconografía EPP -->
+    <div class="prosegin-card mb-4">
+        <div class="prosegin-card-header bg-white py-2 px-3">
+            <span class="fw-bold text-dark small text-uppercase">
+                <i class="bi bi-search text-warning me-2"></i> Criterios de Búsqueda EPP
+            </span>
+            <div class="d-flex gap-2">
+                <span class="badge-prosegin badge-prosegin-info">
+                    <i class="bi bi-funnel"></i> Filtros Activos
+                </span>
+                @if (Model.SeRealizoBusqueda && Model.Resultados.Any())
+                {
+                    <div class="btn-group btn-group-sm">
+                        <a asp-action="Index" asp-route-criterioBusqueda="@Model.CriterioBusqueda" asp-route-categoriaSeleccionada="@Model.CategoriaSeleccionada" asp-route-vista="tabla"
+                           class="btn btn-outline-secondary @(Model.Vista == "tabla" ? "active" : "")">
+                            <i class="bi bi-table"></i> Tabla
+                        </a>
+                        <a asp-action="Index" asp-route-criterioBusqueda="@Model.CriterioBusqueda" asp-route-categoriaSeleccionada="@Model.CategoriaSeleccionada" asp-route-vista="grid"
+                           class="btn btn-outline-secondary @(Model.Vista == "grid" ? "active" : "")">
+                            <i class="bi bi-grid-3x3"></i> Grid
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="prosegin-card-body p-3">
+            <form asp-action="Index" method="get" class="row g-3">
+                <!-- Búsqueda por código o nombre -->
+                <div class="col-md-6">
+                    <label asp-for="CriterioBusqueda" class="form-label-prosegin small text-uppercase fw-bold mb-1">
+                        <i class="bi bi-box-seam me-1"></i> Código o Nombre del Producto
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 text-muted">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input asp-for="CriterioBusqueda" class="form-control form-control-prosegin border-start-0"
+                               placeholder="Ej: CAS-123 o Casco de seguridad" autocomplete="off" />
+                    </div>
+                    <div class="form-text text-muted small">
+                        <i class="bi bi-lightning"></i> Admite coincidencias parciales y búsqueda directa por nombre
+                    </div>
+                </div>
+
+                <!-- Filtro por categoría -->
+                <div class="col-md-4">
+                    <label asp-for="CategoriaSeleccionada" class="form-label-prosegin small text-uppercase fw-bold mb-1">
+                        <i class="bi bi-grid-3x3 me-1"></i> Categoría de EPP
+                    </label>
+                    <select asp-for="CategoriaSeleccionada" class="form-select form-control-prosegin" asp-items="new SelectList(Model.CategoriasDisponibles)">
+                        <option value="">-- Todas las categorías --</option>
+                    </select>
+                </div>
+
+                <!-- Botón de búsqueda -->
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn-prosegin-primary w-100 py-2">
+                        <i class="bi bi-search me-1"></i> BUSCAR
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resultados de Búsqueda con Iconografía EPP -->
+    @if (Model.SeRealizoBusqueda)
+    {
+        <div class="prosegin-card mb-4">
+            <div class="prosegin-card-header py-2 px-3 d-flex justify-content-between align-items-center bg-light">
+                <span class="fw-bold text-dark small text-uppercase">
+                    <i class="bi bi-list-check text-warning me-1"></i> Resultados Encontrados (@Model.Resultados.Count)
+                </span>
+                @if (Model.Resultados.Any())
+                {
+                    <span class="badge-prosegin badge-prosegin-success">
+                        <i class="bi bi-check-circle"></i> Búsqueda Completada
+                    </span>
+                }
+                else
+                {
+                    <span class="badge-prosegin badge-prosegin-neutral">
+                        <i class="bi bi-x-circle"></i> Sin Resultados
+                    </span>
+                }
+            </div>
+
+            @if (Model.Resultados.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover table-prosegin mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 120px;">Código (SKU)</th>
+                                <th>Nombre del Producto</th>
+                                <th style="width: 150px;">Categoría</th>
+                                <th style="width: 100px;">Unidad</th>
+                                <th style="width: 120px;">Costo Ref.</th>
+                                <th style="width: 80px;">Stock</th>
+                                <th style="width: 100px;">Ficha Técnica</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var producto in Model.Resultados)
+                            {
+                                <tr>
+                                    <td class="fw-bold font-monospace text-dark">@producto.Sku</td>
+                                    <td>
+                                        <div class="fw-bold text-dark">@producto.Nombre</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border">@producto.Categoria</span>
+                                    </td>
+                                    <td class="text-muted small">@producto.UnidadMedida</td>
+                                    <td class="fw-bold text-dark">S/ @producto.CostoReferencial.ToString("N2")</td>
+                                    <td>
+                                        @if (producto.Stock > 10)
+                                        {
+                                            <span class="badge-prosegin badge-stock-high">@producto.Stock @producto.UnidadMedida</span>
+                                        }
+                                        else if (producto.Stock > 0)
+                                        {
+                                            <span class="badge-prosegin badge-stock-medium">@producto.Stock @producto.UnidadMedida</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge-prosegin badge-stock-low">Sin Stock</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (producto.TieneFichaTecnica)
+                                        {
+                                            <a asp-action="VerFichaTecnica" asp-route-id="@producto.Id" 
+                                               class="btn btn-sm btn-outline-primary" target="_blank" title="Ver Ficha Técnica">
+                                                <i class="bi bi-file-earmark-pdf"></i> Ver PDF
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small fst-italic">No disponible</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="prosegin-card-body p-4 text-center">
+                    <div class="empty-state">
+                        <i class="bi bi-search empty-state-icon"></i>
+                        <h5 class="empty-state-title">@Model.MensajeNoResultados</h5>
+                        <p class="empty-state-description">
+                            Intente con otros criterios de búsqueda o seleccione una categoría diferente.
+                        </p>
+                    </div>
+                </div>
+            }
+
+            <!-- Grid View de Productos -->
+            @if (Model.Vista == "grid" && Model.Resultados.Any())
+            {
+                <div class="product-grid mt-4">
+                    @foreach (var producto in Model.Resultados)
+                    {
+                        <div class="product-card">
+                            <div class="product-image">
+                                <i class="bi bi-box-seam product-icon"></i>
+                                @if (producto.TieneFichaTecnica)
+                                {
+                                    <a asp-action="VerFichaTecnica" asp-route-id="@producto.Id" class="btn btn-sm btn-light position-absolute top-2 end-2" target="_blank" title="Ver Ficha Técnica">
+                                        <i class="bi bi-file-earmark-pdf"></i>
+                                    </a>
+                                }
+                            </div>
+                            <div class="product-info">
+                                <div class="product-sku">@producto.Sku</div>
+                                <div class="product-name">@producto.Nombre</div>
+                                <div class="product-category">
+                                    <i class="bi bi-tag me-1"></i> @producto.Categoria
+                                </div>
+                                <div class="product-price">S/ @producto.CostoReferencial.ToString("N2")</div>
+                                <div class="product-stock">
+                                    @if (producto.Stock > 10)
+                                    {
+                                        <span class="badge-prosegin badge-stock-high">@producto.Stock @producto.UnidadMedida</span>
+                                    }
+                                    else if (producto.Stock > 0)
+                                    {
+                                        <span class="badge-prosegin badge-stock-medium">@producto.Stock @producto.UnidadMedida</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-prosegin badge-stock-low">Sin Stock</span>
+                                    }
+                                </div>
+                                <div class="product-actions">
+                                    <button class="btn btn-sm btn-prosegin-primary flex-grow-1">
+                                        <i class="bi bi-cart-plus"></i> Agregar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <!-- Estado inicial - Sin búsqueda realizada con Iconografía EPP -->
+        <div class="prosegin-card mb-4">
+            <div class="prosegin-card-body p-4 text-center">
+                <div class="empty-state">
+                    <i class="bi bi-shield-shaded empty-state-icon"></i>
+                    <h5 class="empty-state-title">Catálogo de EPP</h5>
+                    <p class="empty-state-description">
+                        <i class="bi bi-info-circle me-1"></i> Ingrese un código, nombre del producto o seleccione una categoría para buscar en el catálogo de Equipos de Protección Personal.
+                    </p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Focus en el campo de búsqueda al cargar
+        document.addEventListener('DOMContentLoaded', function() {
+            var searchInput = document.getElementById('CriterioBusqueda');
+            if (searchInput) {
+                searchInput.focus();
+            }
+        });
+    </script>
+}

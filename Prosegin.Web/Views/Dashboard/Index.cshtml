@@ -1,0 +1,290 @@
+@model Prosegin.Web.Controllers.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard PROSEGIN";
+}
+
+<div class="container-fluid px-0">
+    <!-- Dashboard Header Industrial -->
+    <div class="dashboard-header">
+        <div class="position-relative z-1">
+            <h1 class="display-6 fw-bold mb-2">
+                <i class="bi bi-shield-shaded me-2"></i> DASHBOARD PROSEGIN
+            </h1>
+            <p class="lead mb-0 opacity-75">
+                Sistema de Gestión de Equipos de Protección Personal - Control en Tiempo Real
+            </p>
+        </div>
+    </div>
+
+    <!-- KPI Stats Grid -->
+    <div class="dashboard-stats-grid">
+        <!-- Total Productos -->
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <div class="stat-label">Total Productos</div>
+                    <div class="stat-value">@Model.TotalProductos</div>
+                </div>
+                <div class="kpi-icon-pill" style="background: var(--prosegin-orange-light); color: var(--prosegin-orange);">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+            </div>
+            <div class="stat-trend positive">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>Catálogo activo</span>
+            </div>
+        </div>
+
+        <!-- Total Clientes -->
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <div class="stat-label">Total Clientes</div>
+                    <div class="stat-value">@Model.TotalClientes</div>
+                </div>
+                <div class="kpi-icon-pill" style="background: var(--industrial-blue-light); color: var(--industrial-blue);">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+            <div class="stat-trend positive">
+                <i class="bi bi-person-plus"></i>
+                <span>Base creciente</span>
+            </div>
+        </div>
+
+        <!-- Stock Bajo -->
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <div class="stat-label">Stock Bajo</div>
+                    <div class="stat-value" style="color: var(--danger-red);">@Model.StockBajo</div>
+                </div>
+                <div class="kpi-icon-pill" style="background: var(--danger-red-light); color: var(--danger-red);">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+            </div>
+            <div class="stat-trend negative">
+                <i class="bi bi-arrow-down"></i>
+                <span>Requiere atención</span>
+            </div>
+        </div>
+
+        <!-- Sin Stock -->
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <div class="stat-label">Sin Stock</div>
+                    <div class="stat-value" style="color: var(--danger-red);">@Model.ProductosSinStock</div>
+                </div>
+                <div class="kpi-icon-pill" style="background: var(--danger-red-light); color: var(--danger-red);">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+            </div>
+            <div class="stat-trend negative">
+                <i class="bi bi-x-circle"></i>
+                <span>Crítico</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Productos por Categoría -->
+        <div class="col-lg-6">
+            <div class="prosegin-card">
+                <div class="prosegin-card-header">
+                    <h5 class="prosegin-card-title">
+                        <i class="bi bi-grid-3x3 text-warning"></i> Productos por Categoría EPP
+                    </h5>
+                    <span class="badge-prosegin badge-prosegin-info">Distribución</span>
+                </div>
+                <div class="prosegin-card-body">
+                    @if (Model.ProductosPorCategoria.Any())
+                    {
+                        <div class="d-flex flex-column gap-3">
+                            @foreach (var categoria in Model.ProductosPorCategoria.OrderByDescending(x => x.Value))
+                            {
+                                var porcentaje = Model.TotalProductos > 0 ? (categoria.Value * 100 / Model.TotalProductos) : 0;
+                                <div>
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="fw-bold small">@categoria.Key</span>
+                                        <span class="badge-prosegin badge-prosegin-neutral">@categoria.Value</span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar" style="width: @porcentaje%; background: linear-gradient(90deg, var(--prosegin-orange), var(--safety-yellow));" role="progressbar"></div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <i class="bi bi-box-seam empty-state-icon"></i>
+                            <h5 class="empty-state-title">Sin Categorías</h5>
+                            <p class="empty-state-description">No hay productos registrados en el sistema</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Alertas de Stock -->
+        <div class="col-lg-6">
+            <div class="prosegin-card">
+                <div class="prosegin-card-header">
+                    <h5 class="prosegin-card-title">
+                        <i class="bi bi-exclamation-triangle text-danger"></i> Alertas de Stock Crítico
+                    </h5>
+                    <span class="badge-prosegin badge-prosegin-danger">@Model.ProductosStockCritico.Count Items</span>
+                </div>
+                <div class="prosegin-card-body">
+                    @if (Model.ProductosStockCritico.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover table-prosegin mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>SKU</th>
+                                        <th>Producto</th>
+                                        <th>Stock</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var producto in Model.ProductosStockCritico)
+                                    {
+                                        <tr>
+                                            <td class="fw-bold font-monospace">@producto.Sku</td>
+                                            <td>@producto.Nombre</td>
+                                            <td>
+                                                @if (producto.Stock == 0)
+                                                {
+                                                    <span class="badge-prosegin badge-prosegin-danger">0</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge-prosegin badge-prosegin-warning">@producto.Stock</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (producto.Stock == 0)
+                                                {
+                                                    <span class="badge-prosegin badge-prosegin-danger">SIN STOCK</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge-prosegin badge-prosegin-warning">BAJO</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <i class="bi bi-check-circle empty-state-icon" style="color: var(--safety-green);"></i>
+                            <h5 class="empty-state-title">Stock Óptimo</h5>
+                            <p class="empty-state-description">No hay productos con stock crítico</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Clientes Recientes -->
+        <div class="col-lg-6">
+            <div class="prosegin-card">
+                <div class="prosegin-card-header">
+                    <h5 class="prosegin-card-title">
+                        <i class="bi bi-people text-primary"></i> Clientes Recientes
+                    </h5>
+                    <span class="badge-prosegin badge-prosegin-success">Últimos 5</span>
+                </div>
+                <div class="prosegin-card-body">
+                    @if (Model.ClientesRecientes.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover table-prosegin mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>RUC</th>
+                                        <th>Razón Social</th>
+                                        <th>Fecha Registro</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var cliente in Model.ClientesRecientes)
+                                    {
+                                        <tr>
+                                            <td class="fw-bold font-monospace small">@cliente.Ruc</td>
+                                            <td>@cliente.RazonSocial</td>
+                                            <td class="small">@cliente.FechaCreacion.ToString("dd/MM/yyyy")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <i class="bi bi-people empty-state-icon"></i>
+                            <h5 class="empty-state-title">Sin Clientes</h5>
+                            <p class="empty-state-description">No hay clientes registrados en el sistema</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Acciones Rápidas -->
+        <div class="col-lg-6">
+            <div class="prosegin-card">
+                <div class="prosegin-card-header">
+                    <h5 class="prosegin-card-title">
+                        <i class="bi bi-lightning text-warning"></i> Acciones Rápidas
+                    </h5>
+                    <span class="badge-prosegin badge-prosegin-info">Atajos</span>
+                </div>
+                <div class="prosegin-card-body">
+                    <div class="d-grid gap-3">
+                        <a asp-controller="Productos" asp-action="Index" class="btn-prosegin-primary">
+                            <i class="bi bi-search"></i> Buscar Productos EPP
+                        </a>
+                        <a asp-controller="Clientes" asp-action="Create" class="btn-prosegin-secondary">
+                            <i class="bi bi-person-plus"></i> Registrar Nuevo Cliente
+                        </a>
+                        <a href="#" class="btn-prosegin-safety">
+                            <i class="bi bi-box-seam"></i> Gestionar Inventario
+                        </a>
+                        <a href="#" class="btn-prosegin-dark">
+                            <i class="bi bi-file-earmark-text"></i> Ver Reportes
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Animación de entrada para las cards
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.stat-card, .prosegin-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+}
