@@ -82,8 +82,15 @@ public class CatalogoController : Controller
     }
 
     [HttpGet]
-    public IActionResult RegistroProductos()
+    public async Task<IActionResult> RegistroProductos()
     {
+        ViewBag.ProductosRegistrados = await _context.Productos
+            .AsNoTracking()
+            .Where(p => p.Activo)
+            .OrderByDescending(p => p.Id)
+            .Take(10)
+            .ToListAsync();
+
         return View();
     }
 
@@ -93,18 +100,35 @@ public class CatalogoController : Controller
     {
         ValidarFichaTecnica(model.FichaTecnica);
 
-        if (await _context.Productos.AnyAsync(p => p.Sku == model.Sku.Trim()))
+        if (!string.IsNullOrWhiteSpace(model.Sku))
         {
-            ModelState.AddModelError(nameof(model.Sku), "El código SKU ya se encuentra registrado en el catálogo.");
+            var skuNormalizado = model.Sku.Trim().ToUpperInvariant();
+            if (await _context.Productos.AnyAsync(p => p.Sku == skuNormalizado && p.Activo))
+            {
+                ModelState.AddModelError(nameof(model.Sku), $"El código SKU '{skuNormalizado}' ya se encuentra registrado en el catálogo.");
+            }
         }
 
         if (!ModelState.IsValid)
         {
+            ViewBag.ProductosRegistrados = await _context.Productos
+                .AsNoTracking()
+                .Where(p => p.Activo)
+                .OrderByDescending(p => p.Id)
+                .Take(10)
+                .ToListAsync();
+
             return View(model);
         }
 
         // 1. Guardar físicamente el PDF en wwwroot/uploads/fichas/
-        var carpetaFichas = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "fichas");
+        var webRoot = _webHostEnvironment.WebRootPath;
+        if (string.IsNullOrWhiteSpace(webRoot))
+        {
+            webRoot = Path.Combine(_webHostEnvironment.ContentRootPath, "wwwroot");
+        }
+
+        var carpetaFichas = Path.Combine(webRoot, "uploads", "fichas");
         Directory.CreateDirectory(carpetaFichas);
 
         var nombreUnico = $"{Guid.NewGuid():N}.pdf";
@@ -119,12 +143,13 @@ public class CatalogoController : Controller
         var producto = new Producto
         {
             Sku = model.Sku.Trim().ToUpperInvariant(),
-            Nombre = model.Nombre.Trim(),
-            Categoria = model.Categoria,
+            Nombre = model.Nombre.Trim().ToUpperInvariant(),
+            Categoria = model.Categoria.Trim(),
+            UnidadMedida = string.IsNullOrWhiteSpace(model.UnidadMedida) ? "UND" : model.UnidadMedida.Trim().ToUpperInvariant(),
             CostoReferencial = model.CostoBaseAdquisicion,
             RutaFichaTecnicaPdf = $"/uploads/fichas/{nombreUnico}",
             NombreArchivoPdf = model.FichaTecnica.FileName,
-            Descripcion = $"Proveedor: {model.ProveedorAutorizado}",
+            Descripcion = $"Proveedor: {model.ProveedorAutorizado.Trim()}",
             FechaCreacion = DateTime.UtcNow,
             Activo = true
         };
@@ -132,8 +157,8 @@ public class CatalogoController : Controller
         _context.Productos.Add(producto);
         await _context.SaveChangesAsync();
 
-        TempData["SuccessMessage"] = $"El producto '{producto.Nombre}' ({producto.Sku}) fue registrado exitosamente con su ficha técnica.";
-        return RedirectToAction(nameof(Index));
+        TempData["SuccessMessage"] = $"El producto '{producto.Nombre}' ({producto.Sku}) fue registrado exitosamente en la base de datos con su ficha técnica.";
+        return RedirectToAction(nameof(RegistroProductos));
     }
 
     [HttpGet]

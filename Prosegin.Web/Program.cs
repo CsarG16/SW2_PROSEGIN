@@ -48,6 +48,19 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// Configuración de localización para moneda y números en Perú (acepta punto y coma decimal)
+var defaultCulture = new System.Globalization.CultureInfo("es-PE");
+defaultCulture.NumberFormat.NumberDecimalSeparator = ".";
+defaultCulture.NumberFormat.CurrencyDecimalSeparator = ".";
+
+var localizationOptions = new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture(defaultCulture),
+    SupportedCultures = new[] { defaultCulture },
+    SupportedUICultures = new[] { defaultCulture }
+};
+app.UseRequestLocalization(localizationOptions);
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
