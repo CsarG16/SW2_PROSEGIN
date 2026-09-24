@@ -699,3 +699,10 @@ body {
   align-items: center;
   gap: 0.3rem;
 }
+
+/* Asterisco de campo obligatorio */
+.required-asterisk {
+  color: #dc2626;
+  font-weight: bold;
+  margin-left: 2px;
+}

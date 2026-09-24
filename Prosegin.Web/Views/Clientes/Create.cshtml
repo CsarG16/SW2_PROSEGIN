@@ -31,9 +31,33 @@
         </div>
     }
 
+    @if (TempData["WarningMessage"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show rounded-3 mb-4 d-flex align-items-center shadow-sm border-warning" role="alert">
+            <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning"></i>
+            <div>
+                <strong class="d-block text-dark">Alerta Tributaria</strong>
+                <span class="text-dark small">@TempData["WarningMessage"]</span>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <form asp-action="Create" method="post" id="formDatosTributarios" novalidate>
         @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="EstadoSunat" id="hiddenEstadoSunat" value="ACTIVO" />
+        <input type="hidden" asp-for="CondicionSunat" id="hiddenCondicionSunat" value="HABIDO" />
+
         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+        <!-- Alerta Dinámica de Riesgo Tributario (No Habido / Baja) -->
+        <div id="alertaRiesgoTributario" class="alert alert-danger d-none mb-4 p-3 border-danger rounded-3 shadow-sm d-flex align-items-start gap-3">
+            <i class="bi bi-shield-slash-fill fs-3 text-danger flex-shrink-0"></i>
+            <div>
+                <div class="fw-bold text-danger text-uppercase" id="alertaRiesgoTitulo">Riesgo Tributario Crítico</div>
+                <div class="small text-danger" id="alertaRiesgoMensaje"></div>
+            </div>
+        </div>
 
         <div class="row g-4">
             <!-- COLUMNA IZQUIERDA: FORMULARIO PRINCIPAL -->
@@ -129,20 +153,20 @@
                         <!-- Ubigeo Desglosado -->
                         <div class="row g-2 mb-3">
                             <div class="col-sm-3">
-                                <label class="form-label-prosegin small text-uppercase" style="font-size: 0.75rem;">Departamento</label>
-                                <input type="text" id="txtDepartamento" class="form-control form-control-prosegin form-control-sm text-muted" placeholder="Ej: Lima" />
+                                <label asp-for="Departamento" class="form-label-prosegin small text-uppercase" style="font-size: 0.75rem;">Departamento</label>
+                                <input asp-for="Departamento" type="text" id="txtDepartamento" class="form-control form-control-prosegin form-control-sm text-dark" placeholder="Ej: Lima" />
                             </div>
                             <div class="col-sm-3">
-                                <label class="form-label-prosegin small text-uppercase" style="font-size: 0.75rem;">Provincia</label>
-                                <input type="text" id="txtProvincia" class="form-control form-control-prosegin form-control-sm text-muted" placeholder="Ej: Lima" />
+                                <label asp-for="Provincia" class="form-label-prosegin small text-uppercase" style="font-size: 0.75rem;">Provincia</label>
+                                <input asp-for="Provincia" type="text" id="txtProvincia" class="form-control form-control-prosegin form-control-sm text-dark" placeholder="Ej: Lima" />
                             </div>
                             <div class="col-sm-3">
-                                <label class="form-label-prosegin small text-uppercase" style="font-size: 0.75rem;">Distrito</label>
-                                <input type="text" id="txtDistrito" class="form-control form-control-prosegin form-control-sm text-muted" placeholder="Ej: San Isidro" />
+                                <label asp-for="Distrito" class="form-label-prosegin small text-uppercase" style="font-size: 0.75rem;">Distrito</label>
+                                <input asp-for="Distrito" type="text" id="txtDistrito" class="form-control form-control-prosegin form-control-sm text-dark" placeholder="Ej: San Isidro" />
                             </div>
                             <div class="col-sm-3">
-                                <label class="form-label-prosegin small text-uppercase" style="font-size: 0.75rem;">Ubigeo</label>
-                                <input type="text" id="txtUbigeo" class="form-control form-control-prosegin form-control-sm font-monospace fw-bold text-muted" placeholder="Ej: 150101" />
+                                <label asp-for="Ubigeo" class="form-label-prosegin small text-uppercase" style="font-size: 0.75rem;">Ubigeo (6 dígitos)</label>
+                                <input asp-for="Ubigeo" type="text" id="txtUbigeo" class="form-control form-control-prosegin form-control-sm font-monospace fw-bold text-dark" placeholder="Ej: 150101" maxlength="6" />
                             </div>
                         </div>
 
@@ -198,7 +222,7 @@
                                         <i class="bi bi-envelope"></i>
                                     </span>
                                     <input asp-for="CorreoElectronico" id="txtCorreo" class="form-control form-control-prosegin border-start-0" 
-                                           placeholder="Ej: facturacion@distribuidoraperu.com" autocomplete="off" />
+                                           placeholder="Ej: facturacion@@distribuidoraperu.com" autocomplete="off" />
                                 </div>
                                 <span asp-validation-for="CorreoElectronico" class="text-danger small d-block mt-1"></span>
                             </div>
@@ -322,12 +346,12 @@
                 <table class="table table-hover table-prosegin mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 140px;">RUC</th>
+                            <th style="width: 135px;">RUC</th>
                             <th>Razón Social</th>
                             <th>Dirección Fiscal</th>
-                            <th>Teléfono</th>
-                            <th>Fecha Registro</th>
-                            <th style="width: 90px;">Estado</th>
+                            <th style="width: 110px;">Ubigeo</th>
+                            <th style="width: 140px;">Condición / Estado</th>
+                            <th style="width: 120px;">Fecha Registro</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -337,13 +361,18 @@
                                 <td class="font-monospace fw-bold text-dark">@c.Ruc</td>
                                 <td class="fw-semibold text-dark">@c.RazonSocial</td>
                                 <td class="small text-muted">@c.DireccionFiscal</td>
-                                <td class="small">@(string.IsNullOrWhiteSpace(c.Telefono) ? "-" : c.Telefono)</td>
-                                <td class="small text-muted">@c.FechaCreacion.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="small font-monospace">@(string.IsNullOrWhiteSpace(c.Ubigeo) ? "-" : c.Ubigeo)</td>
                                 <td>
-                                    <span class="badge-prosegin badge-prosegin-success">
-                                        <i class="bi bi-check-circle-fill"></i> Activo
-                                    </span>
+                                    <div class="d-flex flex-column gap-1">
+                                        <span class="badge @(c.CondicionSunat == "HABIDO" ? "bg-success-subtle text-success border border-success" : "bg-danger-subtle text-danger border border-danger")" style="font-size: 0.68rem;">
+                                            @c.CondicionSunat
+                                        </span>
+                                        <span class="badge @(c.EstadoSunat == "ACTIVO" ? "bg-primary-subtle text-primary border border-primary" : "bg-warning-subtle text-dark border border-warning")" style="font-size: 0.68rem;">
+                                            @c.EstadoSunat
+                                        </span>
+                                    </div>
                                 </td>
+                                <td class="small text-muted">@c.FechaCreacion.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
                             </tr>
                         }
                     </tbody>
@@ -372,6 +401,15 @@
             const textBtnConsultar = document.getElementById('textBtnConsultar');
             const btnGuardar = document.getElementById('btnGuardarCliente');
 
+            // Campos ocultos para base de datos
+            const hiddenEstadoSunat = document.getElementById('hiddenEstadoSunat');
+            const hiddenCondicionSunat = document.getElementById('hiddenCondicionSunat');
+
+            // Alerta de riesgo tributario
+            const alertaRiesgo = document.getElementById('alertaRiesgoTributario');
+            const alertaRiesgoTitulo = document.getElementById('alertaRiesgoTitulo');
+            const alertaRiesgoMensaje = document.getElementById('alertaRiesgoMensaje');
+
             // Badges en formulario
             const badgeEstadoSunat = document.getElementById('badgeEstadoSunat');
             const badgeCondicionSunat = document.getElementById('badgeCondicionSunat');
@@ -396,13 +434,36 @@
 
             let sunatConsultado = false;
 
+            // Algoritmo Oficial de Verificación de RUC - Módulo 11 SUNAT
+            function validarModulo11Sunat(ruc) {
+                if (!ruc || ruc.length !== 11 || !/^\d+$/.test(ruc)) return false;
+
+                const prefijo = ruc.substring(0, 2);
+                if (!['10', '15', '17', '20'].includes(prefijo)) return false;
+
+                const factores = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
+                let suma = 0;
+
+                for (let i = 0; i < 10; i++) {
+                    suma += parseInt(ruc.charAt(i), 10) * factores[i];
+                }
+
+                const residuo = suma % 11;
+                let digitoCalculado = 11 - residuo;
+
+                if (digitoCalculado === 10) digitoCalculado = 0;
+                else if (digitoCalculado === 11) digitoCalculado = 1;
+
+                return digitoCalculado === parseInt(ruc.charAt(10), 10);
+            }
+
             // 1. Filtrar RUC para aceptar exclusivamente números
             txtRuc.addEventListener('input', function () {
                 this.value = this.value.replace(/[^0-9]/g, '');
                 evaluarRucEnTiempoReal();
             });
 
-            // 2. Evaluar RUC en tiempo real
+            // 2. Evaluar RUC en tiempo real con Módulo 11
             function evaluarRucEnTiempoReal() {
                 const val = txtRuc.value.trim();
 
@@ -419,6 +480,7 @@
                     setCheck(iconChkDigitos, lblChkDigitos, false, 'RUC de 11 dígitos');
                     setCheck(iconChkSunat, lblChkSunat, false, 'Consulta en SUNAT');
                     setCheck(iconChkDireccion, lblChkDireccion, false, 'Dirección registrada');
+                    alertaRiesgo.classList.add('d-none');
                     sunatConsultado = false;
                     actualizarEstadoFormulario();
                     return;
@@ -435,17 +497,30 @@
                     
                     setCheck(iconChkDigitos, lblChkDigitos, false, `Faltan ${11 - val.length} dígitos`);
                     setCheck(iconChkSunat, lblChkSunat, false, 'Consulta en SUNAT');
+                    alertaRiesgo.classList.add('d-none');
                     sunatConsultado = false;
                 } else if (val.length === 11) {
-                    txtRuc.classList.remove('is-invalid');
-                    txtRuc.classList.add('is-valid');
-                    rucStatusText.className = 'text-success fw-bold';
-                    rucStatusText.innerHTML = '<i class="bi bi-check-circle-fill"></i> RUC de 11 dígitos listo para consultar';
-                    
-                    setCheck(iconChkDigitos, lblChkDigitos, true, 'RUC de 11 dígitos');
-                    
-                    if (!sunatConsultado) {
-                        consultarSunatApi(val);
+                    // Validación matemática Módulo 11
+                    const esValido = validarModulo11Sunat(val);
+
+                    if (!esValido) {
+                        txtRuc.classList.remove('is-valid');
+                        txtRuc.classList.add('is-invalid');
+                        rucStatusText.className = 'text-danger fw-bold';
+                        rucStatusText.innerHTML = '<i class="bi bi-x-circle-fill"></i> Dígito verificador incorrecto (no cumple algoritmo Módulo 11 de SUNAT)';
+                        setCheck(iconChkDigitos, lblChkDigitos, false, 'RUC inválido (Módulo 11)');
+                        setCheck(iconChkSunat, lblChkSunat, false, 'Consulta en SUNAT');
+                        sunatConsultado = false;
+                    } else {
+                        txtRuc.classList.remove('is-invalid');
+                        txtRuc.classList.add('is-valid');
+                        rucStatusText.className = 'text-success fw-bold';
+                        rucStatusText.innerHTML = '<i class="bi bi-check-circle-fill"></i> RUC válido (Módulo 11) - Listo para consultar';
+                        setCheck(iconChkDigitos, lblChkDigitos, true, 'RUC válido (Módulo 11)');
+                        
+                        if (!sunatConsultado) {
+                            consultarSunatApi(val);
+                        }
                     }
                 }
 
@@ -472,6 +547,14 @@
                     return;
                 }
 
+                if (!validarModulo11Sunat(rucNumero)) {
+                    txtRuc.classList.add('is-invalid');
+                    rucStatusText.className = 'text-danger fw-bold';
+                    rucStatusText.innerHTML = '<i class="bi bi-x-circle-fill"></i> El RUC no cumple con el algoritmo Módulo 11 de SUNAT.';
+                    txtRuc.focus();
+                    return;
+                }
+
                 btnConsultar.disabled = true;
                 iconConsultar.className = 'spinner-border spinner-border-sm';
                 textBtnConsultar.textContent = 'Consultando...';
@@ -490,41 +573,71 @@
                         txtDistrito.value = data.distrito || '';
                         txtUbigeo.value = data.ubigeo || '150101';
 
+                        // Actualizar campos ocultos para persistencia
+                        hiddenEstadoSunat.value = data.estado || 'ACTIVO';
+                        hiddenCondicionSunat.value = data.condicion || 'HABIDO';
+
                         txtRazonSocial.classList.remove('is-invalid');
                         txtDireccion.classList.remove('is-invalid');
 
-                        badgeEstadoSunat.className = 'border rounded px-2 py-1 flex-fill text-center bg-success-subtle small fw-bold text-success border-success';
-                        badgeEstadoSunat.textContent = `Estado: ${data.estado || 'ACTIVO'}`;
+                        // Evaluar Alerta de Riesgo Tributario (No Habido / Baja)
+                        const esHabido = data.esHabido !== false && data.condicion === 'HABIDO';
+                        const esActivo = data.esActivo !== false && data.estado === 'ACTIVO';
 
-                        badgeCondicionSunat.className = 'border rounded px-2 py-1 flex-fill text-center bg-success-subtle small fw-bold text-success border-success';
-                        badgeCondicionSunat.textContent = `Condición: ${data.condicion || 'HABIDO'}`;
+                        if (!esHabido || !esActivo) {
+                            alertaRiesgoTitulo.textContent = 'Atención: Restricción Tributaria SUNAT';
+                            alertaRiesgoMensaje.innerHTML = `El contribuyente figura como <strong>[CONDICIÓN: ${data.condicion}]</strong> y <strong>[ESTADO: ${data.estado}]</strong>. Según normativa de SUNAT, las compras o facturas emitidas a clientes no habidos o en baja no otorgan derecho a crédito fiscal del IGV.`;
+                            alertaRiesgo.classList.remove('d-none');
+
+                            badgeEstadoSunat.className = `border rounded px-2 py-1 flex-fill text-center small fw-bold ${esActivo ? 'bg-success-subtle text-success border-success' : 'bg-danger-subtle text-danger border-danger'}`;
+                            badgeEstadoSunat.textContent = `Estado: ${data.estado || 'INACTIVO'}`;
+
+                            badgeCondicionSunat.className = `border rounded px-2 py-1 flex-fill text-center small fw-bold ${esHabido ? 'bg-success-subtle text-success border-success' : 'bg-danger-subtle text-danger border-danger'}`;
+                            badgeCondicionSunat.textContent = `Condición: ${data.condicion || 'NO HABIDO'}`;
+
+                            previewCondicion.textContent = data.condicion || 'NO HABIDO';
+                            previewCondicion.className = `badge ${esHabido ? 'bg-success-subtle text-success border border-success' : 'bg-danger-subtle text-danger border border-danger'}`;
+
+                            previewEstado.textContent = data.estado || 'INACTIVO';
+                            previewEstado.className = `badge ${esActivo ? 'bg-success-subtle text-success border border-success' : 'bg-danger-subtle text-danger border border-danger'}`;
+                        } else {
+                            alertaRiesgo.classList.add('d-none');
+
+                            badgeEstadoSunat.className = 'border rounded px-2 py-1 flex-fill text-center bg-success-subtle small fw-bold text-success border-success';
+                            badgeEstadoSunat.textContent = `Estado: ${data.estado || 'ACTIVO'}`;
+
+                            badgeCondicionSunat.className = 'border rounded px-2 py-1 flex-fill text-center bg-success-subtle small fw-bold text-success border-success';
+                            badgeCondicionSunat.textContent = `Condición: ${data.condicion || 'HABIDO'}`;
+
+                            previewCondicion.textContent = data.condicion || 'HABIDO';
+                            previewCondicion.className = 'badge bg-success-subtle text-success border border-success';
+
+                            previewEstado.textContent = data.estado || 'ACTIVO';
+                            previewEstado.className = 'badge bg-success-subtle text-success border border-success';
+                        }
 
                         previewRazonSocial.textContent = data.razonSocial;
                         previewRazonSocial.className = 'small fw-bold text-dark mt-1';
 
-                        previewCondicion.textContent = data.condicion || 'HABIDO';
-                        previewCondicion.className = 'badge bg-success-subtle text-success border border-success';
-
-                        previewEstado.textContent = data.estado || 'ACTIVO';
-                        previewEstado.className = 'badge bg-success-subtle text-success border border-success';
-
                         previewEmision.textContent = data.tipoEmision || 'FACTURA ELECTRÓNICA';
                         previewEmision.className = 'badge bg-primary-subtle text-primary border border-primary';
 
-                        setCheck(iconChkDigitos, lblChkDigitos, true, 'RUC de 11 dígitos');
+                        setCheck(iconChkDigitos, lblChkDigitos, true, 'RUC válido (Módulo 11)');
                         setCheck(iconChkSunat, lblChkSunat, true, `SUNAT: ${data.condicion} y ${data.estado}`);
-                        setCheck(iconChkDireccion, lblChkDireccion, true, 'Dirección registrada');
+                        setCheck(iconChkDireccion, lblChkDireccion, true, 'Dirección y Ubigeo sincronizados');
 
                         rucStatusText.className = 'text-success fw-bold';
-                        rucStatusText.innerHTML = `<i class="bi bi-check-circle-fill"></i> RUC validado en SUNAT`;
+                        rucStatusText.innerHTML = `<i class="bi bi-check-circle-fill"></i> RUC validado en SUNAT (${data.condicion})`;
                         sunatConsultado = true;
                     } else {
+                        alertaRiesgo.classList.add('d-none');
                         rucStatusText.className = 'text-danger fw-bold';
                         rucStatusText.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i> ${data.message || 'No se encontró el RUC en SUNAT.'}`;
                         setCheck(iconChkSunat, lblChkSunat, false, 'No encontrado en SUNAT');
                         sunatConsultado = false;
                     }
                 } catch (error) {
+                    alertaRiesgo.classList.add('d-none');
                     rucStatusText.className = 'text-danger fw-bold';
                     rucStatusText.innerHTML = '<i class="bi bi-x-circle-fill"></i> Error al conectar con el servicio de SUNAT.';
                 } finally {
@@ -546,6 +659,16 @@
                     txtRuc.focus();
                     return;
                 }
+
+                if (!validarModulo11Sunat(rucVal)) {
+                    txtRuc.classList.add('is-invalid');
+                    txtRuc.classList.remove('is-valid');
+                    rucStatusText.className = 'text-danger fw-bold';
+                    rucStatusText.innerHTML = '<i class="bi bi-x-circle-fill"></i> Dígito verificador incorrecto (no cumple algoritmo Módulo 11 de SUNAT).';
+                    txtRuc.focus();
+                    return;
+                }
+
                 consultarSunatApi(rucVal);
             });
 
@@ -572,7 +695,7 @@
             });
 
             function actualizarEstadoFormulario() {
-                const rucValido = txtRuc.value.trim().length === 11;
+                const rucValido = txtRuc.value.trim().length === 11 && validarModulo11Sunat(txtRuc.value.trim());
                 const razonValida = txtRazonSocial.value.trim().length > 0;
                 const dirValida = txtDireccion.value.trim().length > 0;
 
@@ -587,7 +710,7 @@
                 }
             }
 
-            // Envío del Formulario
+            // Envío del Formulario con Validación
             form.addEventListener('submit', function (e) {
                 let esValido = true;
 
@@ -597,6 +720,12 @@
                     txtRuc.focus();
                     rucStatusText.className = 'text-danger fw-bold';
                     rucStatusText.innerHTML = 'El RUC debe contener exactamente 11 dígitos numéricos';
+                    esValido = false;
+                } else if (!validarModulo11Sunat(ruc)) {
+                    txtRuc.classList.add('is-invalid');
+                    txtRuc.focus();
+                    rucStatusText.className = 'text-danger fw-bold';
+                    rucStatusText.innerHTML = 'El RUC no cumple con el algoritmo de verificación Módulo 11 de SUNAT';
                     esValido = false;
                 }
 

@@ -1,4 +1,5 @@
 using Prosegin.Data;
+using Prosegin.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,13 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddDataServices(builder.Configuration);
+
+// Servicio de integración SUNAT con IHttpClientFactory
+builder.Services.AddHttpClient("SunatClient", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(4);
+});
+builder.Services.AddScoped<ISunatService, SunatService>();
 
 var app = builder.Build();
 
