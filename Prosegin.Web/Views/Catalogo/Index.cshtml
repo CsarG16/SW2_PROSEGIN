@@ -1,7 +1,10 @@
-@model IEnumerable<Prosegin.Data.Entities.Producto>
+@model Prosegin.Web.ViewModels.Catalogo.CatalogoIndexViewModel
+@using System.Globalization
 
 @{
     ViewData["Title"] = "Catálogo de EPP";
+    var hasResults = Model.Productos != null && Model.Productos.Any();
+    var noResultsMessage = !string.IsNullOrWhiteSpace(Model.MensajeSinResultados) ? Model.MensajeSinResultados : null;
 }
 
 <div class="container-fluid px-0">
@@ -39,24 +42,77 @@
         </div>
     }
 
+    <!-- Barra de Filtros y Búsqueda -->
+    <div class="prosegin-card mb-4">
+        <div class="prosegin-card-body p-3">
+            <form method="get" asp-action="Index" asp-controller="Catalogo" class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label-prosegin" for="codigoProducto">Código SKU o nombre del producto</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
+                        <input id="codigoProducto" name="codigoProducto" value="@Model.CodigoProducto" class="form-control form-control-prosegin" placeholder="Ej: EPP-CAS-001 o Casco 3M" />
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label-prosegin" for="categoria">Categoría</label>
+                    <select id="categoria" name="categoria" class="form-select form-control-prosegin form-select-sm">
+                        <option value="">Todas las categorías</option>
+                        @foreach (var categoria in Model.Categorias)
+                        {
+                            if (categoria == Model.CategoriaSeleccionada)
+                            {
+                                <option value="@categoria" selected>@categoria</option>
+                            }
+                            else
+                            {
+                                <option value="@categoria">@categoria</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn-prosegin-primary flex-fill">
+                        <i class="bi bi-funnel"></i> Filtrar
+                    </button>
+                    @if (!string.IsNullOrWhiteSpace(Model.CodigoProducto) || !string.IsNullOrWhiteSpace(Model.CategoriaSeleccionada))
+                    {
+                        <a asp-action="Index" class="btn btn-outline-secondary btn-sm d-flex align-items-center" title="Limpiar filtros">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(noResultsMessage))
+    {
+        <div class="alert alert-warning border-warning rounded-3 shadow-sm mb-4 d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle-fill fs-5 me-2 text-warning"></i>
+            <span>@noResultsMessage</span>
+        </div>
+    }
+
     <!-- Tarjeta con Tabla de Productos -->
     <div class="prosegin-card">
         <div class="prosegin-card-header d-flex justify-content-between align-items-center">
             <h2 class="prosegin-card-title"><i class="bi bi-boxes"></i> Productos en Catálogo</h2>
             <span class="badge-prosegin badge-prosegin-neutral">
-                @(Model != null ? Model.Count() : 0) @(Model != null && Model.Count() == 1 ? "producto" : "productos")
+                @Model.Productos.Count @(Model.Productos.Count == 1 ? "producto" : "productos")
             </span>
         </div>
 
         <div class="prosegin-card-body p-0">
-            @if (Model == null || !Model.Any())
+            @if (!hasResults)
             {
                 <div class="text-center py-5">
                     <i class="bi bi-inbox text-muted display-5"></i>
-                    <h4 class="mt-3 mb-2 text-dark">Aún no hay productos registrados</h4>
-                    <p class="text-muted mb-3">Usa el botón de arriba para registrar el primer equipo de protección con su ficha técnica.</p>
+                    <h4 class="mt-3 mb-2 text-dark">Aún no hay productos que coincidan</h4>
+                    <p class="text-muted mb-3">Usa el botón de arriba para registrar un nuevo equipo de protección con su ficha técnica.</p>
                     <a asp-controller="Catalogo" asp-action="RegistroProductos" class="btn-prosegin-primary btn-sm">
-                        <i class="bi bi-plus-lg"></i> Agregar Primer Producto
+                        <i class="bi bi-plus-lg"></i> Agregar Producto
                     </a>
                 </div>
             }
@@ -66,16 +122,15 @@
                     <table class="table-prosegin mb-0">
                         <thead>
                             <tr>
-                                <th style="width: 130px;">SKU</th>
+                                <th style="width: 140px;">SKU</th>
                                 <th>Nombre del Equipo</th>
                                 <th>Categoría EPP</th>
                                 <th class="text-end" style="width: 140px;">Costo Base</th>
                                 <th class="text-center" style="width: 180px;">Ficha Técnica (PDF)</th>
-                                <th style="width: 130px;">Fecha Registro</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var prod in Model)
+                            @foreach (var prod in Model.Productos)
                             {
                                 <tr>
                                     <td>
@@ -83,10 +138,6 @@
                                     </td>
                                     <td>
                                         <span class="fw-semibold text-dark d-block">@prod.Nombre</span>
-                                        @if (!string.IsNullOrWhiteSpace(prod.Descripcion))
-                                        {
-                                            <span class="text-muted small">@prod.Descripcion</span>
-                                        }
                                     </td>
                                     <td>
                                         <span class="badge bg-light text-dark border">
@@ -94,12 +145,13 @@
                                         </span>
                                     </td>
                                     <td class="text-end font-monospace fw-bold text-dark">
-                                        S/ @prod.CostoReferencial.ToString("N2")
+                                        S/ @prod.Precio.ToString("N2", new CultureInfo("es-PE"))
                                     </td>
                                     <td class="text-center">
                                         @if (!string.IsNullOrWhiteSpace(prod.RutaFichaTecnicaPdf))
                                         {
-                                            <a href="@prod.RutaFichaTecnicaPdf" target="_blank" rel="noopener noreferrer" 
+                                            <a asp-controller="Catalogo" asp-action="VerFicha" asp-route-id="@prod.Id"
+                                               target="_blank" rel="noopener noreferrer" 
                                                class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1 shadow-sm px-2 py-1"
                                                title="Abrir ficha técnica en una pestaña nueva">
                                                 <i class="bi bi-file-earmark-pdf-fill"></i>
@@ -111,9 +163,6 @@
                                         {
                                             <span class="text-muted small fst-italic">Sin ficha</span>
                                         }
-                                    </td>
-                                    <td class="small text-muted">
-                                        @prod.FechaCreacion.ToLocalTime().ToString("dd/MM/yyyy")
                                     </td>
                                 </tr>
                             }
