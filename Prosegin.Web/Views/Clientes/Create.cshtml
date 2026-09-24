@@ -109,6 +109,19 @@
                             <span asp-validation-for="RazonSocial" class="text-danger small d-block mt-1"></span>
                         </div>
 
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-8">
+                                <label asp-for="RepresentanteLegal" class="form-label-prosegin small text-uppercase fw-bold mb-1">Representante Legal</label>
+                                <input asp-for="RepresentanteLegal" class="form-control form-control-prosegin form-control-sm text-uppercase" placeholder="Según consulta SUNAT" />
+                                <span asp-validation-for="RepresentanteLegal" class="text-danger small d-block mt-1"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="LimiteCredito" class="form-label-prosegin small text-uppercase fw-bold mb-1">Límite de Crédito</label>
+                                <input asp-for="LimiteCredito" class="form-control form-control-prosegin form-control-sm" type="number" min="0" step="0.01" />
+                                <span asp-validation-for="LimiteCredito" class="text-danger small d-block mt-1"></span>
+                            </div>
+                        </div>
+
                         <!-- Nombre Comercial y Estado -->
                         <div class="row g-3">
                             <div class="col-md-6">

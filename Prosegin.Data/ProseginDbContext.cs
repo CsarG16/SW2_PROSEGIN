@@ -35,6 +35,8 @@ public class ProseginDbContext : DbContext
             entity.Property(e => e.DireccionFiscal).HasMaxLength(250);
             entity.Property(e => e.Telefono).HasMaxLength(20);
             entity.Property(e => e.CorreoElectronico).HasMaxLength(100);
+            entity.Property(e => e.LimiteCredito).HasPrecision(18, 2).HasDefaultValue(0m);
+            entity.Property(e => e.RepresentanteLegal).HasMaxLength(200);
         });
 
         // Configuración de la tabla Productos (EPP)
@@ -47,6 +49,7 @@ public class ProseginDbContext : DbContext
             entity.Property(e => e.Categoria).HasMaxLength(100);
             entity.Property(e => e.UnidadMedida).HasMaxLength(20);
             entity.Property(e => e.CostoReferencial).HasPrecision(18, 2);
+            entity.Property(e => e.StockDisponible).HasDefaultValue(0);
             entity.Property(e => e.RutaFichaTecnicaPdf).HasMaxLength(300);
             entity.Property(e => e.NombreArchivoPdf).HasMaxLength(150);
         });

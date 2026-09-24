@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Prosegin.Data;
 
@@ -11,9 +12,11 @@ using Prosegin.Data;
 namespace Prosegin.Data.Migrations
 {
     [DbContext(typeof(ProseginDbContext))]
-    partial class ProseginDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260924060852_AddStockDisponibleToProductos")]
+    partial class AddStockDisponibleToProductos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -60,21 +63,11 @@ namespace Prosegin.Data.Migrations
                     b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<decimal>("LimiteCredito")
-                        .ValueGeneratedOnAdd()
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)")
-                        .HasDefaultValue(0m);
-
                     b.Property<string>("Provincia")
                         .HasColumnType("longtext");
 
                     b.Property<string>("RazonSocial")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
-                    b.Property<string>("RepresentanteLegal")
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
@@ -404,9 +397,7 @@ namespace Prosegin.Data.Migrations
                         .HasColumnType("varchar(50)");
 
                     b.Property<int>("StockDisponible")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
+                        .HasColumnType("int");
 
                     b.Property<string>("UnidadMedida")
                         .IsRequired()
