@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Prosegin.Data;
 
@@ -11,9 +12,11 @@ using Prosegin.Data;
 namespace Prosegin.Data.Migrations
 {
     [DbContext(typeof(ProseginDbContext))]
-    partial class ProseginDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260924204355_AddClienteLimiteCredito")]
+    partial class AddClienteLimiteCredito
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -71,10 +74,6 @@ namespace Prosegin.Data.Migrations
 
                     b.Property<string>("RazonSocial")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
-                    b.Property<string>("RepresentanteLegal")
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 

@@ -82,6 +82,7 @@ namespace Prosegin.Web.Services
                     Ubigeo: null,
                     Estado: null,
                     Condicion: null,
+                    RepresentanteLegal: null,
                     TipoEmision: null,
                     Fuente: null,
                     EsHabido: false,
@@ -104,6 +105,7 @@ namespace Prosegin.Web.Services
                     var direccion = root.TryGetProperty("direccion", out var d) ? d.GetString() ?? "" : "";
                     var estado = root.TryGetProperty("estado", out var e) ? e.GetString()?.Trim().ToUpper() ?? "ACTIVO" : "ACTIVO";
                     var condicion = root.TryGetProperty("condicion", out var c) ? c.GetString()?.Trim().ToUpper() ?? "HABIDO" : "HABIDO";
+                    var representanteLegal = root.TryGetProperty("representanteLegal", out var rep) ? rep.GetString()?.Trim() : null;
                     var departamento = root.TryGetProperty("departamento", out var dep) ? dep.GetString() ?? "LIMA" : "LIMA";
                     var provincia = root.TryGetProperty("provincia", out var prov) ? prov.GetString() ?? "LIMA" : "LIMA";
                     var distrito = root.TryGetProperty("distrito", out var dist) ? dist.GetString() ?? "" : "";
@@ -124,6 +126,7 @@ namespace Prosegin.Web.Services
                         Ubigeo: ubigeo,
                         Estado: estado,
                         Condicion: condicion,
+                        RepresentanteLegal: representanteLegal,
                         TipoEmision: ruc.StartsWith("20") ? "FACTURA ELECTRÓNICA (TIPO 01)" : "BOLETA / FACTURA ELECTRÓNICA",
                         Fuente: "Padrón SUNAT Oficial (En Línea)",
                         EsHabido: esHabido,
@@ -148,6 +151,7 @@ namespace Prosegin.Web.Services
                 Ubigeo: null,
                 Estado: null,
                 Condicion: null,
+                RepresentanteLegal: null,
                 TipoEmision: null,
                 Fuente: null,
                 EsHabido: false,

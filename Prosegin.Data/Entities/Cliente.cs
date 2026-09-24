@@ -14,6 +14,8 @@ public class Cliente
     public string? Ubigeo { get; set; }
     public string EstadoSunat { get; set; } = "ACTIVO";
     public string CondicionSunat { get; set; } = "HABIDO";
+    public string? RepresentanteLegal { get; set; }
+    public decimal LimiteCredito { get; set; }
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     public bool Activo { get; set; } = true;
 

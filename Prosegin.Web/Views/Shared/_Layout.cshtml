@@ -53,7 +53,7 @@
                     </a>
                 </li>
                 <li class="sidebar-nav-item">
-                    <a class="sidebar-nav-link" href="#">
+                    <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Clientes" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")" asp-controller="Clientes" asp-action="Index">
                         <i class="bi bi-people"></i>
                         <span>Búsqueda de Clientes</span>
                     </a>

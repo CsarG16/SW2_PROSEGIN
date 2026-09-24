@@ -9,6 +9,7 @@ public class Producto
     public string Categoria { get; set; } = string.Empty;
     public string UnidadMedida { get; set; } = "UND";
     public decimal CostoReferencial { get; set; }
+    public int StockDisponible { get; set; }
     public string? RutaFichaTecnicaPdf { get; set; }
     public string? NombreArchivoPdf { get; set; }
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;

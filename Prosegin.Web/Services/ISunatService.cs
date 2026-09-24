@@ -12,6 +12,7 @@ namespace Prosegin.Web.Services
         string? Ubigeo,
         string? Estado,
         string? Condicion,
+        string? RepresentanteLegal,
         string? TipoEmision,
         string? Fuente,
         bool EsHabido,
