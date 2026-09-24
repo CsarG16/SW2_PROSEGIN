@@ -133,7 +133,7 @@ namespace Prosegin.Web.Services
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Error al consultar API externa de SUNAT para RUC {Ruc}", ruc);
+                _logger.LogWarning(ex, "Error al consultar API externa de SUNAT para el RUC consultado.");
             }
 
             return new SunatConsultaResult(
