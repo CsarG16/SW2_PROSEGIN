@@ -39,8 +39,8 @@ appsettings.Development.local.json
 
 # 5. Archivos generados y uploads temporales
 # (Ignora archivos subidos en tiempo de ejecución pero conserva la estructura)
-wwwroot/uploads/*
-!wwwroot/uploads/.gitkeep
+**/uploads/**
+!**/uploads/**/.gitkeep
 
 # 6. Archivos del sistema operativo (Windows / macOS / Linux)
 Thumbs.db

@@ -1,5 +1,8 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Prosegin.Data;
+using Prosegin.Data.Entities;
 using Prosegin.Web.ViewModels.Catalogo;
 
 namespace Prosegin.Web.Controllers;
@@ -7,16 +10,23 @@ namespace Prosegin.Web.Controllers;
 public class CatalogoController : Controller
 {
     private const long MaxFichaTecnicaBytes = 5 * 1024 * 1024;
+    private readonly ProseginDbContext _context;
     private readonly IWebHostEnvironment _environment;
 
-    public CatalogoController(IWebHostEnvironment environment)
+    public CatalogoController(ProseginDbContext context, IWebHostEnvironment environment)
     {
+        _context = context;
         _environment = environment;
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
-        return View();
+        var productos = await _context.Productos
+            .Where(p => p.Activo)
+            .OrderByDescending(p => p.Id)
+            .ToListAsync();
+
+        return View(productos);
     }
 
     [HttpGet]
@@ -27,27 +37,51 @@ public class CatalogoController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult RegistroProductos(ProductoCreateViewModel model)
+    public async Task<IActionResult> RegistroProductos(ProductoCreateViewModel model)
     {
         ValidarFichaTecnica(model.FichaTecnica);
+
+        if (await _context.Productos.AnyAsync(p => p.Sku == model.Sku.Trim()))
+        {
+            ModelState.AddModelError(nameof(model.Sku), "El código SKU ya se encuentra registrado en el catálogo.");
+        }
 
         if (!ModelState.IsValid)
         {
             return View(model);
         }
 
-        var carpetaFichas = Path.Combine(_environment.WebRootPath, "uploads", "fichas-tecnicas");
+        // 1. Guardar físicamente el PDF en wwwroot/uploads/fichas/
+        var carpetaFichas = Path.Combine(_environment.WebRootPath, "uploads", "fichas");
         Directory.CreateDirectory(carpetaFichas);
 
-        var nombreArchivo = $"{Guid.NewGuid():N}.pdf";
-        var rutaArchivo = Path.Combine(carpetaFichas, nombreArchivo);
-        using (var stream = System.IO.File.Create(rutaArchivo))
+        var nombreUnico = $"{Guid.NewGuid():N}.pdf";
+        var rutaFisica = Path.Combine(carpetaFichas, nombreUnico);
+
+        await using (var stream = new FileStream(rutaFisica, FileMode.Create))
         {
-            model.FichaTecnica!.CopyTo(stream);
+            await model.FichaTecnica!.CopyToAsync(stream);
         }
 
-        TempData["SuccessMessage"] = $"El producto '{model.Nombre}' está listo para ser registrado.";
-        return RedirectToAction(nameof(RegistroProductos));
+        // 2. Persistir en MySQL con la ruta relativa pública
+        var producto = new Producto
+        {
+            Sku = model.Sku.Trim().ToUpperInvariant(),
+            Nombre = model.Nombre.Trim(),
+            Categoria = model.Categoria,
+            CostoReferencial = model.CostoBaseAdquisicion,
+            RutaFichaTecnicaPdf = $"/uploads/fichas/{nombreUnico}",
+            NombreArchivoPdf = model.FichaTecnica.FileName,
+            Descripcion = $"Proveedor: {model.ProveedorAutorizado}",
+            FechaCreacion = DateTime.UtcNow,
+            Activo = true
+        };
+
+        _context.Productos.Add(producto);
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"El producto '{producto.Nombre}' ({producto.Sku}) fue registrado exitosamente con su ficha técnica.";
+        return RedirectToAction(nameof(Index));
     }
 
     private void ValidarFichaTecnica(IFormFile? fichaTecnica)
