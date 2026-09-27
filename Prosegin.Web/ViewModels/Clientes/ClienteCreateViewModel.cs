@@ -5,7 +5,7 @@ namespace Prosegin.Web.ViewModels.Clientes
     public class ClienteCreateViewModel
     {
         [Required(ErrorMessage = "El RUC es obligatorio.")]
-        [RegularExpression(@"^[0-9]{11}$", ErrorMessage = "El RUC debe tener exactamente 11 dígitos numéricos.")]
+        [RegularExpression(@"^[0-9]{11}$", ErrorMessage = "Número de RUC inválido")]
         [Display(Name = "Número de RUC")]
         public string Ruc { get; set; } = string.Empty;
 

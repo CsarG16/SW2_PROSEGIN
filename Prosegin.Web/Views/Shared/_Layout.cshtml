@@ -123,7 +123,34 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/prosegin-alerts.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @if (TempData["ModalWarning"] != null)
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                ProseginAlert.warning(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["ModalWarning"].ToString())));
+            });
+        </script>
+    }
+    @if (TempData["ModalError"] != null)
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                ProseginAlert.error(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["ModalError"].ToString())));
+            });
+        </script>
+    }
+    @if (TempData["ModalSuccess"] != null)
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                ProseginAlert.success(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["ModalSuccess"].ToString())));
+            });
+        </script>
+    }
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
