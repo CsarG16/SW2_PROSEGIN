@@ -158,7 +158,7 @@ public class CatalogoController : Controller
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = $"El producto '{producto.Nombre}' ({producto.Sku}) fue registrado exitosamente en la base de datos con su ficha técnica.";
-        return RedirectToAction(nameof(RegistroProductos));
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpGet]
