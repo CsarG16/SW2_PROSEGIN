@@ -52,7 +52,7 @@ public class CatalogoController : Controller
                 Nombre = p.Nombre,
                 Categoria = p.Categoria,
                 Precio = p.CostoReferencial,
-                StockDisponible = 0,
+                StockDisponible = p.StockDisponible,
                 RutaFichaTecnicaPdf = p.RutaFichaTecnicaPdf,
                 NombreArchivoPdf = p.NombreArchivoPdf
             })

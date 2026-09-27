@@ -3,15 +3,22 @@ using Prosegin.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Cargar variables de entorno desde el archivo .env en la raíz de la solución
-var rootDirectory = Directory.GetParent(builder.Environment.ContentRootPath)?.FullName ?? builder.Environment.ContentRootPath;
-var envFilePath = Path.Combine(rootDirectory, ".env");
-if (!File.Exists(envFilePath))
+// Buscar el archivo .env desde el proyecto hacia la raíz del repositorio/solución.
+var directory = new DirectoryInfo(builder.Environment.ContentRootPath);
+string? envFilePath = null;
+while (directory != null)
 {
-    envFilePath = Path.Combine(builder.Environment.ContentRootPath, ".env");
+    var candidatePath = Path.Combine(directory.FullName, ".env");
+    if (File.Exists(candidatePath))
+    {
+        envFilePath = candidatePath;
+        break;
+    }
+
+    directory = directory.Parent;
 }
 
-if (File.Exists(envFilePath))
+if (envFilePath != null)
 {
     foreach (var line in File.ReadAllLines(envFilePath))
     {

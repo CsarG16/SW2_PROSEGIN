@@ -35,22 +35,25 @@ public class CotizacionesController : Controller
             return NotFound();
         }
 
-        model.Ruc = current.Ruc;
-        model.RazonSocial = current.RazonSocial;
-        model.DireccionFiscal = current.DireccionFiscal;
-        model.RepresentanteLegal = current.RepresentanteLegal;
-        model.EstadoSunat = current.EstadoSunat;
-        model.CondicionSunat = current.CondicionSunat;
-        model.LimiteCredito = current.LimiteCredito;
-        model.SaldoPendiente = current.SaldoPendiente;
-        model.SaldoVencido = current.SaldoVencido;
-        model.DiasMora = current.DiasMora;
-        model.ClienteBloqueado = current.ClienteBloqueado;
-        model.MotivoBloqueo = current.MotivoBloqueo;
+        var productosEnviados = model.ProductosDisponibles;
+        foreach (var producto in current.ProductosDisponibles)
+        {
+            var enviado = productosEnviados.FirstOrDefault(p => p.ProductoId == producto.ProductoId);
+            if (enviado == null)
+            {
+                continue;
+            }
 
-        var noPuedeVender = !string.Equals(model.EstadoSunat, "ACTIVO", StringComparison.OrdinalIgnoreCase)
-            || !string.Equals(model.CondicionSunat, "HABIDO", StringComparison.OrdinalIgnoreCase);
-        var solicitaCredito = !string.Equals(model.CondicionPago, "Contado", StringComparison.OrdinalIgnoreCase);
+            producto.Seleccionado = enviado.Seleccionado;
+            producto.Cantidad = enviado.Cantidad;
+            producto.MargenPorcentaje = enviado.MargenPorcentaje;
+        }
+
+        current.CondicionPago = model.CondicionPago;
+
+        var noPuedeVender = !string.Equals(current.EstadoSunat, "ACTIVO", StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(current.CondicionSunat, "HABIDO", StringComparison.OrdinalIgnoreCase);
+        var solicitaCredito = !string.Equals(current.CondicionPago, "Contado", StringComparison.OrdinalIgnoreCase);
 
         if (noPuedeVender)
         {
@@ -60,31 +63,79 @@ public class CotizacionesController : Controller
         {
             ModelState.AddModelError(string.Empty, "Debe actualizar los datos fiscales del cliente según SUNAT antes de generar el documento de venta.");
         }
-        else if (solicitaCredito && model.ClienteBloqueado)
+        else if (solicitaCredito && current.ClienteBloqueado)
         {
-            ModelState.AddModelError(string.Empty, $"Cliente Bloqueado por Mora: no se permiten cotizaciones a crédito. {model.MotivoBloqueo}");
+            ModelState.AddModelError(string.Empty, $"Cliente Bloqueado por Mora: no se permiten cotizaciones a crédito. {current.MotivoBloqueo}");
         }
+
+        var productosSeleccionados = productosEnviados.Where(p => p.Seleccionado).ToList();
+        if (productosSeleccionados.Count == 0)
+        {
+            ModelState.AddModelError(string.Empty, "Selecciona al menos un producto del catálogo.");
+        }
+
+        var idsSeleccionados = productosSeleccionados.Select(p => p.ProductoId).ToList();
+        if (idsSeleccionados.Count != idsSeleccionados.Distinct().Count())
+        {
+            ModelState.AddModelError(string.Empty, "No se puede agregar el mismo producto más de una vez.");
+        }
+
+        var productosActivos = await _context.Productos
+            .Where(p => p.Activo && idsSeleccionados.Contains(p.Id))
+            .ToDictionaryAsync(p => p.Id, cancellationToken);
+
+        if (productosActivos.Count != idsSeleccionados.Distinct().Count())
+        {
+            ModelState.AddModelError(string.Empty, "Uno o más productos seleccionados ya no están disponibles en el catálogo.");
+        }
+
+        var detalles = new List<CotizacionDetalle>();
+        foreach (var seleccionado in productosSeleccionados)
+        {
+            if (!productosActivos.TryGetValue(seleccionado.ProductoId, out var producto)
+                || seleccionado.Cantidad < 1
+                || seleccionado.MargenPorcentaje is < 0 or > 100)
+            {
+                continue;
+            }
+
+            var precioVenta = Math.Round(producto.CostoReferencial * (1 + seleccionado.MargenPorcentaje / 100m), 2);
+            detalles.Add(new CotizacionDetalle
+            {
+                ProductoId = producto.Id,
+                Cantidad = seleccionado.Cantidad,
+                CostoProveedorReferencial = producto.CostoReferencial,
+                MargenDeseado = seleccionado.MargenPorcentaje / 100m,
+                PrecioVentaCalculado = precioVenta,
+                Subtotal = Math.Round(precioVenta * seleccionado.Cantidad, 2)
+            });
+        }
+
+        var subtotal = detalles.Sum(d => d.Subtotal);
+        var igv = Math.Round(subtotal * 0.18m, 2);
+        current.Total = subtotal + igv;
 
         if (!ModelState.IsValid)
         {
-            return View(model);
+            return View(current);
         }
 
         var cotizacion = new Cotizacion
         {
-            ClienteId = model.ClienteId,
+            ClienteId = current.ClienteId,
             Correlativo = $"COT-{DateTime.UtcNow:yyyyMMddHHmmss}",
-            CondicionPago = model.CondicionPago,
-            Subtotal = Math.Round(model.Total / 1.18m, 2),
-            Igv = Math.Round(model.Total - (model.Total / 1.18m), 2),
-            Total = model.Total,
-            Estado = "Borrador"
+            CondicionPago = current.CondicionPago,
+            Subtotal = subtotal,
+            Igv = igv,
+            Total = current.Total,
+            Estado = "Borrador",
+            Detalles = detalles
         };
 
         _context.Cotizaciones.Add(cotizacion);
         await _context.SaveChangesAsync(cancellationToken);
         TempData["SuccessMessage"] = $"Cotización {cotizacion.Correlativo} creada correctamente.";
-        return RedirectToAction(nameof(Create), new { clienteId = model.ClienteId });
+        return RedirectToAction(nameof(Create), new { clienteId = current.ClienteId });
     }
 
     [HttpPost]
@@ -153,7 +204,7 @@ public class CotizacionesController : Controller
         var estadoSunat = resultadoSunat.Success ? resultadoSunat.Estado ?? cliente.EstadoSunat : cliente.EstadoSunat;
         var condicionSunat = resultadoSunat.Success ? resultadoSunat.Condicion ?? cliente.CondicionSunat : cliente.CondicionSunat;
 
-        return new CotizacionClienteViewModel
+        var model = new CotizacionClienteViewModel
         {
             ClienteId = cliente.Id,
             Ruc = cliente.Ruc,
@@ -174,5 +225,21 @@ public class CotizacionesController : Controller
                     ? "Ha sobrepasado su línea de crédito aprobada."
                     : null
         };
+
+        model.ProductosDisponibles = await _context.Productos
+            .AsNoTracking()
+            .Where(p => p.Activo)
+            .OrderBy(p => p.Nombre)
+            .Select(p => new ProductoCotizacionViewModel
+            {
+                ProductoId = p.Id,
+                Sku = p.Sku,
+                Nombre = p.Nombre,
+                Categoria = p.Categoria,
+                CostoReferencial = p.CostoReferencial
+            })
+            .ToListAsync(cancellationToken);
+
+        return model;
     }
 }

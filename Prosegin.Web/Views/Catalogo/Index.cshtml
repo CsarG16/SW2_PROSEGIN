@@ -3,173 +3,211 @@
 
 @{
     ViewData["Title"] = "Catálogo de EPP";
-    var hasResults = Model.Productos != null && Model.Productos.Any();
-    var noResultsMessage = !string.IsNullOrWhiteSpace(Model.MensajeSinResultados) ? Model.MensajeSinResultados : null;
+    var hasResults = Model.Productos.Any();
+    var categories = Model.Productos.Select(product => product.Categoria).Where(category => !string.IsNullOrWhiteSpace(category)).Distinct().OrderBy(category => category).ToList();
 }
 
-<div class="container-fluid px-0">
-    <!-- Encabezado del Módulo -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="prosegin-card p-4">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="p-3 rounded-3" style="background: rgba(245, 158, 11, 0.12); color: var(--prosegin-orange);">
-                            <i class="bi bi-grid-3x3-gap-fill fs-2"></i>
-                        </div>
-                        <div>
-                            <h3 class="fw-bold mb-0 text-dark">Catálogo de EPP</h3>
-                            <p class="text-muted small mb-0">Equipos de protección personal registrados con ficha técnica oficial.</p>
-                        </div>
-                    </div>
-                    <a asp-controller="Catalogo" asp-action="RegistroProductos" class="btn-prosegin-primary">
-                        <i class="bi bi-plus-circle-fill"></i> Registrar Nuevo Producto
-                    </a>
-                </div>
-            </div>
+<div class="container-fluid px-0 catalog-shopping" id="catalogShopping">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+        <div>
+            <div class="text-uppercase small fw-bold text-warning mb-1">Equipos de protección personal</div>
+            <h1 class="h3 fw-bold text-dark mb-1">Catálogo de productos EPP</h1>
+            <p class="text-muted small mb-0">Explora los productos, arma tu selección y continúa con los datos del cliente.</p>
         </div>
+        <div class="small text-muted"><i class="bi bi-box-seam me-1"></i><span id="catalogProductCount">@Model.Productos.Count</span> <span id="catalogProductLabel">@((Model.Productos.Count == 1) ? "producto disponible" : "productos disponibles")</span></div>
     </div>
 
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4 d-flex align-items-center shadow-sm" role="alert">
-            <i class="bi bi-check-circle-fill fs-4 me-3 text-success"></i>
-            <div>
-                <strong class="d-block">¡Operación Exitosa!</strong>
-                <span>@TempData["SuccessMessage"]</span>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
         </div>
     }
 
-    <!-- Barra de Filtros y Búsqueda -->
-    <div class="prosegin-card mb-4">
-        <div class="prosegin-card-body p-3">
-            <form method="get" asp-action="Index" asp-controller="Catalogo" class="row g-3 align-items-end">
-                <div class="col-md-5">
-                    <label class="form-label-prosegin" for="codigoProducto">Código SKU o nombre del producto</label>
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
-                        <input id="codigoProducto" name="codigoProducto" value="@Model.CodigoProducto" class="form-control form-control-prosegin" placeholder="Ej: EPP-CAS-001 o Casco 3M" />
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label-prosegin" for="categoria">Categoría</label>
-                    <select id="categoria" name="categoria" class="form-select form-control-prosegin form-select-sm">
-                        <option value="">Todas las categorías</option>
-                        @foreach (var categoria in Model.Categorias)
-                        {
-                            if (categoria == Model.CategoriaSeleccionada)
-                            {
-                                <option value="@categoria" selected>@categoria</option>
-                            }
-                            else
-                            {
-                                <option value="@categoria">@categoria</option>
-                            }
-                        }
-                    </select>
-                </div>
-
-                <div class="col-md-3 d-flex gap-2">
-                    <button type="submit" class="btn-prosegin-primary flex-fill">
-                        <i class="bi bi-funnel"></i> Filtrar
-                    </button>
-                    @if (!string.IsNullOrWhiteSpace(Model.CodigoProducto) || !string.IsNullOrWhiteSpace(Model.CategoriaSeleccionada))
-                    {
-                        <a asp-action="Index" class="btn btn-outline-secondary btn-sm d-flex align-items-center" title="Limpiar filtros">
-                            <i class="bi bi-x-lg"></i>
-                        </a>
-                    }
-                </div>
-            </form>
+    <div class="catalog-toolbar">
+        <label class="catalog-search" for="catalogSearch">
+            <i class="bi bi-search"></i>
+            <input id="catalogSearch" type="search" placeholder="Buscar por código, descripción o categoría..." autocomplete="off" />
+        </label>
+        <a class="btn-prosegin-primary catalog-search-button" href="#catalogProducts"><i class="bi bi-arrow-down me-1"></i>Ver productos</a>
+        <div class="catalog-category-list" role="group" aria-label="Filtrar por categoría">
+            <button type="button" class="catalog-category active" data-category="">Todos</button>
+            @foreach (var category in categories)
+            {
+                <button type="button" class="catalog-category" data-category="@category">@category</button>
+            }
         </div>
     </div>
 
-    @if (!string.IsNullOrWhiteSpace(noResultsMessage))
+    @if (!hasResults)
     {
-        <div class="alert alert-warning border-warning rounded-3 shadow-sm mb-4 d-flex align-items-center">
-            <i class="bi bi-exclamation-triangle-fill fs-5 me-2 text-warning"></i>
-            <span>@noResultsMessage</span>
+        <div class="prosegin-card py-5 text-center">
+            <i class="bi bi-box-seam display-5 text-muted"></i>
+            <h2 class="h5 mt-3">No hay productos disponibles</h2>
+            <p class="text-muted mb-0">Los productos del catálogo aparecerán aquí cuando estén cargados en el sistema.</p>
         </div>
     }
-
-    <!-- Tarjeta con Tabla de Productos -->
-    <div class="prosegin-card">
-        <div class="prosegin-card-header d-flex justify-content-between align-items-center">
-            <h2 class="prosegin-card-title"><i class="bi bi-boxes"></i> Productos en Catálogo</h2>
-            <span class="badge-prosegin badge-prosegin-neutral">
-                @(Model.Productos?.Count ?? 0) @((Model.Productos?.Count ?? 0) == 1 ? "producto" : "productos")
-            </span>
-        </div>
-
-        <div class="prosegin-card-body p-0">
-            @if (!hasResults)
-            {
-                <div class="text-center py-5">
-                    <i class="bi bi-inbox text-muted display-5"></i>
-                    <h4 class="mt-3 mb-2 text-dark">Aún no hay productos que coincidan</h4>
-                    <p class="text-muted mb-3">Usa el botón de arriba para registrar un nuevo equipo de protección con su ficha técnica.</p>
-                    <a asp-controller="Catalogo" asp-action="RegistroProductos" class="btn-prosegin-primary btn-sm">
-                        <i class="bi bi-plus-lg"></i> Agregar Producto
-                    </a>
+    else
+    {
+        <div class="catalog-layout" id="catalogProducts">
+            <section class="catalog-product-list" aria-label="Productos disponibles">
+                @foreach (var product in Model.Productos)
+                {
+                    var estimatedPrice = Math.Round(product.Precio * 1.30m, 2);
+                    var searchText = $"{product.Sku} {product.Nombre} {product.Categoria}".ToLowerInvariant();
+                    <article class="catalog-product" data-product-card data-product-id="@product.Id" data-sku="@product.Sku" data-name="@product.Nombre" data-category="@product.Categoria" data-search="@searchText" data-cost="@product.Precio.ToString(CultureInfo.InvariantCulture)" data-price="@estimatedPrice.ToString(CultureInfo.InvariantCulture)" data-stock="@product.StockDisponible">
+                        <div class="catalog-product-mark" aria-hidden="true"><i class="bi bi-shield-check"></i><span>EPP</span></div>
+                        <div class="catalog-product-info">
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                <span class="catalog-sku">@product.Sku</span>
+                                <span class="catalog-category-label">@product.Categoria</span>
+                            </div>
+                            <h2 class="catalog-product-name">@product.Nombre</h2>
+                            <div class="catalog-product-meta">
+                                <span><i class="bi bi-box me-1"></i>@(product.StockDisponible > 0 ? $"Stock: {product.StockDisponible}" : "Disponibilidad a confirmar")</span>
+                                @if (!string.IsNullOrWhiteSpace(product.RutaFichaTecnicaPdf))
+                                {
+                                    <a asp-controller="Catalogo" asp-action="VerFicha" asp-route-id="@product.Id" target="_blank" rel="noopener noreferrer"><i class="bi bi-file-earmark-pdf me-1"></i>Ficha técnica</a>
+                                }
+                            </div>
+                        </div>
+                        <div class="catalog-unit-price">
+                            <span>Precio estimado / unidad</span>
+                            <strong>S/ @estimatedPrice.ToString("N2", new CultureInfo("es-PE"))</strong>
+                            <small>Incluye margen inicial de 30%</small>
+                        </div>
+                        <div class="catalog-add-controls">
+                            <label class="visually-hidden" for="quantity-@product.Id">Cantidad de @product.Nombre</label>
+                            <input id="quantity-@product.Id" data-quantity type="number" min="1" value="1" inputmode="numeric" />
+                            <button type="button" class="btn-prosegin-primary catalog-add-button" data-add-product aria-label="Agregar @product.Nombre al carrito"><i class="bi bi-plus-lg"></i><span>Agregar</span></button>
+                        </div>
+                    </article>
+                }
+                <div class="catalog-no-match d-none" id="catalogNoMatch">
+                    <i class="bi bi-search"></i><span>No hay productos que coincidan con la búsqueda.</span>
                 </div>
-            }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table-prosegin mb-0">
-                        <thead>
-                            <tr>
-                                <th style="width: 140px;">SKU</th>
-                                <th>Nombre del Equipo</th>
-                                <th>Categoría EPP</th>
-                                <th class="text-end" style="width: 140px;">Costo Base</th>
-                                <th class="text-center" style="width: 180px;">Ficha Técnica (PDF)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var prod in Model.Productos ?? Enumerable.Empty<Prosegin.Web.ViewModels.Catalogo.ProductoCatalogoItemViewModel>())
-                            {
-                                <tr>
-                                    <td>
-                                        <span class="font-monospace fw-bold text-dark">@prod.Sku</span>
-                                    </td>
-                                    <td>
-                                        <span class="fw-semibold text-dark d-block">@prod.Nombre</span>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-light text-dark border">
-                                            <i class="bi bi-tag me-1 text-warning"></i> @prod.Categoria
-                                        </span>
-                                    </td>
-                                    <td class="text-end font-monospace fw-bold text-dark">
-                                        S/ @prod.Precio.ToString("N2", new CultureInfo("es-PE"))
-                                    </td>
-                                    <td class="text-center">
-                                        @if (!string.IsNullOrWhiteSpace(prod.RutaFichaTecnicaPdf))
-                                        {
-                                            <a asp-controller="Catalogo" asp-action="VerFicha" asp-route-id="@prod.Id"
-                                               target="_blank" rel="noopener noreferrer" 
-                                               class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1 shadow-sm px-2 py-1"
-                                               title="Abrir ficha técnica en una pestaña nueva">
-                                                <i class="bi bi-file-earmark-pdf-fill"></i>
-                                                <span class="small fw-semibold">Ver Ficha</span>
-                                                <i class="bi bi-box-arrow-up-right" style="font-size: 0.7rem;"></i>
-                                            </a>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted small fst-italic">Sin ficha</span>
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+            </section>
+
+            <aside class="catalog-cart" aria-label="Resumen de productos seleccionados">
+                <div class="catalog-cart-heading">
+                    <div><span class="catalog-cart-kicker">Tu selección</span><h2 class="h5 mb-0">Resumen de productos</h2></div>
+                    <span class="catalog-cart-count" id="cartItemCount">0</span>
                 </div>
-            }
+                <div class="catalog-cart-items" id="cartItems">
+                    <div class="catalog-cart-empty" id="cartEmpty"><i class="bi bi-cart3"></i><span>El carrito está vacío</span><small>Agrega productos para comenzar la cotización.</small></div>
+                </div>
+                <div class="catalog-cart-totals">
+                    <div><span>Subtotal estimado</span><strong id="cartSubtotal">S/ 0.00</strong></div>
+                    <div><span>IGV (18%)</span><strong id="cartTax">S/ 0.00</strong></div>
+                    <div class="catalog-cart-total"><span>Total estimado</span><strong id="cartTotal">S/ 0.00</strong></div>
+                </div>
+                <button type="button" class="btn-prosegin-primary w-100" id="continueToClient" disabled><i class="bi bi-person-check me-2"></i>Continuar con cliente</button>
+                <button type="button" class="catalog-clear-button" id="clearCart" disabled>Vaciar selección</button>
+                <p class="catalog-cart-note">El precio final se confirma en la cotización.</p>
+            </aside>
         </div>
-    </div>
+    }
 </div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const storageKey = "prosegin.quote.cart.v1";
+            const cards = Array.from(document.querySelectorAll("[data-product-card]"));
+            const cartItems = document.getElementById("cartItems");
+            if (!cartItems) return;
+
+            const cart = new Map();
+            const formatter = new Intl.NumberFormat("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const formatCurrency = amount => `S/ ${formatter.format(amount)}`;
+            const parseCart = () => {
+                try {
+                    const savedItems = JSON.parse(sessionStorage.getItem(storageKey) || "[]");
+                    savedItems.forEach(item => {
+                        const card = cards.find(candidate => Number(candidate.dataset.productId) === Number(item.id));
+                        const quantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
+                        if (card) cart.set(Number(item.id), { card, quantity });
+                    });
+                } catch {
+                    sessionStorage.removeItem(storageKey);
+                }
+            };
+            const saveCart = () => sessionStorage.setItem(storageKey, JSON.stringify(Array.from(cart, ([id, item]) => ({ id, quantity: item.quantity }))));
+
+            const renderCart = () => {
+                const empty = document.getElementById("cartEmpty");
+                cartItems.querySelectorAll("[data-cart-line]").forEach(line => line.remove());
+                let subtotal = 0;
+
+                cart.forEach(({ card, quantity }, id) => {
+                    const line = document.createElement("div");
+                    line.className = "catalog-cart-line";
+                    line.dataset.cartLine = "";
+                    const name = document.createElement("strong");
+                    name.textContent = card.dataset.name;
+                    const detail = document.createElement("span");
+                    detail.textContent = `${card.dataset.sku} · ${quantity} × ${formatCurrency(Number(card.dataset.price))}`;
+                    const remove = document.createElement("button");
+                    remove.type = "button";
+                    remove.className = "catalog-remove-item";
+                    remove.setAttribute("aria-label", `Quitar ${card.dataset.name}`);
+                    remove.innerHTML = '<i class="bi bi-x-lg"></i>';
+                    remove.addEventListener("click", () => { cart.delete(id); saveCart(); renderCart(); });
+                    line.append(name, detail, remove);
+                    cartItems.append(line);
+                    subtotal += Number(card.dataset.price) * quantity;
+                });
+
+                empty.classList.toggle("d-none", cart.size > 0);
+                const tax = Math.round((subtotal * 0.18 + Number.EPSILON) * 100) / 100;
+                document.getElementById("cartItemCount").textContent = String(cart.size);
+                document.getElementById("cartSubtotal").textContent = formatCurrency(subtotal);
+                document.getElementById("cartTax").textContent = formatCurrency(tax);
+                document.getElementById("cartTotal").textContent = formatCurrency(subtotal + tax);
+                document.getElementById("continueToClient").disabled = cart.size === 0;
+                document.getElementById("clearCart").disabled = cart.size === 0;
+            };
+
+            cards.forEach(card => card.querySelector("[data-add-product]").addEventListener("click", () => {
+                const id = Number(card.dataset.productId);
+                const quantityInput = card.querySelector("[data-quantity]");
+                const quantity = Math.max(1, Math.floor(Number(quantityInput.value) || 1));
+                const current = cart.get(id);
+                cart.set(id, { card, quantity: (current?.quantity || 0) + quantity });
+                quantityInput.value = "1";
+                saveCart();
+                renderCart();
+            }));
+
+            document.getElementById("clearCart").addEventListener("click", () => { cart.clear(); saveCart(); renderCart(); });
+            document.getElementById("continueToClient").addEventListener("click", () => { window.location.href = "@Url.Action("Index", "Clientes")"; });
+
+            const search = document.getElementById("catalogSearch");
+            const categoryButtons = Array.from(document.querySelectorAll("[data-category]"));
+            let selectedCategory = "";
+            const applyFilters = () => {
+                const term = search.value.trim().toLocaleLowerCase("es-PE");
+                let visible = 0;
+                cards.forEach(card => {
+                    const matches = card.dataset.search.includes(term) && (!selectedCategory || card.dataset.category === selectedCategory);
+                    card.classList.toggle("d-none", !matches);
+                    if (matches) visible++;
+                });
+                document.getElementById("catalogNoMatch").classList.toggle("d-none", visible > 0);
+                document.getElementById("catalogProductCount").textContent = String(visible);
+                document.getElementById("catalogProductLabel").textContent = visible === 1 ? "producto disponible" : "productos disponibles";
+            };
+            search.addEventListener("input", applyFilters);
+            categoryButtons.forEach(button => button.addEventListener("click", () => {
+                selectedCategory = button.dataset.category;
+                categoryButtons.forEach(candidate => candidate.classList.toggle("active", candidate === button));
+                applyFilters();
+            }));
+
+            parseCart();
+            renderCart();
+            applyFilters();
+        })();
+    </script>
+}

@@ -3,6 +3,7 @@
 
 @{
     ViewData["Title"] = "Nueva Cotización";
+    var cotizacionGuardada = TempData["SuccessMessage"] != null;
     var noPuedeVender = !string.Equals(Model.EstadoSunat, "ACTIVO", StringComparison.OrdinalIgnoreCase)
         || !string.Equals(Model.CondicionSunat, "HABIDO", StringComparison.OrdinalIgnoreCase);
 }
@@ -16,7 +17,7 @@
         <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary"><i class="bi bi-arrow-left me-1"></i>VOLVER A CLIENTES</a>
     </div>
 
-    @if (TempData["SuccessMessage"] != null)
+    @if (cotizacionGuardada)
     {
         <div class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]</div>
     }
@@ -56,29 +57,29 @@
         </div>
     }
 
-    <div class="row g-4">
-        <div class="col-lg-7">
-            <div class="prosegin-card">
-                <div class="prosegin-card-header"><h5 class="prosegin-card-title mb-0">Cliente seleccionado</h5></div>
-                <div class="prosegin-card-body p-4">
-                    <input asp-for="ClienteId" type="hidden" />
-                    <div class="row g-3">
-                        <div class="col-md-4"><span class="text-muted small d-block">RUC</span><strong class="font-monospace">@Model.Ruc</strong></div>
-                        <div class="col-md-8"><span class="text-muted small d-block">Razón social</span><strong>@Model.RazonSocial</strong></div>
-                        <div class="col-md-6"><span class="text-muted small d-block">Estado SUNAT</span><span class="badge @(noPuedeVender ? "bg-danger" : "bg-success")">@Model.EstadoSunat</span></div>
-                        <div class="col-md-6"><span class="text-muted small d-block">Condición SUNAT</span><span class="badge @(noPuedeVender ? "bg-danger" : "bg-success")">@Model.CondicionSunat</span></div>
+    <form asp-action="Create" method="post" id="formCotizacion" data-cotizacion-guardada="@(cotizacionGuardada ? "true" : "false")">
+        @Html.AntiForgeryToken()
+        <input asp-for="ClienteId" type="hidden" />
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="prosegin-card h-100">
+                    <div class="prosegin-card-header"><h5 class="prosegin-card-title mb-0">Cliente seleccionado</h5></div>
+                    <div class="prosegin-card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-4"><span class="text-muted small d-block">RUC</span><strong class="font-monospace">@Model.Ruc</strong></div>
+                            <div class="col-md-8"><span class="text-muted small d-block">Razón social</span><strong>@Model.RazonSocial</strong></div>
+                            <div class="col-md-6"><span class="text-muted small d-block">Estado SUNAT</span><span class="badge @(noPuedeVender ? "bg-danger" : "bg-success")">@Model.EstadoSunat</span></div>
+                            <div class="col-md-6"><span class="text-muted small d-block">Condición SUNAT</span><span class="badge @(noPuedeVender ? "bg-danger" : "bg-success")">@Model.CondicionSunat</span></div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-lg-5">
-            <div class="prosegin-card">
-                <div class="prosegin-card-header"><h5 class="prosegin-card-title mb-0">Condiciones comerciales</h5></div>
-                <div class="prosegin-card-body p-4">
-                    <form asp-action="Create" method="post">
-                        @Html.AntiForgeryToken()
-                        <input asp-for="ClienteId" type="hidden" />
+            <div class="col-lg-5">
+                <div class="prosegin-card h-100">
+                    <div class="prosegin-card-header"><h5 class="prosegin-card-title mb-0">Condiciones comerciales</h5></div>
+                    <div class="prosegin-card-body p-4">
                         <div class="mb-3">
                             <label asp-for="CondicionPago" class="form-label-prosegin">Condición de pago</label>
                             <select asp-for="CondicionPago" class="form-select form-control-prosegin">
@@ -88,21 +89,141 @@
                                 <option value="30 días">Crédito a 30 días</option>
                             </select>
                         </div>
-                        <div class="mb-3">
-                            <label asp-for="Total" class="form-label-prosegin">Total de cotización</label>
-                            <input asp-for="Total" class="form-control form-control-prosegin" type="number" min="0.01" step="0.01" />
-                            <span asp-validation-for="Total" class="text-danger small"></span>
-                        </div>
                         <div class="small text-muted mb-3">
                             Límite: @Model.LimiteCredito.ToString("C", new CultureInfo("es-PE"))<br />
                             Saldo pendiente: @Model.SaldoPendiente.ToString("C", new CultureInfo("es-PE"))
                         </div>
-                        <button type="submit" class="btn-prosegin-primary w-100" @(noPuedeVender || Model.DatosSunatDesactualizados ? "disabled" : null)>
-                            <i class="bi bi-check2-circle me-1"></i>GENERAR COTIZACIÓN
-                        </button>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+
+        <div class="prosegin-card mt-4">
+            <div class="prosegin-card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <h5 class="prosegin-card-title mb-0"><i class="bi bi-boxes me-2"></i>Seleccionar productos del catálogo</h5>
+                <input id="filtroProductos" class="form-control form-control-sm" style="max-width: 320px;" type="search" placeholder="Buscar por SKU, nombre o categoría" aria-label="Buscar productos del catálogo" />
+            </div>
+            <div class="prosegin-card-body p-0">
+                @if (Model.ProductosDisponibles.Count == 0)
+                {
+                    <div class="alert alert-warning m-3 mb-0">No hay productos activos en el catálogo.</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table-prosegin mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-center">Elegir</th>
+                                    <th>Producto</th>
+                                    <th class="text-end">Costo base</th>
+                                    <th style="width: 120px;">Cantidad</th>
+                                    <th style="width: 130px;">Margen (%)</th>
+                                    <th class="text-end">Precio venta</th>
+                                    <th class="text-end">Importe</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (var i = 0; i < Model.ProductosDisponibles.Count; i++)
+                                {
+                                    var producto = Model.ProductosDisponibles[i];
+                                    <tr data-product-row data-product-id="@producto.ProductoId" data-cost="@producto.CostoReferencial.ToString(CultureInfo.InvariantCulture)" data-search="@($"{producto.Sku} {producto.Nombre} {producto.Categoria}".ToLowerInvariant())">
+                                        <td class="text-center">
+                                            <input asp-for="ProductosDisponibles[i].ProductoId" type="hidden" />
+                                            <input asp-for="ProductosDisponibles[i].Seleccionado" class="form-check-input" aria-label="Seleccionar @producto.Nombre" />
+                                        </td>
+                                        <td>
+                                            <span class="font-monospace fw-bold d-block">@producto.Sku</span>
+                                            <span class="fw-semibold">@producto.Nombre</span>
+                                            <span class="text-muted small d-block">@producto.Categoria</span>
+                                        </td>
+                                        <td class="text-end font-monospace">S/ @producto.CostoReferencial.ToString("N2", new CultureInfo("es-PE"))</td>
+                                        <td><input asp-for="ProductosDisponibles[i].Cantidad" class="form-control form-control-sm" type="number" min="1" /></td>
+                                        <td><input asp-for="ProductosDisponibles[i].MargenPorcentaje" class="form-control form-control-sm" type="number" min="0" max="100" step="0.01" /></td>
+                                        <td class="text-end font-monospace" data-unit-price>S/ 0.00</td>
+                                        <td class="text-end font-monospace fw-semibold" data-line-subtotal>—</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+            <div class="prosegin-card-body border-top">
+                <div class="row justify-content-end">
+                    <div class="col-sm-6 col-lg-4">
+                        <div class="d-flex justify-content-between small mb-1"><span>Subtotal</span><strong id="subtotalCotizacion">S/ 0.00</strong></div>
+                        <div class="d-flex justify-content-between small mb-2"><span>IGV (18 %)</span><strong id="igvCotizacion">S/ 0.00</strong></div>
+                        <div class="d-flex justify-content-between border-top pt-2"><span class="fw-bold">Total</span><strong id="totalCotizacion" class="fs-5">S/ 0.00</strong></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end mt-4">
+            <button type="submit" class="btn-prosegin-primary" @(noPuedeVender || Model.DatosSunatDesactualizados ? "disabled" : null)>
+                <i class="bi bi-check2-circle me-1"></i>GENERAR COTIZACIÓN
+            </button>
+        </div>
+    </form>
 </div>
+
+<script>
+    (() => {
+        const storageKey = "prosegin.quote.cart.v1";
+        const rows = Array.from(document.querySelectorAll("[data-product-row]"));
+        const currency = new Intl.NumberFormat("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const formatAmount = (amount) => `S/ ${currency.format(amount)}`;
+        const hasServerSelection = rows.some(row => row.querySelector('input[name$=".Seleccionado"]').checked);
+
+        if (!hasServerSelection) {
+            try {
+                const cart = JSON.parse(sessionStorage.getItem(storageKey) || "[]");
+                cart.forEach(item => {
+                    const row = rows.find(candidate => Number(candidate.dataset.productId) === Number(item.id));
+                    if (!row) return;
+                    row.querySelector('input[name$=".Seleccionado"]').checked = true;
+                    row.querySelector('input[name$=".Cantidad"]').value = Math.max(1, Number(item.quantity) || 1);
+                });
+            } catch {
+                sessionStorage.removeItem(storageKey);
+            }
+        }
+
+        const updateTotals = () => {
+            let subtotal = 0;
+            const selectedProducts = [];
+            rows.forEach((row) => {
+                const selected = row.querySelector('input[name$=".Seleccionado"]');
+                const quantity = Number(row.querySelector('input[name$=".Cantidad"]').value) || 0;
+                const margin = Number(row.querySelector('input[name$=".MargenPorcentaje"]').value) || 0;
+                const cost = Number(row.dataset.cost) || 0;
+                const unitPrice = Math.round((cost * (1 + margin / 100) + Number.EPSILON) * 100) / 100;
+                const lineSubtotal = selected.checked ? unitPrice * quantity : 0;
+                row.querySelector("[data-unit-price]").textContent = formatAmount(unitPrice);
+                row.querySelector("[data-line-subtotal]").textContent = selected.checked ? formatAmount(lineSubtotal) : "—";
+                subtotal += lineSubtotal;
+                if (selected.checked) {
+                    selectedProducts.push({ id: Number(row.dataset.productId), quantity: Math.max(1, quantity) });
+                }
+            });
+
+            const igv = Math.round((subtotal * 0.18 + Number.EPSILON) * 100) / 100;
+            document.getElementById("subtotalCotizacion").textContent = formatAmount(subtotal);
+            document.getElementById("igvCotizacion").textContent = formatAmount(igv);
+            document.getElementById("totalCotizacion").textContent = formatAmount(subtotal + igv);
+            sessionStorage.setItem(storageKey, JSON.stringify(selectedProducts));
+        };
+
+        rows.forEach((row) => row.querySelectorAll("input").forEach((input) => input.addEventListener("input", updateTotals)));
+        document.getElementById("filtroProductos")?.addEventListener("input", (event) => {
+            const term = event.target.value.trim().toLowerCase();
+            rows.forEach((row) => row.classList.toggle("d-none", !row.dataset.search.includes(term)));
+        });
+
+        updateTotals();
+        if (document.getElementById("formCotizacion").dataset.cotizacionGuardada === "true") {
+            sessionStorage.removeItem(storageKey);
+        }
+    })();
+</script>
