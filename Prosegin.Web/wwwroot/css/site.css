@@ -333,3 +333,439 @@ body {
   font-weight: bold;
   margin-left: 2px;
 }
+
+/* ============================================================
+   7. FORMULARIOS PREMIUM - ESTILOS PARA REGISTRO DE DATOS
+   ============================================================ */
+
+/* Encabezado de página con línea de acento */
+.page-header-prosegin {
+  position: relative;
+  padding-left: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.page-header-prosegin::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.15rem;
+  bottom: 0.15rem;
+  width: 4px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, var(--prosegin-orange) 0%, var(--prosegin-orange-hover) 100%);
+}
+
+.page-header-prosegin h4 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  letter-spacing: -0.01em;
+  margin-bottom: 0.25rem;
+}
+
+.page-header-prosegin p {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  margin-bottom: 0;
+  line-height: 1.5;
+}
+
+/* Headers de sección numerados - con acento izquierdo */
+.prosegin-card-header--section {
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid var(--border-card);
+  background: linear-gradient(135deg, #ffffff 0%, var(--bg-card-subtle) 100%);
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.section-step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--prosegin-orange-light);
+  color: var(--prosegin-orange-text);
+  font-size: 0.78rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.section-step-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Card body con mejor padding para formularios */
+.prosegin-card-body--form {
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+/* Input group refined styling */
+.input-group .input-group-text {
+  border-color: #cbd5e1;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+/* Radio / Checkbox selection cards */
+.selection-card-radio {
+  border: 1.5px solid var(--border-card);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  cursor: pointer;
+  background: var(--bg-card);
+  transition: all 0.2s ease;
+}
+
+.selection-card-radio:hover {
+  border-color: var(--prosegin-orange);
+  background: var(--prosegin-orange-light);
+}
+
+.selection-card-radio.active,
+.selection-card-radio:has(input:checked) {
+  border-color: var(--prosegin-orange);
+  background: var(--prosegin-orange-light);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
+}
+
+.selection-card-radio .form-check-input:checked {
+  background-color: var(--prosegin-orange);
+  border-color: var(--prosegin-orange);
+}
+
+/* Tarjeta resumen lateral (sticky preview) */
+.preview-card-sidebar {
+  border-top: 3px solid var(--prosegin-orange);
+}
+
+.preview-card-sidebar .preview-ruc {
+  font-size: 1.65rem;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  transition: color 0.3s ease;
+}
+
+.preview-card-sidebar .preview-ruc.filled {
+  color: var(--text-dark);
+}
+
+.preview-card-sidebar .preview-razon {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  font-style: italic;
+  transition: all 0.3s ease;
+}
+
+.preview-card-sidebar .preview-razon.filled {
+  color: var(--text-dark);
+  font-style: normal;
+  font-weight: 600;
+}
+
+/* Línea divisoria refinada */
+.divider-subtle {
+  border: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-card), transparent);
+  margin: 0.75rem 0;
+}
+
+/* Checklist de validaciones visuales */
+.validation-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.validation-check-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 0.25rem 0;
+  transition: all 0.2s ease;
+}
+
+.validation-check-item.valid {
+  color: var(--state-success-text);
+}
+
+.validation-check-item i {
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+/* Barra inferior de acciones del formulario */
+.form-action-bar {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: var(--shadow-card);
+}
+
+.form-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.4rem 0.85rem;
+  border-radius: 20px;
+  background: #f1f5f9;
+  color: var(--text-muted);
+  border: 1px solid var(--border-card);
+  transition: all 0.3s ease;
+}
+
+.form-status-pill .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: background 0.3s ease;
+}
+
+.form-status-pill.ready {
+  background: var(--state-success-bg);
+  color: var(--state-success-text);
+  border-color: rgba(22, 163, 74, 0.2);
+}
+
+.form-status-pill.ready .status-dot {
+  background: var(--state-success);
+  box-shadow: 0 0 6px var(--state-success);
+}
+
+/* Badge de estado tributario inline */
+.sunat-badge-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+  transition: all 0.25s ease;
+}
+
+/* Estado tributario row compacto */
+.sunat-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.75rem;
+  background: var(--bg-card-subtle);
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+  gap: 1rem;
+}
+
+.sunat-status-row .status-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sunat-status-row .status-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+/* Animación suave de entrada para alertas */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.alert-animated {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* ==========================================================================
+   SISTEMA UNIFICADO DE ALERTAS Y POPUPS EMERGENTES (PROSEGIN ALERTS)
+   ========================================================================== */
+.prosegin-alert-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(12, 19, 34, 0.65);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.22s ease-in-out;
+  padding: 16px;
+}
+
+.prosegin-alert-backdrop.show {
+  opacity: 1;
+}
+
+.prosegin-alert-modal {
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 25px 50px -12px rgba(12, 19, 34, 0.3), 0 0 0 1px rgba(12, 19, 34, 0.06);
+  max-width: 440px;
+  width: 100%;
+  padding: 32px 28px 26px 28px;
+  text-align: center;
+  transform: scale(0.92) translateY(10px);
+  opacity: 0;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease-in-out;
+  position: relative;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.prosegin-alert-backdrop.show .prosegin-alert-modal {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.prosegin-alert-icon-wrapper {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  font-size: 2rem;
+  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.08);
+}
+
+.prosegin-alert-icon-wrapper.warning {
+  background: #fef3c7;
+  color: #d97706;
+  border: 3px solid #fde68a;
+}
+
+.prosegin-alert-icon-wrapper.error {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 3px solid #fecaca;
+}
+
+.prosegin-alert-icon-wrapper.success {
+  background: #dcfce7;
+  color: #16a34a;
+  border: 3px solid #bbf7d0;
+}
+
+.prosegin-alert-icon-wrapper.info {
+  background: #e0f2fe;
+  color: #0284c7;
+  border: 3px solid #bae6fd;
+}
+
+.prosegin-alert-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 10px;
+  letter-spacing: -0.01em;
+}
+
+.prosegin-alert-message {
+  font-size: 0.935rem;
+  color: #475569;
+  line-height: 1.55;
+  margin-bottom: 26px;
+  word-break: break-word;
+}
+
+.prosegin-alert-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+}
+
+.prosegin-alert-btn {
+  padding: 10px 24px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  border: none;
+  outline: none;
+  min-width: 120px;
+}
+
+.prosegin-alert-btn-confirm {
+  background: var(--prosegin-orange, #f59e0b);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+}
+
+.prosegin-alert-btn-confirm:hover,
+.prosegin-alert-btn-confirm:focus {
+  background: var(--prosegin-orange-hover, #d97706);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.45);
+}
+
+.prosegin-alert-btn-confirm.btn-error {
+  background: #dc2626;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+}
+
+.prosegin-alert-btn-confirm.btn-error:hover {
+  background: #b91c1c;
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.45);
+}
+
+.prosegin-alert-btn-cancel {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.prosegin-alert-btn-cancel:hover,
+.prosegin-alert-btn-cancel:focus {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+

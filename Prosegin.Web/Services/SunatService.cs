@@ -27,14 +27,14 @@ namespace Prosegin.Web.Services
 
             if (ruc.Length != 11 || !ruc.All(char.IsDigit))
             {
-                mensajeError = "El RUC debe tener exactamente 11 dígitos numéricos.";
+                mensajeError = "Número de RUC inválido";
                 return false;
             }
 
             // 1. Validación de prefijos oficiales de SUNAT
             if (!ruc.StartsWith("10") && !ruc.StartsWith("15") && !ruc.StartsWith("17") && !ruc.StartsWith("20"))
             {
-                mensajeError = "El RUC debe iniciar con 10, 15, 17 (Persona Natural) o 20 (Persona Jurídica).";
+                mensajeError = "Número de RUC inválido";
                 return false;
             }
 
@@ -57,7 +57,7 @@ namespace Prosegin.Web.Services
 
             if (digitoCalculado != digitoVerificadorReal)
             {
-                mensajeError = "El RUC ingresado no es válido (dígito verificador incorrecto según SUNAT).";
+                mensajeError = "Número de RUC inválido";
                 return false;
             }
 

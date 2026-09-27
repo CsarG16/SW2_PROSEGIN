@@ -22,8 +22,17 @@ namespace Prosegin.Web.Controllers
         public async Task<IActionResult> Index(string? termino, CancellationToken cancellationToken)
         {
             var model = new ClienteBusquedaViewModel { Termino = termino?.Trim() ?? string.Empty };
+
             if (string.IsNullOrWhiteSpace(model.Termino))
             {
+                var clientesRegistrados = await _context.Clientes
+                    .AsNoTracking()
+                    .Where(c => c.Activo)
+                    .OrderByDescending(c => c.Id)
+                    .Take(50)
+                    .ToListAsync(cancellationToken);
+
+                model.Resultados = await MapearClientesConEstadoCrediticioAsync(clientesRegistrados, cancellationToken);
                 return View(model);
             }
 
@@ -61,49 +70,7 @@ namespace Prosegin.Web.Controllers
                 .Take(50)
                 .ToListAsync(cancellationToken);
 
-            var clienteIds = clientes.Select(c => c.Id).ToArray();
-            var facturas = clienteIds.Length == 0
-                ? new List<Factura>()
-                : await _context.Facturas
-                    .AsNoTracking()
-                    .Where(f => clienteIds.Contains(f.ClienteId) && f.EstadoPago != "Pagado")
-                    .ToListAsync(cancellationToken);
-
-            var ahora = DateTime.UtcNow;
-            model.Resultados = clientes.Select(cliente =>
-            {
-                var facturasCliente = facturas.Where(f => f.ClienteId == cliente.Id).ToList();
-                var facturasVencidas = facturasCliente.Where(f => f.FechaVencimiento < ahora).ToList();
-                var saldoPendiente = facturasCliente.Sum(f => f.Total);
-                var saldoVencido = facturasVencidas.Sum(f => f.Total);
-                var diasMora = facturasVencidas.Count == 0
-                    ? 0
-                    : facturasVencidas.Max(f => Math.Max(0, (ahora.Date - f.FechaVencimiento.Date).Days));
-                var creditoExcedido = cliente.LimiteCredito > 0 && saldoPendiente > cliente.LimiteCredito;
-                var bloqueado = facturasVencidas.Count > 0 || creditoExcedido;
-
-                return new ClienteBusquedaItemViewModel
-                {
-                    Id = cliente.Id,
-                    Ruc = cliente.Ruc,
-                    RazonSocial = cliente.RazonSocial,
-                    DireccionFiscal = cliente.DireccionFiscal,
-                    RepresentanteLegal = cliente.RepresentanteLegal,
-                    EstadoSunat = cliente.EstadoSunat,
-                    CondicionSunat = cliente.CondicionSunat,
-                    LimiteCredito = cliente.LimiteCredito,
-                    SaldoVencido = saldoVencido,
-                    DiasMora = diasMora,
-                    CreditoExcedido = creditoExcedido,
-                    ClienteBloqueado = bloqueado,
-                    EstadoCredito = bloqueado ? "BLOQUEADO" : "HABILITADO",
-                    MensajeBloqueo = facturasVencidas.Count > 0
-                        ? $"Cliente bloqueado por mora: factura(s) vencida(s) hasta {diasMora} días."
-                        : creditoExcedido
-                            ? "Cliente bloqueado por sobregiro de crédito."
-                            : null
-                };
-            }).ToList();
+            model.Resultados = await MapearClientesConEstadoCrediticioAsync(clientes, cancellationToken);
 
             if (esRuc && model.Resultados.Count == 0)
             {
@@ -128,14 +95,68 @@ namespace Prosegin.Web.Controllers
             }
             else if (model.Resultados.Count == 0)
             {
-                model.Mensaje = "No se encontraron clientes para la razón social ingresada.";
+                model.Mensaje = "No se encontraron clientes registrados para la razón social ingresada.";
             }
 
             return View(model);
         }
 
+        private async Task<List<ClienteBusquedaItemViewModel>> MapearClientesConEstadoCrediticioAsync(
+            List<Cliente> clientes, 
+            CancellationToken cancellationToken)
+        {
+            var clienteIds = clientes.Select(c => c.Id).ToArray();
+            var facturas = clienteIds.Length == 0
+                ? new List<Factura>()
+                : await _context.Facturas
+                    .AsNoTracking()
+                    .Where(f => clienteIds.Contains(f.ClienteId) && f.EstadoPago != "Pagado")
+                    .ToListAsync(cancellationToken);
+
+            var ahora = DateTime.UtcNow;
+            return clientes.Select(cliente =>
+            {
+                var facturasCliente = facturas.Where(f => f.ClienteId == cliente.Id).ToList();
+                var facturasVencidas = facturasCliente.Where(f => f.FechaVencimiento < ahora).ToList();
+                var saldoPendiente = facturasCliente.Sum(f => f.Total);
+                var saldoVencido = facturasVencidas.Sum(f => f.Total);
+                var diasMora = facturasVencidas.Count == 0
+                    ? 0
+                    : facturasVencidas.Max(f => Math.Max(0, (ahora.Date - f.FechaVencimiento.Date).Days));
+                var creditoExcedido = cliente.LimiteCredito > 0 && saldoPendiente > cliente.LimiteCredito;
+                var bloqueado = facturasVencidas.Count > 0 || creditoExcedido;
+
+                return new ClienteBusquedaItemViewModel
+                {
+                    Id = cliente.Id,
+                    Ruc = cliente.Ruc,
+                    RazonSocial = cliente.RazonSocial,
+                    DireccionFiscal = cliente.DireccionFiscal,
+                    Ubigeo = cliente.Ubigeo,
+                    Departamento = cliente.Departamento,
+                    Provincia = cliente.Provincia,
+                    Distrito = cliente.Distrito,
+                    RepresentanteLegal = cliente.RepresentanteLegal,
+                    EstadoSunat = cliente.EstadoSunat,
+                    CondicionSunat = cliente.CondicionSunat,
+                    LimiteCredito = cliente.LimiteCredito,
+                    SaldoVencido = saldoVencido,
+                    DiasMora = diasMora,
+                    CreditoExcedido = creditoExcedido,
+                    ClienteBloqueado = bloqueado,
+                    EstadoCredito = bloqueado ? "BLOQUEADO" : "HABILITADO",
+                    MensajeBloqueo = facturasVencidas.Count > 0
+                        ? $"Cliente bloqueado por mora: factura(s) vencida(s) hasta {diasMora} días."
+                        : creditoExcedido
+                            ? "Cliente bloqueado por sobregiro de crédito."
+                            : null,
+                    FechaCreacion = cliente.FechaCreacion
+                };
+            }).ToList();
+        }
+
         // GET: Clientes/Create
-        public async Task<IActionResult> Create(
+        public IActionResult Create(
             string? ruc,
             string? razonSocial,
             string? direccionFiscal,
@@ -143,11 +164,6 @@ namespace Prosegin.Web.Controllers
             string? condicionSunat,
             string? representanteLegal)
         {
-            ViewBag.ClientesRegistrados = await _context.Clientes
-                .OrderByDescending(c => c.Id)
-                .Take(10)
-                .ToListAsync();
-
             return View(new ClienteCreateViewModel
             {
                 Ruc = ruc?.Trim() ?? string.Empty,
@@ -179,10 +195,6 @@ namespace Prosegin.Web.Controllers
                 if (rucExiste)
                 {
                     ModelState.AddModelError("Ruc", $"El RUC {rucLimpio} ya se encuentra registrado en el sistema.");
-                    ViewBag.ClientesRegistrados = await _context.Clientes
-                        .OrderByDescending(c => c.Id)
-                        .Take(10)
-                        .ToListAsync();
                     return View(model);
                 }
 
@@ -221,11 +233,6 @@ namespace Prosegin.Web.Controllers
                 return RedirectToAction(nameof(Create));
             }
 
-            ViewBag.ClientesRegistrados = await _context.Clientes
-                .OrderByDescending(c => c.Id)
-                .Take(10)
-                .ToListAsync();
-
             return View(model);
         }
 
@@ -233,7 +240,21 @@ namespace Prosegin.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> ConsultarSunat(string ruc, CancellationToken cancellationToken)
         {
-            var resultado = await _sunatService.ConsultarRucAsync(ruc, cancellationToken);
+            var rucLimpio = ruc?.Trim() ?? string.Empty;
+
+            // HU 1.1: Si el RUC ya se encuentra registrado previamente en la cartera/padrón corporativo, interrumpir la operación
+            var yaRegistrado = await _context.Clientes.AnyAsync(c => c.Ruc == rucLimpio, cancellationToken);
+            if (yaRegistrado)
+            {
+                return Json(new
+                {
+                    success = false,
+                    yaRegistrado = true,
+                    message = "El RUC ingresado ya se encuentra registrado en el padrón de clientes."
+                });
+            }
+
+            var resultado = await _sunatService.ConsultarRucAsync(rucLimpio, cancellationToken);
 
             if (!resultado.Success)
             {

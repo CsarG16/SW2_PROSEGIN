@@ -17,6 +17,10 @@ public class ClienteBusquedaItemViewModel
     public string Ruc { get; set; } = string.Empty;
     public string RazonSocial { get; set; } = string.Empty;
     public string DireccionFiscal { get; set; } = string.Empty;
+    public string? Ubigeo { get; set; }
+    public string? Departamento { get; set; }
+    public string? Provincia { get; set; }
+    public string? Distrito { get; set; }
     public string? RepresentanteLegal { get; set; }
     public string EstadoSunat { get; set; } = string.Empty;
     public string CondicionSunat { get; set; } = string.Empty;
@@ -27,4 +31,5 @@ public class ClienteBusquedaItemViewModel
     public bool ClienteBloqueado { get; set; }
     public string EstadoCredito { get; set; } = string.Empty;
     public string? MensajeBloqueo { get; set; }
+    public DateTime FechaCreacion { get; set; }
 }
