@@ -1,3 +1,4 @@
+// PROSEGIN Core - Inicialización de la aplicación Web
 using Prosegin.Data;
 using Prosegin.Web.Services;
 
@@ -80,3 +81,4 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+// prosegin core

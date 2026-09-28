@@ -163,9 +163,6 @@ public class CotizacionesController : Controller
         cliente.Ubigeo = resultado.Ubigeo?.Trim();
         cliente.EstadoSunat = resultado.Estado?.Trim().ToUpper() ?? cliente.EstadoSunat;
         cliente.CondicionSunat = resultado.Condicion?.Trim().ToUpper() ?? cliente.CondicionSunat;
-        cliente.RepresentanteLegal = string.IsNullOrWhiteSpace(resultado.RepresentanteLegal)
-            ? cliente.RepresentanteLegal
-            : resultado.RepresentanteLegal.Trim().ToUpper();
         await _context.SaveChangesAsync(cancellationToken);
 
         TempData["SuccessMessage"] = "Los datos fiscales fueron actualizados con la información más reciente de SUNAT.";
@@ -193,14 +190,11 @@ public class CotizacionesController : Controller
         var diasMora = vencidas.Count == 0
             ? 0
             : vencidas.Max(f => Math.Max(0, (ahora.Date - f.FechaVencimiento.Date).Days));
-        var sobregiro = cliente.LimiteCredito > 0 && saldoPendiente > cliente.LimiteCredito;
-        var bloqueado = vencidas.Count > 0 || sobregiro;
+        var bloqueado = vencidas.Count > 0;
         var resultadoSunat = await _sunatService.ConsultarRucAsync(cliente.Ruc, cancellationToken);
         var datosSunatDesactualizados = resultadoSunat.Success
-            && ((!string.IsNullOrWhiteSpace(resultadoSunat.DireccionFiscal)
-                && !string.Equals(cliente.DireccionFiscal.Trim(), resultadoSunat.DireccionFiscal.Trim(), StringComparison.OrdinalIgnoreCase))
-                || (!string.IsNullOrWhiteSpace(resultadoSunat.RepresentanteLegal)
-                    && !string.Equals(cliente.RepresentanteLegal?.Trim(), resultadoSunat.RepresentanteLegal.Trim(), StringComparison.OrdinalIgnoreCase)));
+            && (!string.IsNullOrWhiteSpace(resultadoSunat.DireccionFiscal)
+                && !string.Equals(cliente.DireccionFiscal.Trim(), resultadoSunat.DireccionFiscal.Trim(), StringComparison.OrdinalIgnoreCase));
         var estadoSunat = resultadoSunat.Success ? resultadoSunat.Estado ?? cliente.EstadoSunat : cliente.EstadoSunat;
         var condicionSunat = resultadoSunat.Success ? resultadoSunat.Condicion ?? cliente.CondicionSunat : cliente.CondicionSunat;
 
@@ -210,10 +204,8 @@ public class CotizacionesController : Controller
             Ruc = cliente.Ruc,
             RazonSocial = cliente.RazonSocial,
             DireccionFiscal = cliente.DireccionFiscal,
-            RepresentanteLegal = cliente.RepresentanteLegal,
             EstadoSunat = estadoSunat,
             CondicionSunat = condicionSunat,
-            LimiteCredito = cliente.LimiteCredito,
             SaldoPendiente = saldoPendiente,
             SaldoVencido = saldoVencido,
             DiasMora = diasMora,
@@ -221,9 +213,7 @@ public class CotizacionesController : Controller
             DatosSunatDesactualizados = datosSunatDesactualizados,
             MotivoBloqueo = vencidas.Count > 0
                 ? $"Tiene facturas vencidas hasta {diasMora} días."
-                : sobregiro
-                    ? "Ha sobrepasado su línea de crédito aprobada."
-                    : null
+                : null
         };
 
         model.ProductosDisponibles = await _context.Productos

@@ -105,7 +105,7 @@
                     <span class="small text-muted">
                         <i class="bi bi-geo-alt me-1 text-danger"></i> @consultaSunat.DireccionFiscal
                     </span>
-                    <a asp-action="Create" asp-route-ruc="@consultaSunat.Ruc" asp-route-razonSocial="@consultaSunat.RazonSocial" asp-route-direccionFiscal="@consultaSunat.DireccionFiscal" asp-route-estadoSunat="@consultaSunat.Estado" asp-route-condicionSunat="@consultaSunat.Condicion" asp-route-representanteLegal="@consultaSunat.RepresentanteLegal" class="btn-prosegin-primary py-2 px-3 fw-bold">
+                    <a asp-action="Create" asp-route-ruc="@consultaSunat.Ruc" asp-route-razonSocial="@consultaSunat.RazonSocial" asp-route-direccionFiscal="@consultaSunat.DireccionFiscal" asp-route-estadoSunat="@consultaSunat.Estado" asp-route-condicionSunat="@consultaSunat.Condicion" class="btn-prosegin-primary py-2 px-3 fw-bold">
                         <i class="bi bi-person-plus me-1"></i> REGISTRAR CLIENTE CON DATOS SUNAT
                     </a>
                 </div>
@@ -135,10 +135,9 @@
                     <thead class="table-light">
                         <tr>
                             <th style="width: 140px;">RUC</th>
-                            <th>Razón Social / Representante</th>
+                            <th>Razón Social</th>
                             <th>Dirección Fiscal / Ubigeo</th>
                             <th style="width: 130px;">Condición / Estado</th>
-                            <th style="width: 140px;">Línea de Crédito</th>
                             <th style="width: 140px;">Riesgo Crediticio</th>
                             <th class="text-center" style="width: 110px;">Acción</th>
                         </tr>
@@ -153,12 +152,6 @@
                                 </td>
                                 <td>
                                     <div class="fw-bold text-dark">@cliente.RazonSocial</div>
-                                    @if (!string.IsNullOrWhiteSpace(cliente.RepresentanteLegal))
-                                    {
-                                        <div class="text-muted small" style="font-size: 0.75rem;">
-                                            <i class="bi bi-person me-1"></i>Rep: @cliente.RepresentanteLegal
-                                        </div>
-                                    }
                                 </td>
                                 <td>
                                     <div class="small text-muted text-truncate" style="max-width: 280px;" title="@cliente.DireccionFiscal">
@@ -167,7 +160,7 @@
                                     @if (!string.IsNullOrWhiteSpace(cliente.Ubigeo) || !string.IsNullOrWhiteSpace(cliente.Distrito))
                                     {
                                         <span class="badge bg-light text-dark border font-monospace mt-1" style="font-size: 0.7rem;">
-                                            @(cliente.Ubigeo ?? "-") @(!string.IsNullOrWhiteSpace(cliente.Distrito) ? $"• {cliente.Distrito}" : "")
+                                             @(cliente.Ubigeo ?? "-") @(!string.IsNullOrWhiteSpace(cliente.Distrito) ? $"• {cliente.Distrito}" : "")
                                         </span>
                                     }
                                 </td>
@@ -180,17 +173,6 @@
                                             @cliente.EstadoSunat
                                         </span>
                                     </div>
-                                </td>
-                                <td>
-                                    <div class="small fw-semibold text-dark">
-                                        @cliente.LimiteCredito.ToString("C", new CultureInfo("es-PE"))
-                                    </div>
-                                    @if (cliente.SaldoVencido > 0)
-                                    {
-                                        <div class="small text-danger fw-bold" style="font-size: 0.72rem;">
-                                            Vencido: @cliente.SaldoVencido.ToString("C", new CultureInfo("es-PE"))
-                                        </div>
-                                    }
                                 </td>
                                 <td>
                                     @if (cliente.ClienteBloqueado)
@@ -209,7 +191,10 @@
                                         </span>
                                     }
                                 </td>
-                                <td class="text-center">
+                                <td class="text-center text-nowrap">
+                                    <a asp-controller="Clientes" asp-action="Direcciones" asp-route-clienteId="@cliente.Id" class="btn btn-sm btn-outline-secondary me-1 fw-semibold" title="Gestionar direcciones de entrega y sedes de despacho">
+                                        <i class="bi bi-geo-alt me-1"></i>Sedes
+                                    </a>
                                     @if (cliente.ClienteBloqueado)
                                     {
                                         <button type="button" class="btn btn-sm btn-outline-danger" disabled title="@cliente.MensajeBloqueo">

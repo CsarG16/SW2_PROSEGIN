@@ -109,19 +109,6 @@
                             <span asp-validation-for="RazonSocial" class="text-danger small d-block mt-1"></span>
                         </div>
 
-                        <div class="row g-3 mt-1">
-                            <div class="col-md-8">
-                                <label asp-for="RepresentanteLegal" class="form-label-prosegin small text-uppercase fw-bold mb-1">Representante Legal</label>
-                                <input asp-for="RepresentanteLegal" class="form-control form-control-prosegin form-control-sm text-uppercase" placeholder="Según consulta SUNAT" />
-                                <span asp-validation-for="RepresentanteLegal" class="text-danger small d-block mt-1"></span>
-                            </div>
-                            <div class="col-md-4">
-                                <label asp-for="LimiteCredito" class="form-label-prosegin small text-uppercase fw-bold mb-1">Límite de Crédito</label>
-                                <input asp-for="LimiteCredito" class="form-control form-control-prosegin form-control-sm" type="number" min="0" step="0.01" />
-                                <span asp-validation-for="LimiteCredito" class="text-danger small d-block mt-1"></span>
-                            </div>
-                        </div>
-
                         <!-- Nombre Comercial y Estado -->
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -199,11 +186,12 @@
                             </div>
                         </div>
 
-                        <!-- Referencia de Entrega -->
+                        <!-- Referencia de Domicilio Fiscal -->
                         <div>
-                            <label class="form-label-prosegin small text-uppercase fw-bold mb-1">Referencia</label>
-                            <input type="text" class="form-control form-control-prosegin form-control-sm" 
-                                   placeholder="Ej: A media cuadra de Av. Colonial, portón plomo" />
+                            <label asp-for="Referencia" class="form-label-prosegin small text-uppercase fw-bold mb-1">Referencia</label>
+                            <input asp-for="Referencia" type="text" id="txtReferencia" class="form-control form-control-prosegin form-control-sm" 
+                                   placeholder="Ej: A media cuadra de Av. Colonial, portón plomo" autocomplete="off" />
+                            <span asp-validation-for="Referencia" class="text-danger small d-block mt-1"></span>
                         </div>
                     </div>
                 </div>
@@ -339,18 +327,23 @@
         </div>
 
         <!-- BARRA DE ACCIÓN INFERIOR: BOTONES DE GUARDADO -->
+        <input type="hidden" name="accion" id="hiddenAccion" value="guardar" />
+
         <div class="form-action-bar mt-3 mb-4">
             <div class="form-status-pill" id="formStatusIndicator">
                 <span class="status-dot" id="statusDot"></span>
                 <span id="statusLabel">Formulario Pendiente</span>
             </div>
 
-            <div class="d-flex align-items-center gap-2">
-                <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary py-2 px-3">
-                    <i class="bi bi-people me-1"></i> Ver Directorio
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary py-2 px-3" title="Cancelar y descartar el registro">
+                    <i class="bi bi-x-circle me-1"></i> Cancelar
                 </a>
-                <button type="submit" id="btnGuardarCliente" class="btn-prosegin-primary py-2 px-4 fw-bold">
-                    <i class="bi bi-save me-1"></i> Guardar Datos del Cliente
+                <button type="submit" id="btnGuardarCliente" class="btn-prosegin-secondary-orange py-2 px-3 fw-bold" disabled onclick="document.getElementById('hiddenAccion').value='guardar';" title="Guarda el cliente en el sistema">
+                    <i class="bi bi-check2-circle me-1"></i> Guardar Cliente
+                </button>
+                <button type="submit" id="btnGuardarYDirecciones" class="btn-prosegin-primary py-2 px-4 fw-bold" disabled onclick="document.getElementById('hiddenAccion').value='direcciones';" title="Guarda el cliente y habilita automáticamente su dirección fiscal para ver y gestionar sus sedes">
+                    <i class="bi bi-geo-alt-fill me-1"></i> Guardar y ver direcciones de entrega
                 </button>
             </div>
         </div>
@@ -374,9 +367,24 @@
             const btnConsultar = document.getElementById('btnConsultarSunat');
             const iconConsultar = document.getElementById('iconConsultar');
             const textBtnConsultar = document.getElementById('textBtnConsultar');
-            const btnGuardar = document.getElementById('btnGuardarCliente');
+            const btnGuardarCliente = document.getElementById('btnGuardarCliente');
+            const btnGuardarYDirecciones = document.getElementById('btnGuardarYDirecciones');
+            const hiddenAccion = document.getElementById('hiddenAccion');
+            let accionSeleccionada = 'guardar';
 
-            // Campos ocultos para base de datos
+            if (btnGuardarCliente) {
+                btnGuardarCliente.addEventListener('click', function () {
+                    accionSeleccionada = 'guardar';
+                    if (hiddenAccion) hiddenAccion.value = 'guardar';
+                });
+            }
+
+            if (btnGuardarYDirecciones) {
+                btnGuardarYDirecciones.addEventListener('click', function () {
+                    accionSeleccionada = 'direcciones';
+                    if (hiddenAccion) hiddenAccion.value = 'direcciones';
+                });
+            }
             const hiddenEstadoSunat = document.getElementById('hiddenEstadoSunat');
             const hiddenCondicionSunat = document.getElementById('hiddenCondicionSunat');
 
@@ -729,9 +737,9 @@
                 consultarSunatApi(rucVal);
             });
 
-            // Sincronizar Razón Social manual
-            txtRazonSocial.addEventListener('input', function () {
-                const val = this.value.trim();
+            // Sincronizar Razón Social manual y eventos reactivos
+            function onRazonSocialChanged() {
+                const val = txtRazonSocial.value.trim();
                 if (val.length > 0) {
                     previewRazonSocial.textContent = val.toUpperCase();
                     previewRazonSocial.classList.add('filled');
@@ -741,29 +749,49 @@
                     previewRazonSocial.classList.remove('filled');
                 }
                 actualizarEstadoFormulario();
+            }
+
+            ['input', 'change', 'keyup'].forEach(evt => {
+                txtRazonSocial.addEventListener(evt, onRazonSocialChanged);
             });
 
-            txtDireccion.addEventListener('input', function () {
-                if (this.value.trim().length > 0) {
+            // Sincronizar Dirección Fiscal y eventos reactivos
+            function onDireccionChanged() {
+                if (txtDireccion.value.trim().length > 0) {
                     txtDireccion.classList.remove('is-invalid');
                     setCheck(iconChkDireccion, lblChkDireccion, true, 'Dirección registrada');
+                } else {
+                    setCheck(iconChkDireccion, lblChkDireccion, false, 'Dirección registrada');
                 }
                 actualizarEstadoFormulario();
+            }
+
+            ['input', 'change', 'keyup'].forEach(evt => {
+                txtDireccion.addEventListener(evt, onDireccionChanged);
             });
 
             function actualizarEstadoFormulario() {
-                const rucValido = txtRuc.value.trim().length === 11 && validarModulo11Sunat(txtRuc.value.trim());
+                const rucVal = txtRuc.value.trim();
+                const rucValido = rucVal.length === 11 && validarModulo11Sunat(rucVal);
                 const razonValida = txtRazonSocial.value.trim().length > 0;
                 const dirValida = txtDireccion.value.trim().length > 0;
 
-                if (rucValido && razonValida && dirValida) {
+                const esFormularioValido = rucValido && razonValida && dirValida;
+
+                if (esFormularioValido) {
                     statusDot.className = 'status-dot';
                     formStatusIndicator.classList.add('ready');
                     statusLabel.textContent = 'Formulario Listo para Guardar';
+
+                    if (btnGuardarCliente) btnGuardarCliente.disabled = false;
+                    if (btnGuardarYDirecciones) btnGuardarYDirecciones.disabled = false;
                 } else {
                     statusDot.className = 'status-dot';
                     formStatusIndicator.classList.remove('ready');
                     statusLabel.textContent = 'Formulario Pendiente — Complete los campos obligatorios (*)';
+
+                    if (btnGuardarCliente) btnGuardarCliente.disabled = true;
+                    if (btnGuardarYDirecciones) btnGuardarYDirecciones.disabled = true;
                 }
             }
 
@@ -806,9 +834,20 @@
                     return false;
                 }
 
-                btnGuardar.disabled = true;
-                btnGuardar.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Guardando en Base de Datos...';
-                form.submit();
+                // Feedback visual de guardado y prevención de doble submit
+                if (accionSeleccionada === 'direcciones') {
+                    if (btnGuardarYDirecciones) {
+                        btnGuardarYDirecciones.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Guardando y continuando...';
+                        btnGuardarYDirecciones.style.pointerEvents = 'none';
+                    }
+                    if (btnGuardarCliente) btnGuardarCliente.style.pointerEvents = 'none';
+                } else {
+                    if (btnGuardarCliente) {
+                        btnGuardarCliente.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Guardando cliente...';
+                        btnGuardarCliente.style.pointerEvents = 'none';
+                    }
+                    if (btnGuardarYDirecciones) btnGuardarYDirecciones.style.pointerEvents = 'none';
+                }
             });
 
             // Inicialización de estado tributario si ya viene precargado

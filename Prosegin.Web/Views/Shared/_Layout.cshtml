@@ -72,8 +72,8 @@
                 </li>
                 <li class="sidebar-nav-item">
                     <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Clientes" ? "active" : "")" asp-controller="Clientes" asp-action="Create">
-                        <i class="bi bi-file-earmark-text"></i>
-                        <span>Datos Tributarios</span>
+                        <i class="bi bi-person-plus"></i>
+                        <span>Registrar Cliente</span>
                     </a>
                 </li>
             </ul>
@@ -130,7 +130,7 @@
     {
         <script>
             document.addEventListener('DOMContentLoaded', function () {
-                ProseginAlert.warning(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["ModalWarning"].ToString())));
+                ProseginAlert.warning(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["ModalWarning"]?.ToString() ?? string.Empty)));
             });
         </script>
     }
@@ -138,7 +138,7 @@
     {
         <script>
             document.addEventListener('DOMContentLoaded', function () {
-                ProseginAlert.error(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["ModalError"].ToString())));
+                ProseginAlert.error(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["ModalError"]?.ToString() ?? string.Empty)));
             });
         </script>
     }
@@ -146,7 +146,7 @@
     {
         <script>
             document.addEventListener('DOMContentLoaded', function () {
-                ProseginAlert.success(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["ModalSuccess"].ToString())));
+                ProseginAlert.success(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["ModalSuccess"]?.ToString() ?? string.Empty)));
             });
         </script>
     }

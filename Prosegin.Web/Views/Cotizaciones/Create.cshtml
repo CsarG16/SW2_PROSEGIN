@@ -33,7 +33,7 @@
     {
         <div class="alert alert-warning border-warning shadow-sm">
             <i class="bi bi-arrow-repeat me-2"></i>
-            <strong>ACTUALIZACIÓN OBLIGATORIA:</strong> la dirección o el representante legal difiere de SUNAT.
+            <strong>ACTUALIZACIÓN OBLIGATORIA:</strong> la dirección fiscal difiere de SUNAT.
             <form asp-action="ActualizarDesdeSunat" method="post" class="d-inline ms-2">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="clienteId" value="@Model.ClienteId" />
@@ -90,7 +90,6 @@
                             </select>
                         </div>
                         <div class="small text-muted mb-3">
-                            Límite: @Model.LimiteCredito.ToString("C", new CultureInfo("es-PE"))<br />
                             Saldo pendiente: @Model.SaldoPendiente.ToString("C", new CultureInfo("es-PE"))
                         </div>
                     </div>

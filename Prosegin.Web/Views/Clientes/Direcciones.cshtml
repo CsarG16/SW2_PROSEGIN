@@ -1,0 +1,876 @@
+@model Prosegin.Web.ViewModels.Clientes.ClienteDireccionesViewModel
+@{
+    ViewData["Title"] = $"Direcciones de Entrega - {Model.Cliente.RazonSocial}";
+}
+
+@Html.AntiForgeryToken()
+
+<div class="container-fluid px-0">
+    
+    <!-- TARJETA 1: ENCABEZADO Y RESUMEN DEL CLIENTE (EXACTO A GUI SIN LOGO PROSEGIN) -->
+    <div class="prosegin-card p-4 mb-3 border-0 shadow-sm rounded-4 bg-white">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    <h4 class="fw-bold mb-0 text-dark" style="letter-spacing: -0.02em;">@Model.Cliente.RazonSocial</h4>
+                    <span class="text-muted fw-semibold"> RUC: @Model.Cliente.Ruc</span>
+                </div>
+                <div class="d-flex flex-wrap align-items-center gap-3 text-muted small">
+                    <span>
+                        <i class="bi bi-building me-1"></i> @Model.Cliente.DireccionFiscal@(string.IsNullOrWhiteSpace(Model.Cliente.Distrito) ? "" : $", {Model.Cliente.Distrito}")@(string.IsNullOrWhiteSpace(Model.Cliente.Departamento) ? "" : $", {Model.Cliente.Departamento}")
+                    </span>
+                </div>
+            </div>
+
+            <!-- Botón Acción: Volver al Directorio de Clientes y + Nueva Dirección -->
+            <div class="d-flex align-items-center gap-2">
+                <a asp-controller="Clientes" asp-action="Index" class="btn btn-outline-secondary rounded-pill px-3 py-2 small fw-semibold text-decoration-none">
+                    <i class="bi bi-arrow-left me-1"></i> Volver a Clientes
+                </a>
+                <button type="button" class="btn btn-dark rounded-pill px-4 py-2 fw-bold d-inline-flex align-items-center gap-2 shadow-sm text-white" id="btnAbrirModalNuevaSede">
+                    <i class="bi bi-plus-lg"></i> Nueva Dirección de Entrega
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TARJETA 2: BANNER GRE (GUÍAS DE REMISIÓN ELECTRÓNICAS) -->
+    <div class="prosegin-card p-3 mb-4 border-0 shadow-sm rounded-4 bg-white d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="p-2 rounded-3 bg-light text-secondary d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                <i class="bi bi-truck fs-4"></i>
+            </div>
+            <div>
+                <div class="fw-bold text-dark" style="font-size: 0.95rem;">Direcciones validadas para Guías de Remisión Electrónicas (GRE)</div>
+                <div class="text-muted small">Todos los destinos registrados cuentan con código de Ubigeo oficial para emisión directa de GRE remitente y transportista.</div>
+            </div>
+        </div>
+        <div>
+            <span class="badge rounded-pill bg-light text-dark border px-3 py-2 fw-semibold d-inline-flex align-items-center gap-2">
+                <i class="bi bi-geo-alt"></i> <span id="contadorSedesActivas">@Model.DireccionesActivas.Count</span> sedes activas
+            </span>
+        </div>
+    </div>
+
+    <!-- SECCIÓN: LISTADO DE DIRECCIONES DE DESPACHO REGISTRADAS -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-3">
+        <div>
+            <h5 class="fw-bold mb-1 text-dark">Direcciones de Despacho Registradas</h5>
+            <p class="text-muted small mb-0">Puntos de entrega habilitados para este cliente y sus respectivas órdenes de compra.</p>
+        </div>
+        <div style="min-width: 280px; max-width: 360px;">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" id="txtBuscarDireccion" class="form-control border-start-0 ps-0 form-control-prosegin" placeholder="Buscar por sede o distrito..." autocomplete="off">
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENEDOR DE TARJETAS DE SEDES -->
+    <div id="contenedorDirecciones" class="d-flex flex-column gap-3 mb-4">
+        @if (Model.DireccionesActivas.Count == 0)
+        {
+            <div id="emptyStateDirecciones" class="prosegin-card p-5 text-center rounded-4 border-0 shadow-sm bg-white">
+                <i class="bi bi-geo-alt text-muted fs-1 mb-2 d-block"></i>
+                <h6 class="fw-bold text-dark">Aún no hay direcciones de despacho registradas</h6>
+                <p class="text-muted small mb-3">Registre la primera sede autorizada para despachos de EPP y Guías de Remisión.</p>
+                <button type="button" class="btn btn-dark rounded-pill px-4 py-2 fw-bold" onclick="document.getElementById('btnAbrirModalNuevaSede').click();">
+                    <i class="bi bi-plus-lg me-1"></i> Registrar Primera Dirección
+                </button>
+            </div>
+        }
+        else
+        {
+            var index = 1;
+            foreach (var sede in Model.DireccionesActivas)
+            {
+                <div class="sede-card prosegin-card p-3 rounded-4 border-0 shadow-sm bg-white position-relative @(sede.EsPredeterminada ? "sede-predeterminada-card" : "")" 
+                     id="sedeCard-@sede.Id"
+                     data-id="@sede.Id"
+                     data-nombre="@sede.NombreAlias"
+                     data-distrito="@sede.Distrito"
+                     data-direccion="@sede.Direccion"
+                     data-predeterminada="@sede.EsPredeterminada.ToString().ToLower()">
+                    
+                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <span class="fw-bold text-dark fs-6 sede-titulo-numero">@index. @sede.NombreAlias</span>
+                            @if (sede.EsPredeterminada)
+                            {
+                                <span class="badge bg-dark text-white rounded-pill px-2 py-1 small fw-semibold badge-tag-predeterminada">Predeterminada</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(sede.TipoSede))
+                            {
+                                <span class="badge bg-light text-secondary border rounded-pill px-2 py-1 small fw-semibold badge-tag-tipo">@sede.TipoSede</span>
+                            }
+                        </div>
+
+                        <!-- Botones de Acción: Editar y Desactivar -->
+                        <div class="d-flex align-items-center gap-3">
+                            <button type="button" class="btn btn-link text-decoration-none text-dark small fw-semibold p-0 btn-editar-sede" data-id="@sede.Id">
+                                <i class="bi bi-pencil me-1"></i> Editar
+                            </button>
+                            <button type="button" class="btn btn-link text-decoration-none text-danger small fw-semibold p-0 btn-desactivar-sede" data-id="@sede.Id">
+                                <i class="bi bi-slash-circle me-1"></i> Desactivar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Fila 1: Dirección y Ubigeo -->
+                    <div class="text-secondary small mb-2">
+                        <i class="bi bi-geo-alt me-1 text-muted"></i>
+                        <span>@sede.Direccion</span>
+                        @if (!string.IsNullOrWhiteSpace(sede.Ubigeo))
+                        {
+                            <span class="ms-1">· Ubigeo: <strong>@sede.Ubigeo</strong></span>
+                        }
+                    </div>
+
+                    <!-- Fila 2: Contacto, Horario y Restricciones -->
+                    <div class="d-flex flex-wrap align-items-center gap-4 text-muted small">
+                        @if (!string.IsNullOrWhiteSpace(sede.ContactoRecepcion) || !string.IsNullOrWhiteSpace(sede.TelefonoMovil))
+                        {
+                            <span>
+                                <i class="bi bi-person me-1"></i>
+                                @(string.IsNullOrWhiteSpace(sede.ContactoRecepcion) ? "" : sede.ContactoRecepcion)
+                                @if (!string.IsNullOrWhiteSpace(sede.TelefonoMovil))
+                                {
+                                    <span>· <strong>@sede.TelefonoMovil</strong></span>
+                                }
+                            </span>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(sede.HorarioRecepcion))
+                        {
+                            <span>
+                                <i class="bi bi-clock me-1"></i> @sede.HorarioRecepcion
+                            </span>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(sede.RestriccionesAcceso))
+                        {
+                            <span>
+                                <i class="bi bi-exclamation-triangle me-1"></i> @sede.RestriccionesAcceso
+                            </span>
+                        }
+                    </div>
+
+                </div>
+                index++;
+            }
+        }
+    </div>
+
+</div>
+
+<!-- ============================================================== -->
+<!-- MODAL: REGISTRAR / EDITAR SEDE DE ENTREGA (EXACTO A IMAGEN 1) -->
+<!-- ============================================================== -->
+<div class="modal fade" id="modalRegistrarSede" tabindex="-1" aria-labelledby="modalTituloLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            
+            <!-- Encabezado del Modal -->
+            <div class="modal-header border-0 pb-0 pt-4 px-4 align-items-start">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="modalTituloLabel">
+                        <i class="bi bi-building"></i> <span id="modalHeaderTitulo">Registrar Sede de Entrega</span>
+                    </h5>
+                    <p class="text-muted small mb-0 mt-1">Ingresa los datos del punto de entrega autorizada para despachos de EPP y equipos industriales.</p>
+                </div>
+                <button type="button" class="btn-close shadow-none" id="btnCerrarXModal" aria-label="Cerrar"></button>
+            </div>
+
+            <!-- Cuerpo del Formulario Modal -->
+            <div class="modal-body p-4">
+                
+                <!-- Alerta de Validación de Campos Obligatorios -->
+                <div id="alertaCamposFaltantes" class="alert alert-danger d-none py-2 px-3 small rounded-3 mb-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                    <span id="mensajeAlertaCampos">Debe completar todos los datos obligatorios marcados con asterisco (*).</span>
+                </div>
+
+                <form id="formSedeEntrega" novalidate autocomplete="off">
+                    <input type="hidden" id="modalSedeId" value="0" />
+                    <input type="hidden" id="modalClienteId" value="@Model.Cliente.Id" />
+
+                    <!-- Fila 1: Tipo de Sede y Nombre o Alias -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label-prosegin small text-uppercase fw-bold mb-1">
+                                Tipo de Sede <span class="text-danger">*</span>
+                            </label>
+                            <select id="modalTipoSede" class="form-select form-control-prosegin" required>
+                                <option value="">Seleccione tipo...</option>
+                                <option value="Planta Industrial">Planta Industrial</option>
+                                <option value="Obra / Faena">Obra / Faena</option>
+                                <option value="Sede Central / Oficina">Sede Central / Oficina</option>
+                                <option value="Almacén / Depósito">Almacén / Depósito</option>
+                                <option value="Centro de Distribución">Centro de Distribución</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label-prosegin small text-uppercase fw-bold mb-1">
+                                Nombre o Alias de la Sede <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" id="modalNombreAlias" class="form-control form-control-prosegin" 
+                                   placeholder="Ej: Obra Ampliación Planta Sur - Fase II" required />
+                        </div>
+                    </div>
+
+                    <!-- Fila 2: Dirección Detallada y Referencia -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label-prosegin small text-uppercase fw-bold mb-1">
+                                Dirección Detallada <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" id="modalDireccion" class="form-control form-control-prosegin" 
+                                   placeholder="Av., Calle, Jr., Número, Manzana, Lote o Kilómetro" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label-prosegin small text-uppercase fw-bold mb-1">
+                                Referencia de Llegada
+                            </label>
+                            <input type="text" id="modalReferencia" class="form-control form-control-prosegin" 
+                                   placeholder="Frente a garita 4 / Altura Km 28" />
+                        </div>
+                    </div>
+
+                    <!-- Fila 3: Departamento, Provincia, Distrito y Ubigeo -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label-prosegin small text-uppercase fw-bold mb-1">
+                                DEPARTAMENTO <span class="text-danger">*</span>
+                            </label>
+                            <select id="modalDepartamento" class="form-select form-control-prosegin" required>
+                                <option value="Lima">Lima</option>
+                                <option value="Callao">Callao</option>
+                                <option value="Arequipa">Arequipa</option>
+                                <option value="La Libertad">La Libertad</option>
+                                <option value="Piura">Piura</option>
+                                <option value="Cusco">Cusco</option>
+                                <option value="Ica">Ica</option>
+                                <option value="Junín">Junín</option>
+                                <option value="Ancash">Ancash</option>
+                                <option value="Lambayeque">Lambayeque</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-prosegin small text-uppercase fw-bold mb-1">
+                                PROVINCIA <span class="text-danger">*</span>
+                            </label>
+                            <select id="modalProvincia" class="form-select form-control-prosegin" required>
+                                <option value="Lima">Lima</option>
+                                <option value="Callao">Callao</option>
+                                <option value="Cañete">Cañete</option>
+                                <option value="Huaral">Huaral</option>
+                                <option value="Barranca">Barranca</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-prosegin small text-uppercase fw-bold mb-1">
+                                DISTRITO <span class="text-danger">*</span>
+                            </label>
+                            <select id="modalDistrito" class="form-select form-control-prosegin" required>
+                                <option value="Ancón">Ancón</option>
+                                <option value="Ate">Ate</option>
+                                <option value="Barranco">Barranco</option>
+                                <option value="Bellavista">Bellavista</option>
+                                <option value="Breña">Breña</option>
+                                <option value="Callao">Callao</option>
+                                <option value="Carabayllo">Carabayllo</option>
+                                <option value="Carmen de la Legua Reynoso">Carmen de la Legua Reynoso</option>
+                                <option value="Cercado de Lima">Cercado de Lima</option>
+                                <option value="Chaclacayo">Chaclacayo</option>
+                                <option value="Chorrillos">Chorrillos</option>
+                                <option value="Cieneguilla">Cieneguilla</option>
+                                <option value="Comas">Comas</option>
+                                <option value="El Agustino">El Agustino</option>
+                                <option value="Independencia">Independencia</option>
+                                <option value="Jesús María">Jesús María</option>
+                                <option value="La Molina">La Molina</option>
+                                <option value="La Perla">La Perla</option>
+                                <option value="La Punta">La Punta</option>
+                                <option value="La Victoria">La Victoria</option>
+                                <option value="Lima">Lima</option>
+                                <option value="Lince">Lince</option>
+                                <option value="Los Olivos">Los Olivos</option>
+                                <option value="Lurigancho-Chosica">Lurigancho-Chosica</option>
+                                <option value="Lurín">Lurín</option>
+                                <option value="Magdalena del Mar">Magdalena del Mar</option>
+                                <option value="Mi Perú">Mi Perú</option>
+                                <option value="Miraflores">Miraflores</option>
+                                <option value="Pachacámac">Pachacámac</option>
+                                <option value="Pucusana">Pucusana</option>
+                                <option value="Pueblo Libre">Pueblo Libre</option>
+                                <option value="Puente Piedra">Puente Piedra</option>
+                                <option value="Punta Hermosa">Punta Hermosa</option>
+                                <option value="Punta Negra">Punta Negra</option>
+                                <option value="Rímac">Rímac</option>
+                                <option value="San Bartolo">San Bartolo</option>
+                                <option value="San Borja">San Borja</option>
+                                <option value="San Isidro">San Isidro</option>
+                                <option value="San Juan de Lurigancho">San Juan de Lurigancho</option>
+                                <option value="San Juan de Miraflores">San Juan de Miraflores</option>
+                                <option value="San Luis">San Luis</option>
+                                <option value="San Martín de Porres">San Martín de Porres</option>
+                                <option value="San Miguel">San Miguel</option>
+                                <option value="Santa Anita">Santa Anita</option>
+                                <option value="Santa María del Mar">Santa María del Mar</option>
+                                <option value="Santa Rosa">Santa Rosa</option>
+                                <option value="Santiago de Surco">Santiago de Surco</option>
+                                <option value="Surquillo">Surquillo</option>
+                                <option value="Ventanilla">Ventanilla</option>
+                                <option value="Villa El Salvador">Villa El Salvador</option>
+                                <option value="Villa María del Triunfo">Villa María del Triunfo</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-prosegin small text-uppercase fw-bold mb-1">
+                                UBIGEO (6 DÍGITOS) <span class="text-danger">*</span>
+                            </label>
+                            <div class="position-relative">
+                                <input type="text" id="modalUbigeo" maxlength="6" class="form-control form-control-prosegin font-monospace fw-bold" 
+                                       placeholder="150119" value="150119" required />
+                                <i class="bi bi-check-circle text-muted position-absolute" style="right: 12px; top: 50%; transform: translateY(-50%);"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fila 4: Contacto, Teléfono, Horario y Restricciones -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label-prosegin small text-uppercase fw-bold mb-1">
+                                Contacto en Recepción / Almacén
+                            </label>
+                            <input type="text" id="modalContacto" class="form-control form-control-prosegin" placeholder="Nombre y Apellidos" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-prosegin small text-uppercase fw-bold mb-1">
+                                Teléfono Móvil
+                            </label>
+                            <input type="text" id="modalTelefono" class="form-control form-control-prosegin" placeholder="Ej: 987 654 321" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-prosegin small text-uppercase fw-bold mb-1">
+                                Horario Recepción
+                            </label>
+                            <input type="text" id="modalHorario" class="form-control form-control-prosegin" placeholder="08:00 - 17:00" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-prosegin small text-uppercase fw-bold mb-1">
+                                Restricciones de Acceso / EPP
+                            </label>
+                            <input type="text" id="modalRestricciones" class="form-control form-control-prosegin" placeholder="Máx. 15 TN / Casco y botas" />
+                        </div>
+                    </div>
+
+                    <!-- Fila 5: Checkbox Predeterminada y Botones de Acción -->
+                    <div class="d-flex flex-wrap justify-content-between align-items-center pt-2 border-top">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="modalEsPredeterminada">
+                            <label class="form-check-label small fw-semibold text-dark" for="modalEsPredeterminada">
+                                Marcar como dirección predeterminada
+                            </label>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-link text-decoration-none text-muted fw-semibold me-2" id="btnCancelarModal">
+                                Cancelar
+                            </button>
+                            <button type="button" class="btn btn-dark fw-bold px-4 py-2 rounded-3 d-inline-flex align-items-center gap-2 shadow-sm" id="btnGuardarDireccion">
+                                <i class="bi bi-floppy"></i> Guardar Dirección
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos específicos de la vista para replicar fielmente las imágenes de la GUI -->
+<style>
+    .sede-card {
+        border-left: 5px solid transparent !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+    .sede-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+    }
+    .sede-predeterminada-card {
+        border-left: 5px solid #0f172a !important;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            const clienteId = parseInt(document.getElementById('modalClienteId').value, 10);
+
+            // Elementos del Modal
+            const modalElement = document.getElementById('modalRegistrarSede');
+            const bsModal = new bootstrap.Modal(modalElement);
+            const btnAbrirModal = document.getElementById('btnAbrirModalNuevaSede');
+            const btnCerrarX = document.getElementById('btnCerrarXModal');
+            const btnCancelar = document.getElementById('btnCancelarModal');
+            const btnGuardar = document.getElementById('btnGuardarDireccion');
+            const alertaCampos = document.getElementById('alertaCamposFaltantes');
+            const mensajeAlertaCampos = document.getElementById('mensajeAlertaCampos');
+            const modalHeaderTitulo = document.getElementById('modalHeaderTitulo');
+
+            // Campos del formulario
+            const inputSedeId = document.getElementById('modalSedeId');
+            const inputTipoSede = document.getElementById('modalTipoSede');
+            const inputNombreAlias = document.getElementById('modalNombreAlias');
+            const inputDireccion = document.getElementById('modalDireccion');
+            const inputReferencia = document.getElementById('modalReferencia');
+            const inputDepartamento = document.getElementById('modalDepartamento');
+            const inputProvincia = document.getElementById('modalProvincia');
+            const inputDistrito = document.getElementById('modalDistrito');
+            const inputUbigeo = document.getElementById('modalUbigeo');
+            const inputContacto = document.getElementById('modalContacto');
+            const inputTelefono = document.getElementById('modalTelefono');
+            const inputHorario = document.getElementById('modalHorario');
+            const inputRestricciones = document.getElementById('modalRestricciones');
+            const checkPredeterminada = document.getElementById('modalEsPredeterminada');
+
+            // Búsqueda y listado
+            const txtBuscar = document.getElementById('txtBuscarDireccion');
+            const contenedorDirecciones = document.getElementById('contenedorDirecciones');
+            const contadorSedes = document.getElementById('contadorSedesActivas');
+
+            // Datos registrados del cliente (para prellenar automáticamente en el modal de nueva sede)
+            const clienteData = {
+                departamento: '@Html.Raw(Model.Cliente.Departamento ?? "Lima")',
+                provincia: '@Html.Raw(Model.Cliente.Provincia ?? "Lima")',
+                distrito: '@Html.Raw(Model.Cliente.Distrito ?? "Lurín")',
+                ubigeo: '@Html.Raw(Model.Cliente.Ubigeo ?? "150119")'
+            };
+
+            // Catálogo exhaustivo de Ubigeos oficiales para distritos de Lima y Callao
+            const mapUbigeos = {
+                // Callao
+                'Bellavista': { ubigeo: '070102', dep: 'Callao', prov: 'Callao' },
+                'Callao': { ubigeo: '070101', dep: 'Callao', prov: 'Callao' },
+                'Carmen de la Legua Reynoso': { ubigeo: '070103', dep: 'Callao', prov: 'Callao' },
+                'La Perla': { ubigeo: '070104', dep: 'Callao', prov: 'Callao' },
+                'La Punta': { ubigeo: '070105', dep: 'Callao', prov: 'Callao' },
+                'Mi Perú': { ubigeo: '070107', dep: 'Callao', prov: 'Callao' },
+                'Ventanilla': { ubigeo: '070106', dep: 'Callao', prov: 'Callao' },
+
+                // Lima Metropolitana
+                'Ancón': { ubigeo: '150102', dep: 'Lima', prov: 'Lima' },
+                'Ate': { ubigeo: '150103', dep: 'Lima', prov: 'Lima' },
+                'Barranco': { ubigeo: '150104', dep: 'Lima', prov: 'Lima' },
+                'Breña': { ubigeo: '150105', dep: 'Lima', prov: 'Lima' },
+                'Carabayllo': { ubigeo: '150106', dep: 'Lima', prov: 'Lima' },
+                'Chaclacayo': { ubigeo: '150107', dep: 'Lima', prov: 'Lima' },
+                'Chorrillos': { ubigeo: '150108', dep: 'Lima', prov: 'Lima' },
+                'Cieneguilla': { ubigeo: '150109', dep: 'Lima', prov: 'Lima' },
+                'Comas': { ubigeo: '150110', dep: 'Lima', prov: 'Lima' },
+                'El Agustino': { ubigeo: '150111', dep: 'Lima', prov: 'Lima' },
+                'Independencia': { ubigeo: '150112', dep: 'Lima', prov: 'Lima' },
+                'Jesús María': { ubigeo: '150113', dep: 'Lima', prov: 'Lima' },
+                'La Molina': { ubigeo: '150114', dep: 'Lima', prov: 'Lima' },
+                'La Victoria': { ubigeo: '150115', dep: 'Lima', prov: 'Lima' },
+                'Lima': { ubigeo: '150101', dep: 'Lima', prov: 'Lima' },
+                'Cercado de Lima': { ubigeo: '150101', dep: 'Lima', prov: 'Lima' },
+                'Lince': { ubigeo: '150116', dep: 'Lima', prov: 'Lima' },
+                'Los Olivos': { ubigeo: '150117', dep: 'Lima', prov: 'Lima' },
+                'Lurigancho-Chosica': { ubigeo: '150118', dep: 'Lima', prov: 'Lima' },
+                'Lurín': { ubigeo: '150119', dep: 'Lima', prov: 'Lima' },
+                'Magdalena del Mar': { ubigeo: '150120', dep: 'Lima', prov: 'Lima' },
+                'Miraflores': { ubigeo: '150122', dep: 'Lima', prov: 'Lima' },
+                'Pachacámac': { ubigeo: '150123', dep: 'Lima', prov: 'Lima' },
+                'Pucusana': { ubigeo: '150124', dep: 'Lima', prov: 'Lima' },
+                'Pueblo Libre': { ubigeo: '150121', dep: 'Lima', prov: 'Lima' },
+                'Puente Piedra': { ubigeo: '150125', dep: 'Lima', prov: 'Lima' },
+                'Punta Hermosa': { ubigeo: '150126', dep: 'Lima', prov: 'Lima' },
+                'Punta Negra': { ubigeo: '150127', dep: 'Lima', prov: 'Lima' },
+                'Rímac': { ubigeo: '150128', dep: 'Lima', prov: 'Lima' },
+                'San Bartolo': { ubigeo: '150129', dep: 'Lima', prov: 'Lima' },
+                'San Borja': { ubigeo: '150130', dep: 'Lima', prov: 'Lima' },
+                'San Isidro': { ubigeo: '150131', dep: 'Lima', prov: 'Lima' },
+                'San Juan de Lurigancho': { ubigeo: '150132', dep: 'Lima', prov: 'Lima' },
+                'San Juan de Miraflores': { ubigeo: '150133', dep: 'Lima', prov: 'Lima' },
+                'San Luis': { ubigeo: '150134', dep: 'Lima', prov: 'Lima' },
+                'San Martín de Porres': { ubigeo: '150135', dep: 'Lima', prov: 'Lima' },
+                'San Miguel': { ubigeo: '150136', dep: 'Lima', prov: 'Lima' },
+                'Santa Anita': { ubigeo: '150137', dep: 'Lima', prov: 'Lima' },
+                'Santa María del Mar': { ubigeo: '150138', dep: 'Lima', prov: 'Lima' },
+                'Santa Rosa': { ubigeo: '150139', dep: 'Lima', prov: 'Lima' },
+                'Santiago de Surco': { ubigeo: '150140', dep: 'Lima', prov: 'Lima' },
+                'Surquillo': { ubigeo: '150141', dep: 'Lima', prov: 'Lima' },
+                'Villa El Salvador': { ubigeo: '150142', dep: 'Lima', prov: 'Lima' },
+                'Villa María del Triunfo': { ubigeo: '150143', dep: 'Lima', prov: 'Lima' }
+            };
+
+            function normalizarTexto(txt) {
+                if (!txt) return '';
+                return txt.toString()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .trim()
+                    .toLowerCase();
+            }
+
+            function seleccionarOpcion(selectEl, valorDeseado, fallbackValor = '') {
+                if (!selectEl) return;
+                const valorLimpio = (valorDeseado || fallbackValor || '').toString().trim();
+                const buscado = normalizarTexto(valorLimpio);
+                if (!buscado) {
+                    if (selectEl.options.length > 0) selectEl.selectedIndex = 0;
+                    return;
+                }
+
+                let encontrado = false;
+                for (let i = 0; i < selectEl.options.length; i++) {
+                    const opt = selectEl.options[i];
+                    if (normalizarTexto(opt.value) === buscado || normalizarTexto(opt.text) === buscado) {
+                        selectEl.selectedIndex = i;
+                        encontrado = true;
+                        break;
+                    }
+                }
+
+                // Si no se encuentra en las opciones estáticas, crear la opción dinámicamente para que no quede vacía
+                if (!encontrado && valorLimpio) {
+                    const nuevaOpcion = new Option(valorLimpio, valorLimpio, true, true);
+                    selectEl.add(nuevaOpcion);
+                    selectEl.value = valorLimpio;
+                }
+            }
+
+            function actualizarPorDistrito(nombreDistrito) {
+                const norm = normalizarTexto(nombreDistrito);
+                for (const [distKey, data] of Object.entries(mapUbigeos)) {
+                    if (normalizarTexto(distKey) === norm) {
+                        if (data.ubigeo) {
+                            inputUbigeo.value = data.ubigeo;
+                            inputUbigeo.classList.remove('is-invalid');
+                        }
+                        if (data.dep) seleccionarOpcion(inputDepartamento, data.dep);
+                        if (data.prov) seleccionarOpcion(inputProvincia, data.prov);
+                        return;
+                    }
+                }
+            }
+
+            inputDistrito.addEventListener('change', function () {
+                actualizarPorDistrito(this.value);
+            });
+
+            // Limpiar errores visuales al tipear
+            const camposRequeridos = [inputTipoSede, inputNombreAlias, inputDireccion, inputDepartamento, inputProvincia, inputDistrito, inputUbigeo];
+            camposRequeridos.forEach(campo => {
+                ['input', 'change'].forEach(evt => {
+                    campo.addEventListener(evt, function () {
+                        if (this.value.trim().length > 0) {
+                            this.classList.remove('is-invalid');
+                        }
+                    });
+                });
+            });
+
+            function limpiarFormularioModal() {
+                inputSedeId.value = '0';
+                inputTipoSede.value = '';
+                inputNombreAlias.value = '';
+                inputDireccion.value = '';
+                inputReferencia.value = '';
+
+                // Agarrar automáticamente los datos registrados del cliente
+                seleccionarOpcion(inputDepartamento, clienteData.departamento, 'Lima');
+                seleccionarOpcion(inputProvincia, clienteData.provincia, 'Lima');
+                seleccionarOpcion(inputDistrito, clienteData.distrito, 'Lurín');
+                inputUbigeo.value = clienteData.ubigeo || (mapUbigeos[inputDistrito.value] ? mapUbigeos[inputDistrito.value].ubigeo : '150119');
+
+                inputContacto.value = '';
+                inputTelefono.value = '';
+                inputHorario.value = '';
+                inputRestricciones.value = '';
+                checkPredeterminada.checked = false;
+
+                camposRequeridos.forEach(campo => campo.classList.remove('is-invalid'));
+                alertaCampos.classList.add('d-none');
+            }
+
+            // ==============================================================
+            // CRITERIO 1: ABRIR MODAL AL CLIQUEAR "+ NUEVA DIRECCIÓN"
+            // ==============================================================
+            btnAbrirModal.addEventListener('click', function () {
+                limpiarFormularioModal();
+                modalHeaderTitulo.textContent = 'Registrar Sede de Entrega';
+                bsModal.show();
+            });
+
+            // ==============================================================
+            // CRITERIO 4: CANCELAR O (X) DESCARTE DE DATOS Y CIERRE
+            // ==============================================================
+            function descartarYCerrar() {
+                limpiarFormularioModal();
+                bsModal.hide();
+            }
+
+            btnCancelar.addEventListener('click', descartarYCerrar);
+            btnCerrarX.addEventListener('click', descartarYCerrar);
+
+            // ==============================================================
+            // CRITERIO 2 Y 3: GUARDAR DIRECCIÓN CON VALIDACIONES
+            // ==============================================================
+            btnGuardar.addEventListener('click', async function () {
+                let hayErrores = false;
+
+                camposRequeridos.forEach(campo => {
+                    if (!campo.value || campo.value.trim().length === 0) {
+                        campo.classList.add('is-invalid');
+                        hayErrores = true;
+                    } else {
+                        campo.classList.remove('is-invalid');
+                    }
+                });
+
+                if (hayErrores) {
+                    alertaCampos.classList.remove('d-none');
+                    mensajeAlertaCampos.textContent = 'Debe completar todos los datos obligatorios marcados con asterisco (*).';
+                    
+                    const primerInvalido = camposRequeridos.find(c => c.classList.contains('is-invalid'));
+                    if (primerInvalido) primerInvalido.focus();
+
+                    ProseginAlert.warning(
+                        'Debe completar todos los campos obligatorios marcados con asterisco (*).',
+                        'Campos Obligatorios Faltantes'
+                    );
+                    return;
+                }
+
+                alertaCampos.classList.add('d-none');
+                btnGuardar.disabled = true;
+                const textoOriginal = btnGuardar.innerHTML;
+                btnGuardar.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Guardando...';
+
+                const payload = {
+                    Id: parseInt(inputSedeId.value, 10) || 0,
+                    ClienteId: clienteId,
+                    TipoSede: inputTipoSede.value.trim(),
+                    NombreAlias: inputNombreAlias.value.trim(),
+                    Direccion: inputDireccion.value.trim(),
+                    Referencia: inputReferencia.value.trim(),
+                    Departamento: inputDepartamento.value.trim(),
+                    Provincia: inputProvincia.value.trim(),
+                    Distrito: inputDistrito.value.trim(),
+                    Ubigeo: inputUbigeo.value.trim(),
+                    ContactoRecepcion: inputContacto.value.trim(),
+                    TelefonoMovil: inputTelefono.value.trim(),
+                    HorarioRecepcion: inputHorario.value.trim(),
+                    RestriccionesAcceso: inputRestricciones.value.trim(),
+                    EsPredeterminada: checkPredeterminada.checked,
+                    Activo: true
+                };
+
+                try {
+                    const response = await fetch('/Clientes/GuardarDireccion', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': token
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const res = await response.json();
+
+                    if (!res.success) {
+                        alertaCampos.classList.remove('d-none');
+                        mensajeAlertaCampos.textContent = res.message || 'Error al guardar la sede.';
+                        ProseginAlert.error(res.message || 'No se pudo guardar la sede de entrega.');
+                        return;
+                    }
+
+                    // Éxito: cerrar modal
+                    bsModal.hide();
+                    limpiarFormularioModal();
+
+                    ProseginAlert.success(res.message, 'Operación Exitosa');
+
+                    // Actualizar el contador de sedes activas
+                    if (contadorSedes && res.totalActivas !== undefined) {
+                        contadorSedes.textContent = res.totalActivas;
+                    }
+
+                    // Recargar la vista suavemente para reflejar la sincronización de base de datos
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+
+                } catch (error) {
+                    alertaCampos.classList.remove('d-none');
+                    mensajeAlertaCampos.textContent = 'Error de conexión con el servidor.';
+                    ProseginAlert.error('Ocurrió un error al procesar la solicitud.');
+                } finally {
+                    btnGuardar.disabled = false;
+                    btnGuardar.innerHTML = textoOriginal;
+                }
+            });
+
+            // ==============================================================
+            // CRITERIO 5: BÚSQUEDA DINÁMICA POR SEDE O DISTRITO
+            // ==============================================================
+            txtBuscar.addEventListener('input', function () {
+                const query = this.value.trim().toLowerCase();
+                const cards = document.querySelectorAll('.sede-card');
+                let visibles = 0;
+
+                cards.forEach(card => {
+                    const nombre = (card.getAttribute('data-nombre') || '').toLowerCase();
+                    const distrito = (card.getAttribute('data-distrito') || '').toLowerCase();
+                    const direccion = (card.getAttribute('data-direccion') || '').toLowerCase();
+
+                    if (nombre.includes(query) || distrito.includes(query) || direccion.includes(query)) {
+                        card.style.display = '';
+                        visibles++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                let msgNoResultados = document.getElementById('msgNoResultados');
+                if (visibles === 0 && cards.length > 0) {
+                    if (!msgNoResultados) {
+                        msgNoResultados = document.createElement('div');
+                        msgNoResultados.id = 'msgNoResultados';
+                        msgNoResultados.className = 'alert alert-light text-center py-4 rounded-4 border text-muted small';
+                        msgNoResultados.innerHTML = `<i class="bi bi-search mb-2 fs-4 d-block"></i> No se encontraron direcciones para "<strong>${query}</strong>".`;
+                        contenedorDirecciones.appendChild(msgNoResultados);
+                    } else {
+                        msgNoResultados.style.display = '';
+                        msgNoResultados.innerHTML = `<i class="bi bi-search mb-2 fs-4 d-block"></i> No se encontraron direcciones para "<strong>${query}</strong>".`;
+                    }
+                } else if (msgNoResultados) {
+                    msgNoResultados.style.display = 'none';
+                }
+            });
+
+            // ==============================================================
+            // CRITERIO 6: EDITAR SEDE (PRECARGA EN MODAL)
+            // ==============================================================
+            document.addEventListener('click', async function (e) {
+                const btnEditar = e.target.closest('.btn-editar-sede');
+                if (!btnEditar) return;
+
+                const sedeId = btnEditar.getAttribute('data-id');
+                if (!sedeId) return;
+
+                limpiarFormularioModal();
+                modalHeaderTitulo.textContent = 'Editar Sede de Entrega';
+
+                try {
+                    const response = await fetch(`/Clientes/ObtenerDireccion?id=${encodeURIComponent(sedeId)}`);
+                    const res = await response.json();
+
+                    if (!res.success || !res.direccion) {
+                        ProseginAlert.error(res.message || 'No se pudo obtener la información de la sede.');
+                        return;
+                    }
+
+                    const d = res.direccion;
+                    inputSedeId.value = d.id;
+                    inputTipoSede.value = d.tipoSede || '';
+                    inputNombreAlias.value = d.nombreAlias || '';
+                    inputDireccion.value = d.direccion || '';
+                    inputReferencia.value = d.referencia || '';
+                    seleccionarOpcion(inputDepartamento, d.departamento, clienteData.departamento);
+                    seleccionarOpcion(inputProvincia, d.provincia, clienteData.provincia);
+                    seleccionarOpcion(inputDistrito, d.distrito, clienteData.distrito);
+                    inputUbigeo.value = d.ubigeo || (mapUbigeos[inputDistrito.value] ? mapUbigeos[inputDistrito.value].ubigeo : clienteData.ubigeo);
+                    inputContacto.value = d.contactoRecepcion || '';
+                    inputTelefono.value = d.telefonoMovil || '';
+                    inputHorario.value = d.horarioRecepcion || '';
+                    inputRestricciones.value = d.restriccionesAcceso || '';
+                    checkPredeterminada.checked = d.esPredeterminada === true;
+
+                    bsModal.show();
+                } catch (error) {
+                    ProseginAlert.error('Error al cargar los datos para edición.');
+                }
+            });
+
+            // ==============================================================
+            // CRITERIO 7: DESACTIVAR SEDE (CON VALIDACIÓN DE PREDETERMINADA)
+            // ==============================================================
+            document.addEventListener('click', async function (e) {
+                const btnDesactivar = e.target.closest('.btn-desactivar-sede');
+                if (!btnDesactivar) return;
+
+                const sedeId = parseInt(btnDesactivar.getAttribute('data-id'), 10);
+                if (!sedeId) return;
+
+                const card = document.getElementById(`sedeCard-${sedeId}`);
+                const esPredeterminada = card && card.getAttribute('data-predeterminada') === 'true';
+
+                if (esPredeterminada) {
+                    ProseginAlert.warning(
+                        'No es posible desactivar la sede predeterminada. Debe designar primero otra sede como predeterminada.',
+                        'Acción Restringida'
+                    );
+                    return;
+                }
+
+                // Confirmación visual
+                const confirmacion = confirm('¿Está seguro de desactivar esta sede de entrega? Ya no figurará disponible para el cálculo de flete ni emisión de Guías de Remisión.');
+                if (!confirmacion) return;
+
+                try {
+                    const response = await fetch('/Clientes/DesactivarDireccion', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': token
+                        },
+                        body: JSON.stringify({ Id: sedeId })
+                    });
+
+                    const res = await response.json();
+
+                    if (!res.success) {
+                        ProseginAlert.warning(res.message || 'No se pudo desactivar la sede.', 'Atención');
+                        return;
+                    }
+
+                    // Remover tarjeta suavemente y descontar contador
+                    if (card) {
+                        card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                        card.style.opacity = '0';
+                        card.style.transform = 'translateY(-10px)';
+                        setTimeout(() => {
+                            card.remove();
+                            // Renumerar tarjetas visibles
+                            const titulos = document.querySelectorAll('.sede-titulo-numero');
+                            titulos.forEach((t, idx) => {
+                                const texto = t.textContent.replace(/^\d+\.\s*/, '');
+                                t.textContent = `${idx + 1}. ${texto}`;
+                            });
+
+                            if (contadorSedes && res.totalActivas !== undefined) {
+                                contadorSedes.textContent = res.totalActivas;
+                            }
+                        }, 300);
+                    }
+
+                    ProseginAlert.success(res.message, 'Sede Desactivada');
+
+                } catch (error) {
+                    ProseginAlert.error('Ocurrió un error al intentar desactivar la sede.');
+                }
+            });
+
+        });
+    </script>
+}

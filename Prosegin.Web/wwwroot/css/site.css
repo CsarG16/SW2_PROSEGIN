@@ -132,12 +132,60 @@ body {
   text-decoration: none;
 }
 
-.btn-prosegin-primary:hover {
+.btn-prosegin-primary:hover:not(:disabled) {
   background-color: var(--prosegin-orange-hover);
   border-color: var(--prosegin-orange-hover);
   color: #ffffff;
   transform: translateY(-1px);
   box-shadow: 0 3px 6px rgba(245, 158, 11, 0.4);
+}
+
+.btn-prosegin-primary:disabled,
+.btn-prosegin-primary[disabled] {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #94a3b8 !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  opacity: 0.75 !important;
+  transform: none !important;
+}
+
+/* Botón Guardar Alternativo (Naranja Contorno / Secundario Cálido para Guardar Cliente) */
+.btn-prosegin-secondary-orange {
+  background-color: #fef3c7;
+  border: 1.5px solid var(--prosegin-orange);
+  color: #92400e;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-prosegin-secondary-orange:hover:not(:disabled) {
+  background-color: var(--prosegin-orange);
+  border-color: var(--prosegin-orange);
+  color: #0f172a;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(245, 158, 11, 0.3);
+}
+
+.btn-prosegin-secondary-orange:disabled,
+.btn-prosegin-secondary-orange[disabled] {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #94a3b8 !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  opacity: 0.75 !important;
+  transform: none !important;
 }
 
 /* Botón Secundario (Blanco con Borde) */
