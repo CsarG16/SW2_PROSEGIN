@@ -16,6 +16,7 @@
 !.env.example
 appsettings.local.json
 appsettings.Development.local.json
+runtimeconfig.template.json
 
 # 3. Visual Studio y editores
 .vs/
