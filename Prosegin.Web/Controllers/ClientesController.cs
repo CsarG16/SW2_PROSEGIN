@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Prosegin.Data;
 using Prosegin.Data.Entities;
+using Prosegin.Data.Validation;
 using Prosegin.Web.Services;
 using Prosegin.Web.ViewModels.Clientes;
 
@@ -36,7 +37,12 @@ namespace Prosegin.Web.Controllers
                 return View(model);
             }
 
-            var esRuc = model.Termino.All(char.IsDigit) && model.Termino.Length == 11;
+            var esRuc = ClienteBusquedaRules.EsEntradaSoloNumeros(model.Termino);
+            if (esRuc && !_sunatService.ValidarFormatoRuc(model.Termino, out var errorRuc))
+            {
+                model.Mensaje = errorRuc;
+                return View(model);
+            }
 
             var clientesQuery = _context.Clientes
                 .AsNoTracking()
@@ -48,7 +54,7 @@ namespace Prosegin.Web.Controllers
             }
             else
             {
-                clientesQuery = clientesQuery.Where(c => EF.Functions.Like(c.RazonSocial, $"%{model.Termino}%") || c.Ruc.Contains(model.Termino));
+                clientesQuery = clientesQuery.Where(c => EF.Functions.Like(c.RazonSocial, $"%{model.Termino}%"));
             }
 
             var clientes = await clientesQuery
@@ -62,7 +68,7 @@ namespace Prosegin.Web.Controllers
             {
                 // Criterio de Aceptación 2:
                 // DADO QUE el cliente consultado no existe en los registros de la empresa, CUANDO selecciono "BUSCAR", ENTONCES se muestra el MSG: "No se encontraron clientes registrados con los datos ingresados".
-                model.Mensaje = "No se encontraron clientes registrados con los datos ingresados";
+                model.Mensaje = ClienteBusquedaRules.MensajeSinResultados;
 
                 if (esRuc)
                 {
@@ -82,11 +88,30 @@ namespace Prosegin.Web.Controllers
                 {
                     model.ConsultaSunat = await _sunatService.ConsultarRucAsync(model.Termino, cancellationToken);
                     var clienteLocal = clientes[0];
-                    if (model.ConsultaSunat.Success
-                        && !string.IsNullOrWhiteSpace(model.ConsultaSunat.DireccionFiscal)
-                        && (!string.Equals(clienteLocal.DireccionFiscal.Trim(), model.ConsultaSunat.DireccionFiscal.Trim(), StringComparison.OrdinalIgnoreCase)))
+                    var clienteEnVista = model.Resultados.FirstOrDefault(c => c.Id == clienteLocal.Id);
+                    if (model.ConsultaSunat.Success)
                     {
-                        model.MensajeActualizacionSunat = "La dirección fiscal cambió según SUNAT. Debe actualizar los datos del cliente antes de generar un documento de venta.";
+                        if (clienteEnVista != null)
+                        {
+                            clienteEnVista.EstadoSunat = model.ConsultaSunat.Estado ?? "NO VERIFICADO";
+                            clienteEnVista.CondicionSunat = model.ConsultaSunat.Condicion ?? "NO VERIFICADO";
+                        }
+
+                        var direccionSunat = model.ConsultaSunat.DireccionFiscal?.Trim();
+                        if (!string.IsNullOrWhiteSpace(direccionSunat)
+                            && !string.Equals(clienteLocal.DireccionFiscal.Trim(), direccionSunat, StringComparison.OrdinalIgnoreCase))
+                        {
+                            model.MensajeActualizacionSunat = "La dirección fiscal cambió según SUNAT. Debe actualizar los datos del cliente antes de generar un documento de venta.";
+                        }
+                    }
+                    else
+                    {
+                        if (clienteEnVista != null)
+                        {
+                            clienteEnVista.EstadoSunat = "NO VERIFICADO";
+                            clienteEnVista.CondicionSunat = "NO VERIFICADO";
+                        }
+                        model.Mensaje = "No se pudo verificar el estado tributario del cliente en SUNAT. La cotización permanecerá deshabilitada hasta validar sus datos.";
                     }
                 }
                 catch

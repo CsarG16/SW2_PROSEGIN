@@ -1,5 +1,6 @@
 @model Prosegin.Web.ViewModels.Clientes.ClienteBusquedaViewModel
 @using System.Globalization
+@using Prosegin.Data.Validation
 
 @{
     ViewData["Title"] = "Directorio de Clientes";
@@ -209,7 +210,7 @@
                                         </a>
 
                                         <!-- Botón Cotizar -->
-                                        @if (esActivo && esHabido && !cliente.ClienteBloqueado)
+                                        @if (ClienteBusquedaRules.PuedeAbrirCotizacion(cliente.EstadoSunat, cliente.CondicionSunat) && !cliente.ClienteBloqueado)
                                         {
                                             <a asp-controller="Cotizaciones" asp-action="Create" asp-route-clienteId="@cliente.Id"
                                                class="btn-prosegin-action"

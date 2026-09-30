@@ -13,7 +13,7 @@ public static class RucValidator
         }
 
         ruc = ruc.Trim();
-        if (ruc.Length != 11 || !ruc.All(char.IsDigit)
+        if (ruc.Length != 11 || !ruc.All(caracter => caracter >= '0' && caracter <= '9')
             || (!ruc.StartsWith("10") && !ruc.StartsWith("20")))
         {
             mensajeError = "Número de RUC inválido";

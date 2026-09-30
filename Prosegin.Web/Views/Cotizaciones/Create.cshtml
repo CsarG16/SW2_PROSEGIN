@@ -83,11 +83,11 @@
                         <div class="mb-3">
                             <label asp-for="CondicionPago" class="form-label-prosegin">Condición de pago</label>
                             <select asp-for="CondicionPago" class="form-select form-control-prosegin">
-                                <option value="Contado">Contado</option>
                                 <option value="7 días">Crédito a 7 días</option>
                                 <option value="15 días">Crédito a 15 días</option>
                                 <option value="30 días">Crédito a 30 días</option>
                             </select>
+                            <span asp-validation-for="CondicionPago" class="text-danger small"></span>
                         </div>
                         <div class="small text-muted mb-3">
                             Saldo pendiente: @Model.SaldoPendiente.ToString("C", new CultureInfo("es-PE"))
