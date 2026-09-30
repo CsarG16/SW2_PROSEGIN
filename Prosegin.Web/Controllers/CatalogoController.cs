@@ -170,20 +170,22 @@ public class CatalogoController : Controller
 
         if (producto == null || string.IsNullOrWhiteSpace(producto.RutaFichaTecnicaPdf))
         {
-            return NotFound();
+            return NotFound("El producto no cuenta con ficha técnica registrada.");
         }
 
         var filePath = ResolvePdfPath(producto.RutaFichaTecnicaPdf);
         if (!System.IO.File.Exists(filePath))
         {
-            return NotFound();
+            return NotFound($"El archivo de la ficha técnica no se encuentra disponible: {Path.GetFileName(producto.RutaFichaTecnicaPdf)}");
         }
 
         var fileName = string.IsNullOrWhiteSpace(producto.NombreArchivoPdf)
-            ? "ficha-tecnica.pdf"
+            ? Path.GetFileName(filePath)
             : producto.NombreArchivoPdf;
 
-        return PhysicalFile(filePath, "application/pdf", fileName);
+        // Configurar Content-Disposition inline para visualización directa en el navegador
+        Response.Headers["Content-Disposition"] = $"inline; filename=\"{fileName}\"";
+        return PhysicalFile(filePath, "application/pdf");
     }
 
     private string ResolvePdfPath(string relativeOrAbsolutePath)
@@ -193,19 +195,31 @@ public class CatalogoController : Controller
             return string.Empty;
         }
 
-        if (Path.IsPathRooted(relativeOrAbsolutePath))
+        // Si ya es una ruta física absoluta existente (con unidad tipo C:\... o UNC)
+        if (Path.IsPathFullyQualified(relativeOrAbsolutePath) && System.IO.File.Exists(relativeOrAbsolutePath))
         {
-            return relativeOrAbsolutePath;
+            return Path.GetFullPath(relativeOrAbsolutePath);
         }
+
+        var webRoot = !string.IsNullOrWhiteSpace(_webHostEnvironment.WebRootPath)
+            ? _webHostEnvironment.WebRootPath
+            : Path.Combine(_webHostEnvironment.ContentRootPath, "wwwroot");
+
+        var cleanPath = relativeOrAbsolutePath.TrimStart('/', '\\').Replace('/', Path.DirectorySeparatorChar);
+        var fileNameOnly = Path.GetFileName(cleanPath);
 
         var candidates = new[]
         {
-            Path.Combine(_webHostEnvironment.WebRootPath ?? string.Empty, relativeOrAbsolutePath.TrimStart('/','\\')),
-            Path.Combine(_webHostEnvironment.ContentRootPath, relativeOrAbsolutePath.TrimStart('/','\\')),
-            Path.Combine(_webHostEnvironment.WebRootPath ?? string.Empty, "uploads", "fichas", relativeOrAbsolutePath.TrimStart('/','\\'))
+            Path.Combine(webRoot, cleanPath),
+            Path.Combine(webRoot, "fichas", fileNameOnly),
+            Path.Combine(webRoot, "uploads", "fichas", fileNameOnly),
+            Path.Combine(_webHostEnvironment.ContentRootPath, cleanPath),
+            Path.Combine(_webHostEnvironment.ContentRootPath, "wwwroot", cleanPath),
+            Path.Combine(_webHostEnvironment.ContentRootPath, "wwwroot", "fichas", fileNameOnly)
         };
 
-        return candidates.FirstOrDefault(System.IO.File.Exists) ?? candidates[0];
+        var found = candidates.FirstOrDefault(System.IO.File.Exists);
+        return found != null ? Path.GetFullPath(found) : Path.GetFullPath(candidates[0]);
     }
 
     private void ValidarFichaTecnica(IFormFile? fichaTecnica)

@@ -56,6 +56,15 @@
   --state-info: #0284c7;
   --state-info-bg: #e0f2fe;
   --state-info-text: #0369a1;
+
+  /* ── Apple Design: Motion & Spring Tokens ── */
+  --spring-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -2px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 4px 10px -5px rgba(15, 23, 42, 0.04);
+  --focus-ring: 0 0 0 3px rgba(245, 158, 11, 0.35);
 }
 
 * {
@@ -69,6 +78,8 @@ body {
   margin: 0;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  font-optical-sizing: auto;
+  text-rendering: optimizeLegibility;
 }
 
 /* ============================================================
@@ -81,7 +92,7 @@ body {
   border: 1px solid var(--border-card);
   border-radius: 12px;
   box-shadow: var(--shadow-card);
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: box-shadow var(--duration-normal) var(--spring-ease), border-color var(--duration-normal) var(--spring-ease);
 }
 
 .prosegin-card:hover {
@@ -107,6 +118,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  letter-spacing: -0.01em;
 }
 
 .prosegin-card-body {
@@ -127,7 +139,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  transition: all 0.2s ease;
+  transition: all var(--duration-fast) var(--spring-ease);
   box-shadow: 0 1px 3px rgba(245, 158, 11, 0.3);
   text-decoration: none;
 }
@@ -138,6 +150,17 @@ body {
   color: #ffffff;
   transform: translateY(-1px);
   box-shadow: 0 3px 6px rgba(245, 158, 11, 0.4);
+}
+
+.btn-prosegin-primary:active {
+  transform: scale(0.97);
+  box-shadow: 0 1px 2px rgba(245, 158, 11, 0.3);
+  transition-duration: 80ms;
+}
+
+.btn-prosegin-primary:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .btn-prosegin-primary:disabled,
@@ -201,7 +224,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  transition: all 0.2s ease;
+  transition: all var(--duration-fast) var(--spring-ease);
   text-decoration: none;
 }
 
@@ -209,6 +232,16 @@ body {
   background-color: var(--bg-card-subtle);
   border-color: #cbd5e1;
   color: var(--text-dark);
+}
+
+.btn-prosegin-secondary:active {
+  transform: scale(0.97);
+  transition-duration: 80ms;
+}
+
+.btn-prosegin-secondary:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 /* Botón Oscuro / Acción Especial */
@@ -223,11 +256,21 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.2s ease;
+  transition: all var(--duration-fast) var(--spring-ease);
 }
 .btn-prosegin-dark:hover {
   background-color: #1e293b;
   color: #ffffff;
+}
+
+.btn-prosegin-dark:active {
+  transform: scale(0.97);
+  transition-duration: 80ms;
+}
+
+.btn-prosegin-dark:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 /* 3. Campos de Formulario (Inputs Limpios) */
@@ -238,12 +281,18 @@ body {
   padding: 0.65rem 0.9rem;
   font-size: 0.92rem;
   color: var(--text-dark);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color var(--duration-normal) var(--spring-ease), box-shadow var(--duration-normal) var(--spring-ease);
 }
 
 .form-control-prosegin:focus {
   border-color: var(--prosegin-orange);
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+  outline: none;
+}
+
+.form-control-prosegin:focus-visible {
+  border-color: var(--prosegin-orange);
+  box-shadow: var(--focus-ring);
   outline: none;
 }
 
@@ -334,7 +383,8 @@ body {
   font-size: 1.75rem;
   font-weight: 800;
   color: var(--text-dark);
-  line-height: 1.1;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
   margin-bottom: 0.5rem;
 }
 
@@ -372,8 +422,12 @@ body {
   vertical-align: middle;
 }
 
+.table-prosegin tbody tr {
+  transition: background-color var(--duration-fast) var(--spring-ease);
+}
+
 .table-prosegin tbody tr:hover {
-  background-color: #f8fafc;
+  background-color: rgba(245, 158, 11, 0.04);
 }
 
 .catalog-shopping {
@@ -434,20 +488,32 @@ body {
 
 .catalog-category {
   flex: 0 0 auto;
-  padding: 0.45rem 0.7rem;
+  padding: 0.45rem 0.85rem;
   border: 1px solid #d5ddd8;
-  border-radius: 4px;
-  background: #fff;
+  border-radius: 6px;
+  background: #ffffff;
   color: #394840;
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  user-select: none;
+}
+
+.catalog-category:hover:not(.active) {
+  background: #fffbeb;
+  border-color: #f59e0b;
+  color: #b45309;
 }
 
 .catalog-category.active {
-  color: #fff;
-  background: var(--catalog-ink);
-  border-color: var(--catalog-ink);
+  color: #0f172a !important;
+  background: var(--prosegin-orange, #f59e0b) !important;
+  border-color: #d97706 !important;
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
 }
 
 .catalog-layout {
@@ -473,11 +539,33 @@ body {
   min-height: 126px;
   padding: 1rem;
   border-bottom: 1px solid #e8edea;
-  animation: catalog-enter 240ms ease both;
+  border-left: 4px solid transparent;
+  animation: catalog-enter 300ms var(--spring-ease) both;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .catalog-product:last-of-type {
   border-bottom: 0;
+}
+
+.catalog-product:hover:not(.is-selected) {
+  background-color: #fafbfb;
+}
+
+.catalog-product.is-selected {
+  background-color: #fff7ed !important;
+  border-left-color: var(--prosegin-orange, #f59e0b) !important;
+  border-bottom-color: #fed7aa !important;
+}
+
+.catalog-product.is-selected:hover {
+  background-color: #ffedd5 !important;
+}
+
+.catalog-product.is-selected .catalog-product-mark {
+  background-color: #ffedd5;
+  color: #ea580c;
+  border-color: #fed7aa;
 }
 
 .catalog-product-mark {
@@ -1096,7 +1184,7 @@ body {
   text-align: center;
   transform: scale(0.92) translateY(10px);
   opacity: 0;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease-in-out;
+  transition: transform 0.3s var(--spring-bounce), opacity 0.22s ease-in-out;
   position: relative;
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
@@ -1211,5 +1299,75 @@ body {
 .prosegin-alert-btn-cancel:focus {
   background: #e2e8f0;
   color: #1e293b;
+}
+
+/* ============================================================
+   APPLE DESIGN: Entry Animations & Stagger
+   ============================================================ */
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* KPI cards — staggered entrance */
+.kpi-stat-card {
+  animation: fadeSlideUp 0.4s var(--spring-ease) both;
+}
+
+.col-sm-6:nth-child(2) .kpi-stat-card { animation-delay: 60ms; }
+.col-sm-6:nth-child(3) .kpi-stat-card { animation-delay: 120ms; }
+.col-sm-6:nth-child(4) .kpi-stat-card { animation-delay: 180ms; }
+
+/* Content cards — subtle entrance */
+.prosegin-content-body .prosegin-card {
+  animation: fadeSlideUp 0.35s var(--spring-ease) both;
+}
+
+/* Catalog cart sticky — elevated surface shadow */
+.catalog-cart {
+  box-shadow: var(--shadow-md);
+}
+
+/* ============================================================
+   APPLE DESIGN: Accessibility — Reduced Motion & Transparency
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 200ms !important;
+  }
+
+  .prosegin-alert-modal {
+    transform: none !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .prosegin-topbar {
+    background: #ffffff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .prosegin-card {
+    border-color: var(--text-muted) !important;
+  }
+
+  .table-prosegin tbody td {
+    border-bottom-color: var(--text-subtle) !important;
+  }
 }
 
