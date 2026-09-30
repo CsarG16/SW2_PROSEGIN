@@ -196,15 +196,15 @@ namespace Prosegin.Web.Controllers
                 Ruc = ruc?.Trim() ?? string.Empty,
                 RazonSocial = razonSocial?.Trim() ?? string.Empty,
                 DireccionFiscal = direccionFiscal?.Trim() ?? string.Empty,
-                EstadoSunat = string.IsNullOrWhiteSpace(estadoSunat) ? "ACTIVO" : estadoSunat.Trim().ToUpper(),
-                CondicionSunat = string.IsNullOrWhiteSpace(condicionSunat) ? "HABIDO" : condicionSunat.Trim().ToUpper()
+                EstadoSunat = string.IsNullOrWhiteSpace(estadoSunat) ? "NO VERIFICADO" : estadoSunat.Trim().ToUpper(),
+                CondicionSunat = string.IsNullOrWhiteSpace(condicionSunat) ? "NO VERIFICADO" : condicionSunat.Trim().ToUpper()
             });
         }
 
         // POST: Clientes/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(ClienteCreateViewModel model, string? accion = null)
+        public async Task<IActionResult> Create(ClienteCreateViewModel model, string? accion = null, CancellationToken cancellationToken = default)
         {
             // 1. Validación estricta Módulo 11 oficial de SUNAT
             if (!_sunatService.ValidarFormatoRuc(model.Ruc, out var errorRuc))
@@ -217,12 +217,23 @@ namespace Prosegin.Web.Controllers
                 var rucLimpio = model.Ruc.Trim();
 
                 // 2. Validación de RUC duplicado en base de datos
-                var rucExiste = await _context.Clientes.AnyAsync(c => c.Ruc == rucLimpio);
+                var rucExiste = await _context.Clientes.AnyAsync(c => c.Ruc == rucLimpio, cancellationToken);
                 if (rucExiste)
                 {
-                    ModelState.AddModelError("Ruc", $"El RUC {rucLimpio} ya se encuentra registrado en el sistema.");
+                    ModelState.AddModelError("Ruc", "El RUC ingresado ya se encuentra registrado en el padrón de clientes.");
                     return View(model);
                 }
+
+                // Nunca confiar en el estado tributario enviado por el navegador: comprobarlo
+                // nuevamente en el servidor al guardar. Si SUNAT no responde, permitir el alta
+                // manual dejando el cliente explícitamente sin verificar.
+                var consultaSunat = await _sunatService.ConsultarRucAsync(rucLimpio, cancellationToken);
+                model.EstadoSunat = consultaSunat.Success
+                    ? consultaSunat.Estado ?? "NO VERIFICADO"
+                    : "NO VERIFICADO";
+                model.CondicionSunat = consultaSunat.Success
+                    ? consultaSunat.Condicion ?? "NO VERIFICADO"
+                    : "NO VERIFICADO";
 
                 var cliente = new Cliente
                 {
@@ -234,8 +245,8 @@ namespace Prosegin.Web.Controllers
                     Provincia = string.IsNullOrWhiteSpace(model.Provincia) ? null : model.Provincia.Trim(),
                     Distrito = string.IsNullOrWhiteSpace(model.Distrito) ? null : model.Distrito.Trim(),
                     Ubigeo = string.IsNullOrWhiteSpace(model.Ubigeo) ? null : model.Ubigeo.Trim(),
-                    EstadoSunat = string.IsNullOrWhiteSpace(model.EstadoSunat) ? "ACTIVO" : model.EstadoSunat.Trim().ToUpper(),
-                    CondicionSunat = string.IsNullOrWhiteSpace(model.CondicionSunat) ? "HABIDO" : model.CondicionSunat.Trim().ToUpper(),
+                    EstadoSunat = model.EstadoSunat.Trim().ToUpper(),
+                    CondicionSunat = model.CondicionSunat.Trim().ToUpper(),
                     Telefono = model.Telefono?.Trim() ?? string.Empty,
                     CorreoElectronico = model.CorreoElectronico?.Trim() ?? string.Empty,
                     FechaCreacion = DateTime.UtcNow,
@@ -273,19 +284,35 @@ namespace Prosegin.Web.Controllers
                 }
 
                 // Detección de riesgo tributario al guardar
-                if (cliente.CondicionSunat != "HABIDO" || cliente.EstadoSunat != "ACTIVO")
+                var continuarConDirecciones = !string.IsNullOrWhiteSpace(accion)
+                    && accion.Contains("direcciones", StringComparison.OrdinalIgnoreCase);
+                if (continuarConDirecciones)
                 {
-                    TempData["WarningMessage"] = $"Cliente registrado, pero atención: figura en SUNAT como [{cliente.CondicionSunat}] y [{cliente.EstadoSunat}]. La emisión de Facturas Electrónicas no tendrá crédito fiscal.";
+                    TempData["ModalSuccess"] = "Cliente registrado con éxito";
                 }
                 else
                 {
-                    TempData["SuccessMessage"] = $"Cliente '{cliente.RazonSocial}' (RUC: {cliente.Ruc}) registrado y asociado correctamente con Ubigeo {cliente.Ubigeo ?? "N/A"}.";
+                    TempData["SuccessMessage"] = "Cliente registrado con éxito";
+                }
+
+                if (cliente.CondicionSunat != "HABIDO" || cliente.EstadoSunat != "ACTIVO")
+                {
+                    var mensajeTributario = consultaSunat.Success
+                        ? $"Atención: el cliente figura en SUNAT como [{cliente.CondicionSunat}] y [{cliente.EstadoSunat}]. No podrá generar cotizaciones mientras no figure ACTIVO y HABIDO."
+                        : "No se pudo verificar el estado tributario en SUNAT. El cliente quedó como NO VERIFICADO y no podrá generar cotizaciones hasta actualizar sus datos.";
+                    if (continuarConDirecciones)
+                    {
+                        TempData["ModalWarning"] = mensajeTributario;
+                    }
+                    else
+                    {
+                        TempData["WarningMessage"] = mensajeTributario;
+                    }
                 }
 
                 // HU 1.3: Conexión para continuar a registrar o gestionar direcciones de entrega
-                if (!string.IsNullOrWhiteSpace(accion) && accion.Contains("direcciones", StringComparison.OrdinalIgnoreCase))
+                if (continuarConDirecciones)
                 {
-                    TempData["SuccessMessage"] = $"Cliente '{cliente.RazonSocial}' guardado exitosamente. Su dirección fiscal ha sido habilitada automáticamente como sede de entrega predeterminada.";
                     return RedirectToAction(nameof(Direcciones), new { clienteId = cliente.Id });
                 }
 

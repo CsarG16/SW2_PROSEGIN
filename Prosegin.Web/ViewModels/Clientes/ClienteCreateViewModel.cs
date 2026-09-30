@@ -49,9 +49,9 @@ namespace Prosegin.Web.ViewModels.Clientes
         public string? Ubigeo { get; set; }
 
         [Display(Name = "Estado SUNAT")]
-        public string EstadoSunat { get; set; } = "ACTIVO";
+        public string EstadoSunat { get; set; } = "NO VERIFICADO";
 
         [Display(Name = "Condición SUNAT")]
-        public string CondicionSunat { get; set; } = "HABIDO";
+        public string CondicionSunat { get; set; } = "NO VERIFICADO";
     }
 }

@@ -44,8 +44,8 @@
 
     <form asp-action="Create" method="post" id="formDatosTributarios" novalidate>
         @Html.AntiForgeryToken()
-        <input type="hidden" asp-for="EstadoSunat" id="hiddenEstadoSunat" value="ACTIVO" />
-        <input type="hidden" asp-for="CondicionSunat" id="hiddenCondicionSunat" value="HABIDO" />
+        <input type="hidden" asp-for="EstadoSunat" id="hiddenEstadoSunat" value="NO VERIFICADO" />
+        <input type="hidden" asp-for="CondicionSunat" id="hiddenCondicionSunat" value="NO VERIFICADO" />
 
         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
 
@@ -336,7 +336,7 @@
             </div>
 
             <div class="d-flex flex-wrap align-items-center gap-2">
-                <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary py-2 px-3" title="Cancelar y descartar el registro">
+                <a asp-controller="Clientes" asp-action="Create" class="btn-prosegin-secondary py-2 px-3" title="Cancelar y descartar el registro">
                     <i class="bi bi-x-circle me-1"></i> Cancelar
                 </a>
                 <button type="submit" id="btnGuardarCliente" class="btn-prosegin-secondary-orange py-2 px-3 fw-bold" disabled onclick="document.getElementById('hiddenAccion').value='guardar';" title="Guarda el cliente en el sistema">
@@ -421,6 +421,7 @@
             const statusLabel = document.getElementById('statusLabel');
 
             let sunatConsultado = false;
+            let rucConsultado = '';
 
             // Función reactiva centralizada para estado y condición SUNAT
             function actualizarEstadoTributarioVisual(estado, condicion, consultando = false) {
@@ -499,7 +500,7 @@
                 if (!ruc || ruc.length !== 11 || !/^\d+$/.test(ruc)) return false;
 
                 const prefijo = ruc.substring(0, 2);
-                if (!['10', '15', '17', '20'].includes(prefijo)) return false;
+                if (!['10', '20'].includes(prefijo)) return false;
 
                 const factores = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
                 let suma = 0;
@@ -520,6 +521,22 @@
             // 1. Filtrar RUC para aceptar exclusivamente números y permitir Enter para consultar
             txtRuc.addEventListener('input', function () {
                 this.value = this.value.replace(/[^0-9]/g, '');
+                const rucActual = this.value.trim();
+                if (rucConsultado && rucActual !== rucConsultado) {
+                    rucConsultado = '';
+                    sunatConsultado = false;
+                    txtRazonSocial.value = '';
+                    txtDireccion.value = '';
+                    txtDepartamento.value = '';
+                    txtProvincia.value = '';
+                    txtDistrito.value = '';
+                    txtUbigeo.value = '';
+                    hiddenEstadoSunat.value = 'NO VERIFICADO';
+                    hiddenCondicionSunat.value = 'NO VERIFICADO';
+                    previewRazonSocial.textContent = 'Razón social del cliente';
+                    previewRazonSocial.classList.remove('filled');
+                    actualizarEstadoTributarioVisual('Pendiente', 'Pendiente');
+                }
                 evaluarRucEnTiempoReal();
             });
 
@@ -631,6 +648,7 @@
                 try {
                     const response = await fetch(`/Clientes/ConsultarSunat?ruc=${encodeURIComponent(rucNumero)}`);
                     const data = await response.json();
+                    if (txtRuc.value.trim() !== rucNumero) return;
 
                     if (!data.success && data.yaRegistrado) {
                         // HU 1.1: Interrumpir la operación y mostrar advertencia emergente
@@ -642,6 +660,7 @@
                         setCheck(iconChkSunat, lblChkSunat, false, 'Ya registrado en padrón');
                         actualizarEstadoTributarioVisual('Pendiente', 'Pendiente');
                         sunatConsultado = false;
+                        rucConsultado = '';
 
                         ProseginAlert.warning(
                             data.message || "El RUC ingresado ya se encuentra registrado en el padrón de clientes.",
@@ -659,8 +678,8 @@
                         txtUbigeo.value = data.ubigeo || '150101';
 
                         // Actualizar campos ocultos para persistencia
-                        hiddenEstadoSunat.value = data.estado || 'ACTIVO';
-                        hiddenCondicionSunat.value = data.condicion || 'HABIDO';
+                        hiddenEstadoSunat.value = data.estado || 'NO VERIFICADO';
+                        hiddenCondicionSunat.value = data.condicion || 'NO VERIFICADO';
 
                         txtRazonSocial.classList.remove('is-invalid');
                         txtDireccion.classList.remove('is-invalid');
@@ -677,7 +696,7 @@
                             alertaRiesgo.classList.add('d-none');
                         }
 
-                        actualizarEstadoTributarioVisual(data.estado || 'ACTIVO', data.condicion || 'HABIDO');
+                        actualizarEstadoTributarioVisual(data.estado || 'NO VERIFICADO', data.condicion || 'NO VERIFICADO');
 
                         previewRazonSocial.textContent = data.razonSocial;
                         previewRazonSocial.classList.add('filled');
@@ -692,6 +711,7 @@
                         rucStatusText.className = 'text-success fw-bold';
                         rucStatusText.innerHTML = `<i class="bi bi-check-circle-fill"></i> RUC validado en SUNAT (${data.condicion})`;
                         sunatConsultado = true;
+                        rucConsultado = rucNumero;
                     } else {
                         alertaRiesgo.classList.add('d-none');
                         rucStatusText.className = 'text-danger fw-bold';
@@ -699,12 +719,20 @@
                         setCheck(iconChkSunat, lblChkSunat, false, 'No encontrado en SUNAT');
                         actualizarEstadoTributarioVisual('Pendiente', 'Pendiente');
                         sunatConsultado = false;
+                        rucConsultado = rucNumero;
+                        hiddenEstadoSunat.value = 'NO VERIFICADO';
+                        hiddenCondicionSunat.value = 'NO VERIFICADO';
                     }
                 } catch (error) {
+                    if (txtRuc.value.trim() !== rucNumero) return;
                     alertaRiesgo.classList.add('d-none');
                     rucStatusText.className = 'text-danger fw-bold';
                     rucStatusText.innerHTML = '<i class="bi bi-x-circle-fill"></i> Error al conectar con el servicio de SUNAT.';
                     actualizarEstadoTributarioVisual('Pendiente', 'Pendiente');
+                    sunatConsultado = false;
+                    rucConsultado = rucNumero;
+                    hiddenEstadoSunat.value = 'NO VERIFICADO';
+                    hiddenCondicionSunat.value = 'NO VERIFICADO';
                 } finally {
                     btnConsultar.disabled = false;
                     iconConsultar.className = 'bi bi-search';
@@ -776,7 +804,8 @@
                 const razonValida = txtRazonSocial.value.trim().length > 0;
                 const dirValida = txtDireccion.value.trim().length > 0;
 
-                const esFormularioValido = rucValido && razonValida && dirValida;
+                const consultaVigente = rucConsultado === rucVal;
+                const esFormularioValido = rucValido && consultaVigente && razonValida && dirValida;
 
                 if (esFormularioValido) {
                     statusDot.className = 'status-dot';
@@ -800,6 +829,12 @@
                 let esValido = true;
 
                 const ruc = txtRuc.value.trim();
+                if (rucConsultado !== ruc) {
+                    rucStatusText.className = 'text-danger fw-bold';
+                    rucStatusText.textContent = 'Consulte este RUC antes de guardar.';
+                    btnConsultar.focus();
+                    esValido = false;
+                }
                 if (ruc.length !== 11) {
                     txtRuc.classList.add('is-invalid');
                     txtRuc.focus();
@@ -854,13 +889,14 @@
             const rucInicial = txtRuc.value.trim();
             if (rucInicial.length === 11 && validarModulo11Sunat(rucInicial)) {
                 if (txtRazonSocial.value.trim().length > 0) {
-                    actualizarEstadoTributarioVisual(hiddenEstadoSunat.value || 'ACTIVO', hiddenCondicionSunat.value || 'HABIDO');
+                    actualizarEstadoTributarioVisual(hiddenEstadoSunat.value || 'NO VERIFICADO', hiddenCondicionSunat.value || 'NO VERIFICADO');
                     setCheck(iconChkDigitos, lblChkDigitos, true, 'RUC válido (Módulo 11)');
                     setCheck(iconChkSunat, lblChkSunat, true, `SUNAT: ${hiddenCondicionSunat.value} y ${hiddenEstadoSunat.value}`);
                     if (txtDireccion.value.trim().length > 0) {
                         setCheck(iconChkDireccion, lblChkDireccion, true, 'Dirección registrada');
                     }
                     sunatConsultado = true;
+                    rucConsultado = rucInicial;
                 } else {
                     evaluarRucEnTiempoReal();
                 }
