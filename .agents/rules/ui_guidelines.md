@@ -1,141 +1,235 @@
-# 🎨 PROSEGIN UI - Guía de Estilos y Componentes para el Equipo
+# 🎨 PROSEGIN UI - Sistema de Diseño Estandarizado (V2)
 
-Esta regla define el **Sistema de Diseño (Design System)** oficial de **PROSEGIN Core** para garantizar que los desarrolladores y la IA construyan pantallas consistentes, modernas y alineadas a la imagen corporativa del negocio.
-
----
-
-## 1. 🌈 Paleta de Colores y Variables CSS (`site.css`)
-
-Utilizar siempre las variables CSS en lugar de colores quemados:
-
-| Elemento / Propósito | Variable CSS | Color / Hex | Muestra |
-| :--- | :--- | :--- | :--- |
-| **Naranja Corporativo (Principal)** | `var(--prosegin-orange)` | `#f59e0b` | Botones de acción, logos, acentos activos |
-| **Naranja Hover** | `var(--prosegin-orange-hover)` | `#d97706` | Efecto hover de botones primarios |
-| **Fondo Sidebar (Oscuro)** | `var(--sidebar-bg)` | `#0c1322` | Menú lateral izquierdo |
-| **Fondo Canvas (Claro)** | `var(--bg-canvas)` | `#f4f6f9` | Fondo general de todas las vistas |
-| **Fondo de Tarjetas** | `var(--bg-card)` | `#ffffff` | Superficie de paneles y formularios |
-| **Texto Principal** | `var(--text-dark)` | `#0f172a` | Encabezados y títulos principales |
-| **Texto Secundario** | `var(--text-muted)` | `#64748b` | Subtítulos, labels y texto explicativo |
-| **Borde Estándar** | `var(--border-card)` | `#e2e8f0` | Líneas divisorias y bordes de tarjetas |
-
-### Estados y Alertas (SUNAT, SLA, Despachos)
-- **Éxito / Aprobado**: `var(--state-success)` (`#16a34a`) con fondo `var(--state-success-bg)` (`#dcfce7`).
-- **Pendiente / Advertencia**: `var(--state-warning)` (`#f59e0b`) con fondo `var(--state-warning-bg)` (`#fef3c7`).
-- **Retraso SLA / Peligro**: `var(--state-danger)` (`#ef4444`) con fondo `var(--state-danger-bg)` (`#fee2e2`).
-- **Informativo**: `var(--state-info)` (`#0284c7`) con fondo `var(--state-info-bg)` (`#e0f2fe`).
+Este documento define el **Sistema de Diseño (Design System)** oficial de **PROSEGIN Core** para garantizar que todos los desarrolladores y la IA construyan pantallas consistentes, limpias y profesionales.
 
 ---
 
-## 2. 📦 Componentes Reutilizables (Copy-Paste)
+## 🎨 0. Color de Acento Central (Cambiar Todo el Sistema)
 
-### A. Tarjeta Estándar (`.prosegin-card`)
-Toda sección, formulario o listado debe ir dentro de una tarjeta blanca con bordes sutiles:
+Para cambiar el color corporativo de todo el sistema, solo modifica estas variables en `:root` de `site.css`:
+
+```css
+:root {
+  --accent: #f59e0b;        /* Color principal (Dorado/Ámbar) */
+  --accent-hover: #d97706;  /* Hover */
+  --accent-light: #fef3c7;  /* Fondo sutil */
+  --accent-text: #b45309;   /* Texto sobre fondo sutil */
+  --accent-on: #0f172a;     /* Texto SOBRE el botón de acento */
+  --accent-shadow: rgba(245, 158, 11, 0.30);
+}
+```
+
+> Cambiar estas 6 líneas actualiza automáticamente: botones primarios, botones de acción en tablas, badges, focus de inputs, alertas y encabezados.
+
+---
+
+## 1. 📦 Componentes Reutilizables (Copy-Paste)
+
+### A. Encabezado de Página (`.prosegin-page-header--accent`)
+Toda vista DEBE iniciar con un encabezado minimalista con acento lateral dorado:
 
 ```html
-<div class="prosegin-card mb-4">
-    <div class="prosegin-card-header">
-        <h5 class="prosegin-card-title">
-            <i class="bi bi-box-seam text-warning"></i> Título de la Sección
-        </h5>
-        <span class="badge-prosegin badge-prosegin-success">Activo</span>
-    </div>
-    <div class="prosegin-card-body">
-        <!-- Contenido, tablas o campos aquí -->
+<div class="prosegin-card p-3 p-md-4 mb-3">
+    <div class="prosegin-page-header--accent" style="margin-bottom: 0;">
+        <div class="header-content">
+            <h1 class="page-title">Directorio de Clientes</h1>
+            <p class="page-subtitle">Gestión comercial y verificación SUNAT</p>
+        </div>
+        <a asp-action="Create" class="btn-prosegin-primary">
+            + REGISTRAR NUEVO CLIENTE
+        </a>
     </div>
 </div>
 ```
+
+**PROHIBIDO:** Banners gigantes con texto "SISTEMA COMPRA Y VENTA...", fondos recargados o sombras estridentes.
 
 ---
 
 ### B. Botones de Acción
 
 ```html
-<!-- Botón Principal (Naranja corporativo para Crear, Guardar, Confirmar) -->
-<button type="submit" class="btn-prosegin-primary">
-    <i class="bi bi-check2-circle"></i> Guardar Cambios
+<!-- Botón Principal (Dorado Corporativo — para Buscar, Guardar, Registrar) -->
+<button class="btn-prosegin-primary">
+    <i class="bi bi-search"></i> BUSCAR
 </button>
 
-<!-- Botón Secundario (Blanco con borde para Cancelar, Volver, Filtros) -->
+<!-- Botón Secundario (Blanco con borde — para Cancelar, Volver) -->
 <a href="#" class="btn-prosegin-secondary">
-    <i class="bi bi-arrow-left"></i> Regresar
+    <i class="bi bi-arrow-left"></i> Cancelar
 </a>
 
-<!-- Botón Oscuro (Para acciones secundarias o de gestión) -->
+<!-- Botón de Acción en Fila de Tabla (Dorado — para Cotizar, Editar) -->
+<a href="#" class="btn-prosegin-action">
+    <i class="bi bi-file-earmark-text"></i> Cotizar
+</a>
+
+<!-- Botón Secundario en Fila (Gris suave — para Sedes, Detalles) -->
+<a href="#" class="btn-prosegin-action-secondary">
+    <i class="bi bi-building"></i> Sedes (3)
+</a>
+
+<!-- Botón Oscuro Midnight (Opcional — para acciones especiales) -->
 <button class="btn-prosegin-dark">
     <i class="bi bi-printer"></i> Imprimir Rótulo
 </button>
 ```
 
+| Clase CSS | Color | Uso |
+| :--- | :--- | :--- |
+| `.btn-prosegin-primary` | **Dorado** (`--accent`) | Crear, Guardar, Buscar, Confirmar |
+| `.btn-prosegin-secondary` | Blanco con borde | Cancelar, Volver, Limpiar |
+| `.btn-prosegin-action` | **Dorado** (`--accent`) | Acción en fila de tabla (Cotizar) |
+| `.btn-prosegin-action-secondary` | Gris suave | Acción secundaria en tabla (Sedes) |
+| `.btn-prosegin-dark` | Midnight Navy (`--dark`) | Acciones especiales |
+
 ---
 
-### C. Campos de Formulario (Inputs Limpios)
+### C. Badges de Estado (No interactivos, con Dot Indicator)
+Los estados **no deben parecer botones clickeables**. Usar siempre `.badge-status` con `.status-dot`:
 
 ```html
-<div class="mb-3">
-    <label class="form-label-prosegin">Número de RUC</label>
-    <div class="input-group">
-        <span class="input-group-text bg-light border-end-0 text-muted">
-            <i class="bi bi-hash"></i>
-        </span>
-        <input type="text" class="form-control form-control-prosegin border-start-0" placeholder="Ej: 20123456789" />
+<!-- Activo + Habido (verde) -->
+<span class="badge-status badge-status-success">
+    <span class="status-dot"></span> ACTIVO · HABIDO
+</span>
+
+<!-- Neutral / Pendiente -->
+<span class="badge-status badge-status-neutral">
+    <span class="status-dot"></span> NO HABIDO
+</span>
+
+<!-- Peligro / Bloqueado -->
+<span class="badge-status badge-status-danger">
+    <span class="status-dot"></span> BLOQUEADO
+</span>
+
+<!-- Advertencia / En Proceso -->
+<span class="badge-status badge-status-warning">
+    <span class="status-dot"></span> PENDIENTE
+</span>
+```
+
+---
+
+### D. Caja de Búsqueda (`.prosegin-search-box`)
+
+```html
+<div class="prosegin-search-box">
+    <i class="bi bi-search"></i>
+    <input type="text" name="termino" placeholder="Ingrese RUC o razón social..." />
+</div>
+```
+
+---
+
+### E. Tabla Estándar (`.prosegin-table`)
+
+```html
+<div class="prosegin-card overflow-hidden">
+    <!-- Encabezado de Resultados -->
+    <div class="prosegin-results-header">
+        <div class="d-flex align-items-center gap-2">
+            <span class="results-title">Clientes Encontrados</span>
+            <span class="count-pill">3 registros</span>
+        </div>
+        <span class="results-note">Datos validados con Padrón SUNAT</span>
     </div>
-    <div class="form-text text-muted small">Debe contener 11 dígitos numéricos.</div>
+
+    <!-- Tabla -->
+    <div class="table-responsive">
+        <table class="prosegin-table mb-0">
+            <thead>
+                <tr>
+                    <th>EMPRESA</th>
+                    <th>RUC</th>
+                    <th class="text-end">ACCIONES</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="row-icon-avatar"><i class="bi bi-building"></i></div>
+                            <div>
+                                <div class="fw-bold text-dark">CONSTRUCTORA DEL PACIFICO S.A.C.</div>
+                                <div class="text-muted" style="font-size: 0.78rem;">Cliente Habitual</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>20548912340</td>
+                    <td class="text-end">
+                        <a href="#" class="btn-prosegin-action-secondary">Sedes (2)</a>
+                        <a href="#" class="btn-prosegin-action">Cotizar</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pie -->
+    <div class="prosegin-table-footer">
+        <span>Mostrando 3 de 3 registros</span>
+    </div>
 </div>
 ```
 
 ---
 
-### D. Badges / Pastillas de Estado (Según Screenshot)
+### F. Alertas Estándar (`.prosegin-alert`)
 
 ```html
-<span class="badge-prosegin badge-prosegin-success">
-    <i class="bi bi-check-circle"></i> GRE Emitida
-</span>
+<div class="prosegin-alert prosegin-alert-warning">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>No se encontraron clientes registrados con los datos ingresados</span>
+</div>
 
-<span class="badge-prosegin badge-prosegin-warning">
-    <i class="bi bi-clock"></i> Listo Despacho
-</span>
+<div class="prosegin-alert prosegin-alert-danger">
+    <i class="bi bi-exclamation-octagon-fill"></i>
+    <span>El cliente tiene facturas vencidas.</span>
+</div>
 
-<span class="badge-prosegin badge-prosegin-danger">
-    <i class="bi bi-exclamation-triangle"></i> Retraso SLA 42h
-</span>
-
-<span class="badge-prosegin badge-prosegin-neutral">
-    <i class="bi bi-circle"></i> En Espera
-</span>
+<div class="prosegin-alert prosegin-alert-success">
+    <i class="bi bi-check-circle-fill"></i>
+    <span>Cliente registrado exitosamente.</span>
+</div>
 ```
 
 ---
 
-### E. Tablas de Datos (`.table-prosegin`)
+### G. Estado Vacío (`.prosegin-empty-state`)
 
 ```html
-<div class="table-responsive">
-    <table class="table-prosegin">
-        <thead>
-            <tr>
-                <th>Código Pedido</th>
-                <th>Cliente</th>
-                <th>Estado</th>
-                <th>Monto Total</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td class="fw-bold">PED-2026-0842</td>
-                <td>Volcan Compañía Minera S.A.A.</td>
-                <td><span class="badge-prosegin badge-prosegin-warning">Listo Despacho</span></td>
-                <td class="fw-bold">S/ 32,450.00</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></button>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+<div class="prosegin-card">
+    <div class="prosegin-empty-state">
+        <i class="bi bi-building-x empty-icon d-block"></i>
+        <div class="empty-title">No se encontraron resultados</div>
+        <div class="empty-desc">Verifique los datos ingresados o registre un nuevo cliente.</div>
+        <a href="#" class="btn-prosegin-primary">
+            <i class="bi bi-person-plus"></i> Registrar cliente
+        </a>
+    </div>
 </div>
 ```
+
+---
+
+## 2. 🌈 Paleta Completa de Variables CSS
+
+| Elemento | Variable CSS | Color |
+| :--- | :--- | :--- |
+| **Acento Principal (Dorado)** | `var(--accent)` | `#f59e0b` |
+| **Acento Hover** | `var(--accent-hover)` | `#d97706` |
+| **Acento Fondo Sutil** | `var(--accent-light)` | `#fef3c7` |
+| **Midnight Navy (Dark)** | `var(--dark)` | `#0f1b2b` |
+| **Fondo Canvas** | `var(--bg-canvas)` | `#f8fafc` |
+| **Fondo de Tarjetas** | `var(--bg-card)` | `#ffffff` |
+| **Texto Principal** | `var(--text-dark)` | `#0f172a` |
+| **Texto Secundario** | `var(--text-muted)` | `#64748b` |
+| **Borde Estándar** | `var(--border-card)` | `#e2e8f0` |
+| **Éxito** | `var(--state-success)` | `#16a34a` |
+| **Peligro** | `var(--state-danger)` | `#ef4444` |
+| **Advertencia** | `var(--state-warning)` | `#f59e0b` |
 
 ---
 
@@ -149,4 +243,3 @@ Cuenta con los módulos oficiales:
 3. `Edición de Precios`
 4. `Gestión de Pedidos`
 5. `Datos Tributarios` (actualmente en `/Clientes/Create`)
-
