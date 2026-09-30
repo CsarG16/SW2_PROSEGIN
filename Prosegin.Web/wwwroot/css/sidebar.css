@@ -25,7 +25,7 @@
   bottom: 0;
   left: 0;
   z-index: 1045;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s var(--spring-ease);
   overflow-y: auto;
 }
 
@@ -93,7 +93,7 @@
   padding: 0.25rem;
   border-radius: 6px;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color var(--duration-fast) var(--spring-ease);
 }
 .sidebar-toggle-btn:hover {
   color: #ffffff;
@@ -139,13 +139,13 @@
   font-size: 0.88rem;
   font-weight: 500;
   border-radius: 8px;
-  transition: all 0.2s ease;
+  transition: all var(--duration-fast) var(--spring-ease);
 }
 
 .sidebar-nav-link i {
   font-size: 1.1rem;
   color: #64748b;
-  transition: color 0.2s ease;
+  transition: color var(--duration-fast) var(--spring-ease);
 }
 
 .sidebar-nav-link:hover {
@@ -165,6 +165,11 @@
 
 .sidebar-nav-link.active i {
   color: var(--prosegin-orange);
+}
+
+.sidebar-nav-link:active {
+  transform: scale(0.97);
+  transition-duration: 80ms;
 }
 
 /* Footer del Sidebar */
@@ -243,7 +248,7 @@
   font-size: 1.1rem;
   padding: 0.2rem;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color var(--duration-fast) var(--spring-ease);
 }
 .btn-logout:hover {
   color: #ef4444;
@@ -263,8 +268,10 @@
 }
 
 .prosegin-topbar {
-  background: #ffffff;
-  border-bottom: 1px solid var(--border-card);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
   padding: 0.85rem 1.75rem;
   display: flex;
   align-items: center;
