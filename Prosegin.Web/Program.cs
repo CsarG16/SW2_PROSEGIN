@@ -80,5 +80,8 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+// Sembrado de datos de prueba si no existen
+await ClienteDataSeeder.SeedAsync(app.Services);
+
 app.Run();
 // prosegin core

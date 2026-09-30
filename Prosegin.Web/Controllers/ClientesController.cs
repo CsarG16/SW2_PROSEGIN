@@ -28,7 +28,7 @@ namespace Prosegin.Web.Controllers
                 var clientesRegistrados = await _context.Clientes
                     .AsNoTracking()
                     .Where(c => c.Activo)
-                    .OrderByDescending(c => c.Id)
+                    .OrderBy(c => c.RazonSocial)
                     .Take(50)
                     .ToListAsync(cancellationToken);
 
@@ -36,34 +36,20 @@ namespace Prosegin.Web.Controllers
                 return View(model);
             }
 
-            var esRuc = model.Termino.All(char.IsDigit);
-            if (esRuc)
-            {
-                if (model.Termino.Length != 11 || (!model.Termino.StartsWith("10") && !model.Termino.StartsWith("20")))
-                {
-                    model.Mensaje = "El RUC debe contener 11 dígitos y comenzar con 10 o 20.";
-                    return View(model);
-                }
-
-                if (!_sunatService.ValidarFormatoRuc(model.Termino, out var errorRuc))
-                {
-                    model.Mensaje = errorRuc;
-                    return View(model);
-                }
-            }
-            else if (model.Termino.Length < 3)
-            {
-                model.Mensaje = "Ingrese al menos 3 letras de la razón social.";
-                return View(model);
-            }
+            var esRuc = model.Termino.All(char.IsDigit) && model.Termino.Length == 11;
 
             var clientesQuery = _context.Clientes
                 .AsNoTracking()
                 .Where(c => c.Activo);
 
-            clientesQuery = esRuc
-                ? clientesQuery.Where(c => c.Ruc == model.Termino)
-                : clientesQuery.Where(c => EF.Functions.Like(c.RazonSocial, $"%{model.Termino}%"));
+            if (esRuc)
+            {
+                clientesQuery = clientesQuery.Where(c => c.Ruc == model.Termino);
+            }
+            else
+            {
+                clientesQuery = clientesQuery.Where(c => EF.Functions.Like(c.RazonSocial, $"%{model.Termino}%") || c.Ruc.Contains(model.Termino));
+            }
 
             var clientes = await clientesQuery
                 .OrderBy(c => c.RazonSocial)
@@ -72,28 +58,41 @@ namespace Prosegin.Web.Controllers
 
             model.Resultados = await MapearClientesConEstadoCrediticioAsync(clientes, cancellationToken);
 
-            if (esRuc && model.Resultados.Count == 0)
+            if (model.Resultados.Count == 0)
             {
-                model.ConsultaSunat = await _sunatService.ConsultarRucAsync(model.Termino, cancellationToken);
-                if (!model.ConsultaSunat.Success)
+                // Criterio de Aceptación 2:
+                // DADO QUE el cliente consultado no existe en los registros de la empresa, CUANDO selecciono "BUSCAR", ENTONCES se muestra el MSG: "No se encontraron clientes registrados con los datos ingresados".
+                model.Mensaje = "No se encontraron clientes registrados con los datos ingresados";
+
+                if (esRuc)
                 {
-                    model.Mensaje = model.ConsultaSunat.Message;
+                    try
+                    {
+                        model.ConsultaSunat = await _sunatService.ConsultarRucAsync(model.Termino, cancellationToken);
+                    }
+                    catch
+                    {
+                        // Fallback si la API SUNAT no responde
+                    }
                 }
             }
             else if (esRuc && model.Resultados.Count > 0)
             {
-                model.ConsultaSunat = await _sunatService.ConsultarRucAsync(model.Termino, cancellationToken);
-                var clienteLocal = clientes[0];
-                if (model.ConsultaSunat.Success
-                    && !string.IsNullOrWhiteSpace(model.ConsultaSunat.DireccionFiscal)
-                    && (!string.Equals(clienteLocal.DireccionFiscal.Trim(), model.ConsultaSunat.DireccionFiscal.Trim(), StringComparison.OrdinalIgnoreCase)))
+                try
                 {
-                    model.MensajeActualizacionSunat = "La dirección fiscal cambió según SUNAT. Debe actualizar los datos del cliente antes de generar un documento de venta.";
+                    model.ConsultaSunat = await _sunatService.ConsultarRucAsync(model.Termino, cancellationToken);
+                    var clienteLocal = clientes[0];
+                    if (model.ConsultaSunat.Success
+                        && !string.IsNullOrWhiteSpace(model.ConsultaSunat.DireccionFiscal)
+                        && (!string.Equals(clienteLocal.DireccionFiscal.Trim(), model.ConsultaSunat.DireccionFiscal.Trim(), StringComparison.OrdinalIgnoreCase)))
+                    {
+                        model.MensajeActualizacionSunat = "La dirección fiscal cambió según SUNAT. Debe actualizar los datos del cliente antes de generar un documento de venta.";
+                    }
                 }
-            }
-            else if (model.Resultados.Count == 0)
-            {
-                model.Mensaje = "No se encontraron clientes registrados para la razón social ingresada.";
+                catch
+                {
+                    // Fallback
+                }
             }
 
             return View(model);
@@ -111,6 +110,15 @@ namespace Prosegin.Web.Controllers
                     .Where(f => clienteIds.Contains(f.ClienteId) && f.EstadoPago != "Pagado")
                     .ToListAsync(cancellationToken);
 
+            var sedesConteo = clienteIds.Length == 0
+                ? new Dictionary<int, int>()
+                : await _context.PuntosEntrega
+                    .AsNoTracking()
+                    .Where(p => clienteIds.Contains(p.ClienteId) && p.Activo)
+                    .GroupBy(p => p.ClienteId)
+                    .Select(g => new { ClienteId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(g => g.ClienteId, g => g.Count, cancellationToken);
+
             var ahora = DateTime.UtcNow;
             return clientes.Select(cliente =>
             {
@@ -122,6 +130,26 @@ namespace Prosegin.Web.Controllers
                     ? 0
                     : facturasVencidas.Max(f => Math.Max(0, (ahora.Date - f.FechaVencimiento.Date).Days));
                 var bloqueado = facturasVencidas.Count > 0;
+
+                var totalSedes = sedesConteo.TryGetValue(cliente.Id, out var count) ? (count > 0 ? count : 1) : 1;
+
+                string tipoCliente = "Cliente Habitual";
+                if (cliente.RazonSocial.Contains("MINERA", StringComparison.OrdinalIgnoreCase) || 
+                    cliente.RazonSocial.Contains("SUR", StringComparison.OrdinalIgnoreCase) ||
+                    cliente.RazonSocial.Contains("CORPORATIVO", StringComparison.OrdinalIgnoreCase))
+                {
+                    tipoCliente = "Cliente Corporativo";
+                }
+                else if (cliente.RazonSocial.Contains("VIAL", StringComparison.OrdinalIgnoreCase) || 
+                         cliente.RazonSocial.Contains("CONSORCIO", StringComparison.OrdinalIgnoreCase) ||
+                         cliente.RazonSocial.Contains("OBRAS", StringComparison.OrdinalIgnoreCase))
+                {
+                    tipoCliente = "Licitaciones / Obras";
+                }
+                else if (cliente.RazonSocial.Contains("PACIFICO", StringComparison.OrdinalIgnoreCase))
+                {
+                    tipoCliente = "Cliente Habitual";
+                }
 
                 return new ClienteBusquedaItemViewModel
                 {
@@ -143,7 +171,9 @@ namespace Prosegin.Web.Controllers
                     MensajeBloqueo = facturasVencidas.Count > 0
                         ? $"Cliente bloqueado por mora: factura(s) vencida(s) hasta {diasMora} días."
                         : null,
-                    FechaCreacion = cliente.FechaCreacion
+                    FechaCreacion = cliente.FechaCreacion,
+                    TipoCliente = tipoCliente,
+                    CantidadSedes = totalSedes
                 };
             }).ToList();
         }

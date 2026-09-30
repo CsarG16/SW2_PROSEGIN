@@ -30,4 +30,6 @@ public class ClienteBusquedaItemViewModel
     public string EstadoCredito { get; set; } = string.Empty;
     public string? MensajeBloqueo { get; set; }
     public DateTime FechaCreacion { get; set; }
+    public string TipoCliente { get; set; } = "Cliente Corporativo";
+    public int CantidadSedes { get; set; } = 1;
 }
