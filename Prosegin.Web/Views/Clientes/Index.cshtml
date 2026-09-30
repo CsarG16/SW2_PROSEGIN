@@ -10,81 +10,53 @@
 
 <div class="container-fluid px-0">
 
-    <!-- 1. ENCABEZADO SUPERIOR: DIRECTORIO DE CLIENTES Y BOTÓN REGISTRAR -->
-    <div class="prosegin-card mb-3 p-3 p-md-4 bg-white border rounded-3 shadow-none" style="border-color: #e9ecef !important; border-radius: 12px !important;">
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <div style="border-left: 2px solid #cbd5e1; padding-left: 14px;">
-                <h5 class="fw-bold text-dark mb-0" style="font-size: 1.15rem; letter-spacing: -0.01em;">
-                    Directorio de Clientes
-                </h5>
-                <div class="text-muted" style="font-size: 0.84rem; color: #64748b;">
-                    Gestión comercial y verificación SUNAT de empresas clientes
-                </div>
+    <!-- 1. ENCABEZADO: Directorio de Clientes + Botón Registrar -->
+    <div class="prosegin-card mb-3 p-3 p-md-4">
+        <div class="prosegin-page-header--accent" style="margin-bottom: 0;">
+            <div class="header-content">
+                <h1 class="page-title">Directorio de Clientes</h1>
+                <p class="page-subtitle">Gestión comercial y verificación SUNAT de empresas clientes</p>
             </div>
-            <div>
-                <a asp-action="Create" class="btn text-white fw-bold d-inline-flex align-items-center" style="background-color: #18181b; border-radius: 8px; font-size: 0.8rem; letter-spacing: 0.03em; padding: 10px 18px; transition: all 0.2s ease;">
-                    + REGISTRAR NUEVO CLIENTE
-                </a>
-            </div>
+            <a asp-action="Create" class="btn-prosegin-primary">
+                + REGISTRAR NUEVO CLIENTE
+            </a>
         </div>
     </div>
 
-    <!-- 2. TARJETA DE BÚSQUEDA POR RUC O RAZÓN SOCIAL -->
-    <div class="prosegin-card mb-4 p-3 p-md-4 bg-white border rounded-3 shadow-none" style="border-color: #e9ecef !important; border-radius: 12px !important;">
-        <!-- Fila de etiquetas superiores -->
+    <!-- 2. BÚSQUEDA POR RUC O RAZÓN SOCIAL -->
+    <div class="prosegin-card mb-4 p-3 p-md-4">
         <div class="d-flex justify-content-between align-items-center mb-2">
-            <label for="termino" class="text-uppercase fw-bold mb-0" style="font-size: 0.76rem; color: #64748b; letter-spacing: 0.05em;">
-                BÚSQUEDA POR RUC O RAZÓN SOCIAL
-            </label>
-            <span class="text-muted" style="font-size: 0.8rem; color: #64748b;">
+            <span class="prosegin-section-label mb-0">BÚSQUEDA POR RUC O RAZÓN SOCIAL</span>
+            <span class="page-subtitle mb-0">
                 <i class="bi bi-info-circle me-1"></i> Búsqueda por RUC de 11 dígitos o razón social
             </span>
         </div>
 
-        <!-- Formulario de búsqueda horizontal -->
         <form method="get" asp-action="Index" class="d-flex flex-wrap align-items-center gap-2">
-            <div class="flex-grow-1 position-relative" style="min-width: 250px;">
-                <div class="d-flex align-items-center rounded-3 px-3" style="background-color: #f8fafc; border: 1px solid #e2e8f0; height: 46px;">
-                    <i class="bi bi-search text-secondary me-2" style="font-size: 0.95rem;"></i>
-                    <input type="text" id="termino" name="termino" value="@Model.Termino" 
-                           class="form-control bg-transparent border-0 shadow-none px-0 text-dark fw-semibold" 
-                           placeholder="CONSTRUCTORA" 
-                           autocomplete="off" 
-                           style="font-size: 0.88rem;" />
+            <div class="flex-grow-1" style="min-width: 250px;">
+                <div class="prosegin-search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="termino" name="termino" value="@Model.Termino"
+                           placeholder="Ingrese RUC o razón social..." autocomplete="off" />
                 </div>
             </div>
 
-            <!-- Botón BUSCAR -->
-            <button type="submit" class="btn text-white fw-bold d-inline-flex align-items-center justify-content-center px-4" 
-                    style="background-color: #18181b; border-radius: 8px; height: 46px; font-size: 0.82rem; letter-spacing: 0.03em; white-space: nowrap;">
-                <i class="bi bi-search me-2"></i> BUSCAR
+            <button type="submit" class="btn-prosegin-primary" style="height: 46px;">
+                <i class="bi bi-search"></i> BUSCAR
             </button>
 
-            <!-- Pill de Estado / Limpiar -->
             @if (esBusqueda && !resultados.Any())
             {
-                <div class="d-inline-flex align-items-center px-3 rounded-3" 
-                     style="background-color: #f8fafc; border: 1px solid #e2e8f0; height: 46px; font-size: 0.85rem; color: #64748b; white-space: nowrap;">
-                    Sin resultados
-                </div>
-                <a asp-action="Index" class="btn btn-outline-secondary d-inline-flex align-items-center px-3" 
-                   style="height: 46px; border-radius: 8px; font-size: 0.85rem; border-color: #e2e8f0; color: #64748b;" title="Ver todos">
+                <span class="badge-status badge-status-neutral">Sin resultados</span>
+                <a asp-action="Index" class="btn-prosegin-secondary px-3" style="height: 46px; line-height: 30px;" title="Ver todos">
                     <i class="bi bi-x-lg"></i>
                 </a>
             }
             else if (esBusqueda)
             {
-                <a asp-action="Index" class="btn btn-outline-secondary d-inline-flex align-items-center px-3" 
-                   style="height: 46px; border-radius: 8px; font-size: 0.85rem; border-color: #e2e8f0; color: #64748b;" title="Limpiar filtro">
+                <a asp-action="Index" class="btn-prosegin-secondary px-3" style="height: 46px; line-height: 30px;" title="Limpiar filtro">
                     Limpiar
                 </a>
-            }
-            else
-            {
-                <div class="d-inline-flex align-items-center px-3 rounded-3" 
-                     style="background-color: #f8fafc; border: 1px solid #e2e8f0; height: 46px; font-size: 0.85rem; color: #64748b; white-space: nowrap;">
-                    Sin resultados
-                </div>
             }
         </form>
     </div>
@@ -92,55 +64,61 @@
     <!-- 3. MENSAJES Y ALERTAS -->
     @if (!string.IsNullOrWhiteSpace(Model.Mensaje))
     {
-        <div class="alert border rounded-3 mb-4 d-flex align-items-center px-4 py-3" style="background-color: #fffbeb; border-color: #fde68a !important; color: #92400e;">
-            <i class="bi bi-exclamation-triangle-fill fs-5 me-2 text-warning"></i>
-            <div class="fw-medium">@Model.Mensaje</div>
+        <div class="prosegin-alert prosegin-alert-warning">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            <span class="fw-medium">@Model.Mensaje</span>
         </div>
     }
 
     @if (!string.IsNullOrWhiteSpace(Model.MensajeActualizacionSunat))
     {
-        <div class="alert alert-danger border-danger rounded-3 mb-4 d-flex align-items-center px-4 py-3">
-            <i class="bi bi-exclamation-octagon-fill fs-5 me-2"></i>
-            <div>@Model.MensajeActualizacionSunat</div>
+        <div class="prosegin-alert prosegin-alert-danger">
+            <i class="bi bi-exclamation-octagon-fill fs-5"></i>
+            <span>@Model.MensajeActualizacionSunat</span>
         </div>
     }
 
-    <!-- 4. TARJETA EN CASO DE ENCONTRAR EN SUNAT (NO EN REGISTROS LOCALES) -->
+    <!-- 4. EMPRESA ENCONTRADA EN SUNAT (No registrada localmente) -->
     @if (consultaSunat?.Success == true && !resultados.Any())
     {
-        <div class="prosegin-card mb-4 bg-white border rounded-3 p-4" style="border-color: #e2e8f0 !important; border-radius: 12px !important;">
+        <div class="prosegin-card mb-4 p-4">
             <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom">
                 <span class="fw-bold text-dark small text-uppercase">
                     <i class="bi bi-cloud-check text-primary me-2"></i> Empresa Encontrada en Padrón SUNAT (Sin registrar localmente)
                 </span>
-                <span class="badge bg-primary-subtle text-primary border border-primary px-3 py-1 rounded-pill">Disponible para Alta</span>
+                <span class="badge-status badge-status-success">
+                    <span class="status-dot"></span> Disponible para Alta
+                </span>
             </div>
             <div class="row g-3">
                 <div class="col-sm-6 col-md-3">
-                    <span class="text-muted small d-block">RUC</span>
+                    <span class="prosegin-section-label d-block">RUC</span>
                     <strong class="font-monospace fs-6 text-dark">@consultaSunat.Ruc</strong>
                 </div>
                 <div class="col-sm-6 col-md-5">
-                    <span class="text-muted small d-block">Razón Social</span>
+                    <span class="prosegin-section-label d-block">Razón Social</span>
                     <strong class="text-dark">@consultaSunat.RazonSocial</strong>
                 </div>
                 <div class="col-sm-6 col-md-2">
-                    <span class="text-muted small d-block">Estado</span>
-                    <span class="badge @(consultaSunat.EsActivo ? "bg-success" : "bg-danger")">@consultaSunat.Estado</span>
+                    <span class="prosegin-section-label d-block">Estado</span>
+                    <span class="badge-status @(consultaSunat.EsActivo ? "badge-status-success" : "badge-status-danger")">
+                        <span class="status-dot"></span> @consultaSunat.Estado
+                    </span>
                 </div>
                 <div class="col-sm-6 col-md-2">
-                    <span class="text-muted small d-block">Condición</span>
-                    <span class="badge @(consultaSunat.EsHabido ? "bg-success" : "bg-danger")">@consultaSunat.Condicion</span>
+                    <span class="prosegin-section-label d-block">Condición</span>
+                    <span class="badge-status @(consultaSunat.EsHabido ? "badge-status-success" : "badge-status-danger")">
+                        <span class="status-dot"></span> @consultaSunat.Condicion
+                    </span>
                 </div>
             </div>
             <div class="mt-3 pt-3 border-top d-flex flex-wrap justify-content-between align-items-center gap-3">
                 <span class="small text-muted">
                     <i class="bi bi-geo-alt me-1 text-danger"></i> @consultaSunat.DireccionFiscal
                 </span>
-                <a asp-action="Create" asp-route-ruc="@consultaSunat.Ruc" asp-route-razonSocial="@consultaSunat.RazonSocial" asp-route-direccionFiscal="@consultaSunat.DireccionFiscal" asp-route-estadoSunat="@consultaSunat.Estado" asp-route-condicionSunat="@consultaSunat.Condicion" 
-                   class="btn text-white fw-bold px-3 py-2" style="background-color: #18181b; border-radius: 8px; font-size: 0.82rem;">
-                    <i class="bi bi-person-plus me-1"></i> REGISTRAR CLIENTE CON DATOS SUNAT
+                <a asp-action="Create" asp-route-ruc="@consultaSunat.Ruc" asp-route-razonSocial="@consultaSunat.RazonSocial" asp-route-direccionFiscal="@consultaSunat.DireccionFiscal" asp-route-estadoSunat="@consultaSunat.Estado" asp-route-condicionSunat="@consultaSunat.Condicion"
+                   class="btn-prosegin-primary">
+                    <i class="bi bi-person-plus"></i> REGISTRAR CLIENTE CON DATOS SUNAT
                 </a>
             </div>
         </div>
@@ -149,55 +127,40 @@
     <!-- 5. TABLA DE CLIENTES ENCONTRADOS -->
     @if (resultados.Any())
     {
-        <div class="prosegin-card mb-5 bg-white border rounded-3 shadow-none overflow-hidden" style="border-color: #e9ecef !important; border-radius: 12px !important;">
-            <!-- Encabezado de la Tarjeta de Resultados -->
-            <div class="d-flex justify-content-between align-items-center px-4 py-3 bg-white border-bottom" style="border-color: #f1f5f9 !important;">
-                <div class="d-flex align-items-center">
-                    <span class="fw-bold" style="color: #0f172a; font-size: 0.95rem;">Clientes Encontrados</span>
-                    <span class="badge rounded-pill fw-normal px-2 py-1 ms-2" style="background-color: #e2e8f0; color: #475569; font-size: 0.8rem;">
-                        @resultados.Count registros
-                    </span>
+        <div class="prosegin-card mb-5 overflow-hidden">
+            <!-- Encabezado de Resultados -->
+            <div class="prosegin-results-header">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="results-title">Clientes Encontrados</span>
+                    <span class="count-pill">@resultados.Count registros</span>
                 </div>
-                <div>
-                    <span style="color: #94a3b8; font-size: 0.82rem;">Datos validados con Padrón SUNAT</span>
-                </div>
+                <span class="results-note">Datos validados con Padrón SUNAT</span>
             </div>
 
-            <!-- Tabla de Datos -->
+            <!-- Tabla -->
             <div class="table-responsive">
-                <table class="table align-middle mb-0" style="border-color: #f1f5f9;">
+                <table class="prosegin-table mb-0">
                     <thead>
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                            <th class="ps-4 py-3 text-uppercase fw-bold" style="font-size: 0.74rem; color: #64748b; letter-spacing: 0.05em; border-top: none;">
-                                EMPRESA / RAZÓN SOCIAL
-                            </th>
-                            <th class="py-3 text-uppercase fw-bold" style="font-size: 0.74rem; color: #64748b; letter-spacing: 0.05em; border-top: none; width: 140px;">
-                                RUC
-                            </th>
-                            <th class="py-3 text-uppercase fw-bold" style="font-size: 0.74rem; color: #64748b; letter-spacing: 0.05em; border-top: none;">
-                                DIRECCIÓN FISCAL
-                            </th>
-                            <th class="py-3 text-uppercase fw-bold text-center" style="font-size: 0.74rem; color: #64748b; letter-spacing: 0.05em; border-top: none; width: 180px;">
-                                ESTADO SUNAT
-                            </th>
-                            <th class="pe-4 py-3 text-uppercase fw-bold text-end" style="font-size: 0.74rem; color: #64748b; letter-spacing: 0.05em; border-top: none; width: 220px;">
-                                ACCIONES
-                            </th>
+                        <tr>
+                            <th class="ps-4">EMPRESA / RAZÓN SOCIAL</th>
+                            <th style="width: 140px;">RUC</th>
+                            <th>DIRECCIÓN FISCAL</th>
+                            <th class="text-center" style="width: 180px;">ESTADO SUNAT</th>
+                            <th class="text-end pe-4" style="width: 220px;">ACCIONES</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var cliente in resultados)
                         {
-                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <tr>
                                 <!-- Empresa / Razón Social -->
-                                <td class="ps-4 py-3">
+                                <td class="ps-4">
                                     <div class="d-flex align-items-center gap-3">
-                                        <div class="d-flex align-items-center justify-content-center rounded-2" 
-                                             style="width: 38px; height: 38px; background-color: #f1f5f9; color: #64748b; flex-shrink: 0;">
-                                            <i class="bi bi-building fs-6"></i>
+                                        <div class="row-icon-avatar">
+                                            <i class="bi bi-building"></i>
                                         </div>
                                         <div>
-                                            <div class="fw-bold text-dark" style="font-size: 0.85rem; letter-spacing: -0.01em;">
+                                            <div class="fw-bold text-dark" style="font-size: 0.85rem;">
                                                 @cliente.RazonSocial
                                             </div>
                                             <div class="text-muted" style="font-size: 0.78rem;">
@@ -208,60 +171,57 @@
                                 </td>
 
                                 <!-- RUC -->
-                                <td class="py-3">
-                                    <span style="font-size: 0.85rem; color: #334155; font-weight: 500;">
-                                        @cliente.Ruc
-                                    </span>
+                                <td>
+                                    <span style="font-size: 0.85rem; font-weight: 500;">@cliente.Ruc</span>
                                 </td>
 
                                 <!-- Dirección Fiscal -->
-                                <td class="py-3">
+                                <td>
                                     <div class="d-flex align-items-center gap-2" style="max-width: 320px;">
-                                        <i class="bi bi-geo-alt" style="font-size: 0.95rem; color: #94a3b8; flex-shrink: 0;"></i>
-                                        <span class="text-truncate" style="font-size: 0.84rem; color: #475569;" title="@cliente.DireccionFiscal">
+                                        <i class="bi bi-geo-alt" style="color: var(--text-subtle); flex-shrink: 0;"></i>
+                                        <span class="text-truncate" style="font-size: 0.84rem;" title="@cliente.DireccionFiscal">
                                             @cliente.DireccionFiscal
                                         </span>
                                     </div>
                                 </td>
 
                                 <!-- Estado SUNAT -->
-                                <td class="py-3 text-center">
-                                    <span class="badge rounded-pill d-inline-flex align-items-center gap-1 px-3 py-2" 
-                                          style="background-color: #f1f5f9; color: #334155; font-weight: 600; font-size: 0.75rem; letter-spacing: 0.02em;">
-                                        <span style="color: #22c55e; font-size: 1.1rem; line-height: 0;">•</span>
+                                <td class="text-center">
+                                    @{
+                                        var esActivo = cliente.EstadoSunat.Equals("ACTIVO", StringComparison.OrdinalIgnoreCase);
+                                        var esHabido = cliente.CondicionSunat.Equals("HABIDO", StringComparison.OrdinalIgnoreCase);
+                                        var statusClass = (esActivo && esHabido) ? "badge-status-success" : "badge-status-danger";
+                                    }
+                                    <span class="badge-status @statusClass">
+                                        <span class="status-dot"></span>
                                         @cliente.EstadoSunat · @cliente.CondicionSunat
                                     </span>
                                 </td>
 
                                 <!-- Acciones -->
-                                <td class="pe-4 py-3 text-end">
+                                <td class="text-end pe-4">
                                     <div class="d-inline-flex align-items-center gap-2">
                                         <!-- Botón Sedes -->
-                                        <a asp-controller="Clientes" asp-action="Direcciones" asp-route-clienteId="@cliente.Id" 
-                                           class="btn btn-sm d-inline-flex align-items-center fw-semibold" 
-                                           style="background-color: #f1f5f9; border: 1px solid #e2e8f0; color: #1e293b; border-radius: 8px; padding: 6px 14px; font-size: 0.82rem;" 
+                                        <a asp-controller="Clientes" asp-action="Direcciones" asp-route-clienteId="@cliente.Id"
+                                           class="btn-prosegin-action-secondary"
                                            title="Direcciones de Entrega">
-                                            <i class="bi bi-building me-1 text-secondary"></i> Sedes (@cliente.CantidadSedes)
+                                            <i class="bi bi-building"></i> Sedes (@cliente.CantidadSedes)
                                         </a>
 
                                         <!-- Botón Cotizar -->
-                                        @if (cliente.EstadoSunat.Equals("ACTIVO", StringComparison.OrdinalIgnoreCase) && 
-                                             cliente.CondicionSunat.Equals("HABIDO", StringComparison.OrdinalIgnoreCase) && 
-                                             !cliente.ClienteBloqueado)
+                                        @if (esActivo && esHabido && !cliente.ClienteBloqueado)
                                         {
-                                            <a asp-controller="Cotizaciones" asp-action="Create" asp-route-clienteId="@cliente.Id" 
-                                               class="btn btn-sm d-inline-flex align-items-center fw-semibold text-white" 
-                                               style="background-color: #18181b; border: 1px solid #18181b; border-radius: 8px; padding: 6px 16px; font-size: 0.82rem;" 
+                                            <a asp-controller="Cotizaciones" asp-action="Create" asp-route-clienteId="@cliente.Id"
+                                               class="btn-prosegin-action"
                                                title="Generar Cotización">
-                                                <i class="bi bi-file-earmark-text me-1"></i> Cotizar
+                                                <i class="bi bi-file-earmark-text"></i> Cotizar
                                             </a>
                                         }
                                         else
                                         {
-                                            <button type="button" class="btn btn-sm d-inline-flex align-items-center fw-semibold" 
-                                                    style="background-color: #e2e8f0; border: 1px solid #cbd5e1; color: #94a3b8; border-radius: 8px; padding: 6px 16px; font-size: 0.82rem;" 
-                                                    disabled title="@(cliente.ClienteBloqueado ? cliente.MensajeBloqueo : "Cliente no figura ACTIVO y HABIDO")">
-                                                <i class="bi bi-file-earmark-text me-1"></i> Cotizar
+                                            <button type="button" class="btn-prosegin-action" disabled
+                                                    title="@(cliente.ClienteBloqueado ? cliente.MensajeBloqueo : "Cliente no figura ACTIVO y HABIDO")">
+                                                <i class="bi bi-file-earmark-text"></i> Cotizar
                                             </button>
                                         }
                                     </div>
@@ -272,16 +232,14 @@
                 </table>
             </div>
 
-            <!-- Pie de Tabla: Contador y Paginación -->
-            <div class="d-flex justify-content-between align-items-center px-4 py-3 bg-white border-top" style="border-color: #f1f5f9 !important;">
-                <div class="text-muted small" style="color: #64748b; font-size: 0.82rem;">
-                    Mostrando @resultados.Count de @resultados.Count empresas coincidentes
-                </div>
+            <!-- Pie de Tabla -->
+            <div class="prosegin-table-footer">
+                <span>Mostrando @resultados.Count de @resultados.Count empresas coincidentes</span>
                 <div class="d-flex align-items-center gap-3">
-                    <span class="text-muted small" style="color: #94a3b8; font-size: 0.82rem; cursor: default;">Anterior</span>
-                    <span class="d-inline-flex align-items-center justify-content-center rounded-2 border bg-white fw-bold" 
-                          style="width: 28px; height: 28px; font-size: 0.8rem; color: #1e293b; border-color: #e2e8f0 !important;">1</span>
-                    <span class="text-muted small" style="color: #94a3b8; font-size: 0.82rem; cursor: default;">Siguiente</span>
+                    <span style="color: var(--text-subtle); cursor: default;">Anterior</span>
+                    <span class="d-inline-flex align-items-center justify-content-center rounded-2 border bg-white fw-bold"
+                          style="width: 28px; height: 28px; font-size: 0.8rem;">1</span>
+                    <span style="color: var(--text-subtle); cursor: default;">Siguiente</span>
                 </div>
             </div>
         </div>
@@ -289,16 +247,17 @@
     else if (!consultaSunat?.Success == true)
     {
         <!-- Estado Vacío -->
-        <div class="prosegin-card p-5 text-center my-4 bg-white border rounded-3 shadow-none" style="border-color: #e9ecef !important; border-radius: 12px !important;">
-            <i class="bi bi-building-x text-muted display-4 mb-3 d-block"></i>
-            <h5 class="fw-bold text-dark mb-1">No se encontraron clientes registrados con los datos ingresados</h5>
-            <p class="text-muted small mb-4">
-                @(esBusqueda ? "Verifique el número de RUC o el nombre ingresado, o añada una nueva empresa al directorio." : "Aún no hay clientes registrados en el directorio de Prosegin.")
-            </p>
-            <a asp-action="Create" class="btn text-white fw-bold d-inline-flex align-items-center px-4 py-2" 
-               style="background-color: #18181b; border-radius: 8px; font-size: 0.85rem;">
-                <i class="bi bi-person-plus me-2"></i> Registrar cliente
-            </a>
+        <div class="prosegin-card">
+            <div class="prosegin-empty-state">
+                <i class="bi bi-building-x empty-icon d-block"></i>
+                <div class="empty-title">No se encontraron clientes registrados con los datos ingresados</div>
+                <div class="empty-desc">
+                    @(esBusqueda ? "Verifique el número de RUC o el nombre ingresado, o añada una nueva empresa al directorio." : "Aún no hay clientes registrados en el directorio de Prosegin.")
+                </div>
+                <a asp-action="Create" class="btn-prosegin-primary">
+                    <i class="bi bi-person-plus"></i> Registrar cliente
+                </a>
+            </div>
         </div>
     }
 </div>

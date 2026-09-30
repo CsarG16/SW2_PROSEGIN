@@ -5,14 +5,30 @@
    ============================================================ */
 
 :root {
+  /* ============================================================
+     🎨 COLOR DE ACENTO CENTRAL — CAMBIA AQUÍ TODO EL SISTEMA
+     Para cambiar el tema de PROSEGIN, solo modifica estas 4 líneas.
+     ============================================================ */
+  --accent: #f59e0b;                /* Dorado/Ámbar Corporativo PROSEGIN */
+  --accent-hover: #d97706;          /* Hover del acento */
+  --accent-light: #fef3c7;          /* Fondo sutil del acento */
+  --accent-text: #b45309;           /* Texto sobre fondo sutil del acento */
+  --accent-on: #0f172a;             /* Texto legible SOBRE el botón de acento */
+  --accent-shadow: rgba(245, 158, 11, 0.30); /* Sombra del acento */
+
+  /* Aliases legacy (retrocompatibilidad con vistas existentes) */
+  --prosegin-orange: var(--accent);
+  --prosegin-orange-hover: var(--accent-hover);
+  --prosegin-orange-light: var(--accent-light);
+  --prosegin-orange-text: var(--accent-text);
+
   /* Tipografía */
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-  /* Paleta Corporativa Principal */
-  --prosegin-orange: #f59e0b;       /* Naranja/Ámbar PROSEGIN */
-  --prosegin-orange-hover: #d97706; /* Hover Naranja */
-  --prosegin-orange-light: #fef3c7; /* Fondo sutil naranja */
-  --prosegin-orange-text: #b45309;
+  /* Contraste Industrial Sobrio (Midnight Navy) */
+  --dark: #0f1b2b;
+  --dark-hover: #1a2c42;
+  --dark-text: #ffffff;
 
   /* Fondo de la barra lateral (Sidebar Oscuro) */
   --sidebar-bg: #0c1322;
@@ -23,7 +39,7 @@
   --sidebar-hover: rgba(255, 255, 255, 0.05);
 
   /* Fondos del Área de Contenido (Canvas Claro Enterprise) */
-  --bg-canvas: #f4f6f9;
+  --bg-canvas: #f8fafc;
   --bg-card: #ffffff;
   --bg-card-subtle: #f8fafc;
   
@@ -35,6 +51,7 @@
 
   /* Bordes y Sombras */
   --border-card: #e2e8f0;
+  --border-input: #cbd5e1;
   --border-light: #f1f5f9;
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
@@ -114,30 +131,32 @@ body {
 }
 
 /* 2. Botones Estándar */
-/* Botón Principal (Naranja PROSEGIN) */
+/* Botón Principal (Dorado Corporativo PROSEGIN — usa --accent) */
 .btn-prosegin-primary {
-  background-color: var(--prosegin-orange);
-  border: 1px solid var(--prosegin-orange);
-  color: #0f172a;
+  background-color: var(--accent);
+  border: 1px solid var(--accent);
+  color: var(--accent-on);
   font-weight: 700;
-  font-size: 0.9rem;
-  padding: 0.65rem 1.25rem;
+  font-size: 0.82rem;
+  padding: 0.6rem 1.2rem;
   border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 1px 3px var(--accent-shadow);
   text-decoration: none;
+  letter-spacing: 0.02em;
+  cursor: pointer;
 }
 
 .btn-prosegin-primary:hover:not(:disabled) {
-  background-color: var(--prosegin-orange-hover);
-  border-color: var(--prosegin-orange-hover);
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
   color: #ffffff;
   transform: translateY(-1px);
-  box-shadow: 0 3px 6px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 3px 8px var(--accent-shadow);
 }
 
 .btn-prosegin-primary:disabled,
@@ -211,23 +230,384 @@ body {
   color: var(--text-dark);
 }
 
-/* Botón Oscuro / Acción Especial */
+/* Botón Oscuro / Acción Especial (Midnight Navy — usa --dark) */
 .btn-prosegin-dark {
-  background-color: #0f172a;
-  border: 1px solid #0f172a;
-  color: #ffffff;
+  background-color: var(--dark);
+  border: 1px solid var(--dark);
+  color: var(--dark-text);
   font-weight: 600;
-  font-size: 0.9rem;
-  padding: 0.65rem 1.25rem;
+  font-size: 0.82rem;
+  padding: 0.6rem 1.2rem;
   border-radius: 8px;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   transition: all 0.2s ease;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  text-decoration: none;
 }
 .btn-prosegin-dark:hover {
-  background-color: #1e293b;
+  background-color: var(--dark-hover);
+  color: var(--dark-text);
+  transform: translateY(-1px);
+}
+
+/* ============================================================
+   COMPONENTES ESTANDARIZADOS V2 (REFACTORING GLOBAL)
+   Nuevos componentes listos para usar en todas las vistas.
+   ============================================================ */
+
+/* Encabezado de Página Minimalista */
+.prosegin-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-card);
+  margin-bottom: 1.25rem;
+}
+
+.page-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.page-subtitle {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin: 0.15rem 0 0;
+}
+
+/* Encabezado de página con acento lateral dorado */
+.prosegin-page-header--accent {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.prosegin-page-header--accent .header-content {
+  border-left: 3px solid var(--accent);
+  padding-left: 14px;
+}
+
+.prosegin-page-header--accent .header-content .page-title {
+  font-size: 1.15rem;
+}
+
+/* Etiqueta de Sección (BÚSQUEDA POR RUC, DATOS TRIBUTARIOS, etc.) */
+.prosegin-section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+/* Caja de Búsqueda Estándar */
+.prosegin-search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.85rem;
+  height: 46px;
+  background-color: var(--bg-card-subtle);
+  border: 1px solid var(--border-card);
+  border-radius: 8px;
+}
+
+.prosegin-search-box i {
+  color: var(--text-subtle);
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.prosegin-search-box input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font-size: 0.88rem;
+  color: var(--text-dark);
+  font-weight: 600;
+}
+
+.prosegin-search-box input::placeholder {
+  color: var(--text-subtle);
+  font-weight: 400;
+}
+
+/* Botón de Acción en Fila de Tabla (Dorado para Cotizar) */
+.btn-prosegin-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 6px 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 7px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background-color: var(--accent);
+  border: 1px solid var(--accent);
+  color: var(--accent-on);
+}
+
+.btn-prosegin-action:hover {
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
   color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-prosegin-action:disabled,
+.btn-prosegin-action[disabled] {
+  background-color: #f1f5f9;
+  border: 1px solid var(--border-card);
+  color: var(--text-subtle);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Botón Suave para Acciones Secundarias en Tabla (Sedes, Detalles) */
+.btn-prosegin-action-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 7px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background-color: #f1f5f9;
+  border: 1px solid var(--border-card);
+  color: var(--text-dark);
+}
+
+.btn-prosegin-action-secondary:hover {
+  background-color: var(--border-card);
+  color: var(--text-dark);
+}
+
+/* Pill de Estado Informativo (No interactivo — con Dot Indicator) */
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: default;
+  user-select: none;
+}
+
+.badge-status .status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.badge-status-success {
+  background-color: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.badge-status-success .status-dot {
+  background-color: #10b981;
+}
+
+.badge-status-neutral {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid var(--border-card);
+}
+
+.badge-status-neutral .status-dot {
+  background-color: #94a3b8;
+}
+
+.badge-status-danger {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.badge-status-danger .status-dot {
+  background-color: #ef4444;
+}
+
+.badge-status-warning {
+  background-color: var(--accent-light);
+  color: var(--accent-text);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.badge-status-warning .status-dot {
+  background-color: var(--accent);
+}
+
+/* Pill / Chip de Conteo (gris neutral) */
+.count-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  background-color: var(--border-card);
+  color: #475569;
+}
+
+/* Tabla Estándar V2 — Limpia y Consistente */
+.prosegin-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.prosegin-table thead th {
+  background-color: var(--bg-card-subtle);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-card);
+  border-top: none;
+}
+
+.prosegin-table tbody td {
+  padding: 0.85rem 1rem;
+  font-size: 0.86rem;
+  color: var(--text-body);
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: middle;
+}
+
+.prosegin-table tbody tr:hover {
+  background-color: var(--bg-card-subtle);
+}
+
+/* Pie de Tabla con Paginación */
+.prosegin-table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border-light);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+/* Tarjeta de Resultado con Encabezado */
+.prosegin-results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.prosegin-results-header .results-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.prosegin-results-header .results-note {
+  font-size: 0.82rem;
+  color: var(--text-subtle);
+}
+
+/* Ícono Avatar para filas de tabla */
+.row-icon-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background-color: #f1f5f9;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+/* Estado Vacío / Sin Resultados */
+.prosegin-empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+}
+
+.prosegin-empty-state .empty-icon {
+  font-size: 3rem;
+  color: var(--text-subtle);
+  margin-bottom: 1rem;
+}
+
+.prosegin-empty-state .empty-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 0.35rem;
+}
+
+.prosegin-empty-state .empty-desc {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+}
+
+/* Alerta Estándar */
+.prosegin-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.85rem 1.15rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  margin-bottom: 1rem;
+}
+
+.prosegin-alert-warning {
+  background-color: var(--accent-light);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: var(--accent-text);
+}
+
+.prosegin-alert-danger {
+  background-color: var(--state-danger-bg);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: var(--state-danger-text);
+}
+
+.prosegin-alert-info {
+  background-color: var(--state-info-bg);
+  border: 1px solid rgba(2, 132, 199, 0.25);
+  color: var(--state-info-text);
+}
+
+.prosegin-alert-success {
+  background-color: var(--state-success-bg);
+  border: 1px solid rgba(22, 163, 74, 0.2);
+  color: var(--state-success-text);
 }
 
 /* 3. Campos de Formulario (Inputs Limpios) */
