@@ -9,12 +9,16 @@
 }
 
 <div class="container-fluid px-0">
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-        <div>
-            <h4 class="fw-bold text-dark mb-1"><i class="bi bi-file-earmark-text text-warning me-2"></i>GENERAR COTIZACIÓN</h4>
-            <p class="text-muted small mb-0">La validación fiscal y crediticia se ejecuta nuevamente al guardar.</p>
+    <div class="prosegin-card mb-4 p-3 p-md-4">
+        <div class="prosegin-page-header--accent" style="margin-bottom: 0;">
+            <div class="header-content">
+                <h1 class="page-title">Generar Cotización</h1>
+                <p class="page-subtitle">Validación fiscal SUNAT, cálculo de márgenes comerciales y cotización formal de EPP</p>
+            </div>
+            <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary">
+                <i class="bi bi-arrow-left"></i> Volver a Clientes
+            </a>
         </div>
-        <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary"><i class="bi bi-arrow-left me-1"></i>VOLVER A CLIENTES</a>
     </div>
 
     @if (cotizacionGuardada)
@@ -69,8 +73,18 @@
                         <div class="row g-3">
                             <div class="col-md-4"><span class="text-muted small d-block">RUC</span><strong class="font-monospace">@Model.Ruc</strong></div>
                             <div class="col-md-8"><span class="text-muted small d-block">Razón social</span><strong>@Model.RazonSocial</strong></div>
-                            <div class="col-md-6"><span class="text-muted small d-block">Estado SUNAT</span><span class="badge @(noPuedeVender ? "bg-danger" : "bg-success")">@Model.EstadoSunat</span></div>
-                            <div class="col-md-6"><span class="text-muted small d-block">Condición SUNAT</span><span class="badge @(noPuedeVender ? "bg-danger" : "bg-success")">@Model.CondicionSunat</span></div>
+                            <div class="col-md-6">
+                                <span class="text-muted small d-block mb-1">Estado SUNAT</span>
+                                <span class="badge-status @(noPuedeVender ? "badge-status-danger" : "badge-status-success")">
+                                    <span class="status-dot"></span> @Model.EstadoSunat
+                                </span>
+                            </div>
+                            <div class="col-md-6">
+                                <span class="text-muted small d-block mb-1">Condición SUNAT</span>
+                                <span class="badge-status @(noPuedeVender ? "badge-status-danger" : "badge-status-success")">
+                                    <span class="status-dot"></span> @Model.CondicionSunat
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>

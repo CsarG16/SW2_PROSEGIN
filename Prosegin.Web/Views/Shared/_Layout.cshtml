@@ -29,51 +29,65 @@
         <!-- Logo / Marca -->
         <div class="sidebar-brand">
             <a asp-controller="Home" asp-action="Index" class="brand-link">
-                <div class="brand-logo-badge">
-                    <i class="bi bi-shield-shaded"></i>
-                    <div>
-                        <span class="brand-name">PROSEGIN</span>
-                        <span class="brand-subtitle-tag">PREVENCIÓN INTEGRAL</span>
-                    </div>
-                </div>
+                <img src="~/logo_horizontal.png" alt="PROSEGIN - Prevención Integral" class="sidebar-brand-logo" />
             </a>
-            <button type="button" class="sidebar-toggle-btn d-lg-none" id="btnSidebarClose" aria-label="Cerrar menú">
-                <i class="bi bi-x-lg"></i>
+            <button type="button" class="sidebar-toggle-btn" id="btnSidebarClose" aria-label="Colapsar menú" title="Colapsar menú">
+                <i class="bi bi-chevron-double-left"></i>
             </button>
         </div>
 
         <!-- Menú de Operaciones -->
         <div class="sidebar-menu-wrapper">
-            <div class="menu-section-title">Operaciones EPP</div>
+            <div class="menu-section-header">
+                <span class="menu-section-title">OPERACIONES EPP</span>
+                <span class="menu-section-dot"></span>
+            </div>
             <ul class="sidebar-nav">
+                <!-- Módulo 1: Catálogo y Precios -->
                 <li class="sidebar-nav-item">
-                    <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Catalogo" ? "active" : "")" asp-controller="Catalogo" asp-action="Index">
+                    <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Catalogo" && (ViewContext.RouteData.Values["action"]?.ToString() == "Index" || string.IsNullOrEmpty(ViewContext.RouteData.Values["action"]?.ToString())) ? "active" : "")" asp-controller="Catalogo" asp-action="Index">
                         <i class="bi bi-grid"></i>
                         <span>Catálogo de EPP</span>
                     </a>
                 </li>
                 <li class="sidebar-nav-item">
-                    <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Clientes" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")" asp-controller="Clientes" asp-action="Index">
+                    <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Catalogo" && ViewContext.RouteData.Values["action"]?.ToString() == "RegistroProductos" ? "active" : "")" asp-controller="Catalogo" asp-action="RegistroProductos">
+                        <i class="bi bi-tag"></i>
+                        <span>Edición de Precios</span>
+                    </a>
+                </li>
+
+                <!-- Separador sutil de módulo -->
+                <li class="sidebar-nav-divider"></li>
+
+                <!-- Módulo 2: Gestión de Clientes -->
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Clientes" && (ViewContext.RouteData.Values["action"]?.ToString() == "Index" || ViewContext.RouteData.Values["action"]?.ToString() == "Direcciones") ? "active" : "")" asp-controller="Clientes" asp-action="Index">
                         <i class="bi bi-people"></i>
                         <span>Búsqueda de Clientes</span>
                     </a>
                 </li>
                 <li class="sidebar-nav-item">
-                    <a class="sidebar-nav-link" href="#">
-                        <i class="bi bi-tag"></i>
-                        <span>Edición de Precios</span>
-                    </a>
-                </li>
-                <li class="sidebar-nav-item">
-                    <a class="sidebar-nav-link" href="#">
-                        <i class="bi bi-truck"></i>
-                        <span>Gestión de Pedidos</span>
-                    </a>
-                </li>
-                <li class="sidebar-nav-item">
-                    <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Clientes" ? "active" : "")" asp-controller="Clientes" asp-action="Create">
+                    <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Clientes" && ViewContext.RouteData.Values["action"]?.ToString() == "Create" ? "active" : "")" asp-controller="Clientes" asp-action="Create">
                         <i class="bi bi-person-plus"></i>
                         <span>Registrar Cliente</span>
+                    </a>
+                </li>
+
+                <!-- Separador sutil de módulo -->
+                <li class="sidebar-nav-divider"></li>
+
+                <!-- Módulo 3: Ventas y Pedidos -->
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Cotizaciones" ? "active" : "")" asp-controller="Cotizaciones" asp-action="Create">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <span>Cotizaciones</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" href="#" title="En desarrollo">
+                        <i class="bi bi-truck"></i>
+                        <span>Gestión de Pedidos</span>
                     </a>
                 </li>
             </ul>
@@ -81,15 +95,13 @@
 
         <!-- Footer del Sidebar: Usuario -->
         <div class="sidebar-footer">
-            <div class="user-profile-widget">
-                <div class="user-profile-info">
-                    <div class="user-avatar-circle">
-                        <i class="bi bi-person-fill"></i>
-                    </div>
-                    <div>
-                        <div class="user-name">Carlos M.</div>
-                        <div class="user-role">Asesor Comercial</div>
-                    </div>
+            <div class="user-profile-card">
+                <div class="user-avatar-sq">
+                    <span>CM</span>
+                </div>
+                <div class="user-profile-text">
+                    <div class="user-name">Carlos M.</div>
+                    <div class="user-role">Asesor Comercial</div>
                 </div>
                 <button type="button" class="btn-logout" title="Cerrar Sesión">
                     <i class="bi bi-box-arrow-right"></i>

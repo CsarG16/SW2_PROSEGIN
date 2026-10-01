@@ -475,7 +475,7 @@ namespace Prosegin.Web.Controllers
                 }
             }
 
-            PuntoEntrega punto;
+            PuntoEntrega? punto;
             if (model.Id > 0)
             {
                 punto = await _context.PuntosEntrega.FirstOrDefaultAsync(p => p.Id == model.Id && p.ClienteId == model.ClienteId, cancellationToken);
