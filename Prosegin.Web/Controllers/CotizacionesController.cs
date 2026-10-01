@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Prosegin.Data;
 using Prosegin.Data.Entities;
+using Prosegin.Data.Validation;
 using Prosegin.Web.Services;
 using Prosegin.Web.ViewModels.Cotizaciones;
 
@@ -49,11 +50,17 @@ public class CotizacionesController : Controller
             producto.MargenPorcentaje = enviado.MargenPorcentaje;
         }
 
-        current.CondicionPago = model.CondicionPago;
+        if (!CondicionPagoRules.EsPlazoCreditoValido(model.CondicionPago))
+        {
+            ModelState.AddModelError(nameof(model.CondicionPago), "Seleccione un plazo de crédito válido: 7, 15 o 30 días.");
+            current.CondicionPago = CondicionPagoRules.PlazoCreditoPredeterminado;
+        }
+        else
+        {
+            current.CondicionPago = model.CondicionPago.Trim();
+        }
 
-        var noPuedeVender = !string.Equals(current.EstadoSunat, "ACTIVO", StringComparison.OrdinalIgnoreCase)
-            || !string.Equals(current.CondicionSunat, "HABIDO", StringComparison.OrdinalIgnoreCase);
-        var solicitaCredito = !string.Equals(current.CondicionPago, "Contado", StringComparison.OrdinalIgnoreCase);
+        var noPuedeVender = !ClienteBusquedaRules.PuedeAbrirCotizacion(current.EstadoSunat, current.CondicionSunat);
 
         if (noPuedeVender)
         {
@@ -63,7 +70,7 @@ public class CotizacionesController : Controller
         {
             ModelState.AddModelError(string.Empty, "Debe actualizar los datos fiscales del cliente según SUNAT antes de generar el documento de venta.");
         }
-        else if (solicitaCredito && current.ClienteBloqueado)
+        else if (current.ClienteBloqueado)
         {
             ModelState.AddModelError(string.Empty, $"Cliente Bloqueado por Mora: no se permiten cotizaciones a crédito. {current.MotivoBloqueo}");
         }

@@ -41,10 +41,10 @@
         </label>
         <a class="btn-prosegin-primary catalog-search-button" href="#catalogProducts"><i class="bi bi-arrow-down me-1"></i>Ver productos</a>
         <div class="catalog-category-list" role="group" aria-label="Filtrar por categoría">
-            <button type="button" class="catalog-category active" data-category="">Todos</button>
+            <button type="button" class="catalog-category active" data-category-filter="">Todos</button>
             @foreach (var category in categories)
             {
-                <button type="button" class="catalog-category" data-category="@category">@category</button>
+                <button type="button" class="catalog-category" data-category-filter="@category">@category</button>
             }
         </div>
     </div>
@@ -168,6 +168,12 @@
                     subtotal += Number(card.dataset.price) * quantity;
                 });
 
+                // Actualizar estado visual de fila seleccionada en cada producto
+                cards.forEach(card => {
+                    const isSelected = cart.has(Number(card.dataset.productId));
+                    card.classList.toggle("is-selected", isSelected);
+                });
+
                 empty.classList.toggle("d-none", cart.size > 0);
                 const tax = Math.round((subtotal * 0.18 + Number.EPSILON) * 100) / 100;
                 document.getElementById("cartItemCount").textContent = String(cart.size);
@@ -193,13 +199,18 @@
             document.getElementById("continueToClient").addEventListener("click", () => { window.location.href = "@Url.Action("Index", "Clientes")"; });
 
             const search = document.getElementById("catalogSearch");
-            const categoryButtons = Array.from(document.querySelectorAll("[data-category]"));
+            const categoryButtons = Array.from(document.querySelectorAll(".catalog-category-list [data-category-filter]"));
             let selectedCategory = "";
             const applyFilters = () => {
                 const term = search.value.trim().toLocaleLowerCase("es-PE");
+                const targetCat = selectedCategory.trim().toLocaleLowerCase("es-PE");
                 let visible = 0;
                 cards.forEach(card => {
-                    const matches = card.dataset.search.includes(term) && (!selectedCategory || card.dataset.category === selectedCategory);
+                    const cardSearch = (card.dataset.search || "").toLocaleLowerCase("es-PE");
+                    const cardCat = (card.dataset.category || "").trim().toLocaleLowerCase("es-PE");
+                    const matchesSearch = !term || cardSearch.includes(term);
+                    const matchesCategory = !targetCat || cardCat === targetCat;
+                    const matches = matchesSearch && matchesCategory;
                     card.classList.toggle("d-none", !matches);
                     if (matches) visible++;
                 });
@@ -209,7 +220,7 @@
             };
             search.addEventListener("input", applyFilters);
             categoryButtons.forEach(button => button.addEventListener("click", () => {
-                selectedCategory = button.dataset.category;
+                selectedCategory = (button.dataset.categoryFilter || "").trim();
                 categoryButtons.forEach(candidate => candidate.classList.toggle("active", candidate === button));
                 applyFilters();
             }));

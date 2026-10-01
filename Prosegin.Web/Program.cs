@@ -80,8 +80,24 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// Sembrado de datos de prueba si no existen
+// Sembrado de datos de clientes si no existen
 await ClienteDataSeeder.SeedAsync(app.Services);
+
+// Ejecución de Seeder de datos iniciales de EPP y proveedores
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ProseginDbContext>();
+        await DbSeeder.SeedAsync(context);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Error al ejecutar el seeder de base de datos.");
+    }
+}
 
 app.Run();
 // prosegin core
