@@ -3,7 +3,6 @@
 
 @{
     ViewData["Title"] = "Registro de Productos EPP";
-    var productosRegistrados = ViewBag.ProductosRegistrados as List<Producto> ?? new List<Producto>();
 }
 
 <div class="container-fluid px-0">
@@ -314,71 +313,6 @@
             </div>
         </div>
     </form>
-
-    <!-- LISTADO DE PRODUCTOS REGISTRADOS RECIENTEMENTE (EN BASE DE DATOS) -->
-    @if (productosRegistrados.Any())
-    {
-        <div class="prosegin-card mt-4 mb-5">
-            <div class="prosegin-card-header py-2 px-3 d-flex justify-content-between align-items-center bg-light">
-                <span class="fw-bold text-dark small text-uppercase">
-                    <i class="bi bi-boxes text-warning me-1"></i> Productos EPP Registrados en Base de Datos (@productosRegistrados.Count)
-                </span>
-                <span class="badge bg-success text-white small">Base de Datos Activa</span>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover table-prosegin mb-0 align-middle">
-                    <thead>
-                        <tr>
-                            <th style="width: 140px;">SKU</th>
-                            <th>Nombre del Producto EPP</th>
-                            <th style="width: 170px;">Categoría</th>
-                            <th style="width: 80px;" class="text-center">Unidad</th>
-                            <th style="width: 120px;" class="text-end">Costo Base</th>
-                            <th style="width: 130px;" class="text-center">Ficha Técnica</th>
-                            <th style="width: 125px;">Fecha Registro</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var p in productosRegistrados)
-                        {
-                            <tr>
-                                <td class="font-monospace fw-bold text-dark">@p.Sku</td>
-                                <td class="fw-semibold text-dark">
-                                    @p.Nombre
-                                    @if (!string.IsNullOrWhiteSpace(p.Descripcion))
-                                    {
-                                        <div class="text-muted small fst-italic" style="font-size: 0.72rem;">@p.Descripcion</div>
-                                    }
-                                </td>
-                                <td>
-                                    <span class="badge bg-light text-dark border">@p.Categoria</span>
-                                </td>
-                                <td class="text-center font-monospace small">@p.UnidadMedida</td>
-                                <td class="text-end font-monospace fw-bold text-dark">
-                                    S/ @p.CostoReferencial.ToString("N2")
-                                </td>
-                                <td class="text-center">
-                                    @if (!string.IsNullOrWhiteSpace(p.RutaFichaTecnicaPdf))
-                                    {
-                                        <a asp-controller="Catalogo" asp-action="VerFicha" asp-route-id="@p.Id" target="_blank" 
-                                           class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1 py-1 px-2" 
-                                           style="font-size: 0.75rem;" title="Abrir ficha técnica en nueva pestaña">
-                                            <i class="bi bi-file-earmark-pdf-fill"></i> Ver Ficha ↗
-                                        </a>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-secondary-subtle text-secondary small">Sin Ficha</span>
-                                    }
-                                </td>
-                                <td class="small text-muted">@p.FechaCreacion.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    }
 </div>
 
 @section Scripts {
