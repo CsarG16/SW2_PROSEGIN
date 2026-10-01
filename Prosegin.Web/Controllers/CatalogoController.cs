@@ -94,6 +94,24 @@ public class CatalogoController : Controller
         return View();
     }
 
+    [HttpGet]
+    public async Task<IActionResult> ValidarSku(string sku)
+    {
+        if (string.IsNullOrWhiteSpace(sku))
+        {
+            return Json(new { valido = false, mensaje = "Ingrese un código SKU." });
+        }
+
+        var skuNormalizado = sku.Trim().ToUpperInvariant();
+        var existe = await _context.Productos.AnyAsync(p => p.Sku == skuNormalizado && p.Activo);
+        if (existe)
+        {
+            return Json(new { valido = false, existe = true, mensaje = "El código SKU ya se encuentra registrado" });
+        }
+
+        return Json(new { valido = true, existe = false, mensaje = "Código SKU disponible" });
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RegistroProductos(ProductoCreateViewModel model)
@@ -148,8 +166,9 @@ public class CatalogoController : Controller
             UnidadMedida = string.IsNullOrWhiteSpace(model.UnidadMedida) ? "UND" : model.UnidadMedida.Trim().ToUpperInvariant(),
             CostoReferencial = model.CostoBaseAdquisicion,
             RutaFichaTecnicaPdf = $"/uploads/fichas/{nombreUnico}",
-            NombreArchivoPdf = model.FichaTecnica.FileName,
-            Descripcion = $"Proveedor: {model.ProveedorAutorizado.Trim()}",
+            Descripcion = string.IsNullOrWhiteSpace(model.Marca)
+                ? $"Proveedor: {model.ProveedorAutorizado.Trim()}"
+                : $"Marca: {model.Marca.Trim()} | Proveedor: {model.ProveedorAutorizado.Trim()}",
             FechaCreacion = DateTime.UtcNow,
             Activo = true
         };

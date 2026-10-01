@@ -2,21 +2,20 @@
 @using Prosegin.Data.Entities
 
 @{
-    ViewData["Title"] = "Registro de Productos EPP";
+    ViewData["Title"] = "Registrar Nuevo Producto EPP";
 }
 
 <div class="container-fluid px-0">
-    <!-- Encabezado Principal del Registro -->
+    <!-- 1. ENCABEZADO / BREADCRUMB CARD (Diseño Figma) -->
     <div class="prosegin-card mb-4 p-3 p-md-4">
-        <div class="prosegin-page-header--accent" style="margin-bottom: 0;">
-            <div class="header-content">
-                <h1 class="page-title">Registrar Equipo de Protección Personal (EPP)</h1>
-                <p class="page-subtitle">Ficha técnica comercial y archivo PDF homologado del fabricante para compras y cotizaciones</p>
-            </div>
-            <a asp-controller="Catalogo" asp-action="Index" class="btn-prosegin-secondary">
-                <i class="bi bi-arrow-left"></i> Ir al Catálogo EPP
-            </a>
+        <div class="mb-1 text-muted small" style="font-size: 0.82rem;">
+            <a asp-controller="Catalogo" asp-action="Index" class="text-decoration-none text-muted">Catálogo de EPP</a>
+            <i class="bi bi-chevron-right mx-1" style="font-size: 0.72rem;"></i>
+            <span class="text-secondary fw-semibold">Registrar Nuevo Producto</span>
         </div>
+        <h1 class="fw-bold text-dark mb-0" style="font-size: 1.25rem; letter-spacing: -0.01em;">
+            Alta técnica y comercial de equipos de protección personal
+        </h1>
     </div>
 
     @if (TempData["SuccessMessage"] != null)
@@ -34,281 +33,242 @@
     <form asp-controller="Catalogo" asp-action="RegistroProductos" method="post" enctype="multipart/form-data" id="formRegistroProducto" novalidate>
         @Html.AntiForgeryToken()
 
-        <div asp-validation-summary="All" class="alert alert-danger py-2 small mb-3 @(ViewData.ModelState.IsValid ? "d-none" : "")"></div>
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3 @(ViewData.ModelState.IsValid ? "d-none" : "")"></div>
 
-        <div class="row g-4">
-            <!-- COLUMNA IZQUIERDA: FORMULARIO PRINCIPAL -->
-            <div class="col-lg-8">
-                
-                <!-- SECCIÓN 1: IDENTIFICACIÓN DEL PRODUCTO -->
-                <div class="prosegin-card mb-4">
-                    <div class="prosegin-card-header bg-white py-2 px-3">
-                        <span class="fw-bold text-dark small text-uppercase">
-                            <i class="bi bi-upc-scan text-warning me-2"></i> 1. Identificación del Producto
-                        </span>
-                    </div>
-
-                    <div class="prosegin-card-body p-3">
-                        <!-- Campo SKU -->
-                        <div class="mb-3">
-                            <label asp-for="Sku" class="form-label-prosegin small text-uppercase fw-bold mb-1">
-                                Código SKU / Parte <span class="text-danger">*</span>
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0 text-muted fw-bold">
-                                    <i class="bi bi-hash"></i>
-                                </span>
-                                <input asp-for="Sku" id="txtSku" class="form-control form-control-prosegin font-monospace fw-bold fs-6 border-start-0 text-uppercase" 
-                                       placeholder="Ej: CAS-3M-H700" maxlength="50" autocomplete="off" />
-                            </div>
-                            <div id="skuStatusBox" class="mt-1 small">
-                                <span id="skuStatusText" class="text-muted" style="font-size: 0.75rem;">
-                                    Código único para cotizaciones y almacén
-                                </span>
-                            </div>
-                            <span asp-validation-for="Sku" class="text-danger small d-block"></span>
-                        </div>
-
-                        <!-- Nombre Comercial -->
-                        <div class="mb-3">
-                            <label asp-for="Nombre" class="form-label-prosegin small text-uppercase fw-bold mb-1">
-                                Nombre Comercial del EPP <span class="text-danger">*</span>
-                            </label>
-                            <input asp-for="Nombre" id="txtNombre" class="form-control form-control-prosegin form-control-sm text-uppercase" 
-                                   placeholder="Ej: CASCO DE SEGURIDAD MINERO H-700 CON SUSPENSIÓN DE 4 PUNTOS" autocomplete="off" />
-                            <span asp-validation-for="Nombre" class="text-danger small d-block mt-1"></span>
-                        </div>
-
-                        <!-- Categoría y Unidad de Medida -->
-                        <div class="row g-3">
-                            <div class="col-md-7">
-                                <label asp-for="Categoria" class="form-label-prosegin small text-uppercase fw-bold mb-1">
-                                    Categoría de EPP <span class="text-danger">*</span>
-                                </label>
-                                <select asp-for="Categoria" id="ddlCategoria" class="form-select form-control-prosegin form-control-sm">
-                                    <option value="">-- Seleccionar Categoría --</option>
-                                    <option value="Protección de cabeza">Protección de cabeza</option>
-                                    <option value="Protección ocular">Protección ocular / Facial</option>
-                                    <option value="Protección respiratoria">Protección respiratoria</option>
-                                    <option value="Protección auditiva">Protección auditiva</option>
-                                    <option value="Protección de manos">Protección de manos / Guantes</option>
-                                    <option value="Protección de pies">Protección de pies / Calzado</option>
-                                    <option value="Protección corporal">Protección corporal / Indumentaria</option>
-                                    <option value="Trabajo en altura">Trabajo en altura / Caídas</option>
-                                </select>
-                                <span asp-validation-for="Categoria" class="text-danger small d-block mt-1"></span>
-                            </div>
-                            <div class="col-md-5">
-                                <label asp-for="UnidadMedida" class="form-label-prosegin small text-uppercase fw-bold mb-1">
-                                    Unidad de Medida
-                                </label>
-                                <select asp-for="UnidadMedida" id="ddlUnidad" class="form-select form-control-prosegin form-control-sm font-monospace fw-bold">
-                                    <option value="UND" selected>UND - Unidad</option>
-                                    <option value="PAR">PAR - Par</option>
-                                    <option value="JGO">JGO - Juego</option>
-                                    <option value="CJA">CJA - Caja</option>
-                                    <option value="PKT">PKT - Paquete</option>
-                                </select>
-                                <span asp-validation-for="UnidadMedida" class="text-danger small d-block mt-1"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SECCIÓN 2: COSTOS Y PROVEEDOR AUTORIZADO -->
-                <div class="prosegin-card mb-4">
-                    <div class="prosegin-card-header bg-white py-2 px-3">
-                        <span class="fw-bold text-dark small text-uppercase">
-                            <i class="bi bi-cash-stack text-warning me-2"></i> 2. Costo Base y Proveedor Autorizado
-                        </span>
-                    </div>
-
-                    <div class="prosegin-card-body p-3">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label asp-for="CostoBaseAdquisicion" class="form-label-prosegin small text-uppercase fw-bold mb-1">
-                                    Costo Base de Adquisición (Sin IGV) <span class="text-danger">*</span>
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-end-0 fw-bold text-dark">S/</span>
-                                    <input asp-for="CostoBaseAdquisicion" id="txtCosto" type="number" step="0.01" min="0.01" 
-                                           class="form-control form-control-prosegin font-monospace fw-bold border-start-0" 
-                                           placeholder="0.00" autocomplete="off" />
-                                </div>
-                                <div class="small text-muted mt-1" style="font-size: 0.72rem;">
-                                    Costo al contado en Las Malvinas o proveedor oficial
-                                </div>
-                                <span asp-validation-for="CostoBaseAdquisicion" class="text-danger small d-block"></span>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label asp-for="ProveedorAutorizado" class="form-label-prosegin small text-uppercase fw-bold mb-1">
-                                    Proveedor Autorizado <span class="text-danger">*</span>
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-end-0 text-muted">
-                                        <i class="bi bi-shop"></i>
-                                    </span>
-                                    <input asp-for="ProveedorAutorizado" id="txtProveedor" class="form-control form-control-prosegin border-start-0 text-uppercase" 
-                                           placeholder="Ej: 3M PERÚ S.A.C. / IMPORTACIONES MALVINAS" autocomplete="organization" />
-                                </div>
-                                <div class="small text-muted mt-1" style="font-size: 0.72rem;">
-                                    Razón social o distribuidor habitual
-                                </div>
-                                <span asp-validation-for="ProveedorAutorizado" class="text-danger small d-block"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SECCIÓN 3: DOCUMENTACIÓN TÉCNICA OFICIAL (PDF) -->
-                <div class="prosegin-card mb-4">
-                    <div class="prosegin-card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
-                        <span class="fw-bold text-dark small text-uppercase">
-                            <i class="bi bi-file-earmark-pdf text-warning me-2"></i> 3. Ficha Técnica Oficial (PDF Obligatorio) <span class="text-danger">*</span>
-                        </span>
-                        <span class="badge bg-warning-subtle text-dark border border-warning" style="font-size: 0.68rem;">
-                            Auditoría SST & SUNAT
-                        </span>
-                    </div>
-
-                    <div class="prosegin-card-body p-3">
-                        <div class="row g-3 align-items-stretch">
-                            <!-- Dropzone interactivo -->
-                            <div class="col-lg-6">
-                                <div id="dropzoneBox" class="d-flex flex-column justify-content-center align-items-center text-center border border-2 border-secondary-subtle border-dashed rounded-3 p-4 bg-light h-100" style="cursor: pointer; min-height: 140px; transition: all 0.2s ease;">
-                                    <i class="bi bi-cloud-arrow-up fs-2 text-warning mb-1"></i>
-                                    <span class="fw-bold text-dark small">Arrastra el archivo PDF aquí</span>
-                                    <span class="text-muted" style="font-size: 0.75rem;">o haz clic para examinar tu equipo</span>
-                                    <span class="badge bg-white text-secondary border mt-2" style="font-size: 0.68rem;">
-                                        PDF • Máximo 5 MB
-                                    </span>
-                                </div>
-                                <input asp-for="FichaTecnica" id="txtFichaTecnica" type="file" accept="application/pdf,.pdf" class="visually-hidden" />
-                                <span asp-validation-for="FichaTecnica" class="text-danger small d-block mt-1"></span>
-                            </div>
-
-                            <!-- Estado del archivo seleccionado -->
-                            <div class="col-lg-6">
-                                <div id="boxFichaSeleccionada" class="border rounded-3 p-3 h-100 d-none bg-white d-flex align-items-start gap-3 shadow-sm border-success">
-                                    <div class="rounded-2 p-2 bg-danger-subtle text-danger fw-bold d-flex flex-column align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                                        <i class="bi bi-file-earmark-pdf-fill fs-5"></i>
-                                    </div>
-                                    <div class="flex-grow-1 min-width-0">
-                                        <div class="fw-bold text-dark text-truncate small" id="lblFichaNombre">archivo.pdf</div>
-                                        <div class="text-muted small" id="lblFichaTamano" style="font-size: 0.72rem;">0.00 MB</div>
-                                        <span class="badge bg-success-subtle text-success border border-success mt-1" style="font-size: 0.68rem;">
-                                            <i class="bi bi-check-circle-fill me-1"></i> PDF Válido
-                                        </span>
-                                    </div>
-                                    <button type="button" class="btn btn-sm btn-outline-danger border-0" id="btnQuitarFicha" title="Quitar archivo">
-                                        <i class="bi bi-x-circle-fill fs-5"></i>
-                                    </button>
-                                </div>
-
-                                <div id="boxFichaVacia" class="border border-dashed rounded-3 p-3 h-100 d-flex flex-column align-items-center justify-content-center text-muted bg-white text-center">
-                                    <i class="bi bi-file-earmark-x fs-3 text-secondary mb-1"></i>
-                                    <span class="small fw-semibold">Ningún archivo cargado</span>
-                                    <span style="font-size: 0.72rem;">La ficha técnica es requerida para validar cotizaciones.</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+        <!-- 2. CARD 1: INFORMACIÓN GENERAL Y CÓDIGO IDENTIFICADOR -->
+        <div class="prosegin-card mb-4 overflow-hidden">
+            <div class="d-flex justify-content-between align-items-center py-3 px-4 border-bottom bg-white">
+                <span class="fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 0.92rem;">
+                    <i class="bi bi-shield text-muted"></i> Información General y Código Identificador
+                </span>
+                <span class="text-muted small fst-italic" style="font-size: 0.8rem;">*obligatorios</span>
             </div>
 
-            <!-- COLUMNA DERECHA: RESUMEN DEL PRODUCTO (STICKY PREVIEW) -->
-            <div class="col-lg-4">
-                
-                <div class="prosegin-card mb-4 sticky-top" style="top: 85px;">
-                    <div class="prosegin-card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
-                        <span class="fw-bold text-dark small text-uppercase">
-                            Resumen del Producto
-                        </span>
-                        <i class="bi bi-box-seam text-muted"></i>
+            <div class="p-3 p-md-4">
+                <!-- Fila 1: SKU y Nombre del EPP -->
+                <div class="row g-3 mb-3">
+                    <!-- Código SKU -->
+                    <div class="col-md-5">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label asp-for="Sku" class="form-label-prosegin small text-uppercase fw-bold mb-0">
+                                CÓDIGO SKU <span class="text-danger">*</span>
+                            </label>
+                            <span class="text-muted" style="font-size: 0.75rem;">6-12 caracteres</span>
+                        </div>
+                        <div class="position-relative">
+                            <input asp-for="Sku" id="txtSku" class="form-control form-control-prosegin font-monospace text-uppercase pe-5"
+                                   placeholder="EPP-CAS-0042" maxlength="30" autocomplete="off" />
+                            <span id="skuCheckIcon" class="position-absolute end-0 top-50 translate-middle-y me-3 d-none">
+                                <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                            </span>
+                        </div>
+                        <div class="mt-1 small text-muted" style="font-size: 0.78rem;" id="skuHelperText">
+                            <i class="bi bi-info-circle me-1"></i> Código único alfanumérico. Si ya existe, mostrará: <em class="text-secondary">"El código SKU ya se encuentra registrado"</em>
+                        </div>
+                        <span asp-validation-for="Sku" class="text-danger small d-block"></span>
                     </div>
 
-                    <div class="prosegin-card-body p-3">
-                        <div class="mb-3">
-                            <span class="text-muted small text-uppercase fw-bold d-block" style="font-size: 0.7rem;">CÓDIGO SKU</span>
-                            <div class="fs-4 fw-bolder font-monospace text-muted text-break" id="previewSku">
-                                -----------
-                            </div>
-                            <div class="small text-muted fst-italic mt-1 text-break" id="previewNombre">
-                                Nombre comercial del EPP
-                            </div>
-                        </div>
-
-                        <hr class="my-2 border-light" />
-
-                        <!-- Ficha de Datos Dinámica -->
-                        <div class="d-flex flex-column gap-2 py-2 small">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-muted">Categoría:</span>
-                                <span class="badge bg-light text-muted border text-truncate" style="max-width: 170px;" id="previewCategoria">Pendiente</span>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-muted">Unidad Medida:</span>
-                                <span class="badge bg-light text-dark border font-monospace" id="previewUnidad">UND</span>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-muted">Costo Base (Sin IGV):</span>
-                                <span class="fw-bold font-monospace text-dark" id="previewCosto">S/ 0.00</span>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-muted">Ficha Técnica:</span>
-                                <span class="badge bg-light text-muted border" id="previewFicha">Sin Archivo</span>
-                            </div>
-                        </div>
-
-                        <hr class="my-2 border-light" />
-
-                        <!-- Checklist de Validaciones del Producto -->
-                        <div class="d-flex flex-column gap-2 pt-2 small" style="font-size: 0.78rem;">
-                            <!-- Check 1: SKU ingresado -->
-                            <div class="d-flex align-items-center gap-2" id="chkSku">
-                                <i class="bi bi-circle text-muted" id="iconChkSku"></i>
-                                <span class="text-muted" id="lblChkSku">Código SKU asignado</span>
-                            </div>
-
-                            <!-- Check 2: Nombre comercial -->
-                            <div class="d-flex align-items-center gap-2" id="chkNombre">
-                                <i class="bi bi-circle text-muted" id="iconChkNombre"></i>
-                                <span class="text-muted" id="lblChkNombre">Nombre comercial y categoría</span>
-                            </div>
-
-                            <!-- Check 3: Costo Base mayor a 0 -->
-                            <div class="d-flex align-items-center gap-2" id="chkCosto">
-                                <i class="bi bi-circle text-muted" id="iconChkCosto"></i>
-                                <span class="text-muted" id="lblChkCosto">Costo base mayor a S/ 0.00</span>
-                            </div>
-
-                            <!-- Check 4: Ficha técnica PDF -->
-                            <div class="d-flex align-items-center gap-2" id="chkFicha">
-                                <i class="bi bi-circle text-muted" id="iconChkFicha"></i>
-                                <span class="text-muted" id="lblChkFicha">Ficha técnica PDF adjuntada</span>
-                            </div>
-                        </div>
+                    <!-- Nombre o Descripción -->
+                    <div class="col-md-7">
+                        <label asp-for="Nombre" class="form-label-prosegin small text-uppercase fw-bold mb-1">
+                            NOMBRE O DESCRIPCIÓN DEL EPP <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Nombre" id="txtNombre" class="form-control form-control-prosegin"
+                               placeholder="Casco de Seguridad Dieléctrico Tipo 1 Clase E con Barboquejo" autocomplete="off" />
+                        <span asp-validation-for="Nombre" class="text-danger small d-block"></span>
                     </div>
                 </div>
 
+                <!-- Fila 2: Categoría, Marca y Unidad de Medida -->
+                <div class="row g-3">
+                    <!-- Categoría -->
+                    <div class="col-md-5">
+                        <label asp-for="Categoria" class="form-label-prosegin small text-uppercase fw-bold mb-1">
+                            CATEGORÍA / TIPO DE PROTECCIÓN <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="Categoria" id="ddlCategoria" class="form-select form-control-prosegin">
+                            <option value="">-- Seleccione una categoría --</option>
+                            <option value="Protección Craneal / Cascos">Protección Craneal / Cascos</option>
+                            <option value="Protección Auditiva">Protección Auditiva</option>
+                            <option value="Protección Visual y Facial">Protección Visual y Facial</option>
+                            <option value="Protección Respiratoria">Protección Respiratoria</option>
+                            <option value="Protección Manual / Guantes">Protección Manual / Guantes</option>
+                            <option value="Calzado de Seguridad">Calzado de Seguridad</option>
+                            <option value="Protección Corporal / Ropa">Protección Corporal / Ropa</option>
+                            <option value="Trabajo en Altura">Trabajo en Altura</option>
+                        </select>
+                        <span asp-validation-for="Categoria" class="text-danger small d-block"></span>
+                    </div>
+
+                    <!-- Marca / Fabricante -->
+                    <div class="col-md-4">
+                        <label asp-for="Marca" class="form-label-prosegin small text-uppercase fw-bold mb-1">
+                            MARCA / FABRICANTE <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="Marca" id="ddlMarca" class="form-select form-control-prosegin">
+                            <option value="MSA Safety" selected>MSA Safety</option>
+                            <option value="3M">3M</option>
+                            <option value="Steelpro">Steelpro</option>
+                            <option value="Ansell">Ansell</option>
+                            <option value="Bata Industrials">Bata Industrials</option>
+                            <option value="Caterpillar (CAT)">Caterpillar (CAT)</option>
+                            <option value="Showa">Showa</option>
+                            <option value="Hawk">Hawk</option>
+                            <option value="KleenGuard">KleenGuard</option>
+                            <option value="Generico / Nacional">Genérico / Nacional</option>
+                        </select>
+                    </div>
+
+                    <!-- Unidad de Medida -->
+                    <div class="col-md-3">
+                        <label asp-for="UnidadMedida" class="form-label-prosegin small text-uppercase fw-bold mb-1">
+                            UNIDAD DE MEDIDA <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="UnidadMedida" id="ddlUnidad" class="form-select form-control-prosegin">
+                            <option value="UND" selected>Unidad (UND)</option>
+                            <option value="PAR">Par (PAR)</option>
+                            <option value="CAJ">Caja (CAJ)</option>
+                            <option value="PQT">Paquete (PQT)</option>
+                            <option value="JGO">Juego (JGO)</option>
+                        </select>
+                        <span asp-validation-for="UnidadMedida" class="text-danger small d-block"></span>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- BARRA DE ACCIÓN INFERIOR: BOTONES DE GUARDADO -->
-        <div class="prosegin-card p-3 mt-2 mb-4 bg-white border d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <div class="d-flex align-items-center gap-2 small fw-bold text-secondary" id="formStatusIndicator">
-                <span class="d-inline-block rounded-circle bg-secondary" id="statusDot" style="width: 10px; height: 10px;"></span>
-                <span id="statusLabel">FORMULARIO PENDIENTE // COMPLETE LOS CAMPOS OBLIGATORIOS (*)</span>
+        <!-- 3. CARD 2: COSTO BASE Y PROVEEDOR AUTORIZADO -->
+        <div class="prosegin-card mb-4 overflow-hidden">
+            <div class="d-flex justify-content-between align-items-center py-3 px-4 border-bottom bg-white">
+                <span class="fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 0.92rem;">
+                    <i class="bi bi-wallet2 text-muted"></i> Costo base y proveedor autorizado
+                </span>
+            </div>
+
+            <div class="p-3 p-md-4">
+                <div class="row g-3 align-items-end">
+                    <!-- Costo Base -->
+                    <div class="col-md-4">
+                        <label asp-for="CostoBaseAdquisicion" class="form-label-prosegin small text-uppercase fw-bold mb-1">
+                            COSTO BASE (S/.) <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0 text-muted fw-semibold">S/.</span>
+                            <input asp-for="CostoBaseAdquisicion" id="txtCosto" type="number" step="0.01" min="0.01"
+                                   class="form-control form-control-prosegin border-start-0 font-monospace fw-bold"
+                                   placeholder="48.50" />
+                        </div>
+                        <span asp-validation-for="CostoBaseAdquisicion" class="text-danger small d-block"></span>
+                    </div>
+
+                    <!-- Proveedores Autorizados -->
+                    <div class="col-md-6">
+                        <label asp-for="ProveedorAutorizado" class="form-label-prosegin small text-uppercase fw-bold mb-1">
+                            PROVEEDORES AUTORIZADOS <span class="text-danger">*</span>
+                        </label>
+                        <div class="position-relative">
+                            <input asp-for="ProveedorAutorizado" id="txtProveedor" class="form-control form-control-prosegin pe-5"
+                                   placeholder="Buscar y seleccionar proveedor homologado..." autocomplete="off" list="proveedoresList" />
+                            <span class="position-absolute end-0 top-50 translate-middle-y me-3 text-muted pointer-events-none">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <datalist id="proveedoresList">
+                                <option value="DISTRIBUIDORA FERRETERA LAS MALVINAS S.A.C." />
+                                <option value="IMPORTADORA INDUSTRIAL DE SEGURIDAD DEL PERÚ E.I.R.L." />
+                                <option value="COMERCIAL EPP PERÚ S.A." />
+                                <option value="MULTISERVICIOS Y SUMINISTROS LIMA S.A.C." />
+                                <option value="PROVEEDOR DIRECTO FABRICANTE" />
+                            </datalist>
+                        </div>
+                        <span asp-validation-for="ProveedorAutorizado" class="text-danger small d-block"></span>
+                    </div>
+
+                    <!-- Botón Agregar Proveedor -->
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-outline-secondary w-100 d-inline-flex align-items-center justify-content-center gap-1"
+                                id="btnAgregarProveedor" style="height: 44px; font-size: 0.82rem; font-weight: 600; border-radius: 8px;">
+                            <i class="bi bi-plus-lg"></i> Agregar proveedor
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. CARD 3: FICHA TÉCNICA DEL FABRICANTE -->
+        <div class="prosegin-card mb-4 overflow-hidden">
+            <div class="d-flex justify-content-between align-items-center py-3 px-4 border-bottom bg-white">
+                <span class="fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 0.92rem;">
+                    <i class="bi bi-file-earmark-text text-muted"></i> Ficha técnica del fabricante
+                </span>
+            </div>
+
+            <div class="p-3 p-md-4">
+                <!-- Input file oculto -->
+                <input asp-for="FichaTecnica" type="file" id="txtFichaTecnica" class="d-none" accept=".pdf,application/pdf" />
+
+                <!-- Dropzone Box -->
+                <div id="dropzoneBox" class="pdf-dropzone p-4 text-center rounded-3 mb-3"
+                     style="border: 2px dashed #cbd5e1; background-color: #f8fafc; cursor: pointer; transition: all 0.2s ease;">
+                    <div class="d-flex flex-column align-items-center justify-content-center py-2">
+                        <div class="p-2 rounded-3 bg-white border mb-2 shadow-sm d-flex align-items-center justify-content-center"
+                             style="width: 44px; height: 44px;">
+                            <i class="bi bi-file-earmark-arrow-up fs-4 text-dark"></i>
+                        </div>
+                        <div class="text-dark small mb-1" style="font-size: 0.88rem;">
+                            Arrastrar archivo PDF aquí o <span class="text-dark fw-bold text-decoration-underline">explorar equipo</span>
+                        </div>
+                        <div class="text-muted" style="font-size: 0.78rem;">
+                            Formato admitido: Solo PDF. Tamaño máximo: 5 MB
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Selected File Preview Card (Se muestra tras seleccionar) -->
+                <div id="boxFichaSeleccionada" class="d-none p-3 rounded-3 border bg-white d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="p-2 rounded bg-danger-subtle text-danger d-flex align-items-center justify-content-center"
+                             style="width: 44px; height: 44px; border-radius: 8px;">
+                            <i class="bi bi-file-earmark-pdf-fill fs-3"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="fw-bold text-dark small" id="lblFichaNombre">FT_Archivo.pdf</span>
+                                <span class="text-muted small" id="lblFichaTamano" style="font-size: 0.78rem;">(1.8 MB)</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 mt-1">
+                                <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle fw-semibold px-2 py-1"
+                                      style="font-size: 0.72rem;">
+                                    <i class="bi bi-check-circle-fill me-1"></i> ARCHIVO VALIDADO
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" id="btnQuitarFicha" title="Quitar archivo">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+
+                <span asp-validation-for="FichaTecnica" class="text-danger small d-block mt-2"></span>
+            </div>
+        </div>
+
+        <!-- 5. BARRA DE ACCIÓN INFERIOR (Diseño Figma) -->
+        <div class="prosegin-card p-3 mb-5 bg-white border d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div class="d-flex align-items-center gap-2" id="formStatusIndicator">
+                <i class="bi bi-check-circle text-muted fs-5" id="statusIcon"></i>
+                <span id="statusLabel" class="small text-muted fw-medium">
+                    Complete todos los campos obligatorios (*) para guardar
+                </span>
             </div>
 
             <div class="d-flex align-items-center gap-2">
-                <a asp-controller="Catalogo" asp-action="Index" class="btn-prosegin-secondary py-2 px-3">
+                <a asp-controller="Catalogo" asp-action="Index" class="btn btn-outline-secondary py-2 px-4 fw-semibold"
+                   style="border-radius: 8px; font-size: 0.85rem;">
                     CANCELAR
                 </a>
-                <button type="submit" id="btnGuardarProducto" class="btn-prosegin-primary py-2 px-4 fw-bold">
-                    <i class="bi bi-save me-1"></i> GUARDAR PRODUCTO EN CATÁLOGO
+                <button type="submit" id="btnGuardarProducto" class="btn d-inline-flex align-items-center gap-2 py-2 px-4 fw-bold text-white"
+                        style="background-color: #0c1524; border: 1px solid #0c1524; border-radius: 8px; font-size: 0.85rem;">
+                    <i class="bi bi-floppy"></i> GUARDAR PRODUCTO EPP
                 </button>
             </div>
         </div>
@@ -323,146 +283,84 @@
             const txtSku = document.getElementById('txtSku');
             const txtNombre = document.getElementById('txtNombre');
             const ddlCategoria = document.getElementById('ddlCategoria');
+            const ddlMarca = document.getElementById('ddlMarca');
             const ddlUnidad = document.getElementById('ddlUnidad');
             const txtCosto = document.getElementById('txtCosto');
             const txtProveedor = document.getElementById('txtProveedor');
             const txtFichaTecnica = document.getElementById('txtFichaTecnica');
             const dropzoneBox = document.getElementById('dropzoneBox');
 
+            const skuCheckIcon = document.getElementById('skuCheckIcon');
+            const skuHelperText = document.getElementById('skuHelperText');
+
             const boxFichaSeleccionada = document.getElementById('boxFichaSeleccionada');
-            const boxFichaVacia = document.getElementById('boxFichaVacia');
             const lblFichaNombre = document.getElementById('lblFichaNombre');
             const lblFichaTamano = document.getElementById('lblFichaTamano');
             const btnQuitarFicha = document.getElementById('btnQuitarFicha');
             const btnGuardar = document.getElementById('btnGuardarProducto');
+            const btnAgregarProveedor = document.getElementById('btnAgregarProveedor');
 
-            // Previews
-            const previewSku = document.getElementById('previewSku');
-            const previewNombre = document.getElementById('previewNombre');
-            const previewCategoria = document.getElementById('previewCategoria');
-            const previewUnidad = document.getElementById('previewUnidad');
-            const previewCosto = document.getElementById('previewCosto');
-            const previewFicha = document.getElementById('previewFicha');
-
-            // Checks
-            const iconChkSku = document.getElementById('iconChkSku');
-            const lblChkSku = document.getElementById('lblChkSku');
-            const iconChkNombre = document.getElementById('iconChkNombre');
-            const lblChkNombre = document.getElementById('lblChkNombre');
-            const iconChkCosto = document.getElementById('iconChkCosto');
-            const lblChkCosto = document.getElementById('lblChkCosto');
-            const iconChkFicha = document.getElementById('iconChkFicha');
-            const lblChkFicha = document.getElementById('lblChkFicha');
-
-            const statusDot = document.getElementById('statusDot');
+            const statusIcon = document.getElementById('statusIcon');
             const statusLabel = document.getElementById('statusLabel');
 
             const maxBytes = 5 * 1024 * 1024; // 5 MB
+            let skuTimeout = null;
+            let skuEsValido = false;
 
-            function setCheck(iconEl, lblEl, isValid, text) {
-                if (isValid) {
-                    iconEl.className = 'bi bi-check-circle-fill text-success';
-                    lblEl.className = 'text-success fw-bold';
-                    lblEl.textContent = text;
-                } else {
-                    iconEl.className = 'bi bi-circle text-muted';
-                    lblEl.className = 'text-muted';
-                    lblEl.textContent = text;
-                }
-            }
-
-            // Sincronización SKU
+            // Validación en tiempo real del SKU
             txtSku.addEventListener('input', function () {
-                this.value = this.value.toUpperCase();
-                const val = this.value.trim();
-                if (val.length > 0) {
-                    previewSku.textContent = val;
-                    previewSku.className = 'fs-4 fw-bolder font-monospace text-dark text-break';
-                    txtSku.classList.remove('is-invalid');
-                    txtSku.classList.add('is-valid');
-                    setCheck(iconChkSku, lblChkSku, true, `SKU: ${val}`);
-                } else {
-                    previewSku.textContent = '-----------';
-                    previewSku.className = 'fs-4 fw-bolder font-monospace text-muted';
-                    txtSku.classList.remove('is-valid');
-                    setCheck(iconChkSku, lblChkSku, false, 'Código SKU asignado');
+                this.value = this.value.toUpperCase().replace(/\s+/g, '-');
+                const skuVal = this.value.trim();
+
+                clearTimeout(skuTimeout);
+                if (skuVal.length < 3) {
+                    skuCheckIcon.classList.add('d-none');
+                    txtSku.classList.remove('is-valid', 'is-invalid');
+                    skuHelperText.className = 'mt-1 small text-muted';
+                    skuHelperText.innerHTML = '<i class="bi bi-info-circle me-1"></i> Código único alfanumérico. Si ya existe, mostrará: <em class="text-secondary">"El código SKU ya se encuentra registrado"</em>';
+                    skuEsValido = false;
+                    actualizarEstadoFormulario();
+                    return;
                 }
-                actualizarEstadoFormulario();
+
+                skuTimeout = setTimeout(async () => {
+                    try {
+                        const response = await fetch(`/Catalogo/ValidarSku?sku=${encodeURIComponent(skuVal)}`);
+                        const data = await response.json();
+
+                        if (data.valido) {
+                            skuCheckIcon.classList.remove('d-none');
+                            txtSku.classList.remove('is-invalid');
+                            txtSku.classList.add('is-valid');
+                            skuHelperText.className = 'mt-1 small text-success fw-medium';
+                            skuHelperText.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Código SKU disponible para registro';
+                            skuEsValido = true;
+                        } else {
+                            skuCheckIcon.classList.add('d-none');
+                            txtSku.classList.remove('is-valid');
+                            txtSku.classList.add('is-invalid');
+                            skuHelperText.className = 'mt-1 small text-danger fw-bold';
+                            skuHelperText.innerHTML = `<i class="bi bi-exclamation-circle-fill me-1"></i> "${data.mensaje || 'El código SKU ya se encuentra registrado'}"`;
+                            skuEsValido = false;
+                        }
+                    } catch (e) {
+                        skuEsValido = skuVal.length >= 3;
+                    }
+                    actualizarEstadoFormulario();
+                }, 350);
             });
 
-            // Sincronización Nombre
-            txtNombre.addEventListener('input', function () {
-                this.value = this.value.toUpperCase();
-                const val = this.value.trim();
-                if (val.length > 0) {
-                    previewNombre.textContent = val;
-                    previewNombre.className = 'small fw-bold text-dark mt-1 text-break';
-                    txtNombre.classList.remove('is-invalid');
-                    txtNombre.classList.add('is-valid');
-                } else {
-                    previewNombre.textContent = 'Nombre comercial del EPP';
-                    previewNombre.className = 'small text-muted fst-italic mt-1';
-                    txtNombre.classList.remove('is-valid');
-                }
-                evaluarNombreYCategoria();
-                actualizarEstadoFormulario();
-            });
-
-            // Sincronización Categoría
-            ddlCategoria.addEventListener('change', function () {
-                const val = this.value.trim();
-                if (val.length > 0) {
-                    previewCategoria.textContent = val;
-                    previewCategoria.className = 'badge bg-primary-subtle text-primary border border-primary text-truncate';
-                    ddlCategoria.classList.remove('is-invalid');
-                    ddlCategoria.classList.add('is-valid');
-                } else {
-                    previewCategoria.textContent = 'Pendiente';
-                    previewCategoria.className = 'badge bg-light text-muted border text-truncate';
-                    ddlCategoria.classList.remove('is-valid');
-                }
-                evaluarNombreYCategoria();
-                actualizarEstadoFormulario();
-            });
-
-            function evaluarNombreYCategoria() {
-                const nombreOk = txtNombre.value.trim().length > 0;
-                const catOk = ddlCategoria.value.trim().length > 0;
-                if (nombreOk && catOk) {
-                    setCheck(iconChkNombre, lblChkNombre, true, 'Nombre y categoría definidos');
-                } else {
-                    setCheck(iconChkNombre, lblChkNombre, false, 'Nombre comercial y categoría');
-                }
+            // Botón Agregar Proveedor Rápido
+            if (btnAgregarProveedor) {
+                btnAgregarProveedor.addEventListener('click', function () {
+                    const nuevo = prompt("Ingrese el nombre comercial o razón social del proveedor:");
+                    if (nuevo && nuevo.trim().length > 0) {
+                        txtProveedor.value = nuevo.trim().toUpperCase();
+                        txtProveedor.classList.remove('is-invalid');
+                        actualizarEstadoFormulario();
+                    }
+                });
             }
-
-            // Sincronización Unidad de Medida
-            ddlUnidad.addEventListener('change', function () {
-                previewUnidad.textContent = this.value;
-            });
-
-            // Sincronización Costo Base
-            txtCosto.addEventListener('input', function () {
-                const num = parseFloat(this.value);
-                if (!isNaN(num) && num > 0) {
-                    previewCosto.textContent = `S/ ${num.toFixed(2)}`;
-                    txtCosto.classList.remove('is-invalid');
-                    txtCosto.classList.add('is-valid');
-                    setCheck(iconChkCosto, lblChkCosto, true, `Costo Base: S/ ${num.toFixed(2)}`);
-                } else {
-                    previewCosto.textContent = 'S/ 0.00';
-                    txtCosto.classList.remove('is-valid');
-                    setCheck(iconChkCosto, lblChkCosto, false, 'Costo base mayor a S/ 0.00');
-                }
-                actualizarEstadoFormulario();
-            });
-
-            txtProveedor.addEventListener('input', function () {
-                this.value = this.value.toUpperCase();
-                if (this.value.trim().length > 0) {
-                    txtProveedor.classList.remove('is-invalid');
-                }
-                actualizarEstadoFormulario();
-            });
 
             // Manejo de Dropzone & Ficha Técnica PDF
             dropzoneBox.addEventListener('click', () => txtFichaTecnica.click());
@@ -471,7 +369,8 @@
                 dropzoneBox.addEventListener(eventName, (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    dropzoneBox.classList.add('border-warning', 'bg-warning-subtle');
+                    dropzoneBox.style.borderColor = 'var(--accent, #f59e0b)';
+                    dropzoneBox.style.backgroundColor = '#fffbeb';
                 });
             });
 
@@ -479,7 +378,8 @@
                 dropzoneBox.addEventListener(eventName, (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    dropzoneBox.classList.remove('border-warning', 'bg-warning-subtle');
+                    dropzoneBox.style.borderColor = '#cbd5e1';
+                    dropzoneBox.style.backgroundColor = '#f8fafc';
                 });
             });
 
@@ -518,16 +418,10 @@
                 }
 
                 lblFichaNombre.textContent = file.name;
-                lblFichaTamano.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+                lblFichaTamano.textContent = `(${(file.size / 1024 / 1024).toFixed(1)} MB)`;
 
                 boxFichaSeleccionada.classList.remove('d-none');
-                boxFichaVacia.classList.add('d-none');
-
-                previewFicha.textContent = 'PDF Cargado';
-                previewFicha.className = 'badge bg-success-subtle text-success border border-success';
-
-                setCheck(iconChkFicha, lblChkFicha, true, `Ficha: ${file.name}`);
-                txtFichaTecnica.classList.remove('is-invalid');
+                dropzoneBox.classList.add('d-none');
                 actualizarEstadoFormulario();
             }
 
@@ -536,20 +430,21 @@
                 lblFichaNombre.textContent = '';
                 lblFichaTamano.textContent = '';
                 boxFichaSeleccionada.classList.add('d-none');
-                boxFichaVacia.classList.remove('d-none');
-
-                previewFicha.textContent = 'Sin Archivo';
-                previewFicha.className = 'badge bg-light text-muted border';
-
-                setCheck(iconChkFicha, lblChkFicha, false, 'Ficha técnica PDF adjuntada');
+                dropzoneBox.classList.remove('d-none');
                 actualizarEstadoFormulario();
             }
 
             btnQuitarFicha.addEventListener('click', resetearFicha);
 
-            // Validación global del formulario
+            // Escuchar cambios en campos para estado
+            [txtNombre, ddlCategoria, txtCosto, txtProveedor].forEach(el => {
+                el.addEventListener('input', actualizarEstadoFormulario);
+                el.addEventListener('change', actualizarEstadoFormulario);
+            });
+
+            // Estado general del formulario
             function actualizarEstadoFormulario() {
-                const skuOk = txtSku.value.trim().length > 0;
+                const skuOk = txtSku.value.trim().length >= 3 && skuEsValido;
                 const nombreOk = txtNombre.value.trim().length > 0;
                 const catOk = ddlCategoria.value.trim().length > 0;
                 const costoOk = parseFloat(txtCosto.value) > 0;
@@ -557,17 +452,17 @@
                 const fichaOk = txtFichaTecnica.files && txtFichaTecnica.files.length > 0;
 
                 if (skuOk && nombreOk && catOk && costoOk && provOk && fichaOk) {
-                    statusDot.className = 'd-inline-block rounded-circle bg-success';
-                    statusLabel.textContent = 'FORMULARIO LISTO PARA GUARDAR';
-                    statusLabel.className = 'text-success fw-bold';
+                    statusIcon.className = 'bi bi-check-circle-fill text-success fs-5';
+                    statusLabel.className = 'small text-success fw-bold';
+                    statusLabel.textContent = 'Todos los campos obligatorios (*) completados correctamente';
                 } else {
-                    statusDot.className = 'd-inline-block rounded-circle bg-warning';
-                    statusLabel.textContent = 'FORMULARIO PENDIENTE // COMPLETE LOS CAMPOS OBLIGATORIOS (*)';
-                    statusLabel.className = 'text-secondary fw-bold';
+                    statusIcon.className = 'bi bi-check-circle text-muted fs-5';
+                    statusLabel.className = 'small text-muted fw-medium';
+                    statusLabel.textContent = 'Complete todos los campos obligatorios (*) para guardar';
                 }
             }
 
-            // Envío con validación
+            // Validación al enviar
             form.addEventListener('submit', function (e) {
                 let esValido = true;
 
@@ -603,8 +498,8 @@
                 }
 
                 if (!txtFichaTecnica.files || txtFichaTecnica.files.length === 0) {
-                    dropzoneBox.classList.add('border-danger');
-                    if (esValido) dropzoneBox.scrollIntoView({ behavior: 'smooth' });
+                    dropzoneBox.style.borderColor = '#ef4444';
+                    dropzoneBox.scrollIntoView({ behavior: 'smooth' });
                     esValido = false;
                 }
 
@@ -615,15 +510,8 @@
                 }
 
                 btnGuardar.disabled = true;
-                btnGuardar.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Guardando en Base de Datos...';
+                btnGuardar.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Guardando producto...';
             });
-
-            // Disparar sincronización inicial si hay valores (por ejemplo tras error de post)
-            if (txtSku.value.trim().length > 0) txtSku.dispatchEvent(new Event('input'));
-            if (txtNombre.value.trim().length > 0) txtNombre.dispatchEvent(new Event('input'));
-            if (ddlCategoria.value.trim().length > 0) ddlCategoria.dispatchEvent(new Event('change'));
-            if (txtCosto.value.trim().length > 0) txtCosto.dispatchEvent(new Event('input'));
-            if (txtProveedor.value.trim().length > 0) txtProveedor.dispatchEvent(new Event('input'));
         });
     </script>
 }
