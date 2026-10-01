@@ -485,6 +485,7 @@ namespace Prosegin.Web.Controllers
                 string.IsNullOrWhiteSpace(model.TipoSede) ||
                 string.IsNullOrWhiteSpace(model.NombreAlias) ||
                 string.IsNullOrWhiteSpace(model.Direccion) ||
+                string.IsNullOrWhiteSpace(model.Referencia) ||
                 string.IsNullOrWhiteSpace(model.Departamento) ||
                 string.IsNullOrWhiteSpace(model.Provincia) ||
                 string.IsNullOrWhiteSpace(model.Distrito) ||
@@ -494,6 +495,24 @@ namespace Prosegin.Web.Controllers
                 {
                     success = false,
                     message = "Debe completar todos los campos obligatorios marcados con asterisco (*)."
+                });
+            }
+
+            if (!System.Text.RegularExpressions.Regex.IsMatch(model.Ubigeo.Trim(), @"^\d{6}$"))
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "El código de Ubigeo debe tener exactamente 6 dígitos."
+                });
+            }
+
+            if (model.Referencia!.Trim().Length > 200)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "La referencia no puede superar los 200 caracteres."
                 });
             }
 

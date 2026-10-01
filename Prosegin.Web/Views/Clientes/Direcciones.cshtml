@@ -228,10 +228,10 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label-prosegin small text-uppercase fw-bold mb-1">
-                                Referencia de Llegada
+                                Referencia de Llegada <span class="text-danger">*</span>
                             </label>
-                            <input type="text" id="modalReferencia" class="form-control form-control-prosegin" 
-                                   placeholder="Frente a garita 4 / Altura Km 28" />
+                            <input type="text" id="modalReferencia" maxlength="200" class="form-control form-control-prosegin"
+                                   placeholder="Frente a garita 4 / Altura Km 28" required />
                         </div>
                     </div>
 
@@ -329,7 +329,7 @@
                                 UBIGEO (6 DÍGITOS) <span class="text-danger">*</span>
                             </label>
                             <div class="position-relative">
-                                <input type="text" id="modalUbigeo" maxlength="6" class="form-control form-control-prosegin font-monospace fw-bold" 
+                                <input type="text" id="modalUbigeo" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" class="form-control form-control-prosegin font-monospace fw-bold"
                                        placeholder="150119" value="150119" required />
                                 <i class="bi bi-check-circle text-muted position-absolute" style="right: 12px; top: 50%; transform: translateY(-50%);"></i>
                             </div>
@@ -563,7 +563,7 @@
             });
 
             // Limpiar errores visuales al tipear
-            const camposRequeridos = [inputTipoSede, inputNombreAlias, inputDireccion, inputDepartamento, inputProvincia, inputDistrito, inputUbigeo];
+            const camposRequeridos = [inputTipoSede, inputNombreAlias, inputDireccion, inputReferencia, inputDepartamento, inputProvincia, inputDistrito, inputUbigeo];
             camposRequeridos.forEach(campo => {
                 ['input', 'change'].forEach(evt => {
                     campo.addEventListener(evt, function () {
@@ -643,6 +643,15 @@
                         'Debe completar todos los campos obligatorios marcados con asterisco (*).',
                         'Campos Obligatorios Faltantes'
                     );
+                    return;
+                }
+
+                if (!/^\d{6}$/.test(inputUbigeo.value.trim())) {
+                    inputUbigeo.classList.add('is-invalid');
+                    alertaCampos.classList.remove('d-none');
+                    mensajeAlertaCampos.textContent = 'El código de Ubigeo debe tener exactamente 6 dígitos.';
+                    inputUbigeo.focus();
+                    ProseginAlert.warning('El código de Ubigeo debe tener exactamente 6 dígitos.', 'Ubigeo inválido');
                     return;
                 }
 

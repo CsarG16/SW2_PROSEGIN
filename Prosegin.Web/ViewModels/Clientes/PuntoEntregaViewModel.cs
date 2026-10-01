@@ -22,7 +22,8 @@ namespace Prosegin.Web.ViewModels.Clientes
         [Display(Name = "Dirección Detallada")]
         public string Direccion { get; set; } = string.Empty;
 
-        [StringLength(200)]
+        [Required(ErrorMessage = "La Referencia de Llegada es obligatoria.")]
+        [StringLength(200, ErrorMessage = "La referencia no puede superar los 200 caracteres.")]
         [Display(Name = "Referencia de Llegada")]
         public string? Referencia { get; set; }
 
@@ -39,7 +40,7 @@ namespace Prosegin.Web.ViewModels.Clientes
         public string Distrito { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "El código de Ubigeo es obligatorio.")]
-        [StringLength(10, MinimumLength = 6, ErrorMessage = "El código de Ubigeo debe tener 6 dígitos.")]
+        [RegularExpression(@"^\d{6}$", ErrorMessage = "El código de Ubigeo debe tener exactamente 6 dígitos.")]
         [Display(Name = "Ubigeo (6 Dígitos)")]
         public string Ubigeo { get; set; } = string.Empty;
 
