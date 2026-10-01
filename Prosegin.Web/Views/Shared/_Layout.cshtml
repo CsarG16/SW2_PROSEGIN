@@ -85,7 +85,7 @@
                     </a>
                 </li>
                 <li class="sidebar-nav-item">
-                    <a class="sidebar-nav-link" href="#" title="En desarrollo">
+                    <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Pedidos" ? "active" : "")" asp-controller="Pedidos" asp-action="Index">
                         <i class="bi bi-truck"></i>
                         <span>Gestión de Pedidos</span>
                     </a>

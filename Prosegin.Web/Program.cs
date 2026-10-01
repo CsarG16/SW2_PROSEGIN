@@ -45,6 +45,7 @@ builder.Services.AddHttpClient("SunatClient", client =>
     client.Timeout = TimeSpan.FromSeconds(4);
 });
 builder.Services.AddScoped<ISunatService, SunatService>();
+builder.Services.AddScoped<IPedidosService, PedidosService>();
 
 var app = builder.Build();
 
