@@ -61,109 +61,146 @@
         @Html.AntiForgeryToken()
         <input asp-for="ClienteId" type="hidden" />
 
-        <div class="row g-4">
-            <div class="col-lg-7">
-                <div class="prosegin-card h-100">
-                    <div class="prosegin-card-header"><h5 class="prosegin-card-title mb-0">Cliente seleccionado</h5></div>
-                    <div class="prosegin-card-body p-4">
-                        <div class="row g-3">
-                            <div class="col-md-4"><span class="text-muted small d-block">RUC</span><strong class="font-monospace">@Model.Ruc</strong></div>
-                            <div class="col-md-8"><span class="text-muted small d-block">Razón social</span><strong>@Model.RazonSocial</strong></div>
-                            <div class="col-md-6"><span class="text-muted small d-block">Estado SUNAT</span><span class="badge @(noPuedeVender ? "bg-danger" : "bg-success")">@Model.EstadoSunat</span></div>
-                            <div class="col-md-6"><span class="text-muted small d-block">Condición SUNAT</span><span class="badge @(noPuedeVender ? "bg-danger" : "bg-success")">@Model.CondicionSunat</span></div>
-                        </div>
-                    </div>
-                </div>
+        <nav class="quote-tabs" role="tablist" aria-label="Secciones de la cotización">
+            <button type="button" role="tab" aria-selected="false" data-quote-tab="cliente"><i class="bi bi-person me-1"></i>Cliente</button>
+            <button type="button" role="tab" aria-selected="false" data-quote-tab="cabecera"><i class="bi bi-file-earmark-text me-1"></i>Cabecera</button>
+            <button type="button" role="tab" aria-selected="true" data-quote-tab="productos"><i class="bi bi-box-seam me-1"></i>Productos</button>
+            <button type="button" role="tab" aria-selected="false" data-quote-tab="condiciones"><i class="bi bi-credit-card me-1"></i>Condiciones</button>
+            <button type="button" role="tab" aria-selected="false" data-quote-tab="observaciones"><i class="bi bi-chat-left-text me-1"></i>Observaciones</button>
+        </nav>
+
+        <section class="quote-panel" data-quote-panel="cliente" hidden>
+            <div class="quote-panel-heading"><div><span>CLIENTE</span><h2>Datos del cliente</h2></div><span class="quote-status @(noPuedeVender ? "is-danger" : "is-ok")">@(noPuedeVender ? "VENTA RESTRINGIDA" : "HABILITADO")</span></div>
+            <div class="quote-client-grid">
+                <div><span>RUC</span><strong class="font-monospace">@Model.Ruc</strong></div>
+                <div class="quote-client-name"><span>Razón social</span><strong>@Model.RazonSocial</strong></div>
+                <div><span>Estado SUNAT</span><strong>@Model.EstadoSunat</strong></div>
+                <div><span>Condición SUNAT</span><strong>@Model.CondicionSunat</strong></div>
+                <div class="quote-client-name"><span>Dirección fiscal</span><strong>@Model.DireccionFiscal</strong></div>
+            </div>
+        </section>
+
+        <section class="quote-panel" data-quote-panel="cabecera" hidden>
+            <div class="quote-panel-heading"><div><span>CABECERA</span><h2>Resumen de cotización</h2></div><span class="quote-status">BORRADOR</span></div>
+            <div class="quote-header-grid">
+                <div><span>Cliente</span><strong>@Model.RazonSocial</strong></div>
+                <div><span>RUC</span><strong class="font-monospace">@Model.Ruc</strong></div>
+                <div><span>Emisión</span><strong>@DateTime.Now.ToString("dd/MM/yyyy")</strong></div>
+                <div><span>Correlativo</span><strong>Se asignará al guardar</strong></div>
+            </div>
+        </section>
+
+                <div class="quote-workspace" data-quote-panel="productos">
+                    <section class="quote-panel quote-products-panel">
+                        <div class="quote-product-entry">
+                <label class="quote-field quote-search-field" for="filtroProductos">Búsqueda
+                    <input id="filtroProductos" type="search" placeholder="Buscar por código, descripción o categoría" autocomplete="off" aria-label="Buscar productos del catálogo" />
+                    <div class="quote-search-results" id="resultadosBusqueda" role="listbox" aria-label="Productos encontrados" hidden></div>
+                    <span class="quote-search-feedback" id="estadoBusqueda" aria-live="polite"></span>
+                </label>
+                <label class="quote-field quote-product-field" for="selectorProducto">Producto
+                    <select id="selectorProducto" aria-label="Selecciona un producto">
+                        <option value="">Selecciona un producto del catálogo</option>
+                        @foreach (var producto in Model.ProductosDisponibles)
+                        {
+                            <option value="@producto.ProductoId" data-search="@($"{producto.Sku} {producto.Nombre} {producto.Categoria}".ToLowerInvariant())">@producto.Sku · @producto.Nombre</option>
+                        }
+                    </select>
+                </label>
+                <label class="quote-field quote-quantity-field" for="cantidadAgregar">Cantidad
+                    <input id="cantidadAgregar" type="number" min="1" value="1" inputmode="numeric" />
+                </label>
+                <label class="quote-field quote-price-field" for="precioSeleccionado">Precio estimado
+                    <input id="precioSeleccionado" type="text" value="S/ 0.00" readonly />
+                </label>
+                <label class="quote-field quote-stock-field" for="stockSeleccionado">Stock
+                    <input id="stockSeleccionado" type="text" value="-" readonly />
+                </label>
+                <button type="button" class="quote-add-button" id="agregarProducto" disabled><i class="bi bi-plus-lg"></i>Agregar</button>
             </div>
 
-            <div class="col-lg-5">
-                <div class="prosegin-card h-100">
-                    <div class="prosegin-card-header"><h5 class="prosegin-card-title mb-0">Condiciones comerciales</h5></div>
-                    <div class="prosegin-card-body p-4">
-                        <div class="mb-3">
-                            <label asp-for="CondicionPago" class="form-label-prosegin">Condición de pago</label>
-                            <select asp-for="CondicionPago" class="form-select form-control-prosegin">
-                                <option value="Contado">Contado</option>
-                                <option value="7 días">Crédito a 7 días</option>
-                                <option value="15 días">Crédito a 15 días</option>
-                                <option value="30 días">Crédito a 30 días</option>
-                            </select>
-                        </div>
-                        <div class="small text-muted mb-3">
-                            Límite: @Model.LimiteCredito.ToString("C", new CultureInfo("es-PE"))<br />
-                            Saldo pendiente: @Model.SaldoPendiente.ToString("C", new CultureInfo("es-PE"))
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="prosegin-card mt-4">
-            <div class="prosegin-card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
-                <h5 class="prosegin-card-title mb-0"><i class="bi bi-boxes me-2"></i>Seleccionar productos del catálogo</h5>
-                <input id="filtroProductos" class="form-control form-control-sm" style="max-width: 320px;" type="search" placeholder="Buscar por SKU, nombre o categoría" aria-label="Buscar productos del catálogo" />
-            </div>
-            <div class="prosegin-card-body p-0">
-                @if (Model.ProductosDisponibles.Count == 0)
-                {
-                    <div class="alert alert-warning m-3 mb-0">No hay productos activos en el catálogo.</div>
-                }
-                else
-                {
-                    <div class="table-responsive">
-                        <table class="table-prosegin mb-0">
-                            <thead>
-                                <tr>
-                                    <th class="text-center">Elegir</th>
-                                    <th>Producto</th>
-                                    <th class="text-end">Costo base</th>
-                                    <th style="width: 120px;">Cantidad</th>
-                                    <th style="width: 130px;">Margen (%)</th>
-                                    <th class="text-end">Precio venta</th>
-                                    <th class="text-end">Importe</th>
+            @if (Model.ProductosDisponibles.Count == 0)
+            {
+                <div class="alert alert-warning mb-0">No hay productos activos en el catálogo.</div>
+            }
+            else
+            {
+                <div class="quote-table-wrap">
+                    <table class="quote-product-table">
+                        <thead>
+                            <tr><th>#</th><th>Código</th><th>Descripción</th><th>UM</th><th>Cantidad</th><th class="text-end">P. bruto</th><th class="text-center">%</th><th class="text-end">P. final</th><th class="text-end">Total</th><th class="text-center">Opciones</th></tr>
+                        </thead>
+                        <tbody>
+                            @for (var i = 0; i < Model.ProductosDisponibles.Count; i++)
+                            {
+                                var producto = Model.ProductosDisponibles[i];
+                                <tr class="quote-product-row @(producto.Seleccionado ? "is-selected" : "")" data-product-row data-product-id="@producto.ProductoId" data-cost="@producto.CostoReferencial.ToString(CultureInfo.InvariantCulture)" data-stock="@producto.StockDisponible" data-unit="@producto.UnidadMedida" data-search="@($"{producto.Sku} {producto.Nombre} {producto.Categoria}".ToLowerInvariant())">
+                                    <td class="quote-row-number">@(i + 1)</td>
+                                    <td class="font-monospace fw-semibold"><input asp-for="ProductosDisponibles[i].ProductoId" type="hidden" />@producto.Sku</td>
+                                    <td><span class="quote-row-description">@producto.Nombre</span><span class="quote-row-category">@producto.Categoria</span></td>
+                                    <td>@producto.UnidadMedida</td>
+                                    <td><input asp-for="ProductosDisponibles[i].Cantidad" class="quote-line-input" type="number" min="1" aria-label="Cantidad de @producto.Nombre" /></td>
+                                    <td class="text-end font-monospace">@producto.CostoReferencial.ToString("N2", new CultureInfo("es-PE"))</td>
+                                    <td><input asp-for="ProductosDisponibles[i].MargenPorcentaje" class="quote-line-input quote-margin-input" type="number" min="0" max="100" step="0.01" aria-label="Margen de @producto.Nombre en porcentaje" /></td>
+                                    <td class="text-end font-monospace" data-unit-price>S/ 0.00</td>
+                                    <td class="text-end font-monospace fw-semibold" data-line-subtotal>—</td>
+                                    <td class="text-center">
+                                        <input asp-for="ProductosDisponibles[i].Seleccionado" class="quote-selection-input" aria-label="Incluir @producto.Nombre en la cotización" />
+                                        <button type="button" class="quote-remove-button" data-remove-product aria-label="Quitar @producto.Nombre" title="Quitar producto"><i class="bi bi-trash3"></i></button>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @for (var i = 0; i < Model.ProductosDisponibles.Count; i++)
-                                {
-                                    var producto = Model.ProductosDisponibles[i];
-                                    <tr data-product-row data-product-id="@producto.ProductoId" data-cost="@producto.CostoReferencial.ToString(CultureInfo.InvariantCulture)" data-search="@($"{producto.Sku} {producto.Nombre} {producto.Categoria}".ToLowerInvariant())">
-                                        <td class="text-center">
-                                            <input asp-for="ProductosDisponibles[i].ProductoId" type="hidden" />
-                                            <input asp-for="ProductosDisponibles[i].Seleccionado" class="form-check-input" aria-label="Seleccionar @producto.Nombre" />
-                                        </td>
-                                        <td>
-                                            <span class="font-monospace fw-bold d-block">@producto.Sku</span>
-                                            <span class="fw-semibold">@producto.Nombre</span>
-                                            <span class="text-muted small d-block">@producto.Categoria</span>
-                                        </td>
-                                        <td class="text-end font-monospace">S/ @producto.CostoReferencial.ToString("N2", new CultureInfo("es-PE"))</td>
-                                        <td><input asp-for="ProductosDisponibles[i].Cantidad" class="form-control form-control-sm" type="number" min="1" /></td>
-                                        <td><input asp-for="ProductosDisponibles[i].MargenPorcentaje" class="form-control form-control-sm" type="number" min="0" max="100" step="0.01" /></td>
-                                        <td class="text-end font-monospace" data-unit-price>S/ 0.00</td>
-                                        <td class="text-end font-monospace fw-semibold" data-line-subtotal>—</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-            </div>
-            <div class="prosegin-card-body border-top">
-                <div class="row justify-content-end">
-                    <div class="col-sm-6 col-lg-4">
-                        <div class="d-flex justify-content-between small mb-1"><span>Subtotal</span><strong id="subtotalCotizacion">S/ 0.00</strong></div>
-                        <div class="d-flex justify-content-between small mb-2"><span>IGV (18 %)</span><strong id="igvCotizacion">S/ 0.00</strong></div>
-                        <div class="d-flex justify-content-between border-top pt-2"><span class="fw-bold">Total</span><strong id="totalCotizacion" class="fs-5">S/ 0.00</strong></div>
+                            }
+                        </tbody>
+                    </table>
+                    <div class="quote-empty-lines" id="productosVacios" @(Model.ProductosDisponibles.Any(producto => producto.Seleccionado) ? "hidden" : null)>
+                        <i class="bi bi-cart3"></i><span>Agrega productos para preparar la cotización.</span>
                     </div>
                 </div>
-            </div>
+            }
+            <div class="quote-table-footer"><span><strong id="cantidadProductos">0</strong> productos seleccionados</span><span>Moneda: <strong>PEN · S/</strong></span></div>
+          </section>
+          <aside class="quote-side-summary" aria-label="Resumen de importes">
+              <h2><i class="bi bi-calculator me-2"></i>Resumen</h2>
+              <div class="quote-totals" aria-live="polite">
+                  <div><span>Exonerada</span><strong>S/ 0.00</strong></div>
+                  <div><span>Subtotal</span><strong id="subtotalCotizacion">S/ 0.00</strong></div>
+                  <div><span>IGV (18 %)</span><strong id="igvCotizacion">S/ 0.00</strong></div>
+                  <div class="quote-grand-total"><span>Total general</span><strong id="totalCotizacion">S/ 0.00</strong></div>
+              </div>
+          </aside>
         </div>
 
-        <div class="d-flex justify-content-end mt-4">
-            <button type="submit" class="btn-prosegin-primary" @(noPuedeVender || Model.DatosSunatDesactualizados ? "disabled" : null)>
-                <i class="bi bi-check2-circle me-1"></i>GENERAR COTIZACIÓN
-            </button>
+        <section class="quote-panel" data-quote-panel="condiciones" hidden>
+            <div class="quote-panel-heading"><div><span>CONDICIONES</span><h2>Condiciones comerciales</h2></div></div>
+            <div class="quote-conditions-grid">
+                <label asp-for="CondicionPago" class="quote-field">Condición de pago
+                    <select asp-for="CondicionPago">
+                        <option value="Contado">Contado</option>
+                        <option value="7 días">Crédito a 7 días</option>
+                        <option value="15 días">Crédito a 15 días</option>
+                        <option value="30 días">Crédito a 30 días</option>
+                    </select>
+                </label>
+                <div><span>Límite de crédito</span><strong>@Model.LimiteCredito.ToString("C", new CultureInfo("es-PE"))</strong></div>
+                <div><span>Saldo pendiente</span><strong>@Model.SaldoPendiente.ToString("C", new CultureInfo("es-PE"))</strong></div>
+                <div><span>Saldo vencido</span><strong>@Model.SaldoVencido.ToString("C", new CultureInfo("es-PE"))</strong></div>
+            </div>
+        </section>
+
+        <section class="quote-panel" data-quote-panel="observaciones" hidden>
+            <div class="quote-panel-heading"><div><span>OBSERVACIONES</span><h2>Validaciones de la cotización</h2></div></div>
+            <div class="quote-observation-note @(noPuedeVender || Model.DatosSunatDesactualizados ? "is-warning" : "")">
+                <i class="bi @(noPuedeVender || Model.DatosSunatDesactualizados ? "bi-exclamation-triangle" : "bi-info-circle")"></i>
+                <p>@(Model.DatosSunatDesactualizados ? "Actualiza los datos fiscales del cliente desde SUNAT antes de emitir la cotización." : noPuedeVender ? "La cotización no se puede emitir hasta que el cliente figure ACTIVO y HABIDO en SUNAT." : "La información fiscal y crediticia se vuelve a validar al guardar. Las observaciones libres aún no forman parte del registro de cotizaciones.")</p>
+            </div>
+        </section>
+
+        <div class="quote-bottom-bar">
+            <div class="quote-actions">
+                <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary"><i class="bi bi-arrow-left"></i>Atrás</a>
+                <button type="button" class="quote-clear-button" id="limpiarProductos"><i class="bi bi-dash-square"></i>Limpiar</button>
+                <button type="submit" class="btn-prosegin-primary" @(noPuedeVender || Model.DatosSunatDesactualizados ? "disabled" : null)><i class="bi bi-save"></i>Grabar cotización</button>
+            </div>
         </div>
     </form>
 </div>
@@ -172,9 +209,27 @@
     (() => {
         const storageKey = "prosegin.quote.cart.v1";
         const rows = Array.from(document.querySelectorAll("[data-product-row]"));
+        const productSelector = document.getElementById("selectorProducto");
+        const productSearch = document.getElementById("filtroProductos");
+        const searchResults = document.getElementById("resultadosBusqueda");
+        const searchFeedback = document.getElementById("estadoBusqueda");
+        const addButton = document.getElementById("agregarProducto");
+        const emptyLines = document.getElementById("productosVacios");
         const currency = new Intl.NumberFormat("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const formatAmount = (amount) => `S/ ${currency.format(amount)}`;
         const hasServerSelection = rows.some(row => row.querySelector('input[name$=".Seleccionado"]').checked);
+
+        document.querySelectorAll("[data-quote-tab]").forEach((tab) => {
+            tab.addEventListener("click", () => {
+                const selectedTab = tab.dataset.quoteTab;
+                document.querySelectorAll("[data-quote-tab]").forEach((item) => {
+                    item.setAttribute("aria-selected", String(item === tab));
+                });
+                document.querySelectorAll("[data-quote-panel]").forEach((panel) => {
+                    panel.hidden = panel.dataset.quotePanel !== selectedTab;
+                });
+            });
+        });
 
         if (!hasServerSelection) {
             try {
@@ -190,38 +245,151 @@
             }
         }
 
+        const getSelection = row => row.querySelector('input[name$=".Seleccionado"]');
+        const getQuantity = row => row.querySelector('input[name$=".Cantidad"]');
+        const getMargin = row => row.querySelector('input[name$=".MargenPorcentaje"]');
+
+        const updateSelectedProduct = () => {
+            const option = productSelector?.selectedOptions[0];
+            const row = option?.value ? rows.find(candidate => Number(candidate.dataset.productId) === Number(option.value)) : null;
+            addButton.disabled = !row;
+            document.getElementById("stockSeleccionado").value = row
+                ? `${row.dataset.stock} ${row.dataset.unit}`
+                : "-";
+            if (row) {
+                const margin = Number(getMargin(row).value) || 0;
+                const price = Number(row.dataset.cost) * (1 + margin / 100);
+                document.getElementById("precioSeleccionado").value = formatAmount(Math.round((price + Number.EPSILON) * 100) / 100);
+            } else {
+                document.getElementById("precioSeleccionado").value = "S/ 0.00";
+            }
+        };
+
+        const chooseProduct = row => {
+            productSelector.value = row.dataset.productId;
+            searchResults.hidden = true;
+            searchFeedback.textContent = `${row.querySelector(".quote-row-description").textContent} seleccionado. Pulsa Agregar.`;
+            updateSelectedProduct();
+        };
+
+        productSearch?.addEventListener("input", () => {
+            const term = productSearch.value.trim().toLocaleLowerCase();
+            const matches = term ? rows.filter(row => row.dataset.search.includes(term)) : [];
+            Array.from(productSelector.options).forEach((option, index) => {
+                if (index === 0) return;
+                option.hidden = term.length > 0 && !option.dataset.search.includes(term);
+            });
+
+            searchResults.replaceChildren();
+            searchResults.hidden = term.length === 0;
+            searchFeedback.textContent = "";
+
+            if (term.length > 0 && matches.length === 0) {
+                const emptyResult = document.createElement("span");
+                emptyResult.className = "quote-search-empty";
+                emptyResult.textContent = "No se encontraron productos.";
+                searchResults.append(emptyResult);
+                productSelector.value = "";
+            } else if (matches.length > 0) {
+                matches.slice(0, 8).forEach(row => {
+                    const result = document.createElement("button");
+                    result.type = "button";
+                    result.className = "quote-search-result";
+                    result.setAttribute("role", "option");
+                    result.textContent = `${row.querySelector("td:nth-child(2)").textContent.trim()} · ${row.querySelector(".quote-row-description").textContent.trim()}`;
+                    result.addEventListener("click", () => chooseProduct(row));
+                    searchResults.append(result);
+                });
+
+                if (matches.length === 1) {
+                    productSelector.value = matches[0].dataset.productId;
+                    searchFeedback.textContent = "Producto seleccionado. Pulsa Agregar.";
+                } else {
+                    productSelector.value = "";
+                    searchFeedback.textContent = `${matches.length} productos encontrados. Elige uno de la lista.`;
+                }
+            } else {
+                productSelector.value = "";
+            }
+            updateSelectedProduct();
+        });
+        productSelector?.addEventListener("change", () => {
+            updateSelectedProduct();
+            const row = rows.find(candidate => Number(candidate.dataset.productId) === Number(productSelector.value));
+            if (row) searchFeedback.textContent = `${row.querySelector(".quote-row-description").textContent} seleccionado. Pulsa Agregar.`;
+        });
+
+        addButton?.addEventListener("click", () => {
+            const productId = Number(productSelector.value);
+            const row = rows.find(candidate => Number(candidate.dataset.productId) === productId);
+            if (!row) return;
+            const quantity = Math.max(1, Math.floor(Number(document.getElementById("cantidadAgregar").value) || 1));
+            getQuantity(row).value = quantity;
+            getSelection(row).checked = true;
+            row.classList.add("is-selected");
+            updateTotals();
+            productSelector.value = "";
+            productSearch.value = "";
+            Array.from(productSelector.options).forEach(option => { option.hidden = false; });
+            searchResults.replaceChildren();
+            searchResults.hidden = true;
+            searchFeedback.textContent = "";
+            document.getElementById("cantidadAgregar").value = "1";
+            updateSelectedProduct();
+        });
+
         const updateTotals = () => {
             let subtotal = 0;
             const selectedProducts = [];
             rows.forEach((row) => {
-                const selected = row.querySelector('input[name$=".Seleccionado"]');
-                const quantity = Number(row.querySelector('input[name$=".Cantidad"]').value) || 0;
-                const margin = Number(row.querySelector('input[name$=".MargenPorcentaje"]').value) || 0;
+                const selected = getSelection(row);
+                const quantity = Math.max(1, Math.floor(Number(getQuantity(row).value) || 1));
+                const margin = Number(getMargin(row).value) || 0;
                 const cost = Number(row.dataset.cost) || 0;
                 const unitPrice = Math.round((cost * (1 + margin / 100) + Number.EPSILON) * 100) / 100;
-                const lineSubtotal = selected.checked ? unitPrice * quantity : 0;
+                const lineSubtotal = selected.checked ? Math.round((unitPrice * quantity + Number.EPSILON) * 100) / 100 : 0;
                 row.querySelector("[data-unit-price]").textContent = formatAmount(unitPrice);
                 row.querySelector("[data-line-subtotal]").textContent = selected.checked ? formatAmount(lineSubtotal) : "—";
+                row.classList.toggle("is-selected", selected.checked);
                 subtotal += lineSubtotal;
                 if (selected.checked) {
-                    selectedProducts.push({ id: Number(row.dataset.productId), quantity: Math.max(1, quantity) });
+                    selectedProducts.push({ id: Number(row.dataset.productId), quantity });
                 }
             });
 
+            subtotal = Math.round((subtotal + Number.EPSILON) * 100) / 100;
             const igv = Math.round((subtotal * 0.18 + Number.EPSILON) * 100) / 100;
             document.getElementById("subtotalCotizacion").textContent = formatAmount(subtotal);
             document.getElementById("igvCotizacion").textContent = formatAmount(igv);
             document.getElementById("totalCotizacion").textContent = formatAmount(subtotal + igv);
+            document.getElementById("cantidadProductos").textContent = String(selectedProducts.length);
+            if (emptyLines) emptyLines.hidden = selectedProducts.length > 0;
             sessionStorage.setItem(storageKey, JSON.stringify(selectedProducts));
         };
 
-        rows.forEach((row) => row.querySelectorAll("input").forEach((input) => input.addEventListener("input", updateTotals)));
-        document.getElementById("filtroProductos")?.addEventListener("input", (event) => {
-            const term = event.target.value.trim().toLowerCase();
-            rows.forEach((row) => row.classList.toggle("d-none", !row.dataset.search.includes(term)));
+        rows.forEach((row) => {
+            getSelection(row).addEventListener("change", updateTotals);
+            getQuantity(row).addEventListener("input", updateTotals);
+            getMargin(row).addEventListener("input", () => {
+                updateTotals();
+                if (Number(productSelector?.value) === Number(row.dataset.productId)) updateSelectedProduct();
+            });
+            row.querySelector("[data-remove-product]").addEventListener("click", () => {
+                getSelection(row).checked = false;
+                updateTotals();
+            });
+        });
+
+        document.getElementById("limpiarProductos")?.addEventListener("click", () => {
+            rows.forEach((row) => {
+                getSelection(row).checked = false;
+                getQuantity(row).value = "1";
+            });
+            updateTotals();
         });
 
         updateTotals();
+        updateSelectedProduct();
         if (document.getElementById("formCotizacion").dataset.cotizacionGuardada === "true") {
             sessionStorage.removeItem(storageKey);
         }

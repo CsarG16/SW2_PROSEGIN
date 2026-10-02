@@ -236,7 +236,9 @@ public class CotizacionesController : Controller
                 Sku = p.Sku,
                 Nombre = p.Nombre,
                 Categoria = p.Categoria,
-                CostoReferencial = p.CostoReferencial
+                UnidadMedida = p.UnidadMedida,
+                CostoReferencial = p.CostoReferencial,
+                StockDisponible = p.StockDisponible
             })
             .ToListAsync(cancellationToken);
 

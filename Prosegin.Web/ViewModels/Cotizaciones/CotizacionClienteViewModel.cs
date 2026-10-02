@@ -33,7 +33,9 @@ public class ProductoCotizacionViewModel
     public string Sku { get; set; } = string.Empty;
     public string Nombre { get; set; } = string.Empty;
     public string Categoria { get; set; } = string.Empty;
+    public string UnidadMedida { get; set; } = "UND";
     public decimal CostoReferencial { get; set; }
+    public int StockDisponible { get; set; }
     public bool Seleccionado { get; set; }
 
     [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser mayor a cero.")]
