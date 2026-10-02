@@ -23,17 +23,18 @@ public class PedidoLogisticaTests
     private List<PedidoTestDto> ObtenerPedidosPrueba()
     {
         var hoy = DateTime.Today;
+        var anio = hoy.Year;
 
         return new List<PedidoTestDto>
         {
             new()
             {
                 Id = 1,
-                NumeroPedido = "PED-2025-0842",
+                NumeroPedido = $"PED-{anio}-0842",
                 NumeroOrdenCompra = "OC-77821",
                 ClienteRazonSocial = "Consorcio Vial Andino S.R.C.",
                 ClienteRuc = "20492817263",
-                FechaConfirmacion = new DateTime(2025, 3, 26, 10, 14, 0),
+                FechaConfirmacion = hoy.AddDays(-2).AddHours(10),
                 FechaEntrega = hoy.AddHours(16), // HOY 16:00 (Urgente < 24h)
                 EsUrgenteMenor24h = true,
                 EstadoOperativo = PedidoLogisticaRules.EstadoPorPreparar,
@@ -43,11 +44,11 @@ public class PedidoLogisticaTests
             new()
             {
                 Id = 2,
-                NumeroPedido = "PED-2025-0839",
+                NumeroPedido = $"PED-{anio}-0839",
                 NumeroOrdenCompra = "OC-77810",
                 ClienteRazonSocial = "Constructora e Ingeniería Minera del Sur S.A.C.",
                 ClienteRuc = "20601928471",
-                FechaConfirmacion = new DateTime(2025, 3, 26, 8, 45, 0),
+                FechaConfirmacion = hoy.AddDays(-2).AddHours(8),
                 FechaEntrega = hoy.AddDays(1).AddHours(9), // Mañana 09:00 (Urgente < 24h)
                 EsUrgenteMenor24h = true,
                 EstadoOperativo = PedidoLogisticaRules.EstadoEnPreparacion,
@@ -56,11 +57,11 @@ public class PedidoLogisticaTests
             new()
             {
                 Id = 3,
-                NumeroPedido = "PED-2025-0831",
+                NumeroPedido = $"PED-{anio}-0831",
                 NumeroOrdenCompra = "OC-77785",
                 ClienteRazonSocial = "Minera del Norte S.A.C.",
                 ClienteRuc = "20554189312",
-                FechaConfirmacion = new DateTime(2025, 3, 25, 16, 30, 0),
+                FechaConfirmacion = hoy.AddDays(-3).AddHours(16),
                 FechaEntrega = hoy.AddDays(3),
                 EsUrgenteMenor24h = false,
                 EstadoOperativo = PedidoLogisticaRules.EstadoEnPreparacion,
@@ -69,11 +70,11 @@ public class PedidoLogisticaTests
             new()
             {
                 Id = 4,
-                NumeroPedido = "PED-2025-0824",
+                NumeroPedido = $"PED-{anio}-0824",
                 NumeroOrdenCompra = "OC-77742",
                 ClienteRazonSocial = "Constructora del Pacífico S.A.C.",
                 ClienteRuc = "20112839401",
-                FechaConfirmacion = new DateTime(2025, 3, 24, 11, 20, 0),
+                FechaConfirmacion = hoy.AddDays(-4).AddHours(11),
                 FechaEntrega = hoy.AddDays(5),
                 EsUrgenteMenor24h = false,
                 EstadoOperativo = PedidoLogisticaRules.EstadoListoDespacho,
@@ -82,11 +83,11 @@ public class PedidoLogisticaTests
             new()
             {
                 Id = 5,
-                NumeroPedido = "PED-2025-0899",
+                NumeroPedido = $"PED-{anio}-0899",
                 NumeroOrdenCompra = "", // Sin orden de compra asignada
                 ClienteRazonSocial = "Empresa Borrador S.A.C.",
                 ClienteRuc = "20999999999",
-                FechaConfirmacion = new DateTime(2025, 3, 26, 12, 0, 0),
+                FechaConfirmacion = hoy.AddDays(-1).AddHours(12),
                 FechaEntrega = hoy.AddDays(2),
                 EsUrgenteMenor24h = false,
                 EstadoOperativo = PedidoLogisticaRules.EstadoPorPreparar,
@@ -99,13 +100,14 @@ public class PedidoLogisticaTests
     public void ExcluirCotizacionesEnBorradorOSinOrdenCompra()
     {
         var pedidos = ObtenerPedidosPrueba();
+        var anio = DateTime.Today.Year;
 
         var validos = pedidos
             .Where(p => PedidoLogisticaRules.EsPedidoValidoParaLogistica(p.VentaAprobada, p.NumeroOrdenCompra))
             .ToList();
 
         Assert.Equal(4, validos.Count);
-        Assert.DoesNotContain(validos, p => p.NumeroPedido == "PED-2025-0899");
+        Assert.DoesNotContain(validos, p => p.NumeroPedido == $"PED-{anio}-0899");
     }
 
     [Fact]
@@ -116,19 +118,19 @@ public class PedidoLogisticaTests
         {
             NumeroPedido = "P1",
             FechaEntrega = hoy.AddDays(2),
-            FechaConfirmacion = new DateTime(2025, 3, 25, 14, 0, 0)
+            FechaConfirmacion = hoy.AddDays(-2).AddHours(14)
         };
         var p2 = new PedidoTestDto
         {
             NumeroPedido = "P2",
             FechaEntrega = hoy.AddDays(1), // Más próxima
-            FechaConfirmacion = new DateTime(2025, 3, 26, 10, 0, 0)
+            FechaConfirmacion = hoy.AddDays(-1).AddHours(10)
         };
         var p3 = new PedidoTestDto
         {
             NumeroPedido = "P3",
             FechaEntrega = hoy.AddDays(2), // Mismo día que P1
-            FechaConfirmacion = new DateTime(2025, 3, 25, 9, 0, 0) // Confirmado ANTES que P1
+            FechaConfirmacion = hoy.AddDays(-2).AddHours(9) // Confirmado ANTES que P1
         };
 
         var ordenados = new[] { p1, p2, p3 }
@@ -144,6 +146,7 @@ public class PedidoLogisticaTests
     [Fact]
     public void Busqueda_PorNumeroPedido_FiltraCorrectamente()
     {
+        var anio = DateTime.Today.Year;
         var pedidos = ObtenerPedidosPrueba()
             .Where(p => PedidoLogisticaRules.EsPedidoValidoParaLogistica(p.VentaAprobada, p.NumeroOrdenCompra))
             .ToList();
@@ -153,7 +156,7 @@ public class PedidoLogisticaTests
             .ToList();
 
         Assert.Single(resultado);
-        Assert.Equal("PED-2025-0842", resultado[0].NumeroPedido);
+        Assert.Equal($"PED-{anio}-0842", resultado[0].NumeroPedido);
     }
 
     [Fact]
@@ -174,6 +177,7 @@ public class PedidoLogisticaTests
     [Fact]
     public void Busqueda_PorRazonSocial_ParcialEInsensibleMayusculas()
     {
+        var anio = DateTime.Today.Year;
         var pedidos = ObtenerPedidosPrueba()
             .Where(p => PedidoLogisticaRules.EsPedidoValidoParaLogistica(p.VentaAprobada, p.NumeroOrdenCompra))
             .ToList();
@@ -183,8 +187,8 @@ public class PedidoLogisticaTests
             .ToList();
 
         Assert.Equal(2, resultado.Count);
-        Assert.Contains(resultado, p => p.NumeroPedido == "PED-2025-0839");
-        Assert.Contains(resultado, p => p.NumeroPedido == "PED-2025-0831");
+        Assert.Contains(resultado, p => p.NumeroPedido == $"PED-{anio}-0839");
+        Assert.Contains(resultado, p => p.NumeroPedido == $"PED-{anio}-0831");
     }
 
     [Fact]
@@ -206,11 +210,12 @@ public class PedidoLogisticaTests
     [Fact]
     public void AlertaUrgente_DetectaMenor24Horas()
     {
-        var referencia = new DateTime(2025, 3, 26, 10, 0, 0);
+        var anio = DateTime.Today.Year;
+        var referencia = new DateTime(anio, 10, 2, 10, 0, 0);
 
-        var entregaHoy = new DateTime(2025, 3, 26, 16, 0, 0);
-        var entregaMananaTemprano = new DateTime(2025, 3, 27, 9, 30, 0); // 23.5 horas después
-        var entregaLejana = new DateTime(2025, 3, 30, 10, 0, 0);
+        var entregaHoy = new DateTime(anio, 10, 2, 16, 0, 0);
+        var entregaMananaTemprano = new DateTime(anio, 10, 3, 9, 30, 0); // 23.5 horas después
+        var entregaLejana = new DateTime(anio, 10, 6, 10, 0, 0);
 
         Assert.True(PedidoLogisticaRules.EsEntregaMenor24Horas(entregaHoy, referencia));
         Assert.True(PedidoLogisticaRules.EsEntregaMenor24Horas(entregaMananaTemprano, referencia));

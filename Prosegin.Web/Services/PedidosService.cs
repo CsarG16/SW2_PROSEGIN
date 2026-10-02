@@ -86,21 +86,35 @@ public class PedidosService : IPedidosService
 
     private Task<List<PedidoDetalleViewModel>> ObtenerListaBasePedidosAsync(CancellationToken cancellationToken)
     {
-        var baseDate = DateTime.Now;
+        var hoy = DateTime.Today;
+        var anio = hoy.Year;
+
+        static string FormatearFecha(DateTime fecha)
+        {
+            var culture = new System.Globalization.CultureInfo("es-PE");
+            var texto = fecha.ToString("dd MMM yyyy", culture).Replace(".", "");
+            var partes = texto.Split(' ');
+            if (partes.Length == 3 && partes[1].Length > 0)
+            {
+                partes[1] = char.ToUpper(partes[1][0]) + partes[1][1..];
+                return string.Join(" ", partes);
+            }
+            return texto;
+        }
 
         var lista = new List<PedidoDetalleViewModel>
         {
-            // 1. PED-2025-0842 (Urgente: HOY 16:00 hrs)
+            // 1. Urgente: HOY 16:00 hrs (Entrega más próxima #1)
             new PedidoDetalleViewModel
             {
                 Id = 1,
-                NumeroPedido = "PED-2025-0842",
+                NumeroPedido = $"PED-{anio}-0842",
                 NumeroOrdenCompra = "OC-77821",
                 ClienteRazonSocial = "Consorcio Vial Andino S.R.C.",
                 ClienteRuc = "20492817263",
-                FechaConfirmacion = new DateTime(2025, 3, 26, 10, 14, 0),
-                FechaEntrega = DateTime.Today.AddHours(16),
-                FechaConfirmacionTexto = "26 Mar 2025 10:14 hrs",
+                FechaConfirmacion = hoy.AddDays(-2).AddHours(10).AddMinutes(14),
+                FechaEntrega = hoy.AddHours(16),
+                FechaConfirmacionTexto = $"{FormatearFecha(hoy.AddDays(-2))} 10:14 hrs",
                 FechaEntregaTexto = "HOY 16:00 hrs",
                 EsUrgenteMenor24h = true,
                 DireccionEntrega = "Av. Industrial 450, Almacén 4 - Lurín, Lima",
@@ -118,17 +132,17 @@ public class PedidosService : IPedidosService
                 }
             },
 
-            // 2. PED-2025-0839 (Urgente: Mañana 09:30 hrs)
+            // 2. Urgente: Mañana 09:30 hrs (Entrega más próxima #2)
             new PedidoDetalleViewModel
             {
                 Id = 2,
-                NumeroPedido = "PED-2025-0839",
+                NumeroPedido = $"PED-{anio}-0839",
                 NumeroOrdenCompra = "OC-77810",
                 ClienteRazonSocial = "Constructora e Ingeniería Minera del Sur S.A.C.",
                 ClienteRuc = "20601928471",
-                FechaConfirmacion = new DateTime(2025, 3, 26, 8, 45, 0),
-                FechaEntrega = DateTime.Today.AddDays(1).AddHours(9).AddMinutes(30),
-                FechaConfirmacionTexto = "26 Mar 2025 08:45 hrs",
+                FechaConfirmacion = hoy.AddDays(-2).AddHours(8).AddMinutes(45),
+                FechaEntrega = hoy.AddDays(1).AddHours(9).AddMinutes(30),
+                FechaConfirmacionTexto = $"{FormatearFecha(hoy.AddDays(-2))} 08:45 hrs",
                 FechaEntregaTexto = "Mañana 09:30 hrs",
                 EsUrgenteMenor24h = true,
                 DireccionEntrega = "Km 18.5 Carretera Variante Uchumayo, Arequipa",
@@ -146,18 +160,18 @@ public class PedidosService : IPedidosService
                 }
             },
 
-            // 3. PED-2025-0831 (28 Mar 2025)
+            // 3. Entrega en 2 días
             new PedidoDetalleViewModel
             {
                 Id = 3,
-                NumeroPedido = "PED-2025-0831",
+                NumeroPedido = $"PED-{anio}-0831",
                 NumeroOrdenCompra = "OC-77785",
                 ClienteRazonSocial = "Minera del Norte S.A.C.",
                 ClienteRuc = "20554189312",
-                FechaConfirmacion = new DateTime(2025, 3, 25, 16, 30, 0),
-                FechaEntrega = new DateTime(2025, 3, 28, 14, 0, 0),
-                FechaConfirmacionTexto = "25 Mar 2025 16:30 hrs",
-                FechaEntregaTexto = "28 Mar 2025",
+                FechaConfirmacion = hoy.AddDays(-3).AddHours(16).AddMinutes(30),
+                FechaEntrega = hoy.AddDays(2).AddHours(14),
+                FechaConfirmacionTexto = $"{FormatearFecha(hoy.AddDays(-3))} 16:30 hrs",
+                FechaEntregaTexto = FormatearFecha(hoy.AddDays(2)),
                 EsUrgenteMenor24h = false,
                 DireccionEntrega = "Base Mina Sector 3, Huamachuco, La Libertad",
                 SedeAlias = "Campamento Base Huamachuco",
@@ -174,18 +188,18 @@ public class PedidosService : IPedidosService
                 }
             },
 
-            // 4. PED-2025-0824 (30 Mar 2025)
+            // 4. Entrega en 3 días
             new PedidoDetalleViewModel
             {
                 Id = 4,
-                NumeroPedido = "PED-2025-0824",
+                NumeroPedido = $"PED-{anio}-0824",
                 NumeroOrdenCompra = "OC-77742",
                 ClienteRazonSocial = "Constructora del Pacífico S.A.C.",
                 ClienteRuc = "20112839401",
-                FechaConfirmacion = new DateTime(2025, 3, 24, 11, 20, 0),
-                FechaEntrega = new DateTime(2025, 3, 30, 11, 0, 0),
-                FechaConfirmacionTexto = "24 Mar 2025 11:20 hrs",
-                FechaEntregaTexto = "30 Mar 2025",
+                FechaConfirmacion = hoy.AddDays(-4).AddHours(11).AddMinutes(20),
+                FechaEntrega = hoy.AddDays(3).AddHours(11),
+                FechaConfirmacionTexto = $"{FormatearFecha(hoy.AddDays(-4))} 11:20 hrs",
+                FechaEntregaTexto = FormatearFecha(hoy.AddDays(3)),
                 EsUrgenteMenor24h = false,
                 DireccionEntrega = "Av. Néstor Gambetta 920, Callao",
                 SedeAlias = "Planta Industrial Callao",
@@ -202,18 +216,18 @@ public class PedidosService : IPedidosService
                 }
             },
 
-            // 5. PED-2025-0845 (31 Mar 2025)
+            // 5. Entrega en 4 días
             new PedidoDetalleViewModel
             {
                 Id = 5,
-                NumeroPedido = "PED-2025-0845",
+                NumeroPedido = $"PED-{anio}-0845",
                 NumeroOrdenCompra = "OC-77830",
                 ClienteRazonSocial = "Constructora e Ingeniería Minera del Sur S.A.C.",
                 ClienteRuc = "20601928471",
-                FechaConfirmacion = new DateTime(2025, 3, 26, 14, 10, 0),
-                FechaEntrega = new DateTime(2025, 3, 31, 10, 0, 0),
-                FechaConfirmacionTexto = "26 Mar 2025 14:10 hrs",
-                FechaEntregaTexto = "31 Mar 2025",
+                FechaConfirmacion = hoy.AddDays(-2).AddHours(14).AddMinutes(10),
+                FechaEntrega = hoy.AddDays(4).AddHours(10),
+                FechaConfirmacionTexto = $"{FormatearFecha(hoy.AddDays(-2))} 14:10 hrs",
+                FechaEntregaTexto = FormatearFecha(hoy.AddDays(4)),
                 EsUrgenteMenor24h = false,
                 DireccionEntrega = "Carretera Panamericana Sur Km 450, Marcona",
                 SedeAlias = "Campamento Minero Sur",
@@ -229,18 +243,18 @@ public class PedidosService : IPedidosService
                 }
             },
 
-            // 6. PED-2025-0835 (02 Abr 2025)
+            // 6. Entrega en 6 días
             new PedidoDetalleViewModel
             {
                 Id = 6,
-                NumeroPedido = "PED-2025-0835",
+                NumeroPedido = $"PED-{anio}-0835",
                 NumeroOrdenCompra = "OC-77790",
                 ClienteRazonSocial = "Minera del Norte S.A.C.",
                 ClienteRuc = "20554189312",
-                FechaConfirmacion = new DateTime(2025, 3, 25, 18, 0, 0),
-                FechaEntrega = new DateTime(2025, 4, 2, 12, 0, 0),
-                FechaConfirmacionTexto = "25 Mar 2025 18:00 hrs",
-                FechaEntregaTexto = "02 Abr 2025",
+                FechaConfirmacion = hoy.AddDays(-3).AddHours(18).AddMinutes(0),
+                FechaEntrega = hoy.AddDays(6).AddHours(12),
+                FechaConfirmacionTexto = $"{FormatearFecha(hoy.AddDays(-3))} 18:00 hrs",
+                FechaEntregaTexto = FormatearFecha(hoy.AddDays(6)),
                 EsUrgenteMenor24h = false,
                 DireccionEntrega = "Base Mina Sector 3, Huamachuco, La Libertad",
                 SedeAlias = "Base Mina Sector 3",
@@ -256,18 +270,18 @@ public class PedidosService : IPedidosService
                 }
             },
 
-            // 7. PED-2025-0820 (03 Abr 2025)
+            // 7. Entrega en 7 días
             new PedidoDetalleViewModel
             {
                 Id = 7,
-                NumeroPedido = "PED-2025-0820",
+                NumeroPedido = $"PED-{anio}-0820",
                 NumeroOrdenCompra = "OC-77730",
                 ClienteRazonSocial = "Constructora del Pacífico S.A.C.",
                 ClienteRuc = "20112839401",
-                FechaConfirmacion = new DateTime(2025, 3, 23, 15, 30, 0),
-                FechaEntrega = new DateTime(2025, 4, 3, 16, 0, 0),
-                FechaConfirmacionTexto = "23 Mar 2025 15:30 hrs",
-                FechaEntregaTexto = "03 Abr 2025",
+                FechaConfirmacion = hoy.AddDays(-5).AddHours(15).AddMinutes(30),
+                FechaEntrega = hoy.AddDays(7).AddHours(16),
+                FechaConfirmacionTexto = $"{FormatearFecha(hoy.AddDays(-5))} 15:30 hrs",
+                FechaEntregaTexto = FormatearFecha(hoy.AddDays(7)),
                 EsUrgenteMenor24h = false,
                 DireccionEntrega = "Av. Industrial 1450, Ate - Lima",
                 SedeAlias = "Sede Principal Ate",
@@ -283,18 +297,18 @@ public class PedidosService : IPedidosService
                 }
             },
 
-            // 8. PED-2025-0848 (05 Abr 2025)
+            // 8. Entrega en 9 días
             new PedidoDetalleViewModel
             {
                 Id = 8,
-                NumeroPedido = "PED-2025-0848",
+                NumeroPedido = $"PED-{anio}-0848",
                 NumeroOrdenCompra = "OC-77850",
                 ClienteRazonSocial = "Consorcio Vial Andino S.R.C.",
                 ClienteRuc = "20492817263",
-                FechaConfirmacion = new DateTime(2025, 3, 27, 9, 0, 0),
-                FechaEntrega = new DateTime(2025, 4, 5, 11, 0, 0),
-                FechaConfirmacionTexto = "27 Mar 2025 09:00 hrs",
-                FechaEntregaTexto = "05 Abr 2025",
+                FechaConfirmacion = hoy.AddDays(-1).AddHours(9).AddMinutes(0),
+                FechaEntrega = hoy.AddDays(9).AddHours(11),
+                FechaConfirmacionTexto = $"{FormatearFecha(hoy.AddDays(-1))} 09:00 hrs",
+                FechaEntregaTexto = FormatearFecha(hoy.AddDays(9)),
                 EsUrgenteMenor24h = false,
                 DireccionEntrega = "Jr. Huancavelica 320, Cercado - Lima",
                 SedeAlias = "Sede Central Cercado",

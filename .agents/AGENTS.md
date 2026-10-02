@@ -51,3 +51,14 @@ El contexto completo y detallado del negocio, procesos AS-IS vs TO-BE y mapa de 
 - **Formularios**: Controles `.form-control-prosegin` con labels `.form-label-prosegin`.
 - **Detalle completo y snippets**: [ui_guidelines.md](file:///c:/Users/Jualo/Desktop/TRIVILIN%20EPP/.agents/rules/ui_guidelines.md).
 
+---
+
+## 🏃 Metodología de Desarrollo: Scrum
+El proyecto se organiza bajo el marco **Scrum**:
+- **Épicas (Epics):** Módulos de alto nivel (Clientes/SUNAT, Catálogo/Fichas, Cotizaciones/Márgenes, Compras JIT, Facturación/Cobranzas).
+- **Historias de Usuario (User Stories):** Formato estándar (*Como [rol], quiero [acción], para [beneficio]*), con Criterios de Aceptación verificables.
+- **Historias Técnicas (Technical Stories / Enablers):** Tareas de arquitectura, infraestructura, migraciones EF Core, pruebas y refactorización.
+- **Product Backlog & Sprint Backlog:** Priorización orientada al valor de negocio y sprints iterativos de entrega continua.
+- **Definition of Done (DoD):** Compilación limpia .NET 8, pruebas unitarias en `Prosegin.Tests` pasando al 100%, lógica validada en servidor y UI consistente con `ui_guidelines.md`.
+
+

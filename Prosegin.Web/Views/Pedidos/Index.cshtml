@@ -6,240 +6,231 @@
     var pedidosJson = JsonSerializer.Serialize(Model.Pedidos);
 }
 
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
 <style>
-    .font-geist {
-        font-family: 'Geist', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    .font-prosegin {
+        font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif);
     }
+    
     .pedidos-header-card {
         background: #ffffff;
-        border: 1px solid rgba(0, 0, 0, 0.07);
+        border: 1px solid var(--border-card, #e2e8f0);
         border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+        box-shadow: var(--shadow-card, 0 1px 3px rgba(15, 23, 42, 0.06));
     }
+    
     .kpi-urgent-badge {
-        background: #f3f3f4;
-        border-radius: 8px;
+        background: var(--accent-light, #fef3c7);
+        border: 1px solid rgba(245, 158, 11, 0.45);
+        border-radius: 10px;
         padding: 8px 16px;
         display: inline-flex;
         align-items: center;
         gap: 10px;
+        box-shadow: 0 1px 3px var(--accent-shadow, rgba(245, 158, 11, 0.2));
     }
+    
     .prosegin-search-panel {
         background: #ffffff;
-        border: 1px solid rgba(0, 0, 0, 0.07);
+        border: 1px solid var(--border-card, #e2e8f0);
         border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+        box-shadow: var(--shadow-card, 0 1px 3px rgba(15, 23, 42, 0.06));
     }
+    
     .search-input-field {
-        background-color: #f3f3f4;
-        border: 1px solid transparent;
+        background-color: #f8fafc;
+        border: 1px solid var(--border-input, #cbd5e1);
         border-radius: 8px;
-        padding: 10px 14px 10px 40px;
+        padding: 10px 14px 10px 42px;
         font-size: 0.9rem;
-        color: #1a1c1c;
+        color: var(--text-dark, #0f172a);
         width: 100%;
         transition: all 0.2s ease;
     }
     .search-input-field:focus {
         background-color: #ffffff;
-        border-color: #0c1322;
+        border-color: var(--accent, #f59e0b);
         outline: none;
-        box-shadow: 0 0 0 3px rgba(12, 19, 34, 0.08);
+        box-shadow: 0 0 0 3px var(--accent-shadow, rgba(245, 158, 11, 0.25));
     }
-    .btn-search-dark {
-        background-color: #0c1322;
-        color: #ffffff;
-        border-radius: 8px;
-        padding: 10px 20px;
-        font-weight: 500;
-        font-size: 0.875rem;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        border: none;
-        transition: background-color 0.2s ease;
-    }
-    .btn-search-dark:hover {
-        background-color: #1e293b;
-        color: #ffffff;
-    }
-    .btn-reset-light {
-        background-color: #e8e8e8;
-        color: #1a1c1c;
-        border-radius: 8px;
-        padding: 10px 16px;
-        font-weight: 500;
-        font-size: 0.875rem;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        border: none;
-        text-decoration: none;
-        transition: background-color 0.2s ease;
-    }
-    .btn-reset-light:hover {
-        background-color: #dadada;
-        color: #1a1c1c;
-    }
+    
     .tab-pill-btn {
-        border-radius: 6px;
-        padding: 6px 14px;
+        border-radius: 8px;
+        padding: 7px 16px;
         font-size: 0.85rem;
         font-weight: 600;
         border: none;
         background: transparent;
-        color: #5e5e5e;
+        color: #64748b;
         transition: all 0.2s ease;
         cursor: pointer;
     }
     .tab-pill-btn:hover {
-        color: #0c1322;
+        color: var(--accent-hover, #d97706);
+        background: rgba(245, 158, 11, 0.08);
     }
     .tab-pill-btn.active-tab {
-        background-color: #0c1322;
-        color: #ffffff;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        background-color: var(--accent, #f59e0b);
+        color: var(--accent-on, #0f172a);
+        font-weight: 700;
+        box-shadow: 0 2px 6px var(--accent-shadow, rgba(245, 158, 11, 0.35));
     }
+
     .pedidos-table {
         border-collapse: collapse;
         width: 100%;
         min-width: 980px;
     }
     .pedidos-table thead th {
-        background: #f3f3f4;
-        color: #5e5e5e;
+        background: #f8fafc;
+        color: #475569;
         font-size: 0.75rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        font-weight: 600;
+        font-weight: 700;
         padding: 12px 16px;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        border-bottom: 1px solid var(--border-card, #e2e8f0);
     }
     .pedidos-table tbody td {
         padding: 14px 16px;
         font-size: 0.875rem;
         vertical-align: middle;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .pedidos-table tbody tr.order-row {
+        transition: background-color 0.15s ease;
     }
     .pedidos-table tbody tr.order-row:hover {
-        background-color: #f9f9f9;
+        background-color: #f8fafc; /* Hover neutro estándar de Prosegin (.prosegin-table) */
     }
+
+    /* Estados Operativos: diseño sobrio y corporativo (solo texto y punto indicador, sin cápsulas de fondo) */
     .badge-status-pill {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 4px 10px;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 500;
+        gap: 7px;
+        padding: 0;
+        background: transparent !important;
+        border: none !important;
+        font-size: 0.84rem;
+        font-weight: 600;
+        cursor: default;
+        user-select: none;
+        box-shadow: none !important;
     }
     .badge-por-preparar {
-        background-color: #e3e2e2;
-        color: #454747;
+        color: #475569;
     }
     .badge-en-preparacion {
-        background-color: #e5e2e1;
-        color: #474746;
+        color: #c2410c;
     }
     .badge-listo-despacho {
-        background-color: #e2e2e2;
-        color: #1a1c1c;
-        font-weight: 600;
+        color: #15803d;
     }
     .badge-dot {
-        width: 7px;
-        height: 7px;
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
         display: inline-block;
+        flex-shrink: 0;
     }
-    .dot-por-preparar { background-color: #747878; }
-    .dot-en-preparacion { background-color: #474746; }
-    .dot-listo-despacho { background-color: #1c1b1b; }
+    .dot-por-preparar { background-color: #64748b; }
+    .dot-en-preparacion { background-color: #ea580c; }
+    .dot-listo-despacho { background-color: #16a34a; }
 
+    /* Indicador Urgente sobrio: solo texto y punto indicador ámbar, sin cápsula de fondo */
     .badge-urgent-warning {
         display: inline-flex;
         align-items: center;
-        gap: 4px;
-        padding: 2px 8px;
-        border-radius: 9999px;
-        background-color: rgba(227, 226, 226, 0.5);
-        color: #454747;
-        font-size: 0.7rem;
+        gap: 6px;
+        padding: 0;
+        background: transparent !important;
+        border: none !important;
+        font-size: 0.75rem;
         font-weight: 600;
+        color: var(--accent-text, #b45309);
+        cursor: default;
+        user-select: none;
+        box-shadow: none !important;
     }
+    .badge-dot-urgent {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background-color: var(--accent, #f59e0b);
+        display: inline-block;
+        flex-shrink: 0;
+    }
+
+    /* Botón de acción Ver Detalle con Dorado Corporativo */
     .btn-table-detail {
-        background-color: #0c1322;
-        color: #ffffff;
+        background-color: var(--accent, #f59e0b);
+        color: var(--accent-on, #0f172a);
         font-size: 0.8rem;
-        font-weight: 500;
+        font-weight: 700;
         padding: 6px 14px;
         border-radius: 8px;
         display: inline-flex;
         align-items: center;
-        gap: 4px;
-        border: none;
-        transition: background-color 0.2s ease;
+        gap: 5px;
+        border: 1px solid var(--accent, #f59e0b);
+        transition: all 0.2s ease;
         text-decoration: none;
         cursor: pointer;
+        box-shadow: 0 1px 3px var(--accent-shadow, rgba(245, 158, 11, 0.25));
     }
     .btn-table-detail:hover {
-        background-color: #1e293b;
+        background-color: var(--accent-hover, #d97706);
+        border-color: var(--accent-hover, #d97706);
         color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px var(--accent-shadow, rgba(245, 158, 11, 0.35));
     }
+
+    /* Overlay y caja del Modal de Detalle ampliado */
     .detail-modal-overlay {
         position: fixed;
         inset: 0;
         z-index: 1050;
-        background-color: rgba(12, 19, 34, 0.65);
+        background-color: rgba(15, 23, 42, 0.6);
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 1rem;
-        backdrop-filter: blur(2px);
+        padding: 1.25rem;
+        backdrop-filter: blur(4px);
     }
     .detail-modal-box {
         background: #ffffff;
         width: 100%;
-        max-width: 640px;
-        border-radius: 12px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+        max-width: 820px; /* Modal ampliado más cómodo y espacioso */
+        border-radius: 14px;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
         max-height: 90vh;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
-    }
-    .live-pulse-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background-color: #1c1b1b;
-        animation: pulseAnimation 2s infinite;
-    }
-    @@keyframes pulseAnimation {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.4; transform: scale(0.85); }
+        border: 1px solid var(--border-card, #e2e8f0);
     }
 </style>
 
-<div class="container-fluid px-0 font-geist">
+<div class="container-fluid px-0 font-prosegin">
 
-    <!-- 1. HEADER: BRAND, TITULO Y KPI RAPIDO -->
+    <!-- 1. HEADER: BRAND, TITULO Y KPI RAPIDO CON ACENTO CORPORATIVO -->
     <div class="pedidos-header-card p-3 p-md-4 mb-3">
         <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
             <div class="d-flex align-items-center gap-3">
-                <div class="d-none d-sm-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: #f4f6f9; border-radius: 10px;">
-                    <i class="bi bi-truck fs-4" style="color: #0c1322;"></i>
+                <div class="d-none d-sm-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: var(--accent-light, #fef3c7); border-radius: 12px; border: 1px solid rgba(245, 158, 11, 0.3);">
+                    <i class="bi bi-truck fs-4" style="color: var(--accent-text, #b45309);"></i>
                 </div>
                 <div class="d-flex flex-column">
                     <div class="d-flex align-items-center gap-1 text-uppercase text-muted" style="font-size: 0.72rem; letter-spacing: 0.06em; font-weight: 600;">
                         <span>Logística y Despachos</span>
                         <span class="material-symbols-outlined" style="font-size: 14px;">chevron_right</span>
-                        <span style="color: #0c1322; font-weight: 700;">Gestión de Pedidos</span>
+                        <span style="color: var(--accent-text, #b45309); font-weight: 700;">Gestión de Pedidos</span>
                     </div>
-                    <h1 class="mb-0 mt-1" style="font-size: 1.5rem; font-weight: 700; color: #0c1322; letter-spacing: -0.02em;">
+                    <h1 class="mb-0 mt-1" style="font-size: 1.5rem; font-weight: 800; color: var(--text-dark, #0f172a); letter-spacing: -0.02em;">
                         Gestión de Pedidos Confirmados
                     </h1>
                     <p class="mb-0 text-muted" style="font-size: 0.85rem;">
@@ -248,12 +239,12 @@
                 </div>
             </div>
 
-            <!-- KPI Badge: Despachos Urgentes -->
+            <!-- KPI Badge: Despachos Urgentes con Acento Dorado/Amarillo -->
             <div class="kpi-urgent-badge">
-                <span class="material-symbols-outlined text-secondary" style="font-size: 20px;">schedule</span>
+                <span class="material-symbols-outlined" style="font-size: 24px; color: var(--accent-text, #b45309);">schedule</span>
                 <div class="d-flex flex-column">
-                    <span class="text-muted" style="font-size: 0.7rem; font-weight: 500; line-height: 1;">Urgentes</span>
-                    <span style="font-size: 0.95rem; font-weight: 700; color: #0c1322; line-height: 1.3;" id="kpiUrgentText">
+                    <span style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--accent-text, #b45309); line-height: 1;">Urgentes (&lt; 24h)</span>
+                    <span style="font-size: 1.05rem; font-weight: 800; color: var(--accent-on, #0f172a); line-height: 1.3;" id="kpiUrgentText">
                         @Model.TotalUrgentes despachos
                     </span>
                 </div>
@@ -261,7 +252,7 @@
         </div>
     </div>
 
-    <!-- 2. PANEL DE BÚSQUEDA Y FILTRADO -->
+    <!-- 2. PANEL DE BÚSQUEDA Y FILTRADO CON BOTÓN DORADO -->
     <div class="prosegin-search-panel p-3 p-md-4 mb-3">
         <form method="get" asp-action="Index" id="orderSearchForm" class="d-flex flex-column flex-lg-row align-items-stretch align-items-lg-end gap-3" onsubmit="handleFormSubmit(event)">
             <input type="hidden" name="estado" id="formEstadoHidden" value="@Model.EstadoFiltro" />
@@ -271,7 +262,7 @@
                     Buscar por N° de Pedido, RUC o Razón Social
                 </label>
                 <div class="position-relative">
-                    <span class="material-symbols-outlined position-absolute text-muted" style="left: 12px; top: 50%; transform: translateY(-50%); font-size: 20px; pointer-events: none;">
+                    <span class="material-symbols-outlined position-absolute" style="left: 12px; top: 50%; transform: translateY(-50%); font-size: 20px; color: var(--accent-text, #b45309); pointer-events: none;">
                         search
                     </span>
                     <input type="text"
@@ -279,17 +270,17 @@
                            name="termino"
                            class="search-input-field"
                            value="@Model.Termino"
-                           placeholder="Ej: PED-2025-0842, 20492817263 o Consorcio Vial..."
+                           placeholder="Ej: PED-2026-0842, 20492817263 o Consorcio Vial..."
                            autocomplete="off" />
                 </div>
             </div>
 
             <div class="d-flex align-items-center gap-2">
-                <button type="submit" class="btn-search-dark" id="btnSearchSubmit">
+                <button type="submit" class="btn-prosegin-primary" id="btnSearchSubmit" style="height: 44px; padding: 0 1.4rem;">
                     <span class="material-symbols-outlined" style="font-size: 18px;">search</span>
                     <span>Buscar</span>
                 </button>
-                <button type="button" class="btn-reset-light" onclick="resetFilters()">
+                <button type="button" class="btn-prosegin-secondary" onclick="resetFilters()" style="height: 44px; padding: 0 1.2rem;">
                     <span class="material-symbols-outlined" style="font-size: 18px;">restart_alt</span>
                     <span>Limpiar</span>
                 </button>
@@ -299,7 +290,7 @@
 
     <!-- 3. PESTAÑAS DE FASE OPERATIVA (WORKLOAD TABS) -->
     <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-        <div class="d-flex align-items-center gap-1 p-1 rounded-3" style="background: #f3f3f4;">
+        <div class="d-flex align-items-center gap-1 p-1 rounded-3" style="background: #f1f5f9; border: 1px solid #e2e8f0;">
             <button type="button"
                     class="tab-pill-btn @(Model.EstadoFiltro == "ALL" ? "active-tab" : "")"
                     data-status="ALL"
@@ -324,12 +315,6 @@
                     onclick="handleTabClick(this, 'LISTO_DESPACHO')">
                 Listos para Despacho <span class="ms-1 opacity-75">(@Model.TotalListoDespacho)</span>
             </button>
-        </div>
-
-        <!-- Indicador en vivo -->
-        <div class="d-none d-sm-flex align-items-center gap-2 text-muted" style="font-size: 0.75rem;">
-            <span class="live-pulse-dot"></span>
-            <span>Sistema logístico en línea</span>
         </div>
     </div>
 
@@ -358,13 +343,13 @@
                             data-search="@searchMeta">
                             <td>
                                 <div class="d-flex flex-column">
-                                    <span style="font-weight: 700; color: #0c1322; font-size: 0.95rem;">@pedido.NumeroPedido</span>
+                                    <span style="font-weight: 700; color: var(--text-dark, #0f172a); font-size: 0.95rem;">@pedido.NumeroPedido</span>
                                     <span class="text-muted" style="font-size: 0.75rem;">OC: @pedido.NumeroOrdenCompra</span>
                                 </div>
                             </td>
                             <td>
                                 <div class="d-flex flex-column">
-                                    <span style="font-weight: 600; color: #1a1c1c;">@pedido.ClienteRazonSocial</span>
+                                    <span style="font-weight: 600; color: #1e293b;">@pedido.ClienteRazonSocial</span>
                                     <span class="text-muted" style="font-size: 0.78rem;">RUC: @pedido.ClienteRuc</span>
                                 </div>
                             </td>
@@ -373,11 +358,11 @@
                             </td>
                             <td>
                                 <div class="d-flex flex-column align-items-start gap-1">
-                                    <span style="font-weight: 700; color: #0c1322; font-size: 0.88rem;">@pedido.FechaEntregaTexto</span>
+                                    <span style="font-weight: 700; color: var(--text-dark, #0f172a); font-size: 0.88rem;">@pedido.FechaEntregaTexto</span>
                                     @if (pedido.EsUrgenteMenor24h)
                                     {
                                         <span class="badge-urgent-warning">
-                                            <span style="width: 6px; height: 6px; border-radius: 50%; background: #474746;"></span>
+                                            <span class="badge-dot-urgent"></span>
                                             Entrega &lt; 24h
                                         </span>
                                     }
@@ -385,8 +370,8 @@
                             </td>
                             <td>
                                 <div class="d-flex align-items-start gap-1 text-muted" style="font-size: 0.83rem;">
-                                    <span class="material-symbols-outlined text-secondary" style="font-size: 16px; margin-top: 1px;">location_on</span>
-                                    <span style="color: #1a1c1c;">@pedido.DireccionEntrega</span>
+                                    <span class="material-symbols-outlined" style="font-size: 16px; margin-top: 1px; color: var(--accent-text, #b45309);">location_on</span>
+                                    <span style="color: #1e293b;">@pedido.DireccionEntrega</span>
                                 </div>
                             </td>
                             <td>
@@ -417,7 +402,7 @@
                                         class="btn-table-detail"
                                         onclick="openDetailModal('@pedido.NumeroPedido')">
                                     <span>Ver Detalle</span>
-                                    <span class="material-symbols-outlined" style="font-size: 15px;">arrow_forward</span>
+                                    <span class="material-symbols-outlined" style="font-size: 15px;">visibility</span>
                                 </button>
                             </td>
                         </tr>
@@ -428,29 +413,29 @@
 
         <!-- 5. ESTADO VACÍO (EMPTY STATE) -->
         <div id="emptyState" class="p-5 text-center @(Model.Pedidos.Any() ? "d-none" : "d-flex flex-column align-items-center justify-content-center")">
-            <div class="d-flex align-items-center justify-content-center mb-3" style="width: 52px; height: 52px; border-radius: 50%; background: #f3f3f4; color: #747878;">
-                <span class="material-symbols-outlined" style="font-size: 26px;">search_off</span>
+            <div class="d-flex align-items-center justify-content-center mb-3" style="width: 56px; height: 56px; border-radius: 50%; background: var(--accent-light, #fef3c7); color: var(--accent-text, #b45309);">
+                <span class="material-symbols-outlined" style="font-size: 28px;">search_off</span>
             </div>
-            <h5 class="mb-1" style="font-weight: 700; color: #1a1c1c;">No se encontraron pedidos confirmados</h5>
+            <h5 class="mb-1" style="font-weight: 700; color: #1e293b;">No se encontraron pedidos confirmados</h5>
             <p class="text-muted mb-3" style="font-size: 0.85rem; max-width: 440px;">
                 No se encontraron pedidos confirmados con los criterios ingresados. Verifique el número de orden de compra, RUC o limpie los filtros.
             </p>
-            <button type="button" class="btn btn-sm btn-link text-decoration-none d-inline-flex align-items-center gap-1" style="color: #0c1322; font-weight: 600;" onclick="resetFilters()">
+            <button type="button" class="btn btn-sm btn-link text-decoration-none d-inline-flex align-items-center gap-1" style="color: var(--accent-text, #b45309); font-weight: 700;" onclick="resetFilters()">
                 <span class="material-symbols-outlined" style="font-size: 16px;">refresh</span>
                 <span>Restablecer búsqueda</span>
             </button>
         </div>
 
         <!-- 6. PIE DE PAGINACIÓN -->
-        <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between px-3 py-2 border-top gap-2" style="background: rgba(243, 243, 244, 0.5); font-size: 0.8rem;">
+        <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between px-3 py-2 border-top gap-2" style="background: #f8fafc; font-size: 0.8rem;">
             <span class="text-muted" id="paginationText">
-                Mostrando <strong style="color: #1a1c1c;" id="visibleOrdersCount">@Model.Pedidos.Count</strong> de <strong style="color: #1a1c1c;">@Model.TotalPedidos</strong> pedidos confirmados activos
+                Mostrando <strong style="color: #0f172a;" id="visibleOrdersCount">@Model.Pedidos.Count</strong> de <strong style="color: #0f172a;">@Model.TotalPedidos</strong> pedidos confirmados activos
             </span>
             <div class="d-flex align-items-center gap-1">
                 <button type="button" class="btn btn-sm p-1 text-muted border-0" disabled>
                     <span class="material-symbols-outlined" style="font-size: 16px;">chevron_left</span>
                 </button>
-                <span class="px-2 py-1 rounded text-white" style="background: #0c1322; font-size: 0.75rem; font-weight: 600;">1</span>
+                <span class="px-2 py-1 rounded" style="background: var(--accent, #f59e0b); color: var(--accent-on, #0f172a); font-size: 0.75rem; font-weight: 700;">1</span>
                 <span class="px-2 py-1 text-muted" style="font-size: 0.75rem;">2</span>
                 <button type="button" class="btn btn-sm p-1 text-dark border-0">
                     <span class="material-symbols-outlined" style="font-size: 16px;">chevron_right</span>
@@ -460,71 +445,68 @@
     </div>
 </div>
 
-<!-- 7. MODAL DETALLE DE PEDIDO (INTERACTIVE WORKBENCH) -->
+<!-- 7. MODAL DETALLE DE PEDIDO (AMPLIADO Y SIN ACCIONES AJENAS A LA HU) -->
 <div id="detailModal" class="detail-modal-overlay d-none" onclick="handleBackdropClick(event)">
-    <div class="detail-modal-box p-3 p-md-4" onclick="event.stopPropagation()">
+    <div class="detail-modal-box p-4" onclick="event.stopPropagation()">
+        
         <!-- Header -->
-        <div class="d-flex align-items-start justify-content-between pb-2 mb-3 border-bottom">
-            <div class="d-flex flex-column">
+        <div class="d-flex align-items-start justify-content-between pb-3 mb-3 border-bottom">
+            <div class="d-flex flex-column gap-1">
                 <div class="d-flex align-items-center gap-2">
-                    <span id="modalOrderId" style="font-size: 1.25rem; font-weight: 700; color: #0c1322;">PED-2025-0842</span>
-                    <span id="modalOrderOc" class="badge bg-secondary-subtle text-secondary-emphasis" style="font-size: 0.75rem; font-weight: 600;">OC-77821</span>
+                    <span id="modalOrderId" style="font-size: 1.35rem; font-weight: 800; color: #0f172a;">PED-2026-0842</span>
+                    <span id="modalOrderOc" class="badge" style="background: var(--accent-light, #fef3c7); color: var(--accent-text, #b45309); font-size: 0.8rem; font-weight: 700; border: 1px solid rgba(245, 158, 11, 0.4);">OC-77821</span>
                 </div>
-                <span id="modalClient" class="text-muted mt-1" style="font-size: 0.88rem; font-weight: 600;">Consorcio Vial Andino S.R.C.</span>
+                <span id="modalClient" class="text-muted" style="font-size: 0.95rem; font-weight: 600;">Consorcio Vial Andino S.R.C.</span>
             </div>
-            <button type="button" class="btn btn-sm btn-light border-0 rounded-circle p-1 text-muted" onclick="closeDetailModal()">
-                <span class="material-symbols-outlined" style="font-size: 20px;">close</span>
+            <button type="button" class="btn btn-sm btn-light border-0 rounded-circle p-1 text-muted" onclick="closeDetailModal()" title="Cerrar modal">
+                <span class="material-symbols-outlined" style="font-size: 22px;">close</span>
             </button>
         </div>
 
-        <!-- Quick Specs Grid -->
-        <div class="p-3 rounded-3 mb-3" style="background: #f3f3f4;">
-            <div class="row g-2">
-                <div class="col-6 col-sm-4">
-                    <span class="text-muted d-block" style="font-size: 0.72rem; text-transform: uppercase;">Fecha Entrega:</span>
-                    <span id="modalDelivery" style="font-size: 0.85rem; font-weight: 700; color: #0c1322;">HOY 16:00 hrs</span>
+        <!-- Ficha de Datos Operativos -->
+        <div class="p-3 rounded-3 mb-4" style="background: #f8fafc; border: 1px solid var(--border-card, #e2e8f0);">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <span class="text-muted d-block" style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Fecha Entrega:</span>
+                    <span id="modalDelivery" style="font-size: 0.95rem; font-weight: 800; color: #0f172a;">HOY 16:00 hrs</span>
                 </div>
-                <div class="col-6 col-sm-4">
-                    <span class="text-muted d-block" style="font-size: 0.72rem; text-transform: uppercase;">Almacén Origen:</span>
-                    <span id="modalOrigin" style="font-size: 0.85rem; font-weight: 600; color: #1a1c1c;">Central Huachipa</span>
+                <div class="col-md-4">
+                    <span class="text-muted d-block" style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Almacén Origen:</span>
+                    <span id="modalOrigin" style="font-size: 0.9rem; font-weight: 600; color: #1e293b;">Central Huachipa</span>
                 </div>
-                <div class="col-12 col-sm-4">
-                    <span class="text-muted d-block" style="font-size: 0.72rem; text-transform: uppercase;">Embalaje EPP:</span>
-                    <span id="modalPackaging" style="font-size: 0.85rem; font-weight: 600; color: #1a1c1c;">Packs Paletizados</span>
+                <div class="col-md-4">
+                    <span class="text-muted d-block" style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Embalaje EPP:</span>
+                    <span id="modalPackaging" style="font-size: 0.9rem; font-weight: 600; color: #1e293b;">Packs Paletizados</span>
                 </div>
             </div>
-            <div class="mt-2 pt-2 border-top">
-                <span class="text-muted d-block" style="font-size: 0.72rem; text-transform: uppercase;">Punto de Entrega (Sede):</span>
-                <span id="modalAddress" style="font-size: 0.82rem; font-weight: 500; color: #1a1c1c;">
-                    <i class="bi bi-geo-alt me-1 text-muted"></i> Av. Industrial 450, Almacén 4 - Lurín, Lima
+            <div class="mt-3 pt-3 border-top" style="border-color: #e2e8f0 !important;">
+                <span class="text-muted d-block" style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Punto de Entrega (Sede):</span>
+                <span id="modalAddress" style="font-size: 0.9rem; font-weight: 500; color: #1e293b;">
+                    <i class="bi bi-geo-alt-fill me-1" style="color: var(--accent, #f59e0b);"></i> Av. Industrial 450, Almacén 4 - Lurín, Lima
                 </span>
             </div>
         </div>
 
         <!-- Items Table -->
-        <div class="d-flex flex-column gap-1 mb-3">
-            <span class="text-muted text-uppercase" style="font-size: 0.73rem; font-weight: 700; letter-spacing: 0.04em;">
+        <div class="d-flex flex-column gap-2 mb-4">
+            <span class="text-muted text-uppercase" style="font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em;">
                 Ítems de Seguridad Asignados:
             </span>
-            <div class="p-2 rounded-3" style="background: #f3f3f4;">
-                <div class="d-flex align-items-center justify-content-between text-muted pb-1 mb-1 border-bottom" style="font-size: 0.7rem; font-weight: 600;">
+            <div class="p-3 rounded-3" style="background: #f8fafc; border: 1px solid var(--border-card, #e2e8f0);">
+                <div class="d-flex align-items-center justify-content-between text-muted pb-2 mb-2 border-bottom" style="font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; border-color: #e2e8f0 !important;">
                     <span>DESCRIPCIÓN DEL EPP</span>
                     <span>CANTIDAD</span>
                 </div>
-                <div id="modalItemsContainer" class="d-flex flex-column gap-1">
+                <div id="modalItemsContainer" class="d-flex flex-column gap-2">
                     <!-- Filas inyectadas dinámicamente -->
                 </div>
             </div>
         </div>
 
-        <!-- Modal Footer Actions -->
-        <div class="d-flex align-items-center justify-content-end gap-2 pt-2 border-top">
-            <button type="button" class="btn btn-light" style="font-size: 0.85rem; font-weight: 500;" onclick="closeDetailModal()">
+        <!-- Modal Footer Actions: Solo botón Cerrar oficial -->
+        <div class="d-flex align-items-center justify-content-end gap-2 pt-3 border-top">
+            <button type="button" class="btn-prosegin-secondary" style="min-width: 120px;" onclick="closeDetailModal()">
                 Cerrar
-            </button>
-            <button type="button" class="btn-search-dark" onclick="imprimirGuiaPicking()">
-                <span class="material-symbols-outlined" style="font-size: 16px;">print</span>
-                <span>Imprimir Guía / Picking</span>
             </button>
         </div>
     </div>
@@ -534,6 +516,7 @@
     // Almacén de pedidos serializados para apertura instantánea del modal
     const pedidosDataset = @Html.Raw(pedidosJson);
     let currentActiveFilter = '@Model.EstadoFiltro';
+    let committedSearchTerm = '@(Model.Termino ?? "")'.trim().toLowerCase();
 
     function handleTabClick(buttonEl, statusFilter) {
         currentActiveFilter = statusFilter;
@@ -545,17 +528,21 @@
         });
         buttonEl.classList.add('active-tab');
 
-        // Filtrado instantáneo en la tabla
+        // Filtrado en la tabla respetando el término buscado si ya se presionó Buscar
         filterTableClientSide();
     }
 
     function handleFormSubmit(e) {
-        // Envio nativo del formulario GET al controlador
-        // pero también mantiene sincronizado el estado
+        if (e) {
+            e.preventDefault();
+        }
+        // Se requiere presionar el botón de BUSCAR o Enter para ejecutar la búsqueda según criterio de la HU
+        committedSearchTerm = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+        filterTableClientSide();
     }
 
     function filterTableClientSide() {
-        const searchVal = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+        const searchVal = committedSearchTerm;
         const rows = document.querySelectorAll('.order-row');
         const emptyState = document.getElementById('emptyState');
         let visibleCount = 0;
@@ -591,13 +578,9 @@
         }
     }
 
-    // Filtrar en tiempo real mientras el usuario escribe
-    document.getElementById('searchInput')?.addEventListener('input', function() {
-        filterTableClientSide();
-    });
-
     function resetFilters() {
         document.getElementById('searchInput').value = '';
+        committedSearchTerm = '';
         const allTab = document.querySelector('.tab-pill-btn[data-status="ALL"]');
         if (allTab) {
             handleTabClick(allTab, 'ALL');
@@ -619,7 +602,7 @@
         document.getElementById('modalDelivery').innerText = pedido.FechaEntregaTexto;
         document.getElementById('modalOrigin').innerText = pedido.AlmacenOrigen || 'Central Huachipa';
         document.getElementById('modalPackaging').innerText = pedido.Embalaje || 'Packs Paletizados';
-        document.getElementById('modalAddress').innerHTML = '<i class="bi bi-geo-alt me-1 text-muted"></i> ' + pedido.DireccionEntrega;
+        document.getElementById('modalAddress').innerHTML = '<i class="bi bi-geo-alt-fill me-1" style="color: var(--accent, #f59e0b);"></i> ' + pedido.DireccionEntrega;
 
         // Inyectar ítems de seguridad
         const itemsContainer = document.getElementById('modalItemsContainer');
@@ -628,16 +611,17 @@
         if (pedido.Items && pedido.Items.length > 0) {
             pedido.Items.forEach(item => {
                 const itemDiv = document.createElement('div');
-                itemDiv.className = 'd-flex align-items-center justify-content-between py-1 text-dark';
-                itemDiv.style.fontSize = '0.82rem';
+                itemDiv.className = 'd-flex align-items-center justify-content-between py-2 border-bottom';
+                itemDiv.style.borderColor = '#e2e8f0';
+                itemDiv.style.fontSize = '0.85rem';
                 itemDiv.innerHTML = `
-                    <span>${item.Descripcion}</span>
-                    <strong style="color: #0c1322;">${item.Cantidad} ${item.UnidadMedida}</strong>
+                    <span style="color: #1e293b; font-weight: 500;">${item.Descripcion}</span>
+                    <span class="fw-bold font-monospace" style="color: #0f172a; font-size: 0.85rem;">${item.Cantidad} ${item.UnidadMedida}</span>
                 `;
                 itemsContainer.appendChild(itemDiv);
             });
         } else {
-            itemsContainer.innerHTML = '<span class="text-muted" style="font-size: 0.8rem;">Sin ítems registrados.</span>';
+            itemsContainer.innerHTML = '<span class="text-muted" style="font-size: 0.85rem;">Sin ítems registrados.</span>';
         }
 
         document.getElementById('detailModal').classList.remove('d-none');
@@ -651,11 +635,5 @@
         if (e.target.id === 'detailModal') {
             closeDetailModal();
         }
-    }
-
-    function imprimirGuiaPicking() {
-        const orderId = document.getElementById('modalOrderId').innerText;
-        alert('Orden ' + orderId + ' enviada a Hoja de Ruta de Despacho y Picking.');
-        closeDetailModal();
     }
 </script>
