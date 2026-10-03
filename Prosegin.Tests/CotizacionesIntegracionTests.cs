@@ -223,8 +223,7 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
         var html = WebUtility.HtmlDecode(await _host.Client.GetStringAsync("/Catalogo"));
         Assert.Contains("HU31-CASCO", html);
         Assert.DoesNotContain("HU31-INACTIVO", html);
-        Assert.Contains("prosegin.catalog.cart.v1", html);
-        Assert.Contains("prosegin.quote.pending.v1", html);
+        Assert.DoesNotContain("catalog-cart", html);
         var script = await _host.Client.GetStringAsync("/js/cotizacion-productos.js");
         Assert.Contains("prosegin.quote.pending.v1", script);
     }
