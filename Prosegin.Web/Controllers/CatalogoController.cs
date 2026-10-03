@@ -2,15 +2,17 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
 using Prosegin.Data;
 using Prosegin.Data.Entities;
 using Prosegin.Web.ViewModels.Catalogo;
+using Prosegin.Web.Services;
 
 namespace Prosegin.Web.Controllers;
 
 public class CatalogoController : Controller
 {
-    private const long MaxFichaTecnicaBytes = 5 * 1024 * 1024;
+    private const string MensajeSkuDuplicado = "El código SKU ya se encuentra registrado";
     private readonly ProseginDbContext _context;
     private readonly IWebHostEnvironment _webHostEnvironment;
 
@@ -82,20 +84,15 @@ public class CatalogoController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> RegistroProductos()
+    public async Task<IActionResult> RegistroProductos(CancellationToken cancellationToken)
     {
-        ViewBag.ProductosRegistrados = await _context.Productos
-            .AsNoTracking()
-            .Where(p => p.Activo)
-            .OrderByDescending(p => p.Id)
-            .Take(10)
-            .ToListAsync();
-
-        return View();
+        var model = new ProductoCreateViewModel();
+        await CargarProveedoresAsync(model, cancellationToken);
+        return View(model);
     }
 
     [HttpGet]
-    public async Task<IActionResult> ValidarSku(string sku)
+    public async Task<IActionResult> ValidarSku(string sku, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(sku))
         {
@@ -103,10 +100,10 @@ public class CatalogoController : Controller
         }
 
         var skuNormalizado = sku.Trim().ToUpperInvariant();
-        var existe = await _context.Productos.AnyAsync(p => p.Sku == skuNormalizado && p.Activo);
+        var existe = await _context.Productos.AnyAsync(p => p.Sku == skuNormalizado, cancellationToken);
         if (existe)
         {
-            return Json(new { valido = false, existe = true, mensaje = "El código SKU ya se encuentra registrado" });
+            return Json(new { valido = false, existe = true, mensaje = MensajeSkuDuplicado });
         }
 
         return Json(new { valido = true, existe = false, mensaje = "Código SKU disponible" });
@@ -114,28 +111,35 @@ public class CatalogoController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> RegistroProductos(ProductoCreateViewModel model)
+    public async Task<IActionResult> RegistroProductos(ProductoCreateViewModel model, CancellationToken cancellationToken)
     {
-        ValidarFichaTecnica(model.FichaTecnica);
+        if (model.FichaTecnica != null
+            && !await FichaTecnicaValidator.EsValidaAsync(model.FichaTecnica, cancellationToken))
+        {
+            ModelState.AddModelError(nameof(model.FichaTecnica), FichaTecnicaValidator.MensajeError);
+        }
+
+        var proveedorIds = model.ProveedorIds.Distinct().ToList();
+        var proveedores = await _context.Proveedores
+            .Where(p => proveedorIds.Contains(p.Id))
+            .ToListAsync(cancellationToken);
+        if (proveedorIds.Count == 0 || proveedores.Count != proveedorIds.Count)
+        {
+            ModelState.AddModelError(nameof(model.ProveedorIds), "Seleccione al menos un proveedor autorizado de la lista.");
+        }
 
         if (!string.IsNullOrWhiteSpace(model.Sku))
         {
             var skuNormalizado = model.Sku.Trim().ToUpperInvariant();
-            if (await _context.Productos.AnyAsync(p => p.Sku == skuNormalizado && p.Activo))
+            if (await _context.Productos.AnyAsync(p => p.Sku == skuNormalizado, cancellationToken))
             {
-                ModelState.AddModelError(nameof(model.Sku), $"El código SKU '{skuNormalizado}' ya se encuentra registrado en el catálogo.");
+                ModelState.AddModelError(nameof(model.Sku), MensajeSkuDuplicado);
             }
         }
 
         if (!ModelState.IsValid)
         {
-            ViewBag.ProductosRegistrados = await _context.Productos
-                .AsNoTracking()
-                .Where(p => p.Activo)
-                .OrderByDescending(p => p.Id)
-                .Take(10)
-                .ToListAsync();
-
+            await CargarProveedoresAsync(model, cancellationToken);
             return View(model);
         }
 
@@ -152,11 +156,6 @@ public class CatalogoController : Controller
         var nombreUnico = $"{Guid.NewGuid():N}.pdf";
         var rutaFisica = Path.Combine(carpetaFichas, nombreUnico);
 
-        await using (var stream = new FileStream(rutaFisica, FileMode.Create))
-        {
-            await model.FichaTecnica!.CopyToAsync(stream);
-        }
-
         // 2. Persistir en MySQL con la ruta relativa pública
         var producto = new Producto
         {
@@ -166,17 +165,48 @@ public class CatalogoController : Controller
             UnidadMedida = string.IsNullOrWhiteSpace(model.UnidadMedida) ? "UND" : model.UnidadMedida.Trim().ToUpperInvariant(),
             CostoReferencial = model.CostoBaseAdquisicion,
             RutaFichaTecnicaPdf = $"/uploads/fichas/{nombreUnico}",
+            NombreArchivoPdf = Path.GetFileName(model.FichaTecnica!.FileName),
             Descripcion = string.IsNullOrWhiteSpace(model.Marca)
-                ? $"Proveedor: {model.ProveedorAutorizado.Trim()}"
-                : $"Marca: {model.Marca.Trim()} | Proveedor: {model.ProveedorAutorizado.Trim()}",
+                ? string.Empty
+                : $"Marca: {model.Marca.Trim()}",
+            Proveedores = proveedores,
             FechaCreacion = DateTime.UtcNow,
             Activo = true
         };
 
-        _context.Productos.Add(producto);
-        await _context.SaveChangesAsync();
+        var guardado = false;
+        try
+        {
+            await using (var stream = new FileStream(rutaFisica, FileMode.CreateNew))
+            {
+                await model.FichaTecnica.CopyToAsync(stream, cancellationToken);
+            }
 
-        TempData["SuccessMessage"] = $"El producto '{producto.Nombre}' ({producto.Sku}) fue registrado exitosamente en la base de datos con su ficha técnica.";
+            _context.Productos.Add(producto);
+            await _context.SaveChangesAsync(cancellationToken);
+            guardado = true;
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is MySqlException { Number: 1062 })
+        {
+            // El índice único también protege dos registros simultáneos del mismo SKU.
+            if (!await _context.Productos.AsNoTracking().AnyAsync(p => p.Sku == producto.Sku, cancellationToken))
+            {
+                throw;
+            }
+
+            ModelState.AddModelError(nameof(model.Sku), MensajeSkuDuplicado);
+            await CargarProveedoresAsync(model, cancellationToken);
+            return View(model);
+        }
+        finally
+        {
+            if (!guardado && System.IO.File.Exists(rutaFisica))
+            {
+                System.IO.File.Delete(rutaFisica);
+            }
+        }
+
+        TempData["SuccessMessage"] = "Producto registrado con éxito";
         return RedirectToAction(nameof(Index));
     }
 
@@ -241,22 +271,11 @@ public class CatalogoController : Controller
         return found != null ? Path.GetFullPath(found) : Path.GetFullPath(candidates[0]);
     }
 
-    private void ValidarFichaTecnica(IFormFile? fichaTecnica)
+    private async Task CargarProveedoresAsync(ProductoCreateViewModel model, CancellationToken cancellationToken)
     {
-        if (fichaTecnica is null || fichaTecnica.Length == 0)
-        {
-            return;
-        }
-
-        var extension = Path.GetExtension(fichaTecnica.FileName);
-        if (!string.Equals(extension, ".pdf", StringComparison.OrdinalIgnoreCase))
-        {
-            ModelState.AddModelError(nameof(ProductoCreateViewModel.FichaTecnica), "La ficha técnica debe estar en formato PDF.");
-        }
-
-        if (fichaTecnica.Length > MaxFichaTecnicaBytes)
-        {
-            ModelState.AddModelError(nameof(ProductoCreateViewModel.FichaTecnica), "La ficha técnica no puede superar los 5 MB.");
-        }
+        model.ProveedoresDisponibles = await _context.Proveedores.AsNoTracking()
+            .OrderBy(p => p.RazonSocial)
+            .Select(p => new ProveedorOpcionViewModel { Id = p.Id, RazonSocial = p.RazonSocial, Ruc = p.Ruc })
+            .ToListAsync(cancellationToken);
     }
 }
