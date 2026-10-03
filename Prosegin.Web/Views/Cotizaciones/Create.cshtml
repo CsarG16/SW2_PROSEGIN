@@ -208,9 +208,12 @@
                                         @producto.Sku
                                     </td>
                                     <td>
-                                        <div>
-                                            <div class="fw-bold small text-dark quote-row-description">@producto.Nombre</div>
-                                            <div class="text-muted" style="font-size: 0.75rem;">Categoría: @producto.Categoria</div>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <img src="@(string.IsNullOrEmpty(producto.RutaImagen) ? $"/images/productos/{producto.Sku}.png" : producto.RutaImagen)" style="width: 40px; height: 40px; object-fit: contain; border-radius: 4px; border: 1px solid #dee2e6; background: #fff;" onerror="this.style.display='none';" />
+                                            <div>
+                                                <div class="fw-bold small text-dark quote-row-description">@producto.Nombre</div>
+                                                <div class="text-muted" style="font-size: 0.75rem;">Categoría: @producto.Categoria</div>
+                                            </div>
                                         </div>
                                     </td>
                                     <td class="text-center small text-secondary">@producto.UnidadMedida</td>
