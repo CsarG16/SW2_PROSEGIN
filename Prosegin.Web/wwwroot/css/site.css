@@ -669,8 +669,8 @@ body {
 }
 
 .form-control-prosegin:focus {
-  border-color: var(--prosegin-orange);
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+  border-color: #0B1727;
+  box-shadow: 0 0 0 3px rgba(11, 23, 39, 0.12);
   outline: none;
 }
 
@@ -881,17 +881,17 @@ body {
 }
 
 .catalog-category:hover {
-  background: var(--bg-card-subtle);
+  background: #f1f5f9;
   color: var(--text-dark);
-  border-color: var(--border-input);
+  border-color: #cbd5e1;
 }
 
 .catalog-category.active {
-  color: var(--accent-on);
-  background: var(--accent);
-  border-color: var(--accent);
+  color: #ffffff;
+  background: var(--dark, #0f1b2b);
+  border-color: var(--dark, #0f1b2b);
   font-weight: 700;
-  box-shadow: 0 2px 4px var(--accent-shadow);
+  box-shadow: 0 2px 6px rgba(15, 27, 43, 0.2);
 }
 
 .catalog-layout {
@@ -949,8 +949,8 @@ body {
 }
 
 .catalog-product:hover .catalog-product-mark {
-  border-color: var(--prosegin-gold, #c89528);
-  box-shadow: 0 4px 10px rgba(200, 149, 40, 0.18);
+  border-color: var(--dark, #0f1b2b);
+  box-shadow: 0 4px 10px rgba(15, 27, 43, 0.15);
   transform: translateY(-2px);
 }
 

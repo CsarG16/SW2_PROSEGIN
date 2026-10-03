@@ -14,7 +14,7 @@
             <div class="header-content">
                 <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
                     <h1 class="page-title mb-0">Catálogo de Productos EPP</h1>
-                    <span class="badge-status badge-status-warning"><span class="status-dot"></span> <span id="catalogProductCount">@Model.Productos.Count</span> <span id="catalogProductLabel">disponibles</span></span>
+                    <span class="badge-status badge-status-neutral"><span class="status-dot" style="background-color: #0B1727;"></span> <span id="catalogProductCount">@Model.Productos.Count</span> <span id="catalogProductLabel">disponibles</span></span>
                 </div>
                 <p class="page-subtitle mb-0">Explora el catálogo homologado, selecciona las unidades requeridas y continúa con la cotización.</p>
             </div>
@@ -62,12 +62,11 @@
             <section class="catalog-product-list" aria-label="Productos disponibles">
                 @foreach (var product in Model.Productos)
                 {
-                    var estimatedPrice = Math.Round(product.Precio * 1.30m, 2);
                     var searchText = $"{product.Sku} {product.Nombre} {product.Categoria}".ToLowerInvariant();
                     var imageSrc = !string.IsNullOrWhiteSpace(product.RutaImagen)
                         ? product.RutaImagen
                         : $"/images/productos/{product.Sku}.png";
-                    <article class="catalog-product" data-product-card data-product-id="@product.Id" data-sku="@product.Sku" data-name="@product.Nombre" data-category="@product.Categoria" data-search="@searchText" data-cost="@product.Precio.ToString(CultureInfo.InvariantCulture)" data-price="@estimatedPrice.ToString(CultureInfo.InvariantCulture)" data-stock="@product.StockDisponible">
+                    <article class="catalog-product" data-product-card data-product-id="@product.Id" data-sku="@product.Sku" data-name="@product.Nombre" data-category="@product.Categoria" data-search="@searchText" data-cost="@product.Precio.ToString(CultureInfo.InvariantCulture)" data-stock="@product.StockDisponible">
                         <div class="catalog-product-mark" title="Ver imagen de @product.Nombre" data-preview-img="@imageSrc" data-preview-name="@product.Nombre" data-preview-sku="@product.Sku" role="button" tabindex="0" aria-label="Ver imagen ampliada de @product.Nombre">
                             <img src="@imageSrc" alt="Foto referencial de @product.Nombre" class="catalog-product-thumb" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('d-none');" />
                             <div class="catalog-product-fallback d-none" aria-hidden="true">
@@ -85,20 +84,19 @@
                                 <span><i class="bi bi-box me-1"></i>@(product.StockDisponible > 0 ? $"Stock: {product.StockDisponible}" : "Disponibilidad a confirmar")</span>
                                 @if (!string.IsNullOrWhiteSpace(product.RutaFichaTecnicaPdf))
                                 {
-                                    <a asp-controller="Catalogo" asp-action="VerFicha" asp-route-id="@product.Id" target="_blank" rel="noopener noreferrer"><i class="bi bi-file-earmark-pdf me-1"></i>Ficha técnica</a>
+                                    <a asp-controller="Catalogo" asp-action="VerFicha" asp-route-id="@product.Id" target="_blank" rel="noopener noreferrer" class="text-danger text-decoration-none"><i class="bi bi-file-earmark-pdf me-1"></i>Ficha técnica</a>
                                 }
                             </div>
                         </div>
-                        <div class="catalog-unit-price">
-                            <span>Precio estimado / unidad</span>
-                            <strong>S/ @estimatedPrice.ToString("N2", new CultureInfo("es-PE"))</strong>
-                            <small>Incluye margen inicial de 30%</small>
+                        <div class="catalog-unit-price text-end">
+                            <span class="text-secondary small fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Costo Base</span>
+                            <strong class="text-dark d-block fw-bold" style="font-size: 1.25rem;">S/ @product.Precio.ToString("N2", new CultureInfo("es-PE"))</strong>
                         </div>
                         <div class="catalog-add-controls">
                             <label class="visually-hidden" for="quantity-@product.Id">Cantidad de @product.Nombre</label>
                             <input id="quantity-@product.Id" data-quantity type="number" min="1" max="2147483647" step="1" value="1" inputmode="numeric" />
                             <button type="button" class="btn-prosegin-primary catalog-add-button" data-add-product aria-label="Agregar @product.Nombre al carrito"><i class="bi bi-plus-lg"></i><span>Agregar</span></button>
-                            <button type="button" class="btn-prosegin-secondary text-decoration-none" data-bs-toggle="modal" data-bs-target="#editProductModal" onclick="populateEditModal(this)" data-id="@product.Id" data-sku="@product.Sku" data-name="@product.Nombre" data-category="@product.Categoria" data-stock="@product.StockDisponible" data-cost="@product.Precio.ToString(CultureInfo.InvariantCulture)"><i class="bi bi-pencil-square me-1"></i>Editar</button>
+                            <button type="button" class="btn btn-dark px-3 py-2 fw-semibold text-white d-flex align-items-center gap-2 shadow-sm rounded-3" style="background-color: #0B1727; border-color: #0B1727; font-size: 0.85rem;" data-bs-toggle="modal" data-bs-target="#editProductModal" onclick="populateEditModal(this)" data-id="@product.Id" data-sku="@product.Sku" data-name="@product.Nombre" data-category="@product.Categoria" data-stock="@product.StockDisponible" data-cost="@product.Precio.ToString(CultureInfo.InvariantCulture)"><i class="bi bi-pencil-square"></i>Editar</button>
                         </div>
                     </article>
                 }
@@ -129,48 +127,72 @@
     }
 </div>
 
-<!-- Modal Editar Producto -->
+<!-- Modal Editar Producto (Estilo Prosegin Core) -->
 <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
-            <div class="modal-header border-bottom-0 pb-2 pt-4 px-4">
-                <h5 class="modal-title fw-bold" id="editProductModalLabel">Editar Producto</h5>
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header border-bottom py-3 px-4 bg-light bg-opacity-50">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="d-flex align-items-center justify-content-center rounded-3 text-white" style="width: 38px; height: 38px; background-color: #0B1727;">
+                        <i class="bi bi-pencil-square fs-6"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold text-dark mb-0 fs-6" id="editProductModalLabel">Editar Producto del Catálogo</h5>
+                        <small class="text-muted" style="font-size: 0.75rem;">Actualiza las especificaciones maestras y el costo base de referencia</small>
+                    </div>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
-            <div class="modal-body px-4 pb-4">
+            <div class="modal-body p-4">
                 <form id="editProductForm" method="post" asp-action="EditarProducto" enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
                     <input type="hidden" id="editProductId" name="Id" />
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small text-secondary">CÓDIGO SKU</label>
-                        <input type="text" class="form-control bg-light" id="editProductSku" name="Sku" readonly />
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Código SKU</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-lock-fill"></i></span>
+                                <input type="text" class="form-control bg-light font-monospace fw-bold border-start-0 ps-0" id="editProductSku" name="Sku" readonly />
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Categoría</label>
+                            <input type="text" class="form-control" id="editProductCategory" name="Categoria" placeholder="Ej: Protección craneal" />
+                        </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold small text-secondary">NOMBRE DEL PRODUCTO</label>
-                        <input type="text" class="form-control" id="editProductName" name="Nombre" required />
+                        <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Nombre del Producto</label>
+                        <input type="text" class="form-control" id="editProductName" name="Nombre" placeholder="Descripción completa del producto EPP" required />
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold small text-secondary">CATEGORÍA</label>
-                        <input type="text" class="form-control" id="editProductCategory" name="Categoria" />
+                        <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Costo Base (S/.)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-secondary fw-semibold border-end-0">S/</span>
+                            <input type="number" step="0.01" min="0.01" class="form-control border-start-0 ps-1 fw-bold" id="editProductCost" name="Precio" placeholder="0.00" required />
+                        </div>
+                        <small class="text-muted" style="font-size: 0.72rem;">Costo de referencia mayorista registrado en base de datos.</small>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small text-secondary">COSTO BASE (S/)</label>
-                        <input type="number" step="0.01" class="form-control" id="editProductCost" name="Precio" required />
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Ficha Técnica PDF (Opcional)</label>
+                        <div class="p-3 border rounded-3 bg-light bg-opacity-50">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="bi bi-file-earmark-pdf text-danger fs-4"></i>
+                                <span class="small text-secondary">Reemplazar archivo PDF de homologación técnica</span>
+                            </div>
+                            <input type="file" class="form-control form-control-sm" id="editProductFile" name="FichaTecnica" accept=".pdf" />
+                            <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">Deja este campo vacío si no deseas modificar la ficha técnica actual.</small>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small text-secondary">NUEVA FICHA TÉCNICA (OPCIONAL)</label>
-                        <input type="file" class="form-control" id="editProductFile" name="FichaTecnica" accept=".pdf" />
-                        <small class="text-muted d-block mt-1">Sube un archivo PDF solo si deseas reemplazar la ficha actual.</small>
-                    </div>
-
-                    <div class="d-flex justify-content-end gap-2 mt-4">
-                        <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-dark px-4" style="background-color: #0B1727; border-color: #0B1727;">Guardar Cambios</button>
+                    <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                        <button type="button" class="btn btn-light border px-4 py-2 text-secondary fw-semibold rounded-3" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-dark px-4 py-2 fw-bold text-white d-flex align-items-center gap-2 shadow-sm rounded-3" style="background-color: #0B1727; border-color: #0B1727;">
+                            <i class="bi bi-check-lg"></i> Guardar Cambios
+                        </button>
                     </div>
                 </form>
             </div>
@@ -195,12 +217,40 @@
                 </div>
             </div>
             <div class="modal-footer border-top-0 pt-0 px-4 pb-3 justify-content-between">
-                <small class="text-muted"><i class="bi bi-shield-check text-warning me-1"></i>Imagen de referencia homologada</small>
+                <small class="text-muted"><i class="bi bi-shield-check text-success me-1"></i>Imagen de referencia homologada</small>
                 <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    /* Estilos Prosegin Core para Catálogo - Cero hovers amarillos */
+    .catalog-product-mark:hover {
+        border-color: #0B1727 !important;
+        box-shadow: 0 4px 10px rgba(11, 23, 39, 0.14) !important;
+    }
+    .catalog-category:hover:not(.active) {
+        background-color: #f1f5f9 !important;
+        border-color: #cbd5e1 !important;
+        color: #0f172a !important;
+    }
+    .catalog-category.active {
+        background-color: #0B1727 !important;
+        border-color: #0B1727 !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(11, 23, 39, 0.25) !important;
+    }
+    .btn-dark:hover {
+        background-color: #1a2c42 !important;
+        border-color: #1a2c42 !important;
+        color: #ffffff !important;
+    }
+    .form-control:focus {
+        border-color: #0B1727 !important;
+        box-shadow: 0 0 0 0.2rem rgba(11, 23, 39, 0.12) !important;
+    }
+</style>
 
 @section Scripts {
     <script>
@@ -242,7 +292,7 @@
                     const name = document.createElement("strong");
                     name.textContent = card.dataset.name;
                     const detail = document.createElement("span");
-                    detail.textContent = `${card.dataset.sku} · ${quantity} × ${formatCurrency(Number(card.dataset.price))}`;
+                    detail.textContent = `${card.dataset.sku} · ${quantity} × ${formatCurrency(Number(card.dataset.cost))}`;
                     const remove = document.createElement("button");
                     remove.type = "button";
                     remove.className = "catalog-remove-item";
@@ -251,7 +301,7 @@
                     remove.addEventListener("click", () => { cart.delete(id); saveCart(); renderCart(); });
                     line.append(name, detail, remove);
                     cartItems.append(line);
-                    subtotalCents += Math.round(Number(card.dataset.price) * 100) * quantity;
+                    subtotalCents += Math.round(Number(card.dataset.cost) * 100) * quantity;
                 });
 
                 // Actualizar estado visual de fila seleccionada en cada producto

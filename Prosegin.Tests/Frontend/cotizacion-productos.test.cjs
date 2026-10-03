@@ -234,7 +234,7 @@ function catalogScreen(storage = new Map()) {
     const cards = [1, 2].map(id => {
         const card = new Element();
         card.dataset = { productId: String(id), name: `Casco ${id}`, sku: `SKU${id}`,
-            cost: id === 1 ? '10' : '0.25', price: id === 1 ? '13' : '0.33', category: 'EPP', search: `sku${id} casco` };
+            cost: id === 1 ? '10' : '0.25', category: 'EPP', search: `sku${id} casco` };
         card.amount = new Element(); card.amount.value = '1'; card.add = new Element();
         card.querySelector = selector => selector === '[data-quantity]' ? card.amount : card.add;
         return card;
@@ -254,7 +254,9 @@ test('Catálogo: repetir incrementa la cantidad en una sola línea', () => {
     const ui = catalogScreen(); ui.add(2); ui.add(3);
     assert.deepEqual(JSON.parse(ui.storage.get('prosegin.catalog.cart.v1')), [{ id: 1, quantity: 5 }]);
     assert.equal(ui.ids.cartItemCount.textContent, '1');
-    assert.equal(ui.ids.cartTotal.textContent, 'S/ 76.70');
+    assert.equal(ui.ids.cartSubtotal.textContent, 'S/ 50.00');
+    assert.equal(ui.ids.cartTax.textContent, 'S/ 9.00');
+    assert.equal(ui.ids.cartTotal.textContent, 'S/ 59.00');
 });
 
 for (const value of ['0', '-2', '', '1.5', '2.8', '2147483648', '1e3']) {
