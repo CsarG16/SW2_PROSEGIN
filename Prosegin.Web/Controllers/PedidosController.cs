@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Prosegin.Data;
 using Prosegin.Web.Services;
 
 namespace Prosegin.Web.Controllers;
@@ -8,18 +7,19 @@ public class PedidosController : Controller
 {
     private readonly IPedidosService _pedidosService;
 
-    public PedidosController(ProseginDbContext context)
+    public PedidosController(IPedidosService pedidosService)
     {
-        _pedidosService = new PedidosService(context);
+        _pedidosService = pedidosService;
     }
 
     [HttpGet]
     public async Task<IActionResult> Index(
         string? termino,
         string? estado,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        int pagina = 1)
     {
-        var model = await _pedidosService.ObtenerPedidosConfirmadosAsync(termino, estado, cancellationToken);
+        var model = await _pedidosService.ObtenerPedidosConfirmadosAsync(termino, estado, pagina, cancellationToken);
         return View(model);
     }
 

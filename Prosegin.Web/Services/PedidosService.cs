@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using Prosegin.Data;
 using Prosegin.Data.Validation;
 using Prosegin.Web.ViewModels.Pedidos;
@@ -8,15 +7,19 @@ namespace Prosegin.Web.Services;
 public class PedidosService : IPedidosService
 {
     private readonly ProseginDbContext _context;
+    private readonly TimeProvider _timeProvider;
+    private static readonly TimeZoneInfo ZonaHorariaEntrega = TimeZoneInfo.FindSystemTimeZoneById("America/Lima");
 
-    public PedidosService(ProseginDbContext context)
+    public PedidosService(ProseginDbContext context, TimeProvider timeProvider)
     {
         _context = context;
+        _timeProvider = timeProvider;
     }
 
     public async Task<PedidoListViewModel> ObtenerPedidosConfirmadosAsync(
         string? termino,
         string? estado,
+        int pagina = 1,
         CancellationToken cancellationToken = default)
     {
         // 1. Obtener lista base de órdenes confirmadas
@@ -61,11 +64,20 @@ public class PedidosService : IPedidosService
             .ThenBy(p => p.FechaConfirmacion)
             .ToList();
 
+        const int tamanoPagina = 5;
+        var totalFiltrados = pedidos.Count;
+        var totalPaginas = Math.Max(1, (int)Math.Ceiling(totalFiltrados / (double)tamanoPagina));
+        pagina = Math.Clamp(pagina, 1, totalPaginas);
+
         return new PedidoListViewModel
         {
             Termino = termino?.Trim(),
             EstadoFiltro = estadoNormalizado,
-            Pedidos = pedidos,
+            Pedidos = pedidos.Skip((pagina - 1) * tamanoPagina).Take(tamanoPagina).ToList(),
+            Pagina = pagina,
+            TamanoPagina = tamanoPagina,
+            TotalFiltrados = totalFiltrados,
+            TotalPaginas = totalPaginas,
             TotalPedidos = totalGeneral,
             TotalPorPreparar = totalPorPreparar,
             TotalEnPreparacion = totalEnPreparacion,
@@ -86,7 +98,9 @@ public class PedidosService : IPedidosService
 
     private Task<List<PedidoDetalleViewModel>> ObtenerListaBasePedidosAsync(CancellationToken cancellationToken)
     {
-        var hoy = DateTime.Today;
+        cancellationToken.ThrowIfCancellationRequested();
+        var ahora = TimeZoneInfo.ConvertTime(_timeProvider.GetUtcNow(), ZonaHorariaEntrega).DateTime;
+        var hoy = ahora.Date;
         var anio = hoy.Year;
 
         static string FormatearFecha(DateTime fecha)
@@ -104,7 +118,7 @@ public class PedidosService : IPedidosService
 
         var lista = new List<PedidoDetalleViewModel>
         {
-            // 1. Urgente: HOY 16:00 hrs (Entrega más próxima #1)
+            // 1. Entrega HOY 16:00 hrs
             new PedidoDetalleViewModel
             {
                 Id = 1,
@@ -116,7 +130,6 @@ public class PedidosService : IPedidosService
                 FechaEntrega = hoy.AddHours(16),
                 FechaConfirmacionTexto = $"{FormatearFecha(hoy.AddDays(-2))} 10:14 hrs",
                 FechaEntregaTexto = "HOY 16:00 hrs",
-                EsUrgenteMenor24h = true,
                 DireccionEntrega = "Av. Industrial 450, Almacén 4 - Lurín, Lima",
                 SedeAlias = "Almacén Logístico Lurín",
                 EstadoOperativo = PedidoLogisticaRules.EstadoPorPreparar,
@@ -132,7 +145,7 @@ public class PedidosService : IPedidosService
                 }
             },
 
-            // 2. Urgente: Mañana 09:30 hrs (Entrega más próxima #2)
+            // 2. Entrega Mañana 09:30 hrs
             new PedidoDetalleViewModel
             {
                 Id = 2,
@@ -144,7 +157,6 @@ public class PedidosService : IPedidosService
                 FechaEntrega = hoy.AddDays(1).AddHours(9).AddMinutes(30),
                 FechaConfirmacionTexto = $"{FormatearFecha(hoy.AddDays(-2))} 08:45 hrs",
                 FechaEntregaTexto = "Mañana 09:30 hrs",
-                EsUrgenteMenor24h = true,
                 DireccionEntrega = "Km 18.5 Carretera Variante Uchumayo, Arequipa",
                 SedeAlias = "Planta Variante Uchumayo",
                 EstadoOperativo = PedidoLogisticaRules.EstadoEnPreparacion,
@@ -172,7 +184,6 @@ public class PedidosService : IPedidosService
                 FechaEntrega = hoy.AddDays(2).AddHours(14),
                 FechaConfirmacionTexto = $"{FormatearFecha(hoy.AddDays(-3))} 16:30 hrs",
                 FechaEntregaTexto = FormatearFecha(hoy.AddDays(2)),
-                EsUrgenteMenor24h = false,
                 DireccionEntrega = "Base Mina Sector 3, Huamachuco, La Libertad",
                 SedeAlias = "Campamento Base Huamachuco",
                 EstadoOperativo = PedidoLogisticaRules.EstadoEnPreparacion,
@@ -200,7 +211,6 @@ public class PedidosService : IPedidosService
                 FechaEntrega = hoy.AddDays(3).AddHours(11),
                 FechaConfirmacionTexto = $"{FormatearFecha(hoy.AddDays(-4))} 11:20 hrs",
                 FechaEntregaTexto = FormatearFecha(hoy.AddDays(3)),
-                EsUrgenteMenor24h = false,
                 DireccionEntrega = "Av. Néstor Gambetta 920, Callao",
                 SedeAlias = "Planta Industrial Callao",
                 EstadoOperativo = PedidoLogisticaRules.EstadoListoDespacho,
@@ -228,7 +238,6 @@ public class PedidosService : IPedidosService
                 FechaEntrega = hoy.AddDays(4).AddHours(10),
                 FechaConfirmacionTexto = $"{FormatearFecha(hoy.AddDays(-2))} 14:10 hrs",
                 FechaEntregaTexto = FormatearFecha(hoy.AddDays(4)),
-                EsUrgenteMenor24h = false,
                 DireccionEntrega = "Carretera Panamericana Sur Km 450, Marcona",
                 SedeAlias = "Campamento Minero Sur",
                 EstadoOperativo = PedidoLogisticaRules.EstadoPorPreparar,
@@ -255,7 +264,6 @@ public class PedidosService : IPedidosService
                 FechaEntrega = hoy.AddDays(6).AddHours(12),
                 FechaConfirmacionTexto = $"{FormatearFecha(hoy.AddDays(-3))} 18:00 hrs",
                 FechaEntregaTexto = FormatearFecha(hoy.AddDays(6)),
-                EsUrgenteMenor24h = false,
                 DireccionEntrega = "Base Mina Sector 3, Huamachuco, La Libertad",
                 SedeAlias = "Base Mina Sector 3",
                 EstadoOperativo = PedidoLogisticaRules.EstadoEnPreparacion,
@@ -282,7 +290,6 @@ public class PedidosService : IPedidosService
                 FechaEntrega = hoy.AddDays(7).AddHours(16),
                 FechaConfirmacionTexto = $"{FormatearFecha(hoy.AddDays(-5))} 15:30 hrs",
                 FechaEntregaTexto = FormatearFecha(hoy.AddDays(7)),
-                EsUrgenteMenor24h = false,
                 DireccionEntrega = "Av. Industrial 1450, Ate - Lima",
                 SedeAlias = "Sede Principal Ate",
                 EstadoOperativo = PedidoLogisticaRules.EstadoListoDespacho,
@@ -309,7 +316,6 @@ public class PedidosService : IPedidosService
                 FechaEntrega = hoy.AddDays(9).AddHours(11),
                 FechaConfirmacionTexto = $"{FormatearFecha(hoy.AddDays(-1))} 09:00 hrs",
                 FechaEntregaTexto = FormatearFecha(hoy.AddDays(9)),
-                EsUrgenteMenor24h = false,
                 DireccionEntrega = "Jr. Huancavelica 320, Cercado - Lima",
                 SedeAlias = "Sede Central Cercado",
                 EstadoOperativo = PedidoLogisticaRules.EstadoPorPreparar,
@@ -324,6 +330,11 @@ public class PedidosService : IPedidosService
                 }
             }
         };
+
+        foreach (var pedido in lista)
+        {
+            pedido.EsUrgenteMenor24h = PedidoLogisticaRules.EsEntregaMenor24Horas(pedido.FechaEntrega, ahora);
+        }
 
         return Task.FromResult(lista);
     }

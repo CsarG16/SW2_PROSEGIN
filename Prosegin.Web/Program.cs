@@ -46,6 +46,7 @@ builder.Services.AddHttpClient("SunatClient", client =>
 });
 builder.Services.AddScoped<ISunatService, SunatService>();
 builder.Services.AddScoped<IPedidosService, PedidosService>();
+builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
 
 var app = builder.Build();
 

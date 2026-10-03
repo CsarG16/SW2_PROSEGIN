@@ -17,5 +17,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Prosegin.Data\Prosegin.Data.csproj" />
+    <ProjectReference Include="..\Prosegin.Web\Prosegin.Web.csproj" />
   </ItemGroup>
 </Project>
