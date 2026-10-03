@@ -17,6 +17,7 @@ public class Producto
     public bool Activo { get; set; } = true;
 
     // Navegación
+    public ICollection<Proveedor> Proveedores { get; set; } = new List<Proveedor>();
     public ICollection<CotizacionDetalle> CotizacionDetalles { get; set; } = new List<CotizacionDetalle>();
     public ICollection<OrdenCompraDetalle> OrdenCompraDetalles { get; set; } = new List<OrdenCompraDetalle>();
 }
