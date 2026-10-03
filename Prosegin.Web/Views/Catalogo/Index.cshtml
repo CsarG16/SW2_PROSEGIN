@@ -28,7 +28,7 @@
 
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show" role="alert" id="successAlert">
             <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
         </div>
@@ -39,7 +39,6 @@
             <i class="bi bi-search"></i>
             <input id="catalogSearch" type="search" placeholder="Buscar por código, descripción o categoría..." autocomplete="off" />
         </label>
-        <a class="btn-prosegin-primary catalog-search-button" href="#catalogProducts"><i class="bi bi-arrow-down me-1"></i>Ver productos</a>
         <div class="catalog-category-list" role="group" aria-label="Filtrar por categoría">
             <button type="button" class="catalog-category active" data-category-filter="">Todos</button>
             @foreach (var category in categories)
@@ -59,7 +58,7 @@
     }
     else
     {
-        <div class="catalog-layout" id="catalogProducts">
+        <div class="d-block mt-3" id="catalogProducts">
             <section class="catalog-product-list" aria-label="Productos disponibles">
                 @foreach (var product in Model.Productos)
                 {
@@ -95,10 +94,8 @@
                             <strong>S/ @estimatedPrice.ToString("N2", new CultureInfo("es-PE"))</strong>
                             <small>Incluye margen inicial de 30%</small>
                         </div>
-                        <div class="catalog-add-controls">
-                            <label class="visually-hidden" for="quantity-@product.Id">Cantidad de @product.Nombre</label>
-                            <input id="quantity-@product.Id" data-quantity type="number" min="1" value="1" inputmode="numeric" />
-                            <button type="button" class="btn-prosegin-primary catalog-add-button" data-add-product aria-label="Agregar @product.Nombre al carrito"><i class="bi bi-plus-lg"></i><span>Agregar</span></button>
+                        <div class="catalog-add-controls justify-content-end">
+                            <button type="button" class="btn-prosegin-primary catalog-add-button text-decoration-none" style="min-width: 120px;" data-bs-toggle="modal" data-bs-target="#editProductModal" onclick="populateEditModal(this)" data-id="@product.Id" data-sku="@product.Sku" data-name="@product.Nombre" data-category="@product.Categoria" data-stock="@product.StockDisponible" data-cost="@product.Precio.ToString(CultureInfo.InvariantCulture)"><i class="bi bi-pencil-square me-1"></i><span>Editar</span></button>
                         </div>
                     </article>
                 }
@@ -106,26 +103,57 @@
                     <i class="bi bi-search"></i><span>No hay productos que coincidan con la búsqueda.</span>
                 </div>
             </section>
-
-            <aside class="catalog-cart" aria-label="Resumen de productos seleccionados">
-                <div class="catalog-cart-heading">
-                    <div><span class="catalog-cart-kicker">Tu selección</span><h2 class="h5 mb-0">Resumen de productos</h2></div>
-                    <span class="catalog-cart-count" id="cartItemCount">0</span>
-                </div>
-                <div class="catalog-cart-items" id="cartItems">
-                    <div class="catalog-cart-empty" id="cartEmpty"><i class="bi bi-cart3"></i><span>El carrito está vacío</span><small>Agrega productos para comenzar la cotización.</small></div>
-                </div>
-                <div class="catalog-cart-totals">
-                    <div><span>Subtotal estimado</span><strong id="cartSubtotal">S/ 0.00</strong></div>
-                    <div><span>IGV (18%)</span><strong id="cartTax">S/ 0.00</strong></div>
-                    <div class="catalog-cart-total"><span>Total estimado</span><strong id="cartTotal">S/ 0.00</strong></div>
-                </div>
-                <button type="button" class="btn-prosegin-primary w-100" id="continueToClient" disabled><i class="bi bi-person-check me-2"></i>Continuar con cliente</button>
-                <button type="button" class="catalog-clear-button" id="clearCart" disabled>Vaciar selección</button>
-                <p class="catalog-cart-note">El precio final se confirma en la cotización.</p>
-            </aside>
         </div>
     }
+</div>
+
+<!-- Modal Editar Producto -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header border-bottom-0 pb-2 pt-4 px-4">
+                <h5 class="modal-title fw-bold" id="editProductModalLabel">Editar Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body px-4 pb-4">
+                <form id="editProductForm" method="post" asp-action="EditarProducto" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="editProductId" name="Id" />
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-secondary">CÓDIGO SKU</label>
+                        <input type="text" class="form-control bg-light" id="editProductSku" name="Sku" readonly />
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-secondary">NOMBRE DEL PRODUCTO</label>
+                        <input type="text" class="form-control" id="editProductName" name="Nombre" required />
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-secondary">CATEGORÍA</label>
+                        <input type="text" class="form-control" id="editProductCategory" name="Categoria" />
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-secondary">COSTO BASE (S/)</label>
+                        <input type="number" step="0.01" class="form-control" id="editProductCost" name="Precio" required />
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-secondary">NUEVA FICHA TÉCNICA (OPCIONAL)</label>
+                        <input type="file" class="form-control" id="editProductFile" name="FichaTecnica" accept=".pdf" />
+                        <small class="text-muted d-block mt-1">Sube un archivo PDF solo si deseas reemplazar la ficha actual.</small>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-dark px-4" style="background-color: #0B1727; border-color: #0B1727;">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal Vista Previa de Imagen EPP -->
@@ -155,82 +183,8 @@
 @section Scripts {
     <script>
         (() => {
-            const storageKey = "prosegin.quote.cart.v1";
             const cards = Array.from(document.querySelectorAll("[data-product-card]"));
-            const cartItems = document.getElementById("cartItems");
-            if (!cartItems) return;
-
-            const cart = new Map();
-            const formatter = new Intl.NumberFormat("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            const formatCurrency = amount => `S/ ${formatter.format(amount)}`;
-            const parseCart = () => {
-                try {
-                    const savedItems = JSON.parse(sessionStorage.getItem(storageKey) || "[]");
-                    savedItems.forEach(item => {
-                        const card = cards.find(candidate => Number(candidate.dataset.productId) === Number(item.id));
-                        const quantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
-                        if (card) cart.set(Number(item.id), { card, quantity });
-                    });
-                } catch {
-                    sessionStorage.removeItem(storageKey);
-                }
-            };
-            const saveCart = () => sessionStorage.setItem(storageKey, JSON.stringify(Array.from(cart, ([id, item]) => ({ id, quantity: item.quantity }))));
-
-            const renderCart = () => {
-                const empty = document.getElementById("cartEmpty");
-                cartItems.querySelectorAll("[data-cart-line]").forEach(line => line.remove());
-                let subtotal = 0;
-
-                cart.forEach(({ card, quantity }, id) => {
-                    const line = document.createElement("div");
-                    line.className = "catalog-cart-line";
-                    line.dataset.cartLine = "";
-                    const name = document.createElement("strong");
-                    name.textContent = card.dataset.name;
-                    const detail = document.createElement("span");
-                    detail.textContent = `${card.dataset.sku} · ${quantity} × ${formatCurrency(Number(card.dataset.price))}`;
-                    const remove = document.createElement("button");
-                    remove.type = "button";
-                    remove.className = "catalog-remove-item";
-                    remove.setAttribute("aria-label", `Quitar ${card.dataset.name}`);
-                    remove.innerHTML = '<i class="bi bi-x-lg"></i>';
-                    remove.addEventListener("click", () => { cart.delete(id); saveCart(); renderCart(); });
-                    line.append(name, detail, remove);
-                    cartItems.append(line);
-                    subtotal += Number(card.dataset.price) * quantity;
-                });
-
-                // Actualizar estado visual de fila seleccionada en cada producto
-                cards.forEach(card => {
-                    const isSelected = cart.has(Number(card.dataset.productId));
-                    card.classList.toggle("is-selected", isSelected);
-                });
-
-                empty.classList.toggle("d-none", cart.size > 0);
-                const tax = Math.round((subtotal * 0.18 + Number.EPSILON) * 100) / 100;
-                document.getElementById("cartItemCount").textContent = String(cart.size);
-                document.getElementById("cartSubtotal").textContent = formatCurrency(subtotal);
-                document.getElementById("cartTax").textContent = formatCurrency(tax);
-                document.getElementById("cartTotal").textContent = formatCurrency(subtotal + tax);
-                document.getElementById("continueToClient").disabled = cart.size === 0;
-                document.getElementById("clearCart").disabled = cart.size === 0;
-            };
-
-            cards.forEach(card => card.querySelector("[data-add-product]").addEventListener("click", () => {
-                const id = Number(card.dataset.productId);
-                const quantityInput = card.querySelector("[data-quantity]");
-                const quantity = Math.max(1, Math.floor(Number(quantityInput.value) || 1));
-                const current = cart.get(id);
-                cart.set(id, { card, quantity: (current?.quantity || 0) + quantity });
-                quantityInput.value = "1";
-                saveCart();
-                renderCart();
-            }));
-
-            document.getElementById("clearCart").addEventListener("click", () => { cart.clear(); saveCart(); renderCart(); });
-            document.getElementById("continueToClient").addEventListener("click", () => { window.location.href = "@Url.Action("Index", "Clientes")"; });
-
+            
             const search = document.getElementById("catalogSearch");
             const categoryButtons = Array.from(document.querySelectorAll(".catalog-category-list [data-category-filter]"));
             let selectedCategory = "";
@@ -287,9 +241,30 @@
                 });
             }
 
-            parseCart();
-            renderCart();
+            // Desaparecer mensaje de éxito automáticamente después de 5 segundos
+            const successAlert = document.getElementById("successAlert");
+            if (successAlert) {
+                setTimeout(() => {
+                    if (typeof bootstrap !== "undefined" && bootstrap.Alert) {
+                        const bsAlert = bootstrap.Alert.getOrCreateInstance(successAlert);
+                        bsAlert.close();
+                    } else {
+                        successAlert.style.transition = "opacity 0.5s ease";
+                        successAlert.style.opacity = "0";
+                        setTimeout(() => successAlert.remove(), 500);
+                    }
+                }, 5000);
+            }
+
             applyFilters();
         })();
+
+        function populateEditModal(btn) {
+            document.getElementById('editProductId').value = btn.dataset.id;
+            document.getElementById('editProductSku').value = btn.dataset.sku;
+            document.getElementById('editProductName').value = btn.dataset.name;
+            document.getElementById('editProductCategory').value = btn.dataset.category;
+            document.getElementById('editProductCost').value = btn.dataset.cost;
+        }
     </script>
 }
