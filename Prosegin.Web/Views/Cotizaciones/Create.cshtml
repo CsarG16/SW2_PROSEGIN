@@ -3,7 +3,7 @@
 
 @{
     ViewData["Title"] = "Generar Cotización";
-    var cotizacionGuardada = TempData["SuccessMessage"] != null;
+    var cotizacionGuardada = TempData["CotizacionGuardada"] is true;
     var noPuedeVender = !string.Equals(Model.EstadoSunat, "ACTIVO", StringComparison.OrdinalIgnoreCase)
         || !string.Equals(Model.CondicionSunat, "HABIDO", StringComparison.OrdinalIgnoreCase);
 }
@@ -15,13 +15,13 @@
                 <h1 class="page-title">Generar Cotización</h1>
                 <p class="page-subtitle">Validación fiscal SUNAT, cálculo de márgenes comerciales y cotización formal de EPP</p>
             </div>
-            <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary">
+            <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary" data-cancel-quote>
                 <i class="bi bi-arrow-left"></i> Volver a Clientes
             </a>
         </div>
     </div>
 
-    @if (cotizacionGuardada)
+    @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert alert-success d-flex align-items-center mb-4 border border-success border-opacity-25 rounded-2" style="background-color: #d1e7dd; color: #0f5132; padding: 1rem 1.25rem;">
             <i class="bi bi-check-circle-fill me-2 fs-5"></i>
@@ -34,7 +34,7 @@
         <div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]</div>
     }
 
-    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+    <div asp-validation-summary="All" class="alert alert-danger"></div>
 
     @if (Model.DatosSunatDesactualizados)
     {
@@ -64,7 +64,7 @@
         </div>
     }
 
-    <form asp-action="Create" method="post" id="formCotizacion" data-cotizacion-guardada="@(cotizacionGuardada ? "true" : "false")">
+    <form asp-action="Create" method="post" id="formCotizacion" data-cliente-id="@Model.ClienteId" data-post-invalido="@(ViewData["CotizacionPostInvalido"] is true ? "true" : "false")" data-cotizacion-guardada="@(cotizacionGuardada ? "true" : "false")">
         @Html.AntiForgeryToken()
         <input asp-for="ClienteId" type="hidden" />
 
@@ -115,7 +115,8 @@
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label fw-bold text-secondary small mb-1">Cantidad</label>
-                                    <input id="cantidadAgregar" type="number" class="form-control" min="1" value="1" />
+                                    <input id="cantidadAgregar" type="number" class="form-control" min="1" max="2147483647" step="1" value="1" aria-describedby="errorCantidadAgregar" />
+                                    <span id="errorCantidadAgregar" class="text-danger small" role="alert" hidden></span>
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label fw-bold text-secondary small mb-1">U.M.</label>
@@ -126,7 +127,7 @@
                                         <label class="form-label fw-bold text-secondary small mb-1">Costo Base (S/.)</label>
                                         <input type="text" id="precioSeleccionado" class="form-control bg-light" readonly placeholder="S/ 0.00" />
                                     </div>
-                                    <button type="button" class="btn px-3 fw-bold text-white" id="agregarProducto" disabled style="background-color: #0B1727; border-color: #0B1727;">Agregar</button>
+                                    <button type="button" class="btn px-3 fw-bold text-white" id="agregarProducto" disabled style="background-color: #0B1727; border-color: #0B1727;">+Agregar</button>
                                 </div>
                             </div>
                         </div>
@@ -149,7 +150,7 @@
                                 <strong id="igvCotizacion" class="text-dark">S/ 0.00</strong>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mt-auto">
-                                <span class="fw-bold text-dark">Total Estimado</span>
+                                <span class="fw-bold text-dark">Total General</span>
                                 <h4 class="mb-0 fw-bold text-dark" id="totalCotizacion">S/ 0.00</h4>
                             </div>
                         </div>
@@ -157,6 +158,7 @@
                 </div>
             </div>
 
+            <div id="productosError" class="alert alert-danger" role="alert" hidden></div>
             <!-- Tabla de productos -->
             <div class="card border-0 shadow-sm rounded-4 mb-4">
                 <div class="table-responsive">
@@ -170,7 +172,7 @@
                                 <th class="text-secondary small fw-bold py-3 text-center" style="width: 10%;">CANTIDAD</th>
                                 <th class="text-secondary small fw-bold py-3 text-end" style="width: 11%;">COSTO BASE<br>UNIT.</th>
                                 <th class="text-secondary small fw-bold py-3 text-end" style="width: 10%;">SUBTOTAL</th>
-                                <th class="text-secondary small fw-bold py-3 text-center pe-4" style="width: 3%;">ACCIÓN</th>
+                                <th class="text-secondary small fw-bold py-3 text-center pe-4" style="width: 3%;">Opciones</th>
                             </tr>
                         </thead>
                         <tbody id="tablaProductosBody">
@@ -191,7 +193,7 @@
                                     </td>
                                     <td class="text-center small text-secondary">@producto.UnidadMedida</td>
                                     <td class="text-center">
-                                        <input asp-for="ProductosDisponibles[i].Cantidad" class="form-control form-control-sm text-center mx-auto" type="number" min="1" style="width: 70px;" />
+                                        <input asp-for="ProductosDisponibles[i].Cantidad" class="form-control form-control-sm text-center mx-auto" type="number" min="1" max="2147483647" step="1" disabled="@(!producto.Seleccionado)" style="width: 70px;" aria-label="Cantidad de @producto.Nombre" />
                                     </td>
                                     <td class="text-end small text-secondary" data-unit-price>S/ @producto.CostoReferencial.ToString("N2", new CultureInfo("es-PE"))</td>
                                     <td class="text-end fw-bold small text-dark" data-line-subtotal>S/ 0.00</td>
@@ -228,7 +230,7 @@
 
         <!-- Barra inferior de acciones -->
         <div class="d-flex justify-content-between align-items-center mt-4 bg-white p-3 rounded-4 shadow-sm border">
-            <a asp-controller="Clientes" asp-action="Index" class="btn btn-light border px-4"><i class="bi bi-arrow-left me-2"></i>Atrás</a>
+            <a asp-controller="Clientes" asp-action="Index" class="btn btn-light border px-4" data-cancel-quote><i class="bi bi-arrow-left me-2"></i>Atrás</a>
             <div class="d-flex gap-2">
                 <button type="button" class="btn btn-light border px-4" id="limpiarProductos"><i class="bi bi-arrow-counterclockwise me-2"></i>Limpiar</button>
                 <button type="submit" class="btn btn-dark px-4 fw-bold" @(noPuedeVender || Model.DatosSunatDesactualizados ? "disabled" : null) style="background-color: #0B1727; border-color: #0B1727;"><i class="bi bi-box-arrow-down me-2"></i>Grabar</button>
@@ -237,255 +239,6 @@
     </form>
 </div>
 
-<script>
-    (() => {
-        const storageKey = "prosegin.quote.cart.v1";
-        const rows = Array.from(document.querySelectorAll("[data-product-row]"));
-        const productSelector = document.getElementById("selectorProducto");
-        const productSearch = document.getElementById("filtroProductos");
-        const searchResults = document.getElementById("resultadosBusqueda");
-        const addButton = document.getElementById("agregarProducto");
-        const emptyLines = document.getElementById("productosVacios");
-        const currency = new Intl.NumberFormat("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const formatAmount = (amount) => `S/ ${currency.format(amount)}`;
-        const hasServerSelection = rows.some(row => row.querySelector('input.quote-selection-input').checked);
-
-        // Ocultar paneles no relevantes si los hay
-        document.querySelectorAll("[data-quote-panel]").forEach((panel) => {
-            if(panel.dataset.quotePanel !== "productos") panel.classList.add("d-none");
-        });
-
-        if (document.getElementById("formCotizacion").dataset.cotizacionGuardada === "true") {
-            sessionStorage.removeItem(storageKey);
-        } else if (!hasServerSelection) {
-            try {
-                const cart = JSON.parse(sessionStorage.getItem(storageKey) || "[]");
-                cart.forEach(item => {
-                    const row = rows.find(candidate => Number(candidate.dataset.productId) === Number(item.id));
-                    if (!row) return;
-                    row.querySelector('input.quote-selection-input').checked = true;
-                    row.querySelector('input[name$=".Cantidad"]').value = Math.max(1, Number(item.quantity) || 1);
-                });
-            } catch {
-                sessionStorage.removeItem(storageKey);
-            }
-        }
-
-        const getSelection = row => row.querySelector('input.quote-selection-input');
-        const getQuantity = row => row.querySelector('input[name$=".Cantidad"]');
-
-        const updateSelectedProductDisplay = (row) => {
-            if (row) {
-                const sku = row.querySelector("td:nth-child(2)").textContent.trim();
-                const desc = row.querySelector(".quote-row-description").textContent.trim();
-                document.getElementById("productoSeleccionadoDesc").value = `${sku} - ${desc}`;
-                document.getElementById("unidadSeleccionada").value = row.dataset.unit;
-                document.getElementById("precioSeleccionado").value = `S/ ${currency.format(Number(row.dataset.cost))}`;
-                addButton.disabled = false;
-            } else {
-                document.getElementById("productoSeleccionadoDesc").value = "";
-                document.getElementById("unidadSeleccionada").value = "";
-                document.getElementById("precioSeleccionado").value = "";
-                addButton.disabled = true;
-            }
-        };
-
-        const chooseProduct = row => {
-            productSelector.value = row.dataset.productId;
-            searchResults.hidden = true;
-            productSearch.value = row.querySelector(".quote-row-description").textContent.trim();
-            updateSelectedProductDisplay(row);
-        };
-
-        const renderSearchResults = () => {
-            const term = productSearch.value.trim().toLocaleLowerCase();
-            const matches = term ? rows.filter(row => row.dataset.search.includes(term)) : rows;
-            
-            searchResults.replaceChildren();
-            searchResults.hidden = false;
-
-            if (matches.length === 0) {
-                const emptyResult = document.createElement("div");
-                emptyResult.className = "list-group-item text-muted";
-                emptyResult.textContent = "No se encontraron productos.";
-                searchResults.append(emptyResult);
-                productSelector.value = "";
-                updateSelectedProductDisplay(null);
-            } else {
-                matches.forEach(row => {
-                    const result = document.createElement("button");
-                    result.type = "button";
-                    result.className = "list-group-item list-group-item-action text-start d-flex align-items-center gap-3 py-2";
-                    const sku = row.querySelector("td:nth-child(2)").textContent.trim();
-                    const desc = row.querySelector(".quote-row-description").textContent.trim();
-                    const imgSrc = row.dataset.img || "";
-                    
-                    result.innerHTML = `
-                        <img src="${imgSrc}" style="width: 32px; height: 32px; object-fit: contain; border-radius: 4px; border: 1px solid var(--border-light); background: #fff;" onerror="this.style.display='none';" />
-                        <div>
-                            <div class="fw-bold" style="font-size: 0.9em; color: var(--text-dark);">${sku}</div>
-                            <div class="text-muted text-truncate" style="font-size: 0.8em; max-width: 400px;">${desc}</div>
-                        </div>
-                    `;
-                    result.addEventListener("click", () => chooseProduct(row));
-                    searchResults.append(result);
-                });
-            }
-        };
-
-        productSearch?.addEventListener("input", renderSearchResults);
-        productSearch?.addEventListener("focus", renderSearchResults);
-
-        // Ocultar resultados al hacer click fuera
-        document.addEventListener("click", (e) => {
-            if (!searchResults.contains(e.target) && e.target !== productSearch) {
-                searchResults.hidden = true;
-            }
-        });
-
-        addButton?.addEventListener("click", () => {
-            const productId = Number(productSelector.value);
-            const row = rows.find(candidate => Number(candidate.dataset.productId) === productId);
-            if (!row) return;
-            const quantity = Math.max(1, Math.floor(Number(document.getElementById("cantidadAgregar").value) || 1));
-            
-            getQuantity(row).value = quantity;
-            getSelection(row).checked = true;
-            
-            updateTotals();
-            
-            // Limpiar selección
-            productSelector.value = "";
-            productSearch.value = "";
-            document.getElementById("cantidadAgregar").value = "1";
-            updateSelectedProductDisplay(null);
-            searchResults.hidden = true;
-        });
-
-        const updateTotals = () => {
-            let subtotal = 0;
-            const selectedProducts = [];
-            let displayIndex = 1;
-
-            rows.forEach((row) => {
-                const selected = getSelection(row);
-                if (selected.checked) {
-                    row.classList.remove("d-none");
-                    row.querySelector("[data-row-number]").textContent = displayIndex++;
-                    const quantity = Math.max(1, Math.floor(Number(getQuantity(row).value) || 1));
-                    const cost = Number(row.dataset.cost) || 0;
-                    const lineSubtotal = Math.round((cost * quantity + Number.EPSILON) * 100) / 100;
-                    
-                    row.querySelector("[data-line-subtotal]").textContent = formatAmount(lineSubtotal);
-                    subtotal += lineSubtotal;
-                    selectedProducts.push({ id: Number(row.dataset.productId), quantity });
-                } else {
-                    row.classList.add("d-none");
-                }
-            });
-
-            subtotal = Math.round((subtotal + Number.EPSILON) * 100) / 100;
-            const igv = Math.round((subtotal * 0.18 + Number.EPSILON) * 100) / 100;
-            
-            document.getElementById("subtotalCotizacion").textContent = formatAmount(subtotal);
-            document.getElementById("igvCotizacion").textContent = formatAmount(igv);
-            document.getElementById("totalCotizacion").textContent = formatAmount(subtotal + igv);
-            document.getElementById("cantidadProductos").textContent = String(selectedProducts.length);
-            
-            if (emptyLines) {
-                if (selectedProducts.length > 0) emptyLines.classList.add("d-none");
-                else emptyLines.classList.remove("d-none");
-            }
-            sessionStorage.setItem(storageKey, JSON.stringify(selectedProducts));
-        };
-
-        rows.forEach((row) => {
-            getSelection(row).addEventListener("change", updateTotals);
-            getQuantity(row).addEventListener("input", updateTotals);
-            row.querySelector("[data-remove-product]").addEventListener("click", () => {
-                getSelection(row).checked = false;
-                updateTotals();
-            });
-        });
-
-        document.getElementById("limpiarProductos")?.addEventListener("click", () => {
-            rows.forEach((row) => {
-                getSelection(row).checked = false;
-                getQuantity(row).value = "1";
-            });
-            if (productSearch) productSearch.value = "";
-            if (productSelector) productSelector.value = "";
-            if (document.getElementById("cantidadAgregar")) document.getElementById("cantidadAgregar").value = "1";
-            updateSelectedProductDisplay(null);
-            updateTotals();
-        });
-
-        updateTotals();
-        if (document.getElementById("formCotizacion").dataset.cotizacionGuardada === "true") {
-            sessionStorage.removeItem(storageKey);
-        }
-    })();
-</script>
-
-<!-- Select2 CDN para selector de productos con imágenes -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<style>
-    .select2-container--default .select2-selection--single {
-        height: 46px;
-        padding: 8px 12px;
-        border: 1px solid var(--border-input);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-    }
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 44px;
-        right: 10px;
-    }
-    .select2-container--default .select2-selection--single .select2-selection__rendered {
-        line-height: normal;
-        padding-left: 0;
-        display: flex;
-        align-items: center;
-    }
-    .select2-result-product {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .select2-result-product img {
-        width: 32px;
-        height: 32px;
-        object-fit: contain;
-        border-radius: 4px;
-        background: #fff;
-        border: 1px solid var(--border-light);
-    }
-</style>
-<script>
-    $(document).ready(function() {
-        function formatProduct (product) {
-            if (!product.id) { return product.text; }
-            var row = document.querySelector(`[data-product-id='${product.id}']`);
-            var imgSrc = row ? (row.querySelector("img")?.src || "") : "";
-            var $product = $(
-                '<div class="select2-result-product">' +
-                '<img src="' + imgSrc + '" onerror="this.style.display=\'none\'" />' +
-                '<span>' + product.text + '</span>' +
-                '</div>'
-            );
-            return $product;
-        };
-
-        $('#selectorProducto').select2({
-            templateResult: formatProduct,
-            templateSelection: formatProduct,
-            width: '100%',
-            placeholder: 'Selecciona un producto del catálogo'
-        }).on('select2:select', function (e) {
-            // Trigger native change event so existing JS picks it up
-            this.dispatchEvent(new Event('change'));
-        });
-    });
-</script>
+@section Scripts {
+    <script src="~/js/cotizacion-productos.js" asp-append-version="true"></script>
+}

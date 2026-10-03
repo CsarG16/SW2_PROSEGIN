@@ -38,9 +38,9 @@ public class ProductoCotizacionViewModel
     public string RutaImagen { get; set; } = string.Empty;
     public bool Seleccionado { get; set; }
 
-    [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser mayor a cero.")]
+    [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser un número entero mayor a cero.")]
     public int Cantidad { get; set; } = 1;
 
     [Range(typeof(decimal), "0", "100", ErrorMessage = "El margen debe estar entre 0 y 100 %.")]
-    public decimal MargenPorcentaje { get; set; } = 30m;
+    public decimal MargenPorcentaje { get; set; } = 0m;
 }
