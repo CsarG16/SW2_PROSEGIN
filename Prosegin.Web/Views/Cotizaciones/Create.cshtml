@@ -34,7 +34,10 @@
         <div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]</div>
     }
 
-    <div asp-validation-summary="All" class="alert alert-danger"></div>
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+    }
 
     @if (Model.DatosSunatDesactualizados)
     {
