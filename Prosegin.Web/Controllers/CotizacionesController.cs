@@ -48,6 +48,7 @@ public class CotizacionesController : Controller
             producto.Seleccionado = enviado.Seleccionado;
             producto.Cantidad = enviado.Cantidad;
             producto.MargenPorcentaje = enviado.MargenPorcentaje;
+            producto.PrecioUnitario = enviado.PrecioUnitario > 0 ? enviado.PrecioUnitario : producto.CostoReferencial;
         }
 
         if (!CondicionPagoRules.EsPlazoCreditoValido(model.CondicionPago))
@@ -100,27 +101,40 @@ public class CotizacionesController : Controller
         foreach (var seleccionado in productosSeleccionados)
         {
             if (!productosActivos.TryGetValue(seleccionado.ProductoId, out var producto)
-                || seleccionado.Cantidad < 1
-                || seleccionado.MargenPorcentaje is < 0 or > 100)
+                || seleccionado.Cantidad < 1)
             {
                 continue;
             }
 
-            var precioVenta = Math.Round(producto.CostoReferencial * (1 + seleccionado.MargenPorcentaje / 100m), 2);
+            var precioUnitario = seleccionado.PrecioUnitario > 0 ? seleccionado.PrecioUnitario : producto.CostoReferencial;
+            if (!CotizacionPrecioRules.EsPrecioValido(precioUnitario, producto.CostoReferencial))
+            {
+                ModelState.AddModelError(string.Empty, CotizacionPrecioRules.MensajePrecioMenorACosto);
+                precioUnitario = producto.CostoReferencial;
+            }
+
+            var subtotalLinea = CotizacionPrecioRules.CalcularSubtotalItem(seleccionado.Cantidad, precioUnitario);
+            var margenDeseado = producto.CostoReferencial > 0
+                ? (precioUnitario - producto.CostoReferencial) / producto.CostoReferencial
+                : 0m;
+
             detalles.Add(new CotizacionDetalle
             {
                 ProductoId = producto.Id,
                 Cantidad = seleccionado.Cantidad,
                 CostoProveedorReferencial = producto.CostoReferencial,
-                MargenDeseado = seleccionado.MargenPorcentaje / 100m,
-                PrecioVentaCalculado = precioVenta,
-                Subtotal = Math.Round(precioVenta * seleccionado.Cantidad, 2)
+                MargenDeseado = Math.Round(margenDeseado, 4),
+                PrecioVentaCalculado = precioUnitario,
+                Subtotal = subtotalLinea
             });
         }
 
         var subtotal = detalles.Sum(d => d.Subtotal);
-        var igv = Math.Round(subtotal * 0.18m, 2);
-        current.Total = subtotal + igv;
+        var igv = CotizacionPrecioRules.CalcularIgv(subtotal);
+        var total = CotizacionPrecioRules.CalcularTotal(subtotal, igv);
+        current.Subtotal = subtotal;
+        current.Igv = igv;
+        current.Total = total;
 
         if (!ModelState.IsValid)
         {
@@ -134,14 +148,14 @@ public class CotizacionesController : Controller
             CondicionPago = current.CondicionPago,
             Subtotal = subtotal,
             Igv = igv,
-            Total = current.Total,
+            Total = total,
             Estado = "Borrador",
             Detalles = detalles
         };
 
         _context.Cotizaciones.Add(cotizacion);
         await _context.SaveChangesAsync(cancellationToken);
-        TempData["SuccessMessage"] = "Productos guardados correctamente";
+        TempData["SuccessMessage"] = CotizacionPrecioRules.MensajeGuardadoExitoso;
         return RedirectToAction(nameof(Create), new { clienteId = current.ClienteId });
     }
 
@@ -235,6 +249,7 @@ public class CotizacionesController : Controller
                 Categoria = p.Categoria,
                 UnidadMedida = p.UnidadMedida,
                 CostoReferencial = p.CostoReferencial,
+                PrecioUnitario = p.CostoReferencial,
                 StockDisponible = p.StockDisponible,
                 RutaImagen = p.RutaImagen ?? string.Empty
             })
