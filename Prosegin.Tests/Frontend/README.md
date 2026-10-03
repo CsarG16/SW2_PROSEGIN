@@ -1,4 +1,4 @@
-# Verificación de la HU 3.1
+# Verificación de las HU 3.1 y 3.2
 
 Desde la raíz del repositorio:
 
@@ -15,7 +15,10 @@ se conectan a la base MySQL configurada para desarrollo.
 Las pruebas de JavaScript ejecutan el código de producción con un DOM simulado.
 Cubren agregar, acumular cantidades, limpiar, eliminar, cancelar, restaurar por
 cliente, rechazar cantidades inválidas, redondear importes y transferir la
-selección del catálogo al primer cliente elegido.
+selección del catálogo al primer cliente elegido. Tras integrar test, también
+comprueban la edición de precios, sus márgenes, su restauración por cliente y el
+rechazo de precios inferiores al costo. Las pruebas HTTP verifican además que
+la edición de productos del catálogo continúa funcionando.
 
 ## Comprobación manual en navegador
 

@@ -66,12 +66,12 @@ public sealed class CotizacionesTestHost : IAsyncLifetime
         await action(scope.ServiceProvider.GetRequiredService<ProseginDbContext>());
     }
 
-    public async Task<HttpResponseMessage> PostAsync(Dictionary<string, string> fields, string action = "Create")
+    public async Task<HttpResponseMessage> PostAsync(Dictionary<string, string> fields, string action = "Create", string controller = "Cotizaciones")
     {
         var html = await Client.GetStringAsync("/Cotizaciones/Create?clienteId=1");
         var input = Regex.Match(html, "<input[^>]*name=\"__RequestVerificationToken\"[^>]*>").Value;
         fields["__RequestVerificationToken"] = WebUtility.HtmlDecode(Regex.Match(input, "value=\"([^\"]+)\"").Groups[1].Value);
-        return await Client.PostAsync($"/Cotizaciones/{action}", new FormUrlEncodedContent(fields));
+        return await Client.PostAsync($"/{controller}/{action}", new FormUrlEncodedContent(fields));
     }
 
     public async Task DisposeAsync()
@@ -337,6 +337,64 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
         Assert.Contains("checked", seleccion);
         Assert.Contains("validation-summary-errors", html);
         await AssertNoQuotesAsync();
+    }
+
+    [Theory]
+    [InlineData("12.50", "25", 25.00, 4.50, 29.50)]
+    [InlineData("25.00", "150", 50.00, 9.00, 59.00)]
+    public async Task Grabar_PrecioAjustadoConservaMargenYCostoMaestro(string precio, string margen,
+        decimal subtotal, decimal igv, decimal total)
+    {
+        var form = ProductForm();
+        form["ProductosDisponibles[0].PrecioUnitario"] = precio;
+        form["ProductosDisponibles[0].MargenPorcentaje"] = margen;
+        Assert.Equal(HttpStatusCode.Redirect, (await _host.PostAsync(form)).StatusCode);
+        await _host.WithDatabaseAsync(async context =>
+        {
+            var quote = await context.Cotizaciones.Include(q => q.Detalles).AsNoTracking().SingleAsync();
+            var line = Assert.Single(quote.Detalles);
+            Assert.Equal(subtotal, quote.Subtotal);
+            Assert.Equal(igv, quote.Igv);
+            Assert.Equal(total, quote.Total);
+            Assert.Equal(decimal.Parse(precio, System.Globalization.CultureInfo.InvariantCulture), line.PrecioVentaCalculado);
+            Assert.Equal(decimal.Parse(margen, System.Globalization.CultureInfo.InvariantCulture) / 100m, line.MargenDeseado);
+            Assert.Equal(10m, (await context.Productos.SingleAsync(p => p.Id == 1)).CostoReferencial);
+        });
+    }
+
+    [Theory]
+    [InlineData("9.99")]
+    [InlineData("0")]
+    [InlineData("-1")]
+    public async Task Grabar_RechazaPrecioMenorAlCostoSinPersistir(string precio)
+    {
+        var form = ProductForm();
+        form["ProductosDisponibles[0].PrecioUnitario"] = precio;
+        var response = await _host.PostAsync(form);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("El precio cotizado no puede ser menor al costo base registrado",
+            WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync()));
+        await AssertNoQuotesAsync();
+    }
+
+    [Fact]
+    public async Task Catalogo_EditarProductoConservaElFlujoAgregadoEnTest()
+    {
+        var html = await _host.Client.GetStringAsync("/Catalogo");
+        Assert.Contains("editProductModal", html);
+        Assert.Contains("populateEditModal(this)", html);
+        var response = await _host.PostAsync(new()
+        {
+            ["Id"] = "1", ["Nombre"] = "Casco actualizado", ["Categoria"] = "Protección cabeza", ["Precio"] = "11.50"
+        }, "EditarProducto", "Catalogo");
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        await _host.WithDatabaseAsync(async context =>
+        {
+            var product = await context.Productos.AsNoTracking().SingleAsync(p => p.Id == 1);
+            Assert.Equal("CASCO ACTUALIZADO", product.Nombre);
+            Assert.Equal("Protección cabeza", product.Categoria);
+            Assert.Equal(11.50m, product.CostoReferencial);
+        });
     }
 
     private Task AssertNoQuotesAsync() => _host.WithDatabaseAsync(async context =>

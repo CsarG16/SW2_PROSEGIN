@@ -18,6 +18,12 @@
     const formatAmount = amount => `S/ ${currency.format(amount)}`;
     const selection = row => row.querySelector("input.quote-selection-input");
     const quantity = row => row.querySelector('input[name$=".Cantidad"]');
+    const price = row => row.querySelector("input.quote-price-input");
+    const marginInput = row => row.querySelector("input.quote-margin-input");
+    const marginBadge = row => row.querySelector(".quote-margin-badge");
+    const priceMessage = "El precio cotizado no puede ser menor al costo base registrado";
+    const validPrice = (value, cost) => String(value).trim() !== "" && Number.isFinite(Number(value))
+        && Number(value) >= Number(cost) && Math.abs(Number(value) * 100 - Math.round(Number(value) * 100)) < 0.000001;
     const validQuantity = value => /^\d+$/.test(String(value).trim())
         && Number.isInteger(Number(value)) && Number(value) > 0 && Number(value) <= maxQuantity;
 
@@ -62,49 +68,72 @@
 
     const updateTotals = () => {
         let subtotalCents = 0;
+        let costCents = 0;
         let count = 0;
         let invalid = false;
+        let invalidPrice = false;
         const cart = [];
         rows.forEach(row => {
             const selected = selection(row).checked;
             const input = quantity(row);
             input.disabled = !selected;
+            const priceInput = price(row);
+            priceInput.disabled = !selected;
             row.classList.toggle("d-none", !selected);
             const valid = !selected || validQuantity(input.value);
             input.setCustomValidity(valid ? "" : quantityMessage);
             input.classList.toggle("is-invalid", !valid);
+            const priceValid = !selected || validPrice(priceInput.value, row.dataset.cost);
+            priceInput.setCustomValidity(priceValid ? "" : priceMessage);
+            priceInput.classList.toggle("is-invalid", !priceValid);
             if (!selected) return;
             row.querySelector("[data-row-number]").textContent = String(++count);
-            if (!valid) {
-                invalid = true;
+            if (!valid || !priceValid) {
+                invalid = invalid || !valid;
+                invalidPrice = invalidPrice || !priceValid;
                 row.querySelector("[data-line-subtotal]").textContent = "—";
+                marginBadge(row).textContent = "—";
                 return;
             }
             const units = Number(input.value);
             // Los costos del catálogo tienen dos decimales. Calcular en céntimos
             // evita que 30.25 * 0.18 se redondee a 5.44 por precisión binaria.
-            const lineSubtotalCents = Math.round(Number(row.dataset.cost) * 100) * units;
+            const unitPrice = Number(priceInput.value);
+            const lineSubtotalCents = Math.round(unitPrice * 100) * units;
             row.querySelector("[data-line-subtotal]").textContent = formatAmount(lineSubtotalCents / 100);
             subtotalCents += lineSubtotalCents;
-            cart.push({ id: Number(row.dataset.productId), quantity: units });
+            costCents += Math.round(Number(row.dataset.cost) * 100) * units;
+            const margin = Number(row.dataset.cost) > 0 ? (unitPrice - Number(row.dataset.cost)) / Number(row.dataset.cost) * 100 : 0;
+            marginInput(row).value = margin.toFixed(2);
+            marginBadge(row).textContent = `+${margin.toFixed(margin % 1 === 0 ? 0 : 1)}% margen`;
+            cart.push({ id: Number(row.dataset.productId), quantity: units, price: unitPrice });
         });
+        const hasErrors = invalid || invalidPrice;
         const igvCents = Math.round(subtotalCents * 18 / 100);
-        document.getElementById("subtotalCotizacion").textContent = invalid ? "—" : formatAmount(subtotalCents / 100);
-        document.getElementById("igvCotizacion").textContent = invalid ? "—" : formatAmount(igvCents / 100);
-        document.getElementById("totalCotizacion").textContent = invalid ? "—" : formatAmount((subtotalCents + igvCents) / 100);
+        document.getElementById("subtotalCotizacion").textContent = hasErrors ? "—" : formatAmount(subtotalCents / 100);
+        document.getElementById("igvCotizacion").textContent = hasErrors ? "—" : formatAmount(igvCents / 100);
+        document.getElementById("totalCotizacion").textContent = hasErrors ? "—" : formatAmount((subtotalCents + igvCents) / 100);
+        const profitCents = subtotalCents - costCents;
+        const globalMargin = costCents > 0 ? profitCents / costCents * 100 : 0;
+        document.getElementById("margenEstimadoCotizacion").textContent = hasErrors ? "—" : `+${globalMargin.toFixed(1)}% (${formatAmount(profitCents / 100)})`;
         document.getElementById("cantidadProductos").textContent = String(count);
         document.getElementById("productosVacios").classList.toggle("d-none", count > 0);
         productsError.hidden = !invalid;
         productsError.textContent = invalid ? quantityMessage : "";
+        document.getElementById("alertaPrecioError").classList.toggle("d-none", !invalidPrice);
+        document.getElementById("alertaPrecioErrorTexto").textContent = priceMessage;
         // Nunca guardar cantidades corregidas silenciosamente ni una lista parcial.
-        if (!invalid) writeCart(cart);
-        return !invalid;
+        if (!hasErrors) writeCart(cart);
+        return !hasErrors;
     };
 
     const clearProducts = () => {
         rows.forEach(row => {
             selection(row).checked = false;
             quantity(row).value = "1";
+            price(row).value = Number(row.dataset.cost).toFixed(2);
+            marginInput(row).value = "0";
+            marginBadge(row).textContent = "+0% margen";
         });
         resetEntry();
         updateTotals();
@@ -117,6 +146,7 @@
             if (!row || !validQuantity(item.quantity)) return;
             selection(row).checked = true;
             quantity(row).value = String(item.quantity);
+            price(row).value = validPrice(item.price, row.dataset.cost) ? Number(item.price).toFixed(2) : Number(row.dataset.cost).toFixed(2);
         });
     };
 
@@ -204,10 +234,17 @@
 
     rows.forEach(row => {
         quantity(row).addEventListener("input", updateTotals);
+        price(row).addEventListener("input", updateTotals);
+        price(row).addEventListener("change", updateTotals);
+        price(row).addEventListener("blur", () => {
+            if (validPrice(price(row).value, row.dataset.cost)) price(row).value = Number(price(row).value).toFixed(2);
+            updateTotals();
+        });
         selection(row).addEventListener("change", updateTotals);
         row.querySelector("[data-remove-product]").addEventListener("click", () => {
             selection(row).checked = false;
             quantity(row).value = "1";
+            price(row).value = Number(row.dataset.cost).toFixed(2);
             updateTotals();
         });
     });
@@ -217,14 +254,16 @@
         const valid = updateTotals();
         if (!valid || !rows.some(row => selection(row).checked)) {
             event.preventDefault();
-            productsError.textContent = valid ? "Selecciona al menos un producto del catálogo." : quantityMessage;
-            productsError.hidden = false;
+            if (valid) {
+                productsError.textContent = "Selecciona al menos un producto del catálogo.";
+                productsError.hidden = false;
+            }
         }
     });
     // El navegador puede recuperar la página anterior desde su caché de navegación.
     window.addEventListener("pageshow", event => {
         if (!event.persisted) return;
-        rows.forEach(row => { selection(row).checked = false; quantity(row).value = "1"; });
+        rows.forEach(row => { selection(row).checked = false; quantity(row).value = "1"; price(row).value = Number(row.dataset.cost).toFixed(2); });
         resetEntry();
         restoreCart();
         updateTotals();

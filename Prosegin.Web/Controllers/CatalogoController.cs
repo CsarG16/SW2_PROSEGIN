@@ -211,6 +211,60 @@ public class CatalogoController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditarProducto(int Id, string Nombre, string Categoria, decimal Precio, IFormFile? FichaTecnica, CancellationToken cancellationToken)
+    {
+        var producto = await _context.Productos.FirstOrDefaultAsync(p => p.Id == Id, cancellationToken);
+        if (producto != null)
+        {
+            producto.Nombre = Nombre?.Trim().ToUpperInvariant() ?? producto.Nombre;
+            producto.Categoria = Categoria?.Trim() ?? string.Empty;
+            producto.CostoReferencial = Precio;
+
+            if (FichaTecnica != null && FichaTecnica.Length > 0)
+            {
+                var webRoot = _webHostEnvironment.WebRootPath;
+                if (string.IsNullOrWhiteSpace(webRoot))
+                {
+                    webRoot = Path.Combine(_webHostEnvironment.ContentRootPath, "wwwroot");
+                }
+                var carpetaFichas = Path.Combine(webRoot, "uploads", "fichas");
+                Directory.CreateDirectory(carpetaFichas);
+
+                var nombreUnico = $"{Guid.NewGuid():N}.pdf";
+                var rutaFisica = Path.Combine(carpetaFichas, nombreUnico);
+
+                await using (var stream = new FileStream(rutaFisica, FileMode.CreateNew))
+                {
+                    await FichaTecnica.CopyToAsync(stream, cancellationToken);
+                }
+
+                // Si ya tenía una ficha previa en uploads/fichas, eliminamos el archivo anterior
+                if (!string.IsNullOrWhiteSpace(producto.RutaFichaTecnicaPdf) && producto.RutaFichaTecnicaPdf.Contains("uploads/fichas", StringComparison.OrdinalIgnoreCase))
+                {
+                    var rutaAnterior = ResolvePdfPath(producto.RutaFichaTecnicaPdf);
+                    if (System.IO.File.Exists(rutaAnterior))
+                    {
+                        try { System.IO.File.Delete(rutaAnterior); } catch { /* ignorar si está en uso */ }
+                    }
+                }
+
+                producto.RutaFichaTecnicaPdf = $"/uploads/fichas/{nombreUnico}";
+                producto.NombreArchivoPdf = Path.GetFileName(FichaTecnica.FileName);
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+            TempData["SuccessMessage"] = "Producto actualizado correctamente.";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = "No se encontró el producto a editar.";
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
     [HttpGet]
     public async Task<IActionResult> VerFicha(int id)
     {

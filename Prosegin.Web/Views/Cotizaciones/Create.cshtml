@@ -21,7 +21,7 @@
         </div>
     </div>
 
-    @if (TempData["SuccessMessage"] != null)
+    @if (TempData["SuccessMessage"] != null && !cotizacionGuardada)
     {
         <div class="alert alert-success d-flex align-items-center mb-4 border border-success border-opacity-25 rounded-2" style="background-color: #d1e7dd; color: #0f5132; padding: 1rem 1.25rem;">
             <i class="bi bi-check-circle-fill me-2 fs-5"></i>
@@ -145,9 +145,13 @@
                                 <span>Subtotal</span>
                                 <strong id="subtotalCotizacion" class="text-dark">S/ 0.00</strong>
                             </div>
-                            <div class="d-flex justify-content-between mb-4 small text-secondary pb-3 border-bottom">
+                            <div class="d-flex justify-content-between mb-2 small text-secondary">
                                 <span>IGV (18%)</span>
                                 <strong id="igvCotizacion" class="text-dark">S/ 0.00</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-4 small text-secondary pb-3 border-bottom">
+                                <span>Margen Estimado</span>
+                                <strong id="margenEstimadoCotizacion" class="text-success fw-bold">+0.0% (S/ 0.00)</strong>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mt-auto">
                                 <span class="fw-bold text-dark">Total General</span>
@@ -159,48 +163,90 @@
             </div>
 
             <div id="productosError" class="alert alert-danger" role="alert" hidden></div>
+            <!-- Alerta de validación de precio en tiempo real -->
+            <div id="alertaPrecioError" class="alert alert-danger alert-dismissible fade show d-none align-items-center mb-3 shadow-sm rounded-4 border-0 py-3 px-4" role="alert" style="background-color: #f8d7da; color: #842029;">
+                <i class="bi bi-exclamation-octagon-fill me-2 fs-5"></i>
+                <span id="alertaPrecioErrorTexto" class="fw-semibold">El precio cotizado no puede ser menor al costo base registrado</span>
+                <button type="button" class="btn-close ms-auto" aria-label="Close" onclick="this.parentElement.classList.add('d-none')"></button>
+            </div>
+
             <!-- Tabla de productos -->
             <div class="card border-0 shadow-sm rounded-4 mb-4">
                 <div class="table-responsive">
-                    <table class="table table-borderless align-middle mb-0" style="min-width: 800px;">
+                    <table class="table table-borderless align-middle mb-0" style="min-width: 860px;">
                         <thead class="border-bottom">
                             <tr>
                                 <th class="text-secondary small fw-bold py-3 ps-4" style="width: 4%;">#</th>
                                 <th class="text-secondary small fw-bold py-3" style="width: 12%;">CÓDIGO SKU</th>
-                                <th class="text-secondary small fw-bold py-3" style="width: 42%;">DESCRIPCIÓN DEL EPP</th>
-                                <th class="text-secondary small fw-bold py-3 text-center" style="width: 8%;">U.M.</th>
-                                <th class="text-secondary small fw-bold py-3 text-center" style="width: 10%;">CANTIDAD</th>
+                                <th class="text-secondary small fw-bold py-3" style="width: 32%;">DESCRIPCIÓN DEL EPP</th>
+                                <th class="text-secondary small fw-bold py-3 text-center" style="width: 6%;">U.M.</th>
+                                <th class="text-secondary small fw-bold py-3 text-center" style="width: 8%;">CANTIDAD</th>
                                 <th class="text-secondary small fw-bold py-3 text-end" style="width: 11%;">COSTO BASE<br>UNIT.</th>
-                                <th class="text-secondary small fw-bold py-3 text-end" style="width: 10%;">SUBTOTAL</th>
-                                <th class="text-secondary small fw-bold py-3 text-center pe-4" style="width: 3%;">Opciones</th>
+                                <th class="text-secondary small fw-bold py-3 text-center" style="width: 14%;">PRECIO UNIT. (S/.)</th>
+                                <th class="text-secondary small fw-bold py-3 text-end" style="width: 9%;">SUBTOTAL</th>
+                                <th class="text-secondary small fw-bold py-3 text-center pe-4" style="width: 4%;">Opciones</th>
                             </tr>
                         </thead>
                         <tbody id="tablaProductosBody">
                             @for (var i = 0; i < Model.ProductosDisponibles.Count; i++)
                             {
                                 var producto = Model.ProductosDisponibles[i];
-                                <tr class="border-bottom @(producto.Seleccionado ? "" : "d-none")" data-product-row data-product-id="@producto.ProductoId" data-cost="@producto.CostoReferencial.ToString(CultureInfo.InvariantCulture)" data-unit="@producto.UnidadMedida" data-img="@(string.IsNullOrEmpty(producto.RutaImagen) ? $"/images/productos/{producto.Sku}.png" : producto.RutaImagen)" data-search="@($"{producto.Sku} {producto.Nombre} {producto.Categoria}".ToLowerInvariant())">
+                                var precioInicial = producto.PrecioUnitario > 0 ? producto.PrecioUnitario : producto.CostoReferencial;
+                                <tr class="border-bottom @(producto.Seleccionado ? "" : "d-none")"
+                                    data-product-row
+                                    data-product-id="@producto.ProductoId"
+                                    data-cost="@producto.CostoReferencial.ToString(CultureInfo.InvariantCulture)"
+                                    data-unit="@producto.UnidadMedida"
+                                    data-img="@(string.IsNullOrEmpty(producto.RutaImagen) ? $"/images/productos/{producto.Sku}.png" : producto.RutaImagen)"
+                                    data-search="@($"{producto.Sku} {producto.Nombre} {producto.Categoria}".ToLowerInvariant())">
                                     <td class="ps-4 text-muted small" data-row-number></td>
-                                    <td class="fw-bold small text-dark"><input asp-for="ProductosDisponibles[i].ProductoId" type="hidden" />@producto.Sku</td>
+                                    <td class="fw-bold small text-dark">
+                                        <input asp-for="ProductosDisponibles[i].ProductoId" type="hidden" />
+                                        @producto.Sku
+                                    </td>
                                     <td>
-                                        <div class="d-flex align-items-center gap-3">
-                                            <img src="@(string.IsNullOrEmpty(producto.RutaImagen) ? $"/images/productos/{producto.Sku}.png" : producto.RutaImagen)" style="width: 40px; height: 40px; object-fit: contain; border-radius: 4px; border: 1px solid #dee2e6; background: #fff;" onerror="this.style.display='none';" />
-                                            <div>
-                                                <div class="fw-bold small text-dark quote-row-description">@producto.Nombre</div>
-                                                <div class="text-muted" style="font-size: 0.75rem;">Categoría: @producto.Categoria</div>
-                                            </div>
+                                        <div>
+                                            <div class="fw-bold small text-dark quote-row-description">@producto.Nombre</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">Categoría: @producto.Categoria</div>
                                         </div>
                                     </td>
                                     <td class="text-center small text-secondary">@producto.UnidadMedida</td>
                                     <td class="text-center">
-                                        <input asp-for="ProductosDisponibles[i].Cantidad" class="form-control form-control-sm text-center mx-auto" type="number" min="1" max="2147483647" step="1" disabled="@(!producto.Seleccionado)" style="width: 70px;" aria-label="Cantidad de @producto.Nombre" />
+                                        <input asp-for="ProductosDisponibles[i].Cantidad"
+                                               class="form-control form-control-sm text-center mx-auto quote-quantity-input"
+                                               type="number"
+                                               min="1"
+                                               max="2147483647"
+                                               step="1"
+                                               disabled="@(!producto.Seleccionado)"
+                                               aria-label="Cantidad de @producto.Nombre"
+                                               style="width: 70px;" />
                                     </td>
-                                    <td class="text-end small text-secondary" data-unit-price>S/ @producto.CostoReferencial.ToString("N2", new CultureInfo("es-PE"))</td>
+                                    <td class="text-end small text-secondary fw-medium" data-cost-base>
+                                        S/ @producto.CostoReferencial.ToString("N2", new CultureInfo("es-PE"))
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-inline-flex flex-column align-items-center">
+                                            <div class="input-group input-group-sm" style="width: 105px;">
+                                                <span class="input-group-text bg-light text-muted border-end-0 small px-2">S/</span>
+                                                <input asp-for="ProductosDisponibles[i].PrecioUnitario"
+                                                       type="number"
+                                                       step="0.01"
+                                                       disabled="@(!producto.Seleccionado)"
+                                                       aria-label="Precio unitario de @producto.Nombre"
+                                                       min="@producto.CostoReferencial.ToString(CultureInfo.InvariantCulture)"
+                                                       class="form-control form-control-sm text-end fw-bold quote-price-input ps-1 pe-2 border-start-0"
+                                                       data-cost-base="@producto.CostoReferencial.ToString(CultureInfo.InvariantCulture)"
+                                                       value="@precioInicial.ToString("F2", CultureInfo.InvariantCulture)" />
+                                            </div>
+                                            <span class="quote-margin-badge text-success small mt-1" style="font-size: 0.75rem; font-weight: 500;">+0% margen</span>
+                                        </div>
+                                    </td>
                                     <td class="text-end fw-bold small text-dark" data-line-subtotal>S/ 0.00</td>
                                     <td class="text-center pe-4">
                                         <input asp-for="ProductosDisponibles[i].Seleccionado" type="checkbox" class="d-none quote-selection-input" />
-                                        <input asp-for="ProductosDisponibles[i].MargenPorcentaje" type="hidden" value="0" class="quote-margin-input" />
-                                        <button type="button" class="btn btn-sm btn-link text-muted p-0" data-remove-product title="Eliminar"><i class="bi bi-trash"></i></button>
+                                        <input asp-for="ProductosDisponibles[i].MargenPorcentaje" type="hidden" value="@producto.MargenPorcentaje" class="quote-margin-input" />
+                                        <button type="button" class="btn btn-sm btn-link text-muted p-0 quote-remove-btn" data-remove-product title="Eliminar"><i class="bi bi-trash"></i></button>
                                     </td>
                                 </tr>
                             }
@@ -212,12 +258,24 @@
                     </div>
                 </div>
                 <div class="card-footer bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
-                    <span class="small text-dark fw-bold"><i class="bi bi-circle-fill me-2" style="font-size: 6px;"></i><span id="cantidadProductos">0</span> productos agregados a la propuesta</span>
+                    <span class="small text-dark fw-bold">
+                        <i class="bi bi-circle-fill me-2" style="font-size: 6px;"></i><span id="cantidadProductos">0</span> productos en propuesta
+                        <span class="text-muted fw-normal mx-2">|</span>
+                        <span class="text-muted fw-normal"><i class="bi bi-info-circle me-1"></i>Regla de negocio: El precio unitario cotizado no puede ser menor al costo base unitario.</span>
+                    </span>
                     <span class="small fw-bold text-secondary">Moneda: PEN (S/.)</span>
                 </div>
             </div>
 
-
+            <!-- Notificación de éxito centrada estilo píldora -->
+            @if (cotizacionGuardada)
+            {
+                <div class="text-center my-3">
+                    <div class="d-inline-flex align-items-center py-2 px-4 rounded-pill border shadow-sm" style="background-color: #E8F8F2; border-color: #A3E6CD; color: #0D8A58; font-weight: 500; font-size: 0.95rem;">
+                        <i class="bi bi-check-lg me-2 fs-5"></i> @TempData["SuccessMessage"]
+                    </div>
+                </div>
+            }
 
         </div>
 
@@ -233,7 +291,9 @@
             <a asp-controller="Clientes" asp-action="Index" class="btn btn-light border px-4" data-cancel-quote><i class="bi bi-arrow-left me-2"></i>Atrás</a>
             <div class="d-flex gap-2">
                 <button type="button" class="btn btn-light border px-4" id="limpiarProductos"><i class="bi bi-arrow-counterclockwise me-2"></i>Limpiar</button>
-                <button type="submit" class="btn btn-dark px-4 fw-bold" @(noPuedeVender || Model.DatosSunatDesactualizados ? "disabled" : null) style="background-color: #0B1727; border-color: #0B1727;"><i class="bi bi-box-arrow-down me-2"></i>Grabar</button>
+                <button type="submit" class="btn btn-dark px-4 py-2 fw-bold text-white d-flex align-items-center gap-2" id="btnGrabarCotizacion" @(noPuedeVender || Model.DatosSunatDesactualizados ? "disabled" : null) style="background-color: #0B1727; border-color: #0B1727;">
+                    <i class="bi bi-box-arrow-down"></i> Grabar cotización
+                </button>
             </div>
         </div>
     </form>

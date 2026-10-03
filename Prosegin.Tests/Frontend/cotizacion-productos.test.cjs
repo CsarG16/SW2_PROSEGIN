@@ -39,7 +39,7 @@ function screen({ storage = new Map(), clientId = 1, saved = false, invalidPost 
         'agregarProducto', 'cantidadAgregar', 'errorCantidadAgregar', 'productosError',
         'productoSeleccionadoDesc', 'unidadSeleccionada', 'precioSeleccionado',
         'subtotalCotizacion', 'igvCotizacion', 'totalCotizacion', 'cantidadProductos',
-        'productosVacios', 'limpiarProductos']) ids[id] = new Element();
+        'productosVacios', 'limpiarProductos', 'margenEstimadoCotizacion', 'alertaPrecioError', 'alertaPrecioErrorTexto']) ids[id] = new Element();
     ids.formCotizacion.dataset = { clienteId: String(clientId), cotizacionGuardada: String(saved), postInvalido: String(invalidPost) };
     ids.cantidadAgregar.value = '1';
     const rows = [1, 2].map(id => {
@@ -47,7 +47,9 @@ function screen({ storage = new Map(), clientId = 1, saved = false, invalidPost 
         row.dataset = { productId: String(id), cost: id === 1 ? '10' : '0.25', unit: 'UND', search: `sku${id} casco`, img: '' };
         const fields = {};
         for (const key of ['input.quote-selection-input', 'input[name$=".Cantidad"]', 'td:nth-child(2)',
-            '.quote-row-description', '[data-row-number]', '[data-line-subtotal]', '[data-remove-product]']) fields[key] = new Element();
+            '.quote-row-description', '[data-row-number]', '[data-line-subtotal]', '[data-remove-product]',
+            'input.quote-price-input', 'input.quote-margin-input', '.quote-margin-badge']) fields[key] = new Element();
+        fields['input.quote-price-input'].value = row.dataset.cost;
         fields['input[name$=".Cantidad"]'].value = id === 1 && serverQuantity !== undefined ? String(serverQuantity) : '1';
         fields['input.quote-selection-input'].checked = id === 1 && serverQuantity !== undefined;
         fields['td:nth-child(2)'].textContent = `SKU${id}`;
@@ -290,6 +292,7 @@ test('Catálogo: vaciar elimina productos y restablece cantidades', () => {
 test('El IGV redondea los medios céntimos igual que el servidor decimal', () => {
     const ui = screen();
     ui.rows[0].dataset.cost = '30.25';
+    ui.rows[0].querySelector('input.quote-price-input').value = '30.25';
     ui.add(1);
     assert.equal(ui.ids.subtotalCotizacion.textContent, 'S/ 30.25');
     assert.equal(ui.ids.igvCotizacion.textContent, 'S/ 5.45');
@@ -300,6 +303,8 @@ test('Varias filas suman los céntimos antes de calcular el IGV', () => {
     const ui = screen();
     ui.rows[0].dataset.cost = '0.10';
     ui.rows[1].dataset.cost = '0.15';
+    ui.rows[0].querySelector('input.quote-price-input').value = '0.10';
+    ui.rows[1].querySelector('input.quote-price-input').value = '0.15';
     ui.add(1); ui.add(1, 2);
     assert.equal(ui.ids.cantidadProductos.textContent, '2');
     assert.equal(ui.ids.subtotalCotizacion.textContent, 'S/ 0.25');
@@ -316,5 +321,48 @@ test('Restaurar ignora productos ausentes y cantidades inválidas del borrador',
     assert.equal(ui.rows[0].querySelector('input.quote-selection-input').checked, false);
     assert.equal(ui.rows[1].querySelector('input[name$=".Cantidad"]').value, '3');
     assert.equal(ui.ids.totalCotizacion.textContent, 'S/ 0.89');
-    assert.deepEqual(JSON.parse(storage.get(ui.key)), [{ id: 2, quantity: 3 }]);
+    assert.deepEqual(JSON.parse(storage.get(ui.key)), [{ id: 2, quantity: 3, price: 0.25 }]);
+});
+
+test('HU 3.2: ajustar el precio recalcula subtotal, IGV, total y márgenes', () => {
+    const ui = screen(); ui.add(2);
+    const input = ui.rows[0].querySelector('input.quote-price-input');
+    input.value = '12.50'; input.fire('input');
+    assert.equal(ui.ids.subtotalCotizacion.textContent, 'S/ 25.00');
+    assert.equal(ui.ids.igvCotizacion.textContent, 'S/ 4.50');
+    assert.equal(ui.ids.totalCotizacion.textContent, 'S/ 29.50');
+    assert.equal(ui.rows[0].querySelector('.quote-margin-badge').textContent, '+25% margen');
+    assert.equal(ui.ids.margenEstimadoCotizacion.textContent, '+25.0% (S/ 5.00)');
+    ui.add(3);
+    assert.equal(input.value, '12.50');
+    assert.equal(ui.ids.totalCotizacion.textContent, 'S/ 73.75');
+});
+
+for (const value of ['9.99', '0', '-1', '', '12.501']) {
+    test(`HU 3.2: el precio ${JSON.stringify(value)} bloquea el envío sin alterar el costo`, () => {
+        const ui = screen(); ui.add(2); const previous = ui.storage.get(ui.key);
+        const input = ui.rows[0].querySelector('input.quote-price-input');
+        input.value = value; input.fire('input');
+        assert.equal(ui.ids.alertaPrecioError.classList.contains('d-none'), false);
+        assert.equal(input.value, value);
+        assert.equal(ui.ids.formCotizacion.fire('submit').defaultPrevented, true);
+        assert.equal(ui.rows[0].dataset.cost, '10');
+        assert.equal(ui.storage.get(ui.key), previous);
+        input.value = '13'; input.fire('input');
+        assert.equal(ui.ids.alertaPrecioError.classList.contains('d-none'), true);
+        assert.equal(ui.ids.formCotizacion.fire('submit').defaultPrevented, false);
+        assert.equal(ui.ids.totalCotizacion.textContent, 'S/ 30.68');
+    });
+}
+
+test('HU 3.2: el precio ajustado se restaura por cliente y Limpiar lo restablece al costo', () => {
+    const ui = screen(); ui.add(2);
+    ui.rows[0].querySelector('input.quote-price-input').value = '12.50';
+    ui.rows[0].querySelector('input.quote-price-input').fire('input');
+    const restored = screen({ storage: ui.storage });
+    assert.equal(restored.ids.totalCotizacion.textContent, 'S/ 29.50');
+    assert.equal(restored.rows[0].querySelector('input.quote-price-input').value, '12.50');
+    restored.ids.limpiarProductos.fire('click');
+    assert.equal(restored.rows[0].querySelector('input.quote-price-input').value, '10.00');
+    assert.equal(restored.rows[0].querySelector('input.quote-price-input').disabled, true);
 });

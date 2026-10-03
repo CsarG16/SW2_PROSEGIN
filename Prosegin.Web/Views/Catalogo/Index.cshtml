@@ -28,7 +28,7 @@
 
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show" role="alert" id="successAlert">
             <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
         </div>
@@ -39,7 +39,6 @@
             <i class="bi bi-search"></i>
             <input id="catalogSearch" type="search" placeholder="Buscar por código, descripción o categoría..." autocomplete="off" />
         </label>
-        <a class="btn-prosegin-primary catalog-search-button" href="#catalogProducts"><i class="bi bi-arrow-down me-1"></i>Ver productos</a>
         <div class="catalog-category-list" role="group" aria-label="Filtrar por categoría">
             <button type="button" class="catalog-category active" data-category-filter="">Todos</button>
             @foreach (var category in categories)
@@ -59,7 +58,7 @@
     }
     else
     {
-        <div class="catalog-layout" id="catalogProducts">
+        <div class="catalog-layout mt-3" id="catalogProducts">
             <section class="catalog-product-list" aria-label="Productos disponibles">
                 @foreach (var product in Model.Productos)
                 {
@@ -99,6 +98,7 @@
                             <label class="visually-hidden" for="quantity-@product.Id">Cantidad de @product.Nombre</label>
                             <input id="quantity-@product.Id" data-quantity type="number" min="1" max="2147483647" step="1" value="1" inputmode="numeric" />
                             <button type="button" class="btn-prosegin-primary catalog-add-button" data-add-product aria-label="Agregar @product.Nombre al carrito"><i class="bi bi-plus-lg"></i><span>Agregar</span></button>
+                            <button type="button" class="btn-prosegin-secondary text-decoration-none" data-bs-toggle="modal" data-bs-target="#editProductModal" onclick="populateEditModal(this)" data-id="@product.Id" data-sku="@product.Sku" data-name="@product.Nombre" data-category="@product.Categoria" data-stock="@product.StockDisponible" data-cost="@product.Precio.ToString(CultureInfo.InvariantCulture)"><i class="bi bi-pencil-square me-1"></i>Editar</button>
                         </div>
                     </article>
                 }
@@ -127,6 +127,55 @@
             </aside>
         </div>
     }
+</div>
+
+<!-- Modal Editar Producto -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header border-bottom-0 pb-2 pt-4 px-4">
+                <h5 class="modal-title fw-bold" id="editProductModalLabel">Editar Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body px-4 pb-4">
+                <form id="editProductForm" method="post" asp-action="EditarProducto" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="editProductId" name="Id" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-secondary">CÓDIGO SKU</label>
+                        <input type="text" class="form-control bg-light" id="editProductSku" name="Sku" readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-secondary">NOMBRE DEL PRODUCTO</label>
+                        <input type="text" class="form-control" id="editProductName" name="Nombre" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-secondary">CATEGORÍA</label>
+                        <input type="text" class="form-control" id="editProductCategory" name="Categoria" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-secondary">COSTO BASE (S/)</label>
+                        <input type="number" step="0.01" class="form-control" id="editProductCost" name="Precio" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-secondary">NUEVA FICHA TÉCNICA (OPCIONAL)</label>
+                        <input type="file" class="form-control" id="editProductFile" name="FichaTecnica" accept=".pdf" />
+                        <small class="text-muted d-block mt-1">Sube un archivo PDF solo si deseas reemplazar la ficha actual.</small>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-dark px-4" style="background-color: #0B1727; border-color: #0B1727;">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal Vista Previa de Imagen EPP -->
@@ -310,9 +359,32 @@
                 });
             }
 
+            // Desaparecer mensaje de éxito automáticamente después de 5 segundos
+            const successAlert = document.getElementById("successAlert");
+            if (successAlert) {
+                setTimeout(() => {
+                    if (typeof bootstrap !== "undefined" && bootstrap.Alert) {
+                        const bsAlert = bootstrap.Alert.getOrCreateInstance(successAlert);
+                        bsAlert.close();
+                    } else {
+                        successAlert.style.transition = "opacity 0.5s ease";
+                        successAlert.style.opacity = "0";
+                        setTimeout(() => successAlert.remove(), 500);
+                    }
+                }, 5000);
+            }
+
             parseCart();
             renderCart();
             applyFilters();
         })();
+
+        function populateEditModal(btn) {
+            document.getElementById('editProductId').value = btn.dataset.id;
+            document.getElementById('editProductSku').value = btn.dataset.sku;
+            document.getElementById('editProductName').value = btn.dataset.name;
+            document.getElementById('editProductCategory').value = btn.dataset.category;
+            document.getElementById('editProductCost').value = btn.dataset.cost;
+        }
     </script>
 }
