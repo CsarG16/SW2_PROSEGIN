@@ -137,67 +137,123 @@
         </div>
 
         <!-- 3. CARD 2: COSTO BASE Y PROVEEDOR AUTORIZADO -->
-        <div class="prosegin-card mb-4 overflow-hidden">
+        <div class="prosegin-card mb-4" style="overflow: visible;">
             <div class="d-flex justify-content-between align-items-center py-3 px-4 border-bottom bg-white">
                 <span class="fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 0.92rem;">
-                    <i class="bi bi-wallet2 text-muted"></i> Costo base y proveedor autorizado
+                    <i class="bi bi-wallet2 text-dark"></i> Costo Base y Proveedores Autorizados
+                </span>
+                <span class="badge bg-light text-secondary border font-monospace px-2 py-1" style="font-size: 0.74rem;">
+                    Compras JIT Las Malvinas
                 </span>
             </div>
 
             <div class="p-3 p-md-4">
-                <div class="row g-3 align-items-end">
-                    <!-- Costo Base -->
-                    <div class="col-md-4">
-                        <label asp-for="CostoBaseAdquisicion" class="form-label-prosegin small text-uppercase fw-bold mb-1">
-                            COSTO BASE (S/.) <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0 text-muted fw-semibold">S/.</span>
-                            <input asp-for="CostoBaseAdquisicion" id="txtCosto" type="number" step="0.01" min="0.01"
-                                   class="form-control form-control-prosegin border-start-0 font-monospace fw-bold"
-                                   placeholder="48.50" />
+                <div class="row g-4 align-items-start">
+                    <!-- Columna 1: Costo Base -->
+                    <div class="col-md-5">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label asp-for="CostoBaseAdquisicion" class="form-label-prosegin small text-uppercase fw-bold mb-0">
+                                COSTO BASE (S/.) <span class="text-danger">*</span>
+                            </label>
+                            <span class="text-muted" style="font-size: 0.75rem;">Contado / Efectivo</span>
                         </div>
-                        <span asp-validation-for="CostoBaseAdquisicion" class="text-danger small d-block"></span>
-                    </div>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-secondary fw-bold px-3">S/.</span>
+                            <input asp-for="CostoBaseAdquisicion" id="txtCosto" type="number" step="0.01" min="0.01"
+                                   class="form-control form-control-prosegin border-start-0 font-monospace fw-bold ps-1"
+                                   placeholder="0.00" style="font-size: 1.05rem;" />
+                        </div>
+                        <span asp-validation-for="CostoBaseAdquisicion" class="text-danger small d-block mt-1"></span>
 
-                    <!-- Proveedores Autorizados -->
-                    <div class="col-md-6">
-                        <label for="txtProveedorBusqueda" class="form-label-prosegin small text-uppercase fw-bold mb-1">
-                            PROVEEDORES AUTORIZADOS <span class="text-danger">*</span>
-                        </label>
-                        <div class="position-relative">
-                            <input type="search" id="txtProveedorBusqueda" class="form-control form-control-prosegin pe-5"
-                                   placeholder="Buscar por razón social o RUC..." autocomplete="off" aria-controls="proveedoresList" />
-                            <span class="position-absolute end-0 top-50 translate-middle-y me-3 text-muted pointer-events-none">
-                                <i class="bi bi-search"></i>
-                            </span>
-                            <div id="proveedoresList" class="border rounded-3 bg-white p-2 mt-1" hidden
-                                 style="max-height: 220px; overflow-y: auto;">
-                                @foreach (var proveedor in Model.ProveedoresDisponibles)
-                                {
-                                    <label class="proveedor-opcion d-flex align-items-center gap-2 p-2 small"
-                                           data-busqueda="@proveedor.RazonSocial @proveedor.Ruc">
-                                        <input type="checkbox" name="ProveedorIds" value="@proveedor.Id"
-                                               class="form-check-input proveedor-check"
-                                               data-nombre="@proveedor.RazonSocial"
-                                               checked="@(Model.ProveedorIds.Contains(proveedor.Id))" />
-                                        <span>@proveedor.RazonSocial <span class="text-muted">(@proveedor.Ruc)</span></span>
-                                    </label>
-                                }
-                                <div id="proveedoresSinResultados" class="small text-muted p-2" hidden>No se encontraron proveedores registrados.</div>
+                        <div class="mt-3 p-3 rounded-3 bg-light bg-opacity-75 border text-secondary d-flex align-items-start gap-2" style="font-size: 0.78rem; line-height: 1.45;">
+                            <i class="bi bi-info-circle text-primary fs-6 mt-0 flex-shrink-0"></i>
+                            <div>
+                                <strong class="text-dark d-block mb-1">Regla de Negocio EPP:</strong>
+                                Costo base mayorista para cálculo del precio de venta bajo margen comercial:
+                                <div class="mt-1 font-monospace text-muted" style="font-size: 0.74rem;">
+                                    Precio = Costo / (1 - Margen)
+                                </div>
                             </div>
                         </div>
-                        <div id="proveedoresSeleccionados" class="d-flex flex-wrap gap-2 mt-2" aria-live="polite"></div>
-                        <div id="proveedoresContador" class="small text-muted mt-1" aria-live="polite">0 seleccionados</div>
-                        <span asp-validation-for="ProveedorIds" id="proveedoresError" class="text-danger small d-block"></span>
                     </div>
 
-                    <!-- Botón Agregar Proveedor -->
-                    <div class="col-md-2">
-                        <button type="button" class="btn btn-outline-secondary w-100 d-inline-flex align-items-center justify-content-center gap-1"
-                                id="btnAgregarProveedor" aria-controls="proveedoresList" aria-expanded="false" style="height: 44px; font-size: 0.82rem; font-weight: 600; border-radius: 8px;">
-                            <i class="bi bi-plus-lg"></i> Agregar proveedor
-                        </button>
+                    <!-- Columna 2: Proveedores Autorizados (Dropdown Multi-select) -->
+                    <div class="col-md-7">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label-prosegin small text-uppercase fw-bold mb-0">
+                                PROVEEDORES AUTORIZADOS <span class="text-danger">*</span>
+                            </label>
+                            <span class="text-muted" style="font-size: 0.75rem;" id="proveedoresContador">0 seleccionados</span>
+                        </div>
+
+                        <!-- Dropdown Multi-select Container -->
+                        <div class="position-relative" id="proveedoresDropdownWrapper">
+                            <!-- Trigger Button -->
+                            <button type="button" 
+                                    class="form-control form-control-prosegin d-flex align-items-center justify-content-between text-start w-100 py-2 px-3 bg-white" 
+                                    id="btnDropdownProveedores" 
+                                    aria-expanded="false" 
+                                    aria-haspopup="true">
+                                <span class="d-flex align-items-center gap-2 text-truncate" id="dropdownProveedoresText">
+                                    <i class="bi bi-shop text-muted"></i>
+                                    <span class="text-muted" id="dropdownPlaceholder">Seleccionar proveedores autorizados...</span>
+                                </span>
+                                <span class="d-flex align-items-center gap-2 flex-shrink-0 ms-2">
+                                    <span class="badge rounded-pill bg-light text-dark border font-monospace px-2 py-1 d-none" id="proveedoresBadgeCount">0</span>
+                                    <i class="bi bi-chevron-down text-muted" id="dropdownChevron" style="transition: transform 0.2s ease;"></i>
+                                </span>
+                            </button>
+
+                            <!-- Menú flotante (No empuja la tarjeta hacia abajo) -->
+                            <div id="proveedoresList" 
+                                 class="position-absolute start-0 end-0 bg-white border rounded-3 shadow-lg mt-1" 
+                                 style="display: none; z-index: 1050; border-color: #cbd5e1; box-shadow: 0 12px 28px rgba(11, 23, 39, 0.14);">
+                                
+                                <!-- Buscador dentro del Dropdown -->
+                                <div class="p-2 border-bottom bg-light bg-opacity-50">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                                        <input type="search" id="txtProveedorBusqueda" class="form-control form-control-sm border-start-0 ps-0 shadow-none"
+                                               placeholder="Buscar por razón social o RUC..." autocomplete="off" />
+                                    </div>
+                                </div>
+
+                                <!-- Lista scrollable de opciones -->
+                                <div class="p-2" style="max-height: 210px; overflow-y: auto;" id="proveedoresItemsContainer">
+                                    @foreach (var proveedor in Model.ProveedoresDisponibles)
+                                    {
+                                        <div class="proveedor-opcion d-flex align-items-center justify-content-between p-2 rounded-2 mb-1"
+                                             data-busqueda="@proveedor.RazonSocial @proveedor.Ruc"
+                                             style="cursor: pointer; transition: background-color 0.15s ease;">
+                                            <div class="d-flex align-items-center gap-2 flex-grow-1 overflow-hidden">
+                                                <input type="checkbox" name="ProveedorIds" value="@proveedor.Id"
+                                                       class="form-check-input proveedor-check m-0"
+                                                       data-nombre="@proveedor.RazonSocial"
+                                                       data-ruc="@proveedor.Ruc"
+                                                       checked="@(Model.ProveedorIds.Contains(proveedor.Id))" />
+                                                <span class="small fw-semibold text-dark text-truncate">@proveedor.RazonSocial</span>
+                                            </div>
+                                            <span class="badge bg-light text-muted border font-monospace ms-2 flex-shrink-0" style="font-size: 0.72rem;">@proveedor.Ruc</span>
+                                        </div>
+                                    }
+                                    <div id="proveedoresSinResultados" class="small text-muted p-3 text-center d-none">
+                                        <i class="bi bi-search me-1"></i> No se encontraron proveedores que coincidan.
+                                    </div>
+                                </div>
+
+                                <!-- Footer del Dropdown con botón Listo -->
+                                <div class="p-2 border-top bg-light bg-opacity-50 d-flex justify-content-between align-items-center">
+                                    <span class="small text-muted" id="proveedoresFooterCount" style="font-size: 0.75rem;">0 seleccionados</span>
+                                    <button type="button" class="btn btn-sm btn-dark px-3 py-1 fw-bold text-white rounded-2" id="btnCerrarProveedores" style="background-color: #0B1727; font-size: 0.76rem;">
+                                        Listo
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Etiquetas / Chips de Proveedores Seleccionados -->
+                        <div id="proveedoresSeleccionados" class="d-flex flex-wrap gap-2 mt-2" aria-live="polite"></div>
+                        <span asp-validation-for="ProveedorIds" id="proveedoresError" class="text-danger small d-block mt-1"></span>
                     </div>
                 </div>
             </div>
@@ -284,6 +340,47 @@
         </div>
     </form>
 </div>
+
+<style>
+    /* Estilos Prosegin para Dropdown Multi-Select de Proveedores - Cero hovers amarillos */
+    #btnDropdownProveedores:hover {
+        border-color: #94a3b8;
+        background-color: #f8fafc;
+    }
+    #btnDropdownProveedores:focus {
+        border-color: #0B1727 !important;
+        box-shadow: 0 0 0 3px rgba(11, 23, 39, 0.12) !important;
+    }
+    .proveedor-opcion:hover {
+        background-color: #f8fafc !important;
+    }
+    .proveedor-check:focus {
+        box-shadow: 0 0 0 2px rgba(11, 23, 39, 0.15) !important;
+        border-color: #0B1727 !important;
+    }
+    .proveedor-check:checked {
+        background-color: #0B1727 !important;
+        border-color: #0B1727 !important;
+    }
+    #txtProveedorBusqueda:focus {
+        border-color: #0B1727 !important;
+        box-shadow: none !important;
+    }
+    #proveedoresItemsContainer::-webkit-scrollbar {
+        width: 6px;
+    }
+    #proveedoresItemsContainer::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+    #proveedoresItemsContainer::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    #proveedoresItemsContainer::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+</style>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

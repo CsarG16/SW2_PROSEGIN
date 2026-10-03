@@ -9,7 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const skuMensaje = document.getElementById('skuHelperText');
     const busqueda = document.getElementById('txtProveedorBusqueda');
     const lista = document.getElementById('proveedoresList');
-    const agregar = document.getElementById('btnAgregarProveedor');
+    const trigger = document.getElementById('btnDropdownProveedores');
+    const cerrar = document.getElementById('btnCerrarProveedores');
+    const chevron = document.getElementById('dropdownChevron');
+    const dropdownWrapper = document.getElementById('proveedoresDropdownWrapper');
     const checks = [...document.querySelectorAll('.proveedor-check')];
     const etiquetas = document.getElementById('proveedoresSeleccionados');
     const proveedorError = document.getElementById('proveedoresError');
@@ -41,61 +44,155 @@ document.addEventListener('DOMContentLoaded', () => {
             : 'Complete todos los campos obligatorios (*) para guardar';
     }
 
+    function abrirProveedores(abierto) {
+        if (!lista) return;
+        lista.style.display = abierto ? 'block' : 'none';
+        if (trigger) trigger.setAttribute('aria-expanded', String(abierto));
+        if (chevron) chevron.style.transform = abierto ? 'rotate(180deg)' : 'rotate(0deg)';
+        if (abierto) {
+            filtrarProveedores();
+            setTimeout(() => busqueda && busqueda.focus(), 60);
+        }
+    }
+
     function filtrarProveedores() {
+        if (!busqueda) return;
         const termino = busqueda.value.trim().toLocaleLowerCase('es');
         let visibles = 0;
         checks.forEach(check => {
             const opcion = check.closest('.proveedor-opcion');
-            const coincide = opcion.dataset.busqueda.toLocaleLowerCase('es').includes(termino);
-            // Bootstrap d-flex tiene prioridad sobre el atributo hidden.
+            if (!opcion) return;
+            const coincide = (opcion.dataset.busqueda || '').toLocaleLowerCase('es').includes(termino);
             opcion.classList.toggle('d-none', !coincide);
             opcion.classList.toggle('d-flex', coincide);
             if (coincide) visibles++;
         });
-        document.getElementById('proveedoresSinResultados').hidden = visibles > 0;
-    }
-
-    function abrirProveedores(abierto) {
-        lista.hidden = !abierto;
-        agregar.setAttribute('aria-expanded', String(abierto));
-        if (abierto) filtrarProveedores();
+        const sinResultados = document.getElementById('proveedoresSinResultados');
+        if (sinResultados) sinResultados.classList.toggle('d-none', visibles > 0);
     }
 
     function actualizarProveedores() {
+        if (!etiquetas) return;
         etiquetas.replaceChildren();
         const seleccionados = checks.filter(c => c.checked);
+
+        // Estilos de selección en la lista
+        checks.forEach(check => {
+            const opcion = check.closest('.proveedor-opcion');
+            if (opcion) {
+                opcion.style.backgroundColor = check.checked ? '#f1f5f9' : '';
+            }
+        });
+
+        // Crear chips con botón de quitar
         seleccionados.forEach(check => {
-            const etiqueta = document.createElement('span');
-            etiqueta.className = 'badge rounded-pill bg-success-subtle text-success border d-inline-flex align-items-center gap-2';
-            etiqueta.append(document.createTextNode(check.dataset.nombre));
+            const chip = document.createElement('span');
+            chip.className = 'badge rounded-pill bg-light text-dark border d-inline-flex align-items-center gap-2 py-1 px-3 shadow-sm';
+            chip.style.fontSize = '0.78rem';
+            chip.style.fontWeight = '500';
+            
+            const icon = document.createElement('i');
+            icon.className = 'bi bi-building text-secondary';
+            chip.append(icon);
+
+            const texto = document.createElement('span');
+            texto.textContent = check.dataset.nombre || '';
+            chip.append(texto);
+
             const quitar = document.createElement('button');
             quitar.type = 'button';
-            quitar.className = 'btn-close';
+            quitar.className = 'btn-close ms-1';
+            quitar.style.fontSize = '0.55rem';
             quitar.setAttribute('aria-label', `Quitar ${check.dataset.nombre}`);
-            quitar.addEventListener('click', () => {
+            quitar.addEventListener('click', (e) => {
+                e.stopPropagation();
                 check.checked = false;
                 actualizarProveedores();
             });
-            etiqueta.append(quitar);
-            etiquetas.append(etiqueta);
+            chip.append(quitar);
+            etiquetas.append(chip);
         });
-        document.getElementById('proveedoresContador').textContent = `${seleccionados.length} seleccionados`;
-        if (seleccionados.length) proveedorError.textContent = '';
+
+        const countText = `${seleccionados.length} seleccionados`;
+        const contadorTop = document.getElementById('proveedoresContador');
+        if (contadorTop) contadorTop.textContent = countText;
+        const contadorFooter = document.getElementById('proveedoresFooterCount');
+        if (contadorFooter) contadorFooter.textContent = countText;
+
+        const placeholder = document.getElementById('dropdownPlaceholder');
+        const badgeCount = document.getElementById('proveedoresBadgeCount');
+        if (placeholder) {
+            if (seleccionados.length === 0) {
+                placeholder.textContent = 'Seleccionar proveedores autorizados...';
+                placeholder.className = 'text-muted';
+                if (badgeCount) badgeCount.classList.add('d-none');
+            } else {
+                placeholder.textContent = seleccionados.length === 1 
+                    ? seleccionados[0].dataset.nombre 
+                    : `${seleccionados.length} proveedores seleccionados`;
+                placeholder.className = 'text-dark fw-semibold';
+                if (badgeCount) {
+                    badgeCount.textContent = String(seleccionados.length);
+                    badgeCount.classList.remove('d-none');
+                }
+            }
+        }
+
+        if (seleccionados.length && proveedorError) proveedorError.textContent = '';
         actualizarEstado();
     }
 
-    agregar.addEventListener('click', () => {
-        abrirProveedores(lista.hidden);
-        if (!lista.hidden) busqueda.focus();
+    if (trigger) {
+        trigger.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const isOpen = lista && lista.style.display === 'block';
+            abrirProveedores(!isOpen);
+        });
+    }
+
+    if (cerrar) {
+        cerrar.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            abrirProveedores(false);
+        });
+    }
+
+    if (busqueda) {
+        busqueda.addEventListener('input', filtrarProveedores);
+        busqueda.addEventListener('click', (e) => e.stopPropagation());
+        busqueda.addEventListener('keydown', e => {
+            if (e.key === 'Escape') abrirProveedores(false);
+            if (e.key === 'Enter') e.preventDefault();
+        });
+    }
+
+    document.querySelectorAll('.proveedor-opcion').forEach(opcion => {
+        opcion.addEventListener('click', (e) => {
+            if (e.target.tagName === 'INPUT') return;
+            const check = opcion.querySelector('.proveedor-check');
+            if (check) {
+                check.checked = !check.checked;
+                actualizarProveedores();
+            }
+        });
+        opcion.addEventListener('mouseenter', () => {
+            const check = opcion.querySelector('.proveedor-check');
+            if (!check || !check.checked) {
+                opcion.style.backgroundColor = '#f8fafc';
+            }
+        });
+        opcion.addEventListener('mouseleave', () => {
+            const check = opcion.querySelector('.proveedor-check');
+            if (!check || !check.checked) {
+                opcion.style.backgroundColor = '';
+            }
+        });
     });
-    busqueda.addEventListener('focus', () => abrirProveedores(true));
-    busqueda.addEventListener('input', filtrarProveedores);
-    busqueda.addEventListener('keydown', e => {
-        if (e.key === 'Escape') abrirProveedores(false);
-        if (e.key === 'Enter') e.preventDefault();
-    });
+
     document.addEventListener('click', e => {
-        if (!lista.contains(e.target) && e.target !== busqueda && !agregar.contains(e.target)) {
+        if (dropdownWrapper && !dropdownWrapper.contains(e.target)) {
             abrirProveedores(false);
         }
     });
@@ -255,6 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         resetearFicha();
         actualizarProveedores();
+        abrirProveedores(false);
     });
 
     actualizarProveedores();

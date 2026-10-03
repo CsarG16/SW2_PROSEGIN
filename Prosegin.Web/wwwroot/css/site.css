@@ -669,8 +669,8 @@ body {
 }
 
 .form-control-prosegin:focus {
-  border-color: var(--prosegin-orange);
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+  border-color: #0B1727;
+  box-shadow: 0 0 0 3px rgba(11, 23, 39, 0.12);
   outline: none;
 }
 
