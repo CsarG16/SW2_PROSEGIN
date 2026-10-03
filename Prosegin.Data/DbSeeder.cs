@@ -52,9 +52,12 @@ public static class DbSeeder
             }
         };
 
+        var existingProvRucs = new HashSet<string>(
+            await context.Proveedores.Select(p => p.Ruc).ToListAsync());
+
         foreach (var prov in proveedores)
         {
-            if (!await context.Proveedores.AnyAsync(p => p.Ruc == prov.Ruc))
+            if (!existingProvRucs.Contains(prov.Ruc))
             {
                 context.Proveedores.Add(prov);
             }
@@ -485,6 +488,11 @@ public static class DbSeeder
             }
         };
 
+        // Cargar todos los SKUs existentes de golpe para evitar N+1 queries (una sola consulta).
+        var existingProducts = await context.Productos
+            .Select(p => new { p.Sku, p.RutaImagen, p.Id })
+            .ToDictionaryAsync(p => p.Sku, p => p);
+
         foreach (var prod in productos)
         {
             if (string.IsNullOrWhiteSpace(prod.RutaImagen))
@@ -492,14 +500,14 @@ public static class DbSeeder
                 prod.RutaImagen = $"/images/productos/{prod.Sku}.png";
             }
 
-            var existing = await context.Productos.FirstOrDefaultAsync(p => p.Sku == prod.Sku);
-            if (existing == null)
+            if (!existingProducts.TryGetValue(prod.Sku, out var existing))
             {
                 context.Productos.Add(prod);
             }
             else if (string.IsNullOrWhiteSpace(existing.RutaImagen))
             {
-                existing.RutaImagen = prod.RutaImagen;
+                var tracked = await context.Productos.FindAsync(existing.Id);
+                if (tracked != null) tracked.RutaImagen = prod.RutaImagen;
             }
         }
 
