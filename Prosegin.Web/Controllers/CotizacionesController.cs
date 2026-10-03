@@ -141,7 +141,7 @@ public class CotizacionesController : Controller
 
         _context.Cotizaciones.Add(cotizacion);
         await _context.SaveChangesAsync(cancellationToken);
-        TempData["SuccessMessage"] = $"Cotización {cotizacion.Correlativo} creada correctamente.";
+        TempData["SuccessMessage"] = "Productos guardados correctamente";
         return RedirectToAction(nameof(Create), new { clienteId = current.ClienteId });
     }
 
@@ -235,7 +235,8 @@ public class CotizacionesController : Controller
                 Categoria = p.Categoria,
                 UnidadMedida = p.UnidadMedida,
                 CostoReferencial = p.CostoReferencial,
-                StockDisponible = p.StockDisponible
+                StockDisponible = p.StockDisponible,
+                RutaImagen = p.RutaImagen ?? string.Empty
             })
             .ToListAsync(cancellationToken);
 

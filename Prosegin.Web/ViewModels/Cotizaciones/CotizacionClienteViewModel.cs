@@ -35,6 +35,7 @@ public class ProductoCotizacionViewModel
     public string UnidadMedida { get; set; } = "UND";
     public decimal CostoReferencial { get; set; }
     public int StockDisponible { get; set; }
+    public string RutaImagen { get; set; } = string.Empty;
     public bool Seleccionado { get; set; }
 
     [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser mayor a cero.")]
