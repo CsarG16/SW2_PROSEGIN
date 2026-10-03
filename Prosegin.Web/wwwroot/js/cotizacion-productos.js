@@ -13,6 +13,7 @@
     const quantityError = document.getElementById("errorCantidadAgregar");
     const productsError = document.getElementById("productosError");
     const maxQuantity = 2147483647;
+    const maxPrice = 999999.99;
     const quantityMessage = "La cantidad debe ser un número entero mayor a cero y no exceder 2147483647.";
     const currency = new Intl.NumberFormat("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const formatAmount = amount => `S/ ${currency.format(amount)}`;
@@ -21,9 +22,10 @@
     const price = row => row.querySelector("input.quote-price-input");
     const marginInput = row => row.querySelector("input.quote-margin-input");
     const marginBadge = row => row.querySelector(".quote-margin-badge");
-    const priceMessage = "El precio cotizado no puede ser menor al costo base registrado";
+    const priceMessage = "El precio debe estar entre el costo base y S/ 999,999.99";
     const validPrice = (value, cost) => String(value).trim() !== "" && Number.isFinite(Number(value))
-        && Number(value) >= Number(cost) && Math.abs(Number(value) * 100 - Math.round(Number(value) * 100)) < 0.000001;
+        && Number(value) >= Number(cost) && Number(value) <= maxPrice
+        && Math.abs(Number(value) * 100 - Math.round(Number(value) * 100)) < 0.000001;
     const validQuantity = value => /^\d+$/.test(String(value).trim())
         && Number.isInteger(Number(value)) && Number(value) > 0 && Number(value) <= maxQuantity;
 
