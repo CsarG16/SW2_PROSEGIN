@@ -66,7 +66,7 @@
         updateProductDisplay(null);
     };
 
-    const updateTotals = () => {
+    const updateTotals = ({ deferPriceValidation = false } = {}) => {
         let subtotalCents = 0;
         let costCents = 0;
         let count = 0;
@@ -84,8 +84,10 @@
             input.setCustomValidity(valid ? "" : quantityMessage);
             input.classList.toggle("is-invalid", !valid);
             const priceValid = !selected || validPrice(priceInput.value, row.dataset.cost);
-            priceInput.setCustomValidity(priceValid ? "" : priceMessage);
-            priceInput.classList.toggle("is-invalid", !priceValid);
+            if (!deferPriceValidation) {
+                priceInput.setCustomValidity(priceValid ? "" : priceMessage);
+                priceInput.classList.toggle("is-invalid", !priceValid);
+            }
             if (!selected) return;
             row.querySelector("[data-row-number]").textContent = String(++count);
             if (!valid || !priceValid) {
@@ -120,8 +122,10 @@
         document.getElementById("productosVacios").classList.toggle("d-none", count > 0);
         productsError.hidden = !invalid;
         productsError.textContent = invalid ? quantityMessage : "";
-        document.getElementById("alertaPrecioError").classList.toggle("d-none", !invalidPrice);
-        document.getElementById("alertaPrecioErrorTexto").textContent = priceMessage;
+        if (!deferPriceValidation) {
+            document.getElementById("alertaPrecioError").classList.toggle("d-none", !invalidPrice);
+            document.getElementById("alertaPrecioErrorTexto").textContent = priceMessage;
+        }
         // Nunca guardar cantidades corregidas silenciosamente ni una lista parcial.
         if (!hasErrors) writeCart(cart);
         return !hasErrors;
@@ -234,7 +238,7 @@
 
     rows.forEach(row => {
         quantity(row).addEventListener("input", updateTotals);
-        price(row).addEventListener("input", updateTotals);
+        price(row).addEventListener("input", () => updateTotals({ deferPriceValidation: true }));
         price(row).addEventListener("change", updateTotals);
         price(row).addEventListener("blur", () => {
             if (validPrice(price(row).value, row.dataset.cost)) price(row).value = Number(price(row).value).toFixed(2);
