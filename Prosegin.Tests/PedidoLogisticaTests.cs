@@ -222,6 +222,19 @@ public class PedidoLogisticaTests
         Assert.False(PedidoLogisticaRules.EsEntregaMenor24Horas(entregaLejana, referencia));
     }
 
+    [Theory]
+    [InlineData(-24, false)]
+    [InlineData(-1, false)]
+    [InlineData(0, true)]
+    [InlineData(23.5, true)]
+    [InlineData(24, true)]
+    [InlineData(24.01, false)]
+    public void AlertaUrgente_RespetaLimitesSinIncluirVencidos(double horas, bool esperado)
+    {
+        var referencia = new DateTime(2026, 10, 2, 18, 0, 0);
+        Assert.Equal(esperado, PedidoLogisticaRules.EsEntregaMenor24Horas(referencia.AddHours(horas), referencia));
+    }
+
     [Fact]
     public void Busqueda_SinCoincidencias_DevuelveVacioYMensajeEstablecido()
     {

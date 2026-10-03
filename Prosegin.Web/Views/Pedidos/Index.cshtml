@@ -57,6 +57,7 @@
     }
     
     .tab-pill-btn {
+        text-decoration: none;
         border-radius: 8px;
         padding: 7px 16px;
         font-size: 0.85rem;
@@ -243,7 +244,7 @@
             <div class="kpi-urgent-badge">
                 <span class="material-symbols-outlined" style="font-size: 24px; color: var(--accent-text, #b45309);">schedule</span>
                 <div class="d-flex flex-column">
-                    <span style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--accent-text, #b45309); line-height: 1;">Urgentes (&lt; 24h)</span>
+                    <span style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--accent-text, #b45309); line-height: 1;">Urgentes (&le; 24h)</span>
                     <span style="font-size: 1.05rem; font-weight: 800; color: var(--accent-on, #0f172a); line-height: 1.3;" id="kpiUrgentText">
                         @Model.TotalUrgentes despachos
                     </span>
@@ -254,7 +255,7 @@
 
     <!-- 2. PANEL DE BÚSQUEDA Y FILTRADO CON BOTÓN DORADO -->
     <div class="prosegin-search-panel p-3 p-md-4 mb-3">
-        <form method="get" asp-action="Index" id="orderSearchForm" class="d-flex flex-column flex-lg-row align-items-stretch align-items-lg-end gap-3" onsubmit="handleFormSubmit(event)">
+        <form method="get" asp-action="Index" id="orderSearchForm" class="d-flex flex-column flex-lg-row align-items-stretch align-items-lg-end gap-3">
             <input type="hidden" name="estado" id="formEstadoHidden" value="@Model.EstadoFiltro" />
 
             <div class="flex-grow-1 d-flex flex-column gap-1">
@@ -280,10 +281,10 @@
                     <span class="material-symbols-outlined" style="font-size: 18px;">search</span>
                     <span>Buscar</span>
                 </button>
-                <button type="button" class="btn-prosegin-secondary" onclick="resetFilters()" style="height: 44px; padding: 0 1.2rem;">
+                <a asp-action="Index" id="btnClearFilters" class="btn-prosegin-secondary" style="height: 44px; padding: 0 1.2rem;">
                     <span class="material-symbols-outlined" style="font-size: 18px;">restart_alt</span>
                     <span>Limpiar</span>
-                </button>
+                </a>
             </div>
         </form>
     </div>
@@ -291,30 +292,30 @@
     <!-- 3. PESTAÑAS DE FASE OPERATIVA (WORKLOAD TABS) -->
     <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
         <div class="d-flex align-items-center gap-1 p-1 rounded-3" style="background: #f1f5f9; border: 1px solid #e2e8f0;">
-            <button type="button"
+            <a asp-action="Index" asp-route-termino="@Model.Termino" asp-route-estado="ALL"
                     class="tab-pill-btn @(Model.EstadoFiltro == "ALL" ? "active-tab" : "")"
                     data-status="ALL"
-                    onclick="handleTabClick(this, 'ALL')">
+                    >
                 Todos <span class="ms-1 opacity-75">(@Model.TotalPedidos)</span>
-            </button>
-            <button type="button"
+            </a>
+            <a asp-action="Index" asp-route-termino="@Model.Termino" asp-route-estado="POR_PREPARAR"
                     class="tab-pill-btn @(Model.EstadoFiltro == "POR_PREPARAR" ? "active-tab" : "")"
                     data-status="POR_PREPARAR"
-                    onclick="handleTabClick(this, 'POR_PREPARAR')">
+                    >
                 Por Preparar <span class="ms-1 opacity-75">(@Model.TotalPorPreparar)</span>
-            </button>
-            <button type="button"
+            </a>
+            <a asp-action="Index" asp-route-termino="@Model.Termino" asp-route-estado="EN_PREPARACION"
                     class="tab-pill-btn @(Model.EstadoFiltro == "EN_PREPARACION" ? "active-tab" : "")"
                     data-status="EN_PREPARACION"
-                    onclick="handleTabClick(this, 'EN_PREPARACION')">
+                    >
                 En Preparación <span class="ms-1 opacity-75">(@Model.TotalEnPreparacion)</span>
-            </button>
-            <button type="button"
+            </a>
+            <a asp-action="Index" asp-route-termino="@Model.Termino" asp-route-estado="LISTO_DESPACHO"
                     class="tab-pill-btn @(Model.EstadoFiltro == "LISTO_DESPACHO" ? "active-tab" : "")"
                     data-status="LISTO_DESPACHO"
-                    onclick="handleTabClick(this, 'LISTO_DESPACHO')">
+                    >
                 Listos para Despacho <span class="ms-1 opacity-75">(@Model.TotalListoDespacho)</span>
-            </button>
+            </a>
         </div>
     </div>
 
@@ -363,7 +364,7 @@
                                     {
                                         <span class="badge-urgent-warning">
                                             <span class="badge-dot-urgent"></span>
-                                            Entrega &lt; 24h
+                                            Entrega &le; 24h
                                         </span>
                                     }
                                 </div>
@@ -420,27 +421,40 @@
             <p class="text-muted mb-3" style="font-size: 0.85rem; max-width: 440px;">
                 No se encontraron pedidos confirmados con los criterios ingresados. Verifique el número de orden de compra, RUC o limpie los filtros.
             </p>
-            <button type="button" class="btn btn-sm btn-link text-decoration-none d-inline-flex align-items-center gap-1" style="color: var(--accent-text, #b45309); font-weight: 700;" onclick="resetFilters()">
+            <a asp-action="Index" class="btn btn-sm btn-link text-decoration-none d-inline-flex align-items-center gap-1" style="color: var(--accent-text, #b45309); font-weight: 700;">
                 <span class="material-symbols-outlined" style="font-size: 16px;">refresh</span>
                 <span>Restablecer búsqueda</span>
-            </button>
+            </a>
         </div>
 
         <!-- 6. PIE DE PAGINACIÓN -->
         <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between px-3 py-2 border-top gap-2" style="background: #f8fafc; font-size: 0.8rem;">
             <span class="text-muted" id="paginationText">
-                Mostrando <strong style="color: #0f172a;" id="visibleOrdersCount">@Model.Pedidos.Count</strong> de <strong style="color: #0f172a;">@Model.TotalPedidos</strong> pedidos confirmados activos
+                Mostrando <strong style="color: #0f172a;">@Model.Desde–@Model.Hasta</strong> de <strong style="color: #0f172a;" id="filteredOrdersCount">@Model.TotalFiltrados</strong> pedidos coincidentes (@Model.TotalPedidos activos)
             </span>
-            <div class="d-flex align-items-center gap-1">
-                <button type="button" class="btn btn-sm p-1 text-muted border-0" disabled>
-                    <span class="material-symbols-outlined" style="font-size: 16px;">chevron_left</span>
-                </button>
-                <span class="px-2 py-1 rounded" style="background: var(--accent, #f59e0b); color: var(--accent-on, #0f172a); font-size: 0.75rem; font-weight: 700;">1</span>
-                <span class="px-2 py-1 text-muted" style="font-size: 0.75rem;">2</span>
-                <button type="button" class="btn btn-sm p-1 text-dark border-0">
-                    <span class="material-symbols-outlined" style="font-size: 16px;">chevron_right</span>
-                </button>
-            </div>
+            <nav class="d-flex align-items-center gap-1" aria-label="Páginas de pedidos">
+                @if (Model.Pagina > 1)
+                {
+                    <a asp-action="Index" asp-route-termino="@Model.Termino" asp-route-estado="@Model.EstadoFiltro" asp-route-pagina="@(Model.Pagina - 1)" class="btn btn-sm p-1 border-0" aria-label="Página anterior">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">chevron_left</span>
+                    </a>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-sm p-1 text-muted border-0" disabled aria-label="Página anterior"><span class="material-symbols-outlined" style="font-size: 16px;">chevron_left</span></button>
+                }
+                <span class="px-2 py-1 rounded" aria-current="page" style="background: var(--accent, #f59e0b); color: var(--accent-on, #0f172a); font-size: 0.75rem; font-weight: 700;">Página @Model.Pagina de @Model.TotalPaginas</span>
+                @if (Model.Pagina < Model.TotalPaginas)
+                {
+                    <a asp-action="Index" asp-route-termino="@Model.Termino" asp-route-estado="@Model.EstadoFiltro" asp-route-pagina="@(Model.Pagina + 1)" class="btn btn-sm p-1 border-0" aria-label="Página siguiente">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">chevron_right</span>
+                    </a>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-sm p-1 text-muted border-0" disabled aria-label="Página siguiente"><span class="material-symbols-outlined" style="font-size: 16px;">chevron_right</span></button>
+                }
+            </nav>
         </div>
     </div>
 </div>
@@ -515,80 +529,6 @@
 <script>
     // Almacén de pedidos serializados para apertura instantánea del modal
     const pedidosDataset = @Html.Raw(pedidosJson);
-    let currentActiveFilter = '@Model.EstadoFiltro';
-    let committedSearchTerm = '@(Model.Termino ?? "")'.trim().toLowerCase();
-
-    function handleTabClick(buttonEl, statusFilter) {
-        currentActiveFilter = statusFilter;
-        document.getElementById('formEstadoHidden').value = statusFilter;
-
-        // Actualizar estilos visuales de las pestañas
-        document.querySelectorAll('.tab-pill-btn').forEach(btn => {
-            btn.classList.remove('active-tab');
-        });
-        buttonEl.classList.add('active-tab');
-
-        // Filtrado en la tabla respetando el término buscado si ya se presionó Buscar
-        filterTableClientSide();
-    }
-
-    function handleFormSubmit(e) {
-        if (e) {
-            e.preventDefault();
-        }
-        // Se requiere presionar el botón de BUSCAR o Enter para ejecutar la búsqueda según criterio de la HU
-        committedSearchTerm = (document.getElementById('searchInput').value || '').trim().toLowerCase();
-        filterTableClientSide();
-    }
-
-    function filterTableClientSide() {
-        const searchVal = committedSearchTerm;
-        const rows = document.querySelectorAll('.order-row');
-        const emptyState = document.getElementById('emptyState');
-        let visibleCount = 0;
-
-        rows.forEach(row => {
-            const rowStatus = row.getAttribute('data-status');
-            const rowSearch = (row.getAttribute('data-search') || '').toLowerCase();
-
-            const matchStatus = (currentActiveFilter === 'ALL') || (rowStatus === currentActiveFilter);
-            const matchSearch = !searchVal || rowSearch.includes(searchVal);
-
-            if (matchStatus && matchSearch) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
-        });
-
-        // Toggle del estado vacío (Empty State)
-        if (visibleCount === 0) {
-            emptyState.classList.remove('d-none');
-            emptyState.classList.add('d-flex');
-        } else {
-            emptyState.classList.add('d-none');
-            emptyState.classList.remove('d-flex');
-        }
-
-        // Actualizar contador del footer
-        const visibleCountEl = document.getElementById('visibleOrdersCount');
-        if (visibleCountEl) {
-            visibleCountEl.innerText = visibleCount;
-        }
-    }
-
-    function resetFilters() {
-        document.getElementById('searchInput').value = '';
-        committedSearchTerm = '';
-        const allTab = document.querySelector('.tab-pill-btn[data-status="ALL"]');
-        if (allTab) {
-            handleTabClick(allTab, 'ALL');
-        } else {
-            filterTableClientSide();
-        }
-    }
-
     function openDetailModal(orderId) {
         const pedido = pedidosDataset.find(p => p.NumeroPedido.toLowerCase() === orderId.toLowerCase());
         if (!pedido) {

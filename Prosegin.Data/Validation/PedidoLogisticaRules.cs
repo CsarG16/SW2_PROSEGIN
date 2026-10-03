@@ -28,9 +28,7 @@ public static class PedidoLogisticaRules
     public static bool EsEntregaMenor24Horas(DateTime fechaEntrega, DateTime fechaReferencia)
     {
         var diferencia = fechaEntrega - fechaReferencia;
-        // Si la entrega es hoy (o en el transcurso del día) o dentro de 24 horas calendario
-        return (diferencia.TotalHours >= -12 && diferencia.TotalHours <= 24)
-            || (fechaEntrega.Date == fechaReferencia.Date);
+        return diferencia >= TimeSpan.Zero && diferencia <= TimeSpan.FromHours(24);
     }
 
     /// <summary>
