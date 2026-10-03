@@ -12,6 +12,7 @@ public class Producto
     public int StockDisponible { get; set; }
     public string? RutaFichaTecnicaPdf { get; set; }
     public string? NombreArchivoPdf { get; set; }
+    public string? RutaImagen { get; set; }
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     public bool Activo { get; set; } = true;
 

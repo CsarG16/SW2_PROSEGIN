@@ -14,7 +14,7 @@
             <div class="header-content">
                 <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
                     <h1 class="page-title mb-0">Catálogo de Productos EPP</h1>
-                    <span class="badge-status badge-status-warning"><span class="status-dot"></span> @Model.Productos.Count disponibles</span>
+                    <span class="badge-status badge-status-warning"><span class="status-dot"></span> <span id="catalogProductCount">@Model.Productos.Count</span> <span id="catalogProductLabel">disponibles</span></span>
                 </div>
                 <p class="page-subtitle mb-0">Explora el catálogo homologado, selecciona las unidades requeridas y continúa con la cotización.</p>
             </div>
@@ -65,8 +65,17 @@
                 {
                     var estimatedPrice = Math.Round(product.Precio * 1.30m, 2);
                     var searchText = $"{product.Sku} {product.Nombre} {product.Categoria}".ToLowerInvariant();
+                    var imageSrc = !string.IsNullOrWhiteSpace(product.RutaImagen)
+                        ? product.RutaImagen
+                        : $"/images/productos/{product.Sku}.png";
                     <article class="catalog-product" data-product-card data-product-id="@product.Id" data-sku="@product.Sku" data-name="@product.Nombre" data-category="@product.Categoria" data-search="@searchText" data-cost="@product.Precio.ToString(CultureInfo.InvariantCulture)" data-price="@estimatedPrice.ToString(CultureInfo.InvariantCulture)" data-stock="@product.StockDisponible">
-                        <div class="catalog-product-mark" aria-hidden="true"><i class="bi bi-shield-check"></i><span>EPP</span></div>
+                        <div class="catalog-product-mark" title="Ver imagen de @product.Nombre" data-preview-img="@imageSrc" data-preview-name="@product.Nombre" data-preview-sku="@product.Sku" role="button" tabindex="0" aria-label="Ver imagen ampliada de @product.Nombre">
+                            <img src="@imageSrc" alt="Foto referencial de @product.Nombre" class="catalog-product-thumb" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('d-none');" />
+                            <div class="catalog-product-fallback d-none" aria-hidden="true">
+                                <i class="bi bi-shield-check"></i>
+                                <span>EPP</span>
+                            </div>
+                        </div>
                         <div class="catalog-product-info">
                             <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
                                 <span class="catalog-sku">@product.Sku</span>
@@ -117,6 +126,30 @@
             </aside>
         </div>
     }
+</div>
+
+<!-- Modal Vista Previa de Imagen EPP -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header border-bottom-0 pb-1 pt-3 px-4">
+                <div>
+                    <span class="badge bg-light text-secondary border font-monospace" id="modalProductSku"></span>
+                    <h2 class="modal-title fs-6 fw-bold mt-1 text-dark mb-0" id="imagePreviewTitle"></h2>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <div class="p-3 bg-light rounded-4 d-inline-block shadow-sm w-100" style="max-width: 360px;">
+                    <img id="modalPreviewImg" src="" alt="Imagen referencial del producto" class="img-fluid" style="max-height: 320px; object-fit: contain; border-radius: 8px;" />
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 pt-0 px-4 pb-3 justify-content-between">
+                <small class="text-muted"><i class="bi bi-shield-check text-warning me-1"></i>Imagen de referencia homologada</small>
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
@@ -224,6 +257,35 @@
                 categoryButtons.forEach(candidate => candidate.classList.toggle("active", candidate === button));
                 applyFilters();
             }));
+
+            // Modal de previsualización de imagen ampliada
+            const previewModalEl = document.getElementById("imagePreviewModal");
+            if (previewModalEl && typeof bootstrap !== "undefined") {
+                const previewModal = new bootstrap.Modal(previewModalEl);
+                const modalImg = document.getElementById("modalPreviewImg");
+                const modalTitle = document.getElementById("imagePreviewTitle");
+                const modalSku = document.getElementById("modalProductSku");
+
+                document.querySelectorAll("[data-preview-img]").forEach(elem => {
+                    elem.addEventListener("click", () => {
+                        const src = elem.dataset.previewImg;
+                        const name = elem.dataset.previewName;
+                        const sku = elem.dataset.previewSku;
+                        if (src) {
+                            modalImg.src = src;
+                            modalTitle.textContent = name || "";
+                            modalSku.textContent = sku || "";
+                            previewModal.show();
+                        }
+                    });
+                    elem.addEventListener("keydown", (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            elem.click();
+                        }
+                    });
+                });
+            }
 
             parseCart();
             renderCart();

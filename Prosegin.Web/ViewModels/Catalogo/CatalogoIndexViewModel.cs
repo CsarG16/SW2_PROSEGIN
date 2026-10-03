@@ -19,4 +19,5 @@ public class ProductoCatalogoItemViewModel
     public int StockDisponible { get; set; }
     public string? RutaFichaTecnicaPdf { get; set; }
     public string? NombreArchivoPdf { get; set; }
+    public string? RutaImagen { get; set; }
 }

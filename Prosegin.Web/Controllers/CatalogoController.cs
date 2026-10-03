@@ -54,7 +54,8 @@ public class CatalogoController : Controller
                 Precio = p.CostoReferencial,
                 StockDisponible = p.StockDisponible,
                 RutaFichaTecnicaPdf = p.RutaFichaTecnicaPdf,
-                NombreArchivoPdf = p.NombreArchivoPdf
+                NombreArchivoPdf = p.NombreArchivoPdf,
+                RutaImagen = p.RutaImagen
             })
             .ToListAsync();
 

@@ -487,9 +487,19 @@ public static class DbSeeder
 
         foreach (var prod in productos)
         {
-            if (!await context.Productos.AnyAsync(p => p.Sku == prod.Sku))
+            if (string.IsNullOrWhiteSpace(prod.RutaImagen))
+            {
+                prod.RutaImagen = $"/images/productos/{prod.Sku}.png";
+            }
+
+            var existing = await context.Productos.FirstOrDefaultAsync(p => p.Sku == prod.Sku);
+            if (existing == null)
             {
                 context.Productos.Add(prod);
+            }
+            else if (string.IsNullOrWhiteSpace(existing.RutaImagen))
+            {
+                existing.RutaImagen = prod.RutaImagen;
             }
         }
 
