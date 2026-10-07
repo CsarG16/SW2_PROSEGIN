@@ -18,6 +18,15 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/sidebar.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Prosegin.Web.styles.css" asp-append-version="true" />
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('prosegin_sidebar_collapsed') === 'true' && window.innerWidth >= 992) {
+                    document.documentElement.classList.add('sidebar-is-collapsed-init');
+                }
+            } catch (e) {}
+        })();
+    </script>
 </head>
 <body>
 <div class="prosegin-app-container">
@@ -28,12 +37,12 @@
     <aside class="prosegin-sidebar" id="proseginSidebar">
         <!-- Logo / Marca -->
         <div class="sidebar-brand">
-            <a asp-controller="Home" asp-action="Index" class="brand-link">
+            <a asp-controller="Home" asp-action="Index" class="brand-link" title="PROSEGIN - Inicio">
                 <img src="~/logo_horizontal.png" alt="PROSEGIN - Prevención Integral" class="sidebar-brand-logo" />
+                <div class="sidebar-brand-mini" title="PROSEGIN - Prevención Integral">
+                    <span class="brand-mini-letter">P</span>
+                </div>
             </a>
-            <button type="button" class="sidebar-toggle-btn" id="btnSidebarClose" aria-label="Colapsar menú" title="Colapsar menú">
-                <i class="bi bi-chevron-double-left"></i>
-            </button>
         </div>
 
         <!-- Menú de Operaciones -->
@@ -47,13 +56,15 @@
                 <li class="sidebar-nav-item">
                     <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Catalogo" && (ViewContext.RouteData.Values["action"]?.ToString() == "Index" || string.IsNullOrEmpty(ViewContext.RouteData.Values["action"]?.ToString())) ? "active" : "")" asp-controller="Catalogo" asp-action="Index">
                         <i class="bi bi-grid"></i>
-                        <span>Catálogo de EPP</span>
+                        <span class="sidebar-nav-text">Catálogo de EPP</span>
+                        <span class="sidebar-floating-tag">Catálogo de EPP</span>
                     </a>
                 </li>
                 <li class="sidebar-nav-item">
                     <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Catalogo" && ViewContext.RouteData.Values["action"]?.ToString() == "RegistroProductos" ? "active" : "")" asp-controller="Catalogo" asp-action="RegistroProductos">
                         <i class="bi bi-plus-circle"></i>
-                        <span>Registrar EPP</span>
+                        <span class="sidebar-nav-text">Registrar EPP</span>
+                        <span class="sidebar-floating-tag">Registrar EPP</span>
                     </a>
                 </li>
 
@@ -64,13 +75,15 @@
                 <li class="sidebar-nav-item">
                     <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Clientes" && (ViewContext.RouteData.Values["action"]?.ToString() == "Index" || ViewContext.RouteData.Values["action"]?.ToString() == "Direcciones") ? "active" : "")" asp-controller="Clientes" asp-action="Index">
                         <i class="bi bi-people"></i>
-                        <span>Búsqueda de Clientes</span>
+                        <span class="sidebar-nav-text">Búsqueda de Clientes</span>
+                        <span class="sidebar-floating-tag">Búsqueda de Clientes</span>
                     </a>
                 </li>
                 <li class="sidebar-nav-item">
                     <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Clientes" && ViewContext.RouteData.Values["action"]?.ToString() == "Create" ? "active" : "")" asp-controller="Clientes" asp-action="Create">
                         <i class="bi bi-person-plus"></i>
-                        <span>Registrar Cliente</span>
+                        <span class="sidebar-nav-text">Registrar Cliente</span>
+                        <span class="sidebar-floating-tag">Registrar Cliente</span>
                     </a>
                 </li>
 
@@ -81,7 +94,8 @@
                 <li class="sidebar-nav-item">
                     <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Pedidos" ? "active" : "")" asp-controller="Pedidos" asp-action="Index">
                         <i class="bi bi-truck"></i>
-                        <span>Gestión de Pedidos</span>
+                        <span class="sidebar-nav-text">Gestión de Pedidos</span>
+                        <span class="sidebar-floating-tag">Gestión de Pedidos</span>
                     </a>
                 </li>
             </ul>
@@ -100,17 +114,18 @@
                 <button type="button" class="btn-logout" title="Cerrar Sesión">
                     <i class="bi bi-box-arrow-right"></i>
                 </button>
+                <span class="sidebar-floating-tag">Carlos M. &bull; Asesor Comercial</span>
             </div>
         </div>
     </aside>
 
     <!-- Área de Contenido Principal -->
     <div class="prosegin-main-wrapper">
-        <!-- Topbar limpia -->
+        <!-- Topbar limpia con botón de colapso accesible -->
         <header class="prosegin-topbar">
             <div class="d-flex align-items-center gap-3">
-                <button type="button" class="btn btn-sm btn-outline-secondary d-lg-none" id="btnSidebarToggle">
-                    <i class="bi bi-list fs-5"></i>
+                <button type="button" class="topbar-toggle-btn" id="btnSidebarToggle" aria-label="Alternar menú lateral" title="Alternar menú lateral">
+                    <i class="bi bi-layout-sidebar-inset"></i>
                 </button>
                 <div class="topbar-breadcrumbs">
                     <a asp-controller="Home" asp-action="Index" class="crumb-root">Operaciones EPP</a>
