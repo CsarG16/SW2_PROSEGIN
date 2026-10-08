@@ -4,6 +4,7 @@
 @{
     ViewData["Title"] = "Generar Cotización";
     var cotizacionGuardada = TempData["CotizacionGuardada"] is true;
+    var tieneCotizacionGuardada = Model.CotizacionId.HasValue;
     var noPuedeVender = !string.Equals(Model.EstadoSunat, "ACTIVO", StringComparison.OrdinalIgnoreCase)
         || !string.Equals(Model.CondicionSunat, "HABIDO", StringComparison.OrdinalIgnoreCase);
 }
@@ -66,6 +67,10 @@
             <div class="small mt-1">Las cotizaciones a crédito están deshabilitadas.</div>
         </div>
     }
+
+    <div id="pdfDownloadSuccess" class="alert alert-success d-flex align-items-center mb-4" role="status" hidden>
+        <i class="bi bi-check-circle-fill me-2"></i>Documento PDF descargado correctamente.
+    </div>
 
     <form asp-action="Create" method="post" id="formCotizacion" data-cliente-id="@Model.ClienteId" data-post-invalido="@(ViewData["CotizacionPostInvalido"] is true ? "true" : "false")" data-cotizacion-guardada="@(cotizacionGuardada ? "true" : "false")">
         @Html.AntiForgeryToken()
@@ -320,12 +325,144 @@
         <div class="quote-bottom-bar">
             <div class="quote-actions">
                 <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary"><i class="bi bi-arrow-left"></i>Atrás</a>
+                <button type="button" class="btn-prosegin-secondary" id="generarPdf"
+                        data-bs-toggle="modal" data-bs-target="#cotizacionPdfModal"
+                        disabled="@(!tieneCotizacionGuardada)"
+                        title="@(tieneCotizacionGuardada ? "Ver y generar el PDF" : "Guarda la cotización antes de generar el PDF")">
+                    <i class="bi bi-file-earmark-pdf"></i> Generar PDF
+                </button>
                 <button type="button" class="quote-clear-button" id="limpiarProductos"><i class="bi bi-dash-square"></i>Limpiar</button>
                 <button type="submit" class="btn-prosegin-primary" id="btnGrabarCotizacion" @(noPuedeVender || Model.DatosSunatDesactualizados || Model.ClienteBloqueado ? "disabled" : null)><i class="bi bi-save"></i>Grabar cotización</button>
             </div>
         </div>
     </form>
 </div>
+
+@if (tieneCotizacionGuardada)
+{
+    <div class="modal fade" id="cotizacionPdfModal" tabindex="-1" aria-labelledby="cotizacionPdfModalTitle" aria-hidden="true"
+         data-download-url="@Url.Action("DescargarPdf", "Cotizaciones")"
+         data-cotizacion-id="@Model.CotizacionId"
+         data-download-filename="@($"COT-{Model.FechaEmision:yyyy}-{Model.Correlativo}_{Model.RazonSocial}.pdf")">
+        <div class="modal-dialog modal-xl modal-dialog-centered quote-pdf-dialog">
+            <div class="modal-content quote-pdf-modal">
+                <div class="modal-header quote-pdf-modal-header">
+                    <div>
+                        <h2 class="modal-title fs-6 fw-bold" id="cotizacionPdfModalTitle">
+                            Vista Previa de Cotización: @Model.Correlativo
+                        </h2>
+                        <p class="small text-secondary mb-0">Revisión formal del documento comercial y sus anexos técnicos</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body quote-pdf-modal-body">
+                    <div class="row g-3">
+                        <div class="col-lg-8">
+                            <article class="quote-pdf-paper" aria-label="Documento de cotización">
+                                <header class="quote-pdf-document-header">
+                                    <div>
+                                        <span class="quote-pdf-brand">PROSEGIN</span>
+                                        <p>Equipos de protección personal · R.U.C. 20601234567</p>
+                                    </div>
+                                    <div class="quote-pdf-number">
+                                        <span>DOCUMENTO OFICIAL</span>
+                                        <strong>@Model.Correlativo</strong>
+                                        <small>Emisión: @Model.FechaEmision?.ToString("dd/MM/yyyy")</small>
+                                        <small>Moneda: PEN (S/.)</small>
+                                    </div>
+                                </header>
+
+                                <section class="quote-pdf-client">
+                                    <div>
+                                        <span>CLIENTE / RAZÓN SOCIAL</span>
+                                        <strong>@Model.RazonSocial</strong>
+                                        <small>RUC: @Model.Ruc · @Model.DireccionFiscal</small>
+                                    </div>
+                                    <div>
+                                        <span>CONDICIÓN DE PAGO</span>
+                                        <strong>@Model.CondicionPago</strong>
+                                    </div>
+                                </section>
+
+                                <div class="table-responsive">
+                                    <table class="table table-sm quote-pdf-products">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>SKU</th>
+                                                <th>DESCRIPCIÓN</th>
+                                                <th class="text-end">CANT.</th>
+                                                <th class="text-end">P. UNIT.</th>
+                                                <th class="text-end">SUBTOTAL</th>
+                                                <th class="text-center">FICHA</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @for (var i = 0; i < Model.ProductosCotizacionGuardada.Count; i++)
+                                            {
+                                                var producto = Model.ProductosCotizacionGuardada[i];
+                                                <tr>
+                                                    <td>@(i + 1)</td>
+                                                    <td class="font-monospace">@producto.Sku</td>
+                                                    <td>@producto.Nombre <small class="d-block text-secondary">@producto.UnidadMedida</small></td>
+                                                    <td class="text-end">@producto.Cantidad</td>
+                                                    <td class="text-end">S/ @producto.PrecioUnitario.ToString("N2", new CultureInfo("es-PE"))</td>
+                                                    <td class="text-end">S/ @producto.Subtotal.ToString("N2", new CultureInfo("es-PE"))</td>
+                                                    <td class="text-center">
+                                                        @if (!string.IsNullOrWhiteSpace(producto.RutaFichaTecnicaPdf))
+                                                        {
+                                                            <a asp-controller="Catalogo" asp-action="VerFicha" asp-route-id="@producto.ProductoId"
+                                                               target="_blank" rel="noopener noreferrer" aria-label="Abrir ficha técnica de @producto.Nombre"
+                                                               title="@(string.IsNullOrWhiteSpace(producto.NombreArchivoPdf) ? "Abrir ficha técnica" : producto.NombreArchivoPdf)">
+                                                                <i class="bi bi-file-earmark-pdf"></i>
+                                                            </a>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-secondary">No disponible</span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="quote-pdf-totals">
+                                    <div><span>Subtotal neto</span><strong>S/ @Model.Subtotal.ToString("N2", new CultureInfo("es-PE"))</strong></div>
+                                    <div><span>I.G.V. (18%)</span><strong>S/ @Model.Igv.ToString("N2", new CultureInfo("es-PE"))</strong></div>
+                                    <div class="quote-pdf-total"><span>TOTAL A PAGAR</span><strong>S/ @Model.Total.ToString("N2", new CultureInfo("es-PE")) PEN</strong></div>
+                                </div>
+                            </article>
+                        </div>
+                        <aside class="col-lg-4">
+                            <div class="quote-pdf-controls">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h3 class="small fw-bold text-uppercase mb-0">Control de emisión</h3>
+                                    <span class="badge @(Model.EstadoCotizacion == "Enviada" ? "text-bg-primary" : "text-bg-success")" id="cotizacionPdfEstado">
+                                        @(Model.EstadoCotizacion == "Enviada" ? "ENVIADA" : "LISTO PARA ENVÍO")
+                                    </span>
+                                </div>
+                                <div class="quote-pdf-summary">
+                                    <h4>Resumen de contenido</h4>
+                                    <div><span><i class="bi bi-check-circle me-1"></i>Total ítems:</span><strong>@Model.ProductosCotizacionGuardada.Count productos homologados</strong></div>
+                                    <div><span><i class="bi bi-box-seam me-1"></i>Unidades:</span><strong>@Model.ProductosCotizacionGuardada.Sum(p => (long)p.Cantidad) unidades</strong></div>
+                                    <div><span><i class="bi bi-cash-stack me-1"></i>Monto a facturar:</span><strong>S/ @Model.Total.ToString("N2", new CultureInfo("es-PE"))</strong></div>
+                                </div>
+                                <div id="pdfDownloadError" class="alert alert-danger small mt-3" role="alert" hidden></div>
+                                <button type="button" class="btn btn-dark w-100 mt-4" id="confirmarDescargaPdf">
+                                    <i class="bi bi-download me-1"></i>Confirmar y Descargar
+                                </button>
+                                <p class="small text-secondary text-center mt-2 mb-0">Se descargará el PDF y la cotización quedará marcada como enviada.</p>
+                                <button type="button" class="btn btn-light border w-100 mt-2" data-bs-dismiss="modal">Cancelar</button>
+                            </div>
+                        </aside>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @section Scripts {
     <script src="~/js/cotizacion-productos.js" asp-append-version="true"></script>

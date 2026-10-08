@@ -2239,3 +2239,519 @@ body {
   }
 }
 
+.quote-pdf-dialog {
+  width: min(96vw, 1320px);
+  max-width: none;
+}
+
+.quote-pdf-modal {
+  border: 0;
+  border-radius: 0.8rem;
+  overflow: hidden;
+}
+
+.quote-pdf-modal-header {
+  padding: 0.8rem 1.2rem;
+}
+
+.quote-pdf-modal-body {
+  min-height: min(76vh, 760px);
+  padding: 1rem;
+  background: #e8edf2;
+}
+
+.quote-pdf-paper {
+  min-height: 660px;
+  padding: clamp(1rem, 3vw, 2.5rem);
+  background: #fff;
+  box-shadow: 0 0.25rem 1.2rem rgb(12 25 42 / 14%);
+  color: #263445;
+}
+
+.quote-pdf-document-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e1e7ed;
+}
+
+.quote-pdf-brand {
+  display: inline-block;
+  padding-left: 0.6rem;
+  border-left: 4px solid #ee911c;
+  color: #0b1727;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.quote-pdf-document-header p,
+.quote-pdf-number small {
+  display: block;
+  margin: 0.25rem 0 0;
+  color: #657487;
+  font-size: 0.68rem;
+}
+
+.quote-pdf-number {
+  display: grid;
+  gap: 0.2rem;
+  text-align: right;
+}
+
+.quote-pdf-number > span,
+.quote-pdf-client span {
+  color: #718094;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+}
+
+.quote-pdf-number strong {
+  color: #0b1727;
+  font-size: 0.85rem;
+}
+
+.quote-pdf-client {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding: 0.85rem;
+  border: 1px solid #e2e8ee;
+  border-radius: 0.35rem;
+  background: #f8fafc;
+}
+
+.quote-pdf-client > div {
+  display: grid;
+  align-content: start;
+  gap: 0.25rem;
+}
+
+.quote-pdf-client strong {
+  color: #263445;
+  font-size: 0.72rem;
+}
+
+.quote-pdf-client small {
+  color: #657487;
+  font-size: 0.63rem;
+}
+
+.quote-pdf-products {
+  --bs-table-bg: transparent;
+  font-size: 0.62rem;
+}
+
+.quote-pdf-products th {
+  color: #607083;
+  font-size: 0.57rem;
+  white-space: nowrap;
+}
+
+.quote-pdf-products td {
+  vertical-align: middle;
+}
+
+.quote-pdf-products th,
+.quote-pdf-products td {
+  padding: 0.45rem 0.3rem;
+}
+
+.quote-pdf-totals {
+  width: min(100%, 310px);
+  margin: 1rem 0 0 auto;
+}
+
+.quote-pdf-totals > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.3rem 0;
+  color: #647386;
+  font-size: 0.7rem;
+}
+
+.quote-pdf-totals .quote-pdf-total {
+  margin-top: 0.35rem;
+  padding: 0.65rem;
+  background: #0b1727;
+  color: #fff;
+  font-weight: 700;
+}
+
+.quote-pdf-controls {
+  min-height: 100%;
+  padding: 0.9rem;
+  background: #fff;
+}
+
+.quote-pdf-controls h3,
+.quote-pdf-summary h4 {
+  color: #526173;
+  font-size: 0.72rem;
+}
+
+.quote-pdf-summary {
+  padding: 0.8rem;
+  background: #f6f8fa;
+}
+
+.quote-pdf-summary h4 {
+  margin-bottom: 0.7rem;
+  font-weight: 700;
+}
+
+.quote-pdf-summary > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-top: 0.55rem;
+  color: #647386;
+  font-size: 0.68rem;
+}
+
+.quote-pdf-summary strong {
+  color: #263445;
+  text-align: right;
+}
+
+@media (max-width: 767.98px) {
+  .quote-pdf-dialog {
+    width: auto;
+    margin: 0.5rem;
+  }
+
+  .quote-pdf-modal-body {
+    padding: 0.6rem;
+  }
+
+  .quote-pdf-paper {
+    min-height: 0;
+    padding: 1rem 0.7rem;
+  }
+
+  .quote-pdf-document-header {
+    flex-direction: column;
+  }
+
+  .quote-pdf-number {
+    text-align: left;
+  }
+
+  .quote-pdf-client {
+    flex-direction: column;
+  }
+}
+
+.quote-inbox {
+  color: #172536;
+}
+
+.quote-inbox-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.2rem 1.35rem;
+  border: 1px solid #e2e8ef;
+  border-radius: 0.65rem;
+  background: #fff;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 6%);
+}
+
+.quote-inbox-header h1 {
+  margin: 0;
+  color: #182638;
+  font-size: 1.2rem;
+  font-weight: 750;
+}
+
+.quote-inbox-header p {
+  margin: 0.22rem 0 0;
+  color: #718094;
+  font-size: 0.8rem;
+}
+
+.quote-inbox-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid #e5e9ee;
+  color: #657184;
+  font-size: 0.65rem;
+  white-space: nowrap;
+}
+
+.quote-inbox-brand i {
+  color: #ee911c;
+  font-size: 0.55rem;
+}
+
+.quote-inbox-brand strong {
+  color: #263445;
+}
+
+.quote-inbox-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.1rem 0 0.85rem;
+  padding: 0.65rem;
+  border: 1px solid #e2e8ef;
+  border-radius: 0.55rem;
+  background: #fff;
+}
+
+.quote-inbox-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: min(100%, 470px);
+}
+
+.quote-inbox-search > i {
+  position: absolute;
+  left: 0.8rem;
+  color: #8895a4;
+  pointer-events: none;
+}
+
+.quote-inbox-search input {
+  min-width: 0;
+  flex: 1;
+  height: 38px;
+  padding: 0.45rem 0.7rem 0.45rem 2.1rem;
+  border: 1px solid #cbd3dc;
+  border-radius: 0.25rem;
+  color: #263445;
+  font-size: 0.78rem;
+}
+
+.quote-inbox-search input:focus {
+  border-color: #63788e;
+  outline: 2px solid rgb(99 120 142 / 16%);
+}
+
+.quote-inbox-search button {
+  height: 38px;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.quote-inbox-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  overflow-x: auto;
+}
+
+.quote-inbox-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 0.2rem;
+  color: #59697b;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.quote-inbox-filter:hover {
+  background: #f1f4f7;
+  color: #172536;
+}
+
+.quote-inbox-filter.active {
+  background: #15263a;
+  color: #fff;
+}
+
+.quote-inbox-filter span {
+  opacity: 0.75;
+}
+
+.quote-inbox-table-card {
+  overflow: hidden;
+  border: 1px solid #e2e8ef;
+  border-radius: 0.55rem;
+  background: #fff;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 5%);
+}
+
+.quote-inbox-table {
+  min-width: 900px;
+}
+
+.quote-inbox-table thead th {
+  padding: 0.8rem 0.7rem;
+  border-bottom: 1px solid #e0e6ec;
+  background: #f7f9fb;
+  color: #657386;
+  font-size: 0.63rem;
+  font-weight: 750;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.quote-inbox-table tbody td {
+  padding: 0.75rem 0.7rem;
+  border-bottom: 1px solid #edf0f3;
+  color: #384657;
+  font-size: 0.72rem;
+  vertical-align: middle;
+}
+
+.quote-inbox-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.quote-inbox-code {
+  color: #29394d !important;
+  font-family: var(--font-mono, Consolas, monospace);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.quote-inbox-expiry {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.2rem;
+  color: #617286;
+  font-size: 0.63rem;
+}
+
+.quote-inbox-expiry.expired {
+  color: #c03339;
+}
+
+.quote-inbox-expiry.approved {
+  color: #158469;
+}
+
+.quote-inbox-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.45rem;
+  border-radius: 0.15rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.quote-inbox-status i {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.quote-inbox-status.enviada {
+  background: #e5eefb;
+  color: #315c9e;
+}
+
+.quote-inbox-status.vencida {
+  background: #fde9e8;
+  color: #b83236;
+}
+
+.quote-inbox-status.aprobada {
+  background: #ddf7ee;
+  color: #14856a;
+}
+
+.quote-inbox-table .btn {
+  font-size: 0.65rem;
+}
+
+.quote-inbox-empty {
+  height: 190px;
+  text-align: center;
+}
+
+.quote-inbox-empty > * {
+  display: block;
+  margin: 0.25rem auto;
+}
+
+.quote-inbox-empty i {
+  color: #8592a1;
+  font-size: 1.5rem;
+}
+
+.quote-inbox-empty strong {
+  color: #536174;
+}
+
+.quote-inbox-empty span {
+  color: #7e8b99;
+}
+
+.quote-inbox-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.7rem 0.85rem;
+  border-top: 1px solid #e7ebef;
+  background: #f8f9fa;
+  color: #667487;
+  font-size: 0.66rem;
+}
+
+.quote-inbox-pagination {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.quote-inbox-pagination a {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #dfe4e9;
+  border-radius: 0.2rem;
+  background: #fff;
+  color: #405064;
+  text-decoration: none;
+}
+
+.quote-inbox-pagination a.disabled {
+  color: #a0a9b4;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .quote-inbox-header,
+  .quote-inbox-toolbar,
+  .quote-inbox-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .quote-inbox-toolbar {
+    gap: 0.65rem;
+  }
+
+  .quote-inbox-search {
+    width: 100%;
+  }
+
+  .quote-inbox-filters {
+    width: 100%;
+  }
+
+  .quote-inbox-footer {
+    align-items: flex-start;
+  }
+}

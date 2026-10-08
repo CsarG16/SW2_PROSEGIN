@@ -90,7 +90,19 @@
                 <!-- Separador sutil de módulo -->
                 <li class="sidebar-nav-divider"></li>
 
-                <!-- Módulo 3: Pedidos y Logística -->
+                <!-- Módulo 3: Cotizaciones -->
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Cotizaciones" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")" asp-controller="Cotizaciones" asp-action="Index">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <span class="sidebar-nav-text">Cotizaciones</span>
+                        <span class="sidebar-floating-tag">Cotizaciones</span>
+                    </a>
+                </li>
+
+                <!-- Separador sutil de módulo -->
+                <li class="sidebar-nav-divider"></li>
+
+                <!-- Módulo 4: Pedidos y Logística -->
                 <li class="sidebar-nav-item">
                     <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Pedidos" ? "active" : "")" asp-controller="Pedidos" asp-action="Index">
                         <i class="bi bi-truck"></i>

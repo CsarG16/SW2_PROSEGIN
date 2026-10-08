@@ -1,0 +1,156 @@
+@model Prosegin.Web.ViewModels.Cotizaciones.CotizacionBandejaViewModel
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Cotizaciones";
+    var peruCulture = CultureInfo.GetCultureInfo("es-PE");
+    var filters = new[]
+    {
+        new { Key = "Todas", Label = "Todas", Count = Model.ResultadosTodas },
+        new { Key = "Enviada", Label = "Enviada", Count = Model.ResultadosEnviadas },
+        new { Key = "Vencida", Label = "Vencida", Count = Model.ResultadosVencidas },
+        new { Key = "Aprobada", Label = "Aprobada", Count = Model.ResultadosAprobadas }
+    };
+}
+
+<div class="container-fluid px-0 quote-inbox">
+    <header class="quote-inbox-header">
+        <div>
+            <h1>Cotizaciones</h1>
+            <p>Bandeja de seguimiento y control de vigencia de cotizaciones emitidas.</p>
+        </div>
+        <span class="quote-inbox-brand"><i class="bi bi-square-fill"></i><strong>PROSEGIN</strong><span>PREVENCIÓN INTEGRAL</span></span>
+    </header>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success d-flex align-items-center mt-3" role="status">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger d-flex align-items-center mt-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+        </div>
+    }
+
+    <section class="quote-inbox-toolbar">
+        <form asp-controller="Cotizaciones" asp-action="Index" method="get" class="quote-inbox-search">
+            <label class="visually-hidden" for="buscarCotizacion">Buscar por código o cliente</label>
+            <i class="bi bi-search"></i>
+            <input id="buscarCotizacion" type="search" name="busqueda" value="@Model.Busqueda"
+                   placeholder="Buscar por código correlativo o cliente..." />
+            <input type="hidden" name="estado" value="@Model.EstadoFiltro" />
+            <button type="submit" class="btn btn-dark">Buscar</button>
+        </form>
+
+        <nav class="quote-inbox-filters" aria-label="Filtrar cotizaciones por estado">
+            @foreach (var filter in filters)
+            {
+                <a asp-controller="Cotizaciones" asp-action="Index"
+                   asp-route-estado="@filter.Key"
+                   asp-route-busqueda="@Model.Busqueda"
+                   class="quote-inbox-filter @(Model.EstadoFiltro == filter.Key ? "active" : "")"
+                   aria-current="@(Model.EstadoFiltro == filter.Key ? "page" : null)">
+                    @filter.Label <span>@filter.Count</span>
+                </a>
+            }
+        </nav>
+    </section>
+
+    <section class="quote-inbox-table-card" aria-label="Listado de cotizaciones">
+        <div class="table-responsive">
+            <table class="table quote-inbox-table mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Código</th>
+                        <th scope="col">Cliente</th>
+                        <th scope="col">Emisión</th>
+                        <th scope="col">Vigencia (48 h)</th>
+                        <th scope="col" class="text-end">Monto total</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col" class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Cotizaciones.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" class="quote-inbox-empty">
+                                <i class="bi bi-inbox"></i>
+                                <strong>No se encontraron cotizaciones.</strong>
+                                <span>Prueba otro código, cliente o filtro de estado.</span>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var cotizacion in Model.Cotizaciones)
+                        {
+                            var vigenciaRestante = cotizacion.FechaVencimiento - DateTime.UtcNow;
+                            <tr>
+                                <td class="quote-inbox-code">@cotizacion.Correlativo</td>
+                                <td>
+                                    <strong class="d-block">@cotizacion.Cliente</strong>
+                                    <span class="text-secondary small">RUC @cotizacion.Ruc</span>
+                                </td>
+                                <td>@cotizacion.FechaEmision.ToLocalTime().ToString("dd/MM/yyyy HH:mm", peruCulture)</td>
+                                <td>
+                                    <span class="d-block">@cotizacion.FechaVencimiento.ToLocalTime().ToString("dd/MM/yyyy HH:mm", peruCulture)</span>
+                                    @if (cotizacion.Estado == "Enviada")
+                                    {
+                                        <span class="quote-inbox-expiry">
+                                            <i class="bi bi-clock"></i> Vence en @Math.Max(0, (int)Math.Ceiling(vigenciaRestante.TotalHours)) h
+                                        </span>
+                                    }
+                                    else if (cotizacion.Estado == "Vencida")
+                                    {
+                                        <span class="quote-inbox-expiry expired"><i class="bi bi-exclamation-circle-fill"></i> Expiró hace @Math.Max(0, (int)Math.Ceiling(-vigenciaRestante.TotalHours)) h
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="quote-inbox-expiry approved"><i class="bi bi-check-circle-fill"></i> Cerrada por aceptación</span>
+                                    }
+                                </td>
+                                <td class="text-end fw-bold">S/ @cotizacion.Total.ToString("N2", peruCulture)</td>
+                                <td><span class="quote-inbox-status @cotizacion.Estado.ToLowerInvariant()"><i></i>@cotizacion.Estado</span></td>
+                                <td class="text-end text-nowrap">
+                                    <a asp-controller="Cotizaciones" asp-action="VerPdf" asp-route-id="@cotizacion.Id"
+                                       target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-light border">
+                                        <i class="bi bi-file-earmark-pdf me-1"></i>Ver PDF
+                                    </a>
+                                    @if (cotizacion.Estado == "Vencida")
+                                    {
+                                        <form asp-controller="Cotizaciones" asp-action="Actualizar" asp-route-id="@cotizacion.Id"
+                                              method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-warning fw-semibold ms-1">
+                                                <i class="bi bi-arrow-repeat me-1"></i>Actualizar cotización
+                                            </button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+        <footer class="quote-inbox-footer">
+            <span>Mostrando @Model.Cotizaciones.Count de @Model.TotalResultados cotizaciones emitidas</span>
+            @if (Model.TotalPaginas > 1)
+            {
+                <nav aria-label="Paginación de cotizaciones" class="quote-inbox-pagination">
+                    <a asp-action="Index" asp-route-estado="@Model.EstadoFiltro" asp-route-busqueda="@Model.Busqueda"
+                       asp-route-pagina="@(Model.Pagina - 1)" class="@(Model.Pagina == 1 ? "disabled" : "")"
+                       aria-disabled="@(Model.Pagina == 1)">Anterior</a>
+                    <span>Página @Model.Pagina de @Model.TotalPaginas</span>
+                    <a asp-action="Index" asp-route-estado="@Model.EstadoFiltro" asp-route-busqueda="@Model.Busqueda"
+                       asp-route-pagina="@(Model.Pagina + 1)" class="@(Model.Pagina == Model.TotalPaginas ? "disabled" : "")"
+                       aria-disabled="@(Model.Pagina == Model.TotalPaginas)">Siguiente</a>
+                </nav>
+            }
+        </footer>
+    </section>
+</div>
