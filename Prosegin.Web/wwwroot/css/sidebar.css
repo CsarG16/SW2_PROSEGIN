@@ -11,14 +11,6 @@
 }
 
 /* ============================================================
-   SIDEBAR (MENÚ LATERAL)
-   ============================================================ */
-
-/* ============================================================
-   SIDEBAR (MENÚ LATERAL ENTERPRISE)
-   ============================================================ */
-
-/* ============================================================
    SIDEBAR (MENÚ LATERAL BLANCO ENTERPRISE - DISEÑO FIGMA)
    ============================================================ */
 
@@ -33,7 +25,7 @@
   bottom: 0;
   left: 0;
   z-index: 1045;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   overflow-y: auto;
 }
 
@@ -47,11 +39,12 @@
 
 /* Marca en Sidebar */
 .sidebar-brand {
-  padding: 1.15rem 1.15rem 1rem;
+  padding: 1.15rem 1.25rem 1rem;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   border-bottom: 1px solid #f1f5f9;
+  min-height: 72px;
 }
 
 .brand-link {
@@ -72,20 +65,25 @@
   transform: scale(1.02);
 }
 
-.sidebar-toggle-btn {
-  background: transparent;
-  border: none;
-  color: #94a3b8;
-  font-size: 1.1rem;
-  padding: 0.25rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
+/* Isotipo mini para modo contraído */
+.sidebar-brand-mini {
+  display: none;
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, var(--accent) 0%, #d97706 100%);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 1.15rem;
+  border-radius: 10px;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.35);
+  transition: transform 0.2s ease;
+  user-select: none;
 }
 
-.sidebar-toggle-btn:hover {
-  color: #0f172a;
-  background: #f1f5f9;
+.sidebar-brand-mini:hover {
+  transform: scale(1.05);
 }
 
 /* Menú de Navegación */
@@ -108,6 +106,7 @@
   letter-spacing: 0.06em;
   color: #64748b;
   margin: 0;
+  transition: opacity 0.2s ease;
 }
 
 .menu-section-dot {
@@ -128,6 +127,7 @@
 
 .sidebar-nav-item {
   width: 100%;
+  position: relative;
 }
 
 .sidebar-nav-divider {
@@ -141,52 +141,69 @@
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  padding: 0.75rem 1rem;
+  padding: 0.72rem 0.95rem;
   color: #475569;
   text-decoration: none;
   font-size: 0.88rem;
   font-weight: 500;
   border-radius: 12px;
+  border: 1px solid transparent;
   transition: all 0.18s ease;
   position: relative;
 }
 
 .sidebar-nav-link i {
-  font-size: 1.15rem;
+  font-size: 1.18rem;
   color: #94a3b8;
   transition: color 0.18s ease;
+  flex-shrink: 0;
 }
 
 .sidebar-nav-link:hover {
   background-color: #f8fafc;
   color: #0f172a;
+  border-color: #f1f5f9;
 }
 
 .sidebar-nav-link:hover i {
   color: var(--accent);
 }
 
-/* ESTADO ACTIVO: PÍLDORA DARK CON ICONO Y DOT DORADO */
+.sidebar-nav-link:focus,
+.sidebar-nav-link:active {
+  outline: none;
+}
+
+/* ============================================================
+   ESTADO ACTIVO / SELECCIONADO (HOVER ESTÁTICO)
+   Sombra sutil elegante sin color entero azul oscuro y sin punto dorado
+   ============================================================ */
 .sidebar-nav-link.active {
-  background-color: #0c1524 !important;
-  color: #ffffff !important;
-  font-weight: 700;
-  box-shadow: 0 3px 10px rgba(12, 21, 36, 0.12);
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  font-weight: 600;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.08), 0 2px 4px -1px rgba(15, 23, 42, 0.04) !important;
 }
 
 .sidebar-nav-link.active i {
   color: var(--accent) !important;
 }
 
+.sidebar-nav-link.active:hover {
+  background-color: #ffffff !important;
+  box-shadow: 0 6px 16px -2px rgba(15, 23, 42, 0.1), 0 2px 4px -1px rgba(15, 23, 42, 0.05) !important;
+}
+
+/* Eliminación explícita del punto dorado */
 .sidebar-nav-link.active::after {
-  content: '';
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background-color: var(--accent);
-  margin-left: auto;
-  box-shadow: 0 0 8px var(--accent-shadow);
-  flex-shrink: 0;
+  display: none !important;
+  content: none !important;
+}
+
+/* Tag flotante base (oculto en modo expandido) */
+.sidebar-floating-tag {
+  display: none;
 }
 
 /* Footer del Sidebar: Usuario Card Flotante */
@@ -207,6 +224,7 @@
   border-radius: 14px;
   background: #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  position: relative;
 }
 
 .user-avatar-sq {
@@ -222,6 +240,7 @@
   justify-content: center;
   flex-shrink: 0;
   letter-spacing: 0.03em;
+  transition: transform 0.2s ease;
 }
 
 .user-profile-text {
@@ -273,6 +292,7 @@
   flex-direction: column;
   width: calc(100% - 260px);
   background-color: var(--bg-canvas);
+  transition: margin-left 0.25s cubic-bezier(0.16, 1, 0.3, 1), width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .prosegin-topbar {
@@ -287,6 +307,37 @@
   z-index: 1030;
 }
 
+/* Botón toggle ultra-minimalista: ícono suelto sin contenedor ni caja */
+.topbar-toggle-btn {
+  background: transparent;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  color: #64748b;
+  font-size: 1.35rem;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.topbar-toggle-btn:hover {
+  background: transparent;
+  color: var(--accent);
+  transform: scale(1.12);
+}
+
+.topbar-toggle-btn:focus,
+.topbar-toggle-btn:active {
+  outline: none;
+  box-shadow: none;
+  border: none;
+}
+
 .topbar-breadcrumbs {
   display: flex;
   align-items: center;
@@ -298,6 +349,7 @@
   color: var(--text-muted);
   font-weight: 500;
   text-decoration: none;
+  transition: color 0.15s ease;
 }
 .crumb-root:hover {
   color: var(--prosegin-orange);
@@ -316,6 +368,211 @@
 .prosegin-content-body {
   flex: 1;
   padding: 1.75rem;
+}
+
+/* ============================================================
+   MODO CONTRAÍDO EN ESCRITORIO (SIDEBAR INTERACTIVO CON RAILS & TAGS)
+   ============================================================ */
+
+@media (min-width: 992px) {
+  /* Ancho reducido del sidebar y expansión del contenido principal */
+  .sidebar-collapsed .prosegin-sidebar {
+    width: 72px;
+    overflow: visible; /* Clave: permite desplegar los tags flotantes */
+  }
+
+  .sidebar-collapsed .prosegin-main-wrapper {
+    margin-left: 72px;
+    width: calc(100% - 72px);
+  }
+
+  /* Cabecera / Marca colapsada */
+  .sidebar-collapsed .sidebar-brand {
+    padding: 0.85rem 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sidebar-collapsed .sidebar-brand-logo {
+    display: none;
+  }
+
+  .sidebar-collapsed .sidebar-brand-mini {
+    display: flex;
+    cursor: pointer;
+  }
+
+  /* Menú de opciones en modo colapsado */
+  .sidebar-collapsed .sidebar-menu-wrapper {
+    padding: 1rem 0.4rem;
+    overflow: visible;
+  }
+
+  .sidebar-collapsed .menu-section-header {
+    justify-content: center;
+    padding: 0 0 0.65rem;
+  }
+
+  .sidebar-collapsed .menu-section-title {
+    display: none;
+  }
+
+  .sidebar-collapsed .menu-section-dot {
+    width: 16px;
+    height: 3px;
+    border-radius: 2px;
+    background-color: #cbd5e1;
+  }
+
+  /* Enlaces de navegación tipo ícono centrado */
+  .sidebar-collapsed .sidebar-nav {
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .sidebar-collapsed .sidebar-nav-item {
+    display: flex;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+  }
+
+  .sidebar-collapsed .sidebar-nav-link {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 12px;
+    margin: 0 auto;
+  }
+
+  .sidebar-collapsed .sidebar-nav-link i {
+    font-size: 1.25rem;
+    margin: 0;
+  }
+
+  .sidebar-collapsed .sidebar-nav-text {
+    display: none;
+  }
+
+  .sidebar-collapsed .sidebar-nav-divider {
+    width: 32px;
+    margin: 0.35rem auto;
+  }
+
+  /* Footer de usuario en modo colapsado */
+  .sidebar-collapsed .sidebar-footer {
+    padding: 0.75rem 0.4rem;
+  }
+
+  .sidebar-collapsed .user-profile-card {
+    padding: 0.3rem;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    position: relative;
+  }
+
+  .sidebar-collapsed .user-profile-text,
+  .sidebar-collapsed .btn-logout {
+    display: none;
+  }
+
+  .sidebar-collapsed .user-avatar-sq {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  /* ============================================================
+     TAGS / TOOLTIPS FLOTANTES EN MODO COLAPSADO
+     ============================================================ */
+  .sidebar-collapsed .sidebar-nav-link .sidebar-floating-tag,
+  .sidebar-collapsed .user-profile-card .sidebar-floating-tag {
+    display: inline-flex;
+    align-items: center;
+    position: absolute;
+    left: calc(100% + 14px);
+    top: 50%;
+    transform: translateY(-50%) translateX(-6px);
+    background: #0f172a;
+    color: #ffffff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    padding: 0.45rem 0.85rem;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.35), 0 4px 8px -2px rgba(15, 23, 42, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: 1090;
+    transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1), 
+                transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), 
+                visibility 0.18s;
+  }
+
+  /* Flechita / Triángulo que apunta hacia el ícono del sidebar */
+  .sidebar-collapsed .sidebar-nav-link .sidebar-floating-tag::before,
+  .sidebar-collapsed .user-profile-card .sidebar-floating-tag::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 100%;
+    transform: translateY(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent #0f172a transparent transparent;
+  }
+
+  /* Al pasar el mouse: el tag aparece suavemente con slide */
+  .sidebar-collapsed .sidebar-nav-link:hover .sidebar-floating-tag,
+  .sidebar-collapsed .user-profile-card:hover .sidebar-floating-tag {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+/* ============================================================
+   PREVENCIÓN DE PARPADEO EN CARGA INICIAL (FOUC)
+   ============================================================ */
+
+html.sidebar-is-collapsed-init .prosegin-sidebar {
+  width: 72px !important;
+  transition: none !important;
+  overflow: visible !important;
+}
+
+html.sidebar-is-collapsed-init .prosegin-main-wrapper {
+  margin-left: 72px !important;
+  width: calc(100% - 72px) !important;
+  transition: none !important;
+}
+
+html.sidebar-is-collapsed-init .sidebar-brand-logo,
+html.sidebar-is-collapsed-init .menu-section-title,
+html.sidebar-is-collapsed-init .sidebar-nav-text,
+html.sidebar-is-collapsed-init .user-profile-text,
+html.sidebar-is-collapsed-init .btn-logout {
+  display: none !important;
+}
+
+html.sidebar-is-collapsed-init .sidebar-brand-mini {
+  display: flex !important;
+}
+
+html.sidebar-is-collapsed-init .sidebar-nav-link {
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  justify-content: center !important;
 }
 
 /* ============================================================

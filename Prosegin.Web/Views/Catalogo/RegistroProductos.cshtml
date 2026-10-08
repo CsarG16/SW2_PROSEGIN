@@ -1,5 +1,4 @@
 @model Prosegin.Web.ViewModels.Catalogo.ProductoCreateViewModel
-@using Prosegin.Data.Entities
 
 @{
     ViewData["Title"] = "Registrar Nuevo Producto EPP";
@@ -53,11 +52,11 @@
                             <label asp-for="Sku" class="form-label-prosegin small text-uppercase fw-bold mb-0">
                                 CÓDIGO SKU <span class="text-danger">*</span>
                             </label>
-                            <span class="text-muted" style="font-size: 0.75rem;">6-12 caracteres</span>
+                            <span class="text-muted" style="font-size: 0.75rem;">Hasta 50 caracteres</span>
                         </div>
                         <div class="position-relative">
                             <input asp-for="Sku" id="txtSku" class="form-control form-control-prosegin font-monospace text-uppercase pe-5"
-                                   placeholder="EPP-CAS-0042" maxlength="30" autocomplete="off" />
+                                   placeholder="EPP-CAS-0042" maxlength="50" autocomplete="off" />
                             <span id="skuCheckIcon" class="position-absolute end-0 top-50 translate-middle-y me-3 d-none">
                                 <i class="bi bi-check-circle-fill text-success fs-5"></i>
                             </span>
@@ -138,57 +137,113 @@
         </div>
 
         <!-- 3. CARD 2: COSTO BASE Y PROVEEDOR AUTORIZADO -->
-        <div class="prosegin-card mb-4 overflow-hidden">
+        <div class="prosegin-card mb-4" style="overflow: visible;">
             <div class="d-flex justify-content-between align-items-center py-3 px-4 border-bottom bg-white">
                 <span class="fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 0.92rem;">
-                    <i class="bi bi-wallet2 text-muted"></i> Costo base y proveedor autorizado
+                    <i class="bi bi-wallet2 text-dark"></i> Costo Base y Proveedores Autorizados
+                </span>
+                <span class="badge bg-light text-secondary border font-monospace px-2 py-1" style="font-size: 0.74rem;">
+                    Compras JIT Las Malvinas
                 </span>
             </div>
 
             <div class="p-3 p-md-4">
-                <div class="row g-3 align-items-end">
-                    <!-- Costo Base -->
-                    <div class="col-md-4">
-                        <label asp-for="CostoBaseAdquisicion" class="form-label-prosegin small text-uppercase fw-bold mb-1">
-                            COSTO BASE (S/.) <span class="text-danger">*</span>
-                        </label>
+                <div class="row g-4 align-items-start">
+                    <!-- Columna 1: Costo Base -->
+                    <div class="col-md-5">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label asp-for="CostoBaseAdquisicion" class="form-label-prosegin small text-uppercase fw-bold mb-0">
+                                COSTO BASE (S/.) <span class="text-danger">*</span>
+                            </label>
+                            <span class="text-muted" style="font-size: 0.75rem;">Contado / Efectivo</span>
+                        </div>
                         <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0 text-muted fw-semibold">S/.</span>
+                            <span class="input-group-text bg-light border-end-0 text-secondary fw-bold px-3">S/.</span>
                             <input asp-for="CostoBaseAdquisicion" id="txtCosto" type="number" step="0.01" min="0.01"
-                                   class="form-control form-control-prosegin border-start-0 font-monospace fw-bold"
-                                   placeholder="48.50" />
+                                   class="form-control form-control-prosegin border-start-0 font-monospace fw-bold ps-1"
+                                   placeholder="0.00" style="font-size: 1.05rem;" />
                         </div>
-                        <span asp-validation-for="CostoBaseAdquisicion" class="text-danger small d-block"></span>
+                        <span asp-validation-for="CostoBaseAdquisicion" class="text-danger small d-block mt-1"></span>
+
                     </div>
 
-                    <!-- Proveedores Autorizados -->
-                    <div class="col-md-6">
-                        <label asp-for="ProveedorAutorizado" class="form-label-prosegin small text-uppercase fw-bold mb-1">
-                            PROVEEDORES AUTORIZADOS <span class="text-danger">*</span>
-                        </label>
-                        <div class="position-relative">
-                            <input asp-for="ProveedorAutorizado" id="txtProveedor" class="form-control form-control-prosegin pe-5"
-                                   placeholder="Buscar y seleccionar proveedor homologado..." autocomplete="off" list="proveedoresList" />
-                            <span class="position-absolute end-0 top-50 translate-middle-y me-3 text-muted pointer-events-none">
-                                <i class="bi bi-search"></i>
-                            </span>
-                            <datalist id="proveedoresList">
-                                <option value="DISTRIBUIDORA FERRETERA LAS MALVINAS S.A.C." />
-                                <option value="IMPORTADORA INDUSTRIAL DE SEGURIDAD DEL PERÚ E.I.R.L." />
-                                <option value="COMERCIAL EPP PERÚ S.A." />
-                                <option value="MULTISERVICIOS Y SUMINISTROS LIMA S.A.C." />
-                                <option value="PROVEEDOR DIRECTO FABRICANTE" />
-                            </datalist>
+                    <!-- Columna 2: Proveedores Autorizados (Dropdown Multi-select) -->
+                    <div class="col-md-7">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label-prosegin small text-uppercase fw-bold mb-0">
+                                PROVEEDORES AUTORIZADOS <span class="text-danger">*</span>
+                            </label>
+                            <span class="text-muted" style="font-size: 0.75rem;" id="proveedoresContador">0 seleccionados</span>
                         </div>
-                        <span asp-validation-for="ProveedorAutorizado" class="text-danger small d-block"></span>
-                    </div>
 
-                    <!-- Botón Agregar Proveedor -->
-                    <div class="col-md-2">
-                        <button type="button" class="btn btn-outline-secondary w-100 d-inline-flex align-items-center justify-content-center gap-1"
-                                id="btnAgregarProveedor" style="height: 44px; font-size: 0.82rem; font-weight: 600; border-radius: 8px;">
-                            <i class="bi bi-plus-lg"></i> Agregar proveedor
-                        </button>
+                        <!-- Dropdown Multi-select Container -->
+                        <div class="position-relative" id="proveedoresDropdownWrapper">
+                            <!-- Trigger Button -->
+                            <button type="button"
+                                    class="form-control form-control-prosegin d-flex align-items-center justify-content-between text-start w-100 py-2 px-3 bg-white"
+                                    id="btnDropdownProveedores"
+                                    aria-expanded="false"
+                                    aria-haspopup="true">
+                                <span class="d-flex align-items-center gap-2 text-truncate" id="dropdownProveedoresText">
+                                    <i class="bi bi-shop text-muted"></i>
+                                    <span class="text-muted" id="dropdownPlaceholder">Seleccionar proveedores autorizados...</span>
+                                </span>
+                                <span class="d-flex align-items-center gap-2 flex-shrink-0 ms-2">
+                                    <span class="badge rounded-pill bg-light text-dark border font-monospace px-2 py-1 d-none" id="proveedoresBadgeCount">0</span>
+                                    <i class="bi bi-chevron-down text-muted" id="dropdownChevron" style="transition: transform 0.2s ease;"></i>
+                                </span>
+                            </button>
+
+                            <!-- Menú flotante (No empuja la tarjeta hacia abajo) -->
+                            <div id="proveedoresList"
+                                 class="position-absolute start-0 end-0 bg-white border rounded-3 shadow-lg mt-1"
+                                 style="display: none; z-index: 1050; border-color: #cbd5e1; box-shadow: 0 12px 28px rgba(11, 23, 39, 0.14);">
+
+                                <!-- Buscador dentro del Dropdown -->
+                                <div class="p-2 border-bottom bg-light bg-opacity-50">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                                        <input type="search" id="txtProveedorBusqueda" class="form-control form-control-sm border-start-0 ps-0 shadow-none"
+                                               placeholder="Buscar por razón social o RUC..." autocomplete="off" />
+                                    </div>
+                                </div>
+
+                                <!-- Lista scrollable de opciones -->
+                                <div class="p-2" style="max-height: 210px; overflow-y: auto;" id="proveedoresItemsContainer">
+                                    @foreach (var proveedor in Model.ProveedoresDisponibles)
+                                    {
+                                        <div class="proveedor-opcion d-flex align-items-center justify-content-between p-2 rounded-2 mb-1"
+                                             data-busqueda="@proveedor.RazonSocial @proveedor.Ruc"
+                                             style="cursor: pointer; transition: background-color 0.15s ease;">
+                                            <div class="d-flex align-items-center gap-2 flex-grow-1 overflow-hidden">
+                                                <input type="checkbox" name="ProveedorIds" value="@proveedor.Id"
+                                                       class="form-check-input proveedor-check m-0"
+                                                       data-nombre="@proveedor.RazonSocial"
+                                                       data-ruc="@proveedor.Ruc"
+                                                       checked="@(Model.ProveedorIds.Contains(proveedor.Id))" />
+                                                <span class="small fw-semibold text-dark text-truncate">@proveedor.RazonSocial</span>
+                                            </div>
+                                            <span class="badge bg-light text-muted border font-monospace ms-2 flex-shrink-0" style="font-size: 0.72rem;">@proveedor.Ruc</span>
+                                        </div>
+                                    }
+                                    <div id="proveedoresSinResultados" class="small text-muted p-3 text-center d-none">
+                                        <i class="bi bi-search me-1"></i> No se encontraron proveedores que coincidan.
+                                    </div>
+                                </div>
+
+                                <!-- Footer del Dropdown con botón Listo -->
+                                <div class="p-2 border-top bg-light bg-opacity-50 d-flex justify-content-between align-items-center">
+                                    <span class="small text-muted" id="proveedoresFooterCount" style="font-size: 0.75rem;">0 seleccionados</span>
+                                    <button type="button" class="btn btn-sm btn-dark px-3 py-1 fw-bold text-white rounded-2" id="btnCerrarProveedores" style="background-color: #0B1727; font-size: 0.76rem;">
+                                        Listo
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Etiquetas / Chips de Proveedores Seleccionados -->
+                        <div id="proveedoresSeleccionados" class="d-flex flex-wrap gap-2 mt-2" aria-live="polite"></div>
+                        <span asp-validation-for="ProveedorIds" id="proveedoresError" class="text-danger small d-block mt-1"></span>
                     </div>
                 </div>
             </div>
@@ -231,6 +286,7 @@
                             <i class="bi bi-file-earmark-pdf-fill fs-3"></i>
                         </div>
                         <div>
+                            <div class="small fw-bold text-muted mb-1">ARCHIVO CARGADO</div>
                             <div class="d-flex align-items-center gap-2 flex-wrap">
                                 <span class="fw-bold text-dark small" id="lblFichaNombre">FT_Archivo.pdf</span>
                                 <span class="text-muted small" id="lblFichaTamano" style="font-size: 0.78rem;">(1.8 MB)</span>
@@ -248,7 +304,7 @@
                     </button>
                 </div>
 
-                <span asp-validation-for="FichaTecnica" class="text-danger small d-block mt-2"></span>
+                <span asp-validation-for="FichaTecnica" id="fichaError" class="text-danger small d-block mt-2" role="alert"></span>
             </div>
         </div>
 
@@ -262,7 +318,7 @@
             </div>
 
             <div class="d-flex align-items-center gap-2">
-                <a asp-controller="Catalogo" asp-action="Index" class="btn btn-outline-secondary py-2 px-4 fw-semibold"
+                <a asp-controller="Catalogo" asp-action="Index" id="btnCancelar" class="btn btn-outline-secondary py-2 px-4 fw-semibold"
                    style="border-radius: 8px; font-size: 0.85rem;">
                     CANCELAR
                 </a>
@@ -275,243 +331,48 @@
     </form>
 </div>
 
+<style>
+    /* Estilos Prosegin para Dropdown Multi-Select de Proveedores - Cero hovers amarillos */
+    #btnDropdownProveedores:hover {
+        border-color: #94a3b8;
+        background-color: #f8fafc;
+    }
+    #btnDropdownProveedores:focus {
+        border-color: #0B1727 !important;
+        box-shadow: 0 0 0 3px rgba(11, 23, 39, 0.12) !important;
+    }
+    .proveedor-opcion:hover {
+        background-color: #f8fafc !important;
+    }
+    .proveedor-check:focus {
+        box-shadow: 0 0 0 2px rgba(11, 23, 39, 0.15) !important;
+        border-color: #0B1727 !important;
+    }
+    .proveedor-check:checked {
+        background-color: #0B1727 !important;
+        border-color: #0B1727 !important;
+    }
+    #txtProveedorBusqueda:focus {
+        border-color: #0B1727 !important;
+        box-shadow: none !important;
+    }
+    #proveedoresItemsContainer::-webkit-scrollbar {
+        width: 6px;
+    }
+    #proveedoresItemsContainer::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+    #proveedoresItemsContainer::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    #proveedoresItemsContainer::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+</style>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const form = document.getElementById('formRegistroProducto');
-            const txtSku = document.getElementById('txtSku');
-            const txtNombre = document.getElementById('txtNombre');
-            const ddlCategoria = document.getElementById('ddlCategoria');
-            const ddlMarca = document.getElementById('ddlMarca');
-            const ddlUnidad = document.getElementById('ddlUnidad');
-            const txtCosto = document.getElementById('txtCosto');
-            const txtProveedor = document.getElementById('txtProveedor');
-            const txtFichaTecnica = document.getElementById('txtFichaTecnica');
-            const dropzoneBox = document.getElementById('dropzoneBox');
-
-            const skuCheckIcon = document.getElementById('skuCheckIcon');
-            const skuHelperText = document.getElementById('skuHelperText');
-
-            const boxFichaSeleccionada = document.getElementById('boxFichaSeleccionada');
-            const lblFichaNombre = document.getElementById('lblFichaNombre');
-            const lblFichaTamano = document.getElementById('lblFichaTamano');
-            const btnQuitarFicha = document.getElementById('btnQuitarFicha');
-            const btnGuardar = document.getElementById('btnGuardarProducto');
-            const btnAgregarProveedor = document.getElementById('btnAgregarProveedor');
-
-            const statusIcon = document.getElementById('statusIcon');
-            const statusLabel = document.getElementById('statusLabel');
-
-            const maxBytes = 5 * 1024 * 1024; // 5 MB
-            let skuTimeout = null;
-            let skuEsValido = false;
-
-            // Validación en tiempo real del SKU
-            txtSku.addEventListener('input', function () {
-                this.value = this.value.toUpperCase().replace(/\s+/g, '-');
-                const skuVal = this.value.trim();
-
-                clearTimeout(skuTimeout);
-                if (skuVal.length < 3) {
-                    skuCheckIcon.classList.add('d-none');
-                    txtSku.classList.remove('is-valid', 'is-invalid');
-                    skuHelperText.className = 'mt-1 small text-muted';
-                    skuHelperText.innerHTML = '<i class="bi bi-info-circle me-1"></i> Código único alfanumérico. Si ya existe, mostrará: <em class="text-secondary">"El código SKU ya se encuentra registrado"</em>';
-                    skuEsValido = false;
-                    actualizarEstadoFormulario();
-                    return;
-                }
-
-                skuTimeout = setTimeout(async () => {
-                    try {
-                        const response = await fetch(`/Catalogo/ValidarSku?sku=${encodeURIComponent(skuVal)}`);
-                        const data = await response.json();
-
-                        if (data.valido) {
-                            skuCheckIcon.classList.remove('d-none');
-                            txtSku.classList.remove('is-invalid');
-                            txtSku.classList.add('is-valid');
-                            skuHelperText.className = 'mt-1 small text-success fw-medium';
-                            skuHelperText.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Código SKU disponible para registro';
-                            skuEsValido = true;
-                        } else {
-                            skuCheckIcon.classList.add('d-none');
-                            txtSku.classList.remove('is-valid');
-                            txtSku.classList.add('is-invalid');
-                            skuHelperText.className = 'mt-1 small text-danger fw-bold';
-                            skuHelperText.innerHTML = `<i class="bi bi-exclamation-circle-fill me-1"></i> "${data.mensaje || 'El código SKU ya se encuentra registrado'}"`;
-                            skuEsValido = false;
-                        }
-                    } catch (e) {
-                        skuEsValido = skuVal.length >= 3;
-                    }
-                    actualizarEstadoFormulario();
-                }, 350);
-            });
-
-            // Botón Agregar Proveedor Rápido
-            if (btnAgregarProveedor) {
-                btnAgregarProveedor.addEventListener('click', function () {
-                    const nuevo = prompt("Ingrese el nombre comercial o razón social del proveedor:");
-                    if (nuevo && nuevo.trim().length > 0) {
-                        txtProveedor.value = nuevo.trim().toUpperCase();
-                        txtProveedor.classList.remove('is-invalid');
-                        actualizarEstadoFormulario();
-                    }
-                });
-            }
-
-            // Manejo de Dropzone & Ficha Técnica PDF
-            dropzoneBox.addEventListener('click', () => txtFichaTecnica.click());
-
-            ['dragenter', 'dragover'].forEach(eventName => {
-                dropzoneBox.addEventListener(eventName, (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    dropzoneBox.style.borderColor = 'var(--accent, #f59e0b)';
-                    dropzoneBox.style.backgroundColor = '#fffbeb';
-                });
-            });
-
-            ['dragleave', 'drop'].forEach(eventName => {
-                dropzoneBox.addEventListener(eventName, (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    dropzoneBox.style.borderColor = '#cbd5e1';
-                    dropzoneBox.style.backgroundColor = '#f8fafc';
-                });
-            });
-
-            dropzoneBox.addEventListener('drop', (e) => {
-                const files = e.dataTransfer.files;
-                if (files && files.length > 0) {
-                    txtFichaTecnica.files = files;
-                    procesarArchivoFicha(files[0]);
-                }
-            });
-
-            txtFichaTecnica.addEventListener('change', function () {
-                if (this.files && this.files.length > 0) {
-                    procesarArchivoFicha(this.files[0]);
-                } else {
-                    resetearFicha();
-                }
-            });
-
-            function procesarArchivoFicha(file) {
-                if (!file) {
-                    resetearFicha();
-                    return;
-                }
-
-                if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-                    alert('Solo se permiten archivos en formato PDF.');
-                    resetearFicha();
-                    return;
-                }
-
-                if (file.size > maxBytes) {
-                    alert('La ficha técnica no puede superar los 5 MB.');
-                    resetearFicha();
-                    return;
-                }
-
-                lblFichaNombre.textContent = file.name;
-                lblFichaTamano.textContent = `(${(file.size / 1024 / 1024).toFixed(1)} MB)`;
-
-                boxFichaSeleccionada.classList.remove('d-none');
-                dropzoneBox.classList.add('d-none');
-                actualizarEstadoFormulario();
-            }
-
-            function resetearFicha() {
-                txtFichaTecnica.value = '';
-                lblFichaNombre.textContent = '';
-                lblFichaTamano.textContent = '';
-                boxFichaSeleccionada.classList.add('d-none');
-                dropzoneBox.classList.remove('d-none');
-                actualizarEstadoFormulario();
-            }
-
-            btnQuitarFicha.addEventListener('click', resetearFicha);
-
-            // Escuchar cambios en campos para estado
-            [txtNombre, ddlCategoria, txtCosto, txtProveedor].forEach(el => {
-                el.addEventListener('input', actualizarEstadoFormulario);
-                el.addEventListener('change', actualizarEstadoFormulario);
-            });
-
-            // Estado general del formulario
-            function actualizarEstadoFormulario() {
-                const skuOk = txtSku.value.trim().length >= 3 && skuEsValido;
-                const nombreOk = txtNombre.value.trim().length > 0;
-                const catOk = ddlCategoria.value.trim().length > 0;
-                const costoOk = parseFloat(txtCosto.value) > 0;
-                const provOk = txtProveedor.value.trim().length > 0;
-                const fichaOk = txtFichaTecnica.files && txtFichaTecnica.files.length > 0;
-
-                if (skuOk && nombreOk && catOk && costoOk && provOk && fichaOk) {
-                    statusIcon.className = 'bi bi-check-circle-fill text-success fs-5';
-                    statusLabel.className = 'small text-success fw-bold';
-                    statusLabel.textContent = 'Todos los campos obligatorios (*) completados correctamente';
-                } else {
-                    statusIcon.className = 'bi bi-check-circle text-muted fs-5';
-                    statusLabel.className = 'small text-muted fw-medium';
-                    statusLabel.textContent = 'Complete todos los campos obligatorios (*) para guardar';
-                }
-            }
-
-            // Validación al enviar
-            form.addEventListener('submit', function (e) {
-                let esValido = true;
-
-                if (!txtSku.value.trim()) {
-                    txtSku.classList.add('is-invalid');
-                    txtSku.focus();
-                    esValido = false;
-                }
-
-                if (!txtNombre.value.trim()) {
-                    txtNombre.classList.add('is-invalid');
-                    if (esValido) txtNombre.focus();
-                    esValido = false;
-                }
-
-                if (!ddlCategoria.value.trim()) {
-                    ddlCategoria.classList.add('is-invalid');
-                    if (esValido) ddlCategoria.focus();
-                    esValido = false;
-                }
-
-                const costoVal = parseFloat(txtCosto.value);
-                if (isNaN(costoVal) || costoVal <= 0) {
-                    txtCosto.classList.add('is-invalid');
-                    if (esValido) txtCosto.focus();
-                    esValido = false;
-                }
-
-                if (!txtProveedor.value.trim()) {
-                    txtProveedor.classList.add('is-invalid');
-                    if (esValido) txtProveedor.focus();
-                    esValido = false;
-                }
-
-                if (!txtFichaTecnica.files || txtFichaTecnica.files.length === 0) {
-                    dropzoneBox.style.borderColor = '#ef4444';
-                    dropzoneBox.scrollIntoView({ behavior: 'smooth' });
-                    esValido = false;
-                }
-
-                if (!esValido) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return false;
-                }
-
-                btnGuardar.disabled = true;
-                btnGuardar.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Guardando producto...';
-            });
-        });
-    </script>
+    <script src="~/js/registro-productos.js" asp-append-version="true"></script>
 }

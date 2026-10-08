@@ -45,6 +45,8 @@ builder.Services.AddHttpClient("SunatClient", client =>
     client.Timeout = TimeSpan.FromSeconds(4);
 });
 builder.Services.AddScoped<ISunatService, SunatService>();
+builder.Services.AddScoped<IPedidosService, PedidosService>();
+builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
 
 var app = builder.Build();
 
@@ -100,4 +102,3 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
-// prosegin core

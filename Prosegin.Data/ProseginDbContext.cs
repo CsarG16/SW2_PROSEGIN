@@ -44,6 +44,7 @@ public class ProseginDbContext : DbContext
             entity.ToTable("Productos");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Sku).HasMaxLength(50).IsRequired();
+            entity.HasIndex(e => e.Sku).IsUnique();
             entity.Property(e => e.Nombre).HasMaxLength(200).IsRequired();
             entity.Property(e => e.Categoria).HasMaxLength(100);
             entity.Property(e => e.UnidadMedida).HasMaxLength(20);
@@ -51,6 +52,17 @@ public class ProseginDbContext : DbContext
             entity.Property(e => e.StockDisponible).HasDefaultValue(0);
             entity.Property(e => e.RutaFichaTecnicaPdf).HasMaxLength(300);
             entity.Property(e => e.NombreArchivoPdf).HasMaxLength(150);
+            entity.HasMany(e => e.Proveedores)
+                .WithMany(e => e.Productos)
+                .UsingEntity<Dictionary<string, object>>(
+                    "ProductoProveedor",
+                    right => right.HasOne<Proveedor>().WithMany().HasForeignKey("ProveedorId"),
+                    left => left.HasOne<Producto>().WithMany().HasForeignKey("ProductoId"),
+                    join =>
+                    {
+                        join.ToTable("ProductoProveedores");
+                        join.HasKey("ProductoId", "ProveedorId");
+                    });
         });
 
         modelBuilder.Entity<Cotizacion>(entity =>

@@ -52,9 +52,12 @@ public static class DbSeeder
             }
         };
 
+        var existingProvRucs = new HashSet<string>(
+            await context.Proveedores.Select(p => p.Ruc).ToListAsync());
+
         foreach (var prov in proveedores)
         {
-            if (!await context.Proveedores.AnyAsync(p => p.Ruc == prov.Ruc))
+            if (!existingProvRucs.Contains(prov.Ruc))
             {
                 context.Proveedores.Add(prov);
             }
@@ -485,14 +488,139 @@ public static class DbSeeder
             }
         };
 
+        // Cargar todos los SKUs existentes de golpe para evitar N+1 queries (una sola consulta).
+        var existingProducts = await context.Productos
+            .Select(p => new { p.Sku, p.RutaImagen, p.Id })
+            .ToDictionaryAsync(p => p.Sku, p => p);
+
         foreach (var prod in productos)
         {
-            if (!await context.Productos.AnyAsync(p => p.Sku == prod.Sku))
+            if (string.IsNullOrWhiteSpace(prod.RutaImagen))
+            {
+                prod.RutaImagen = $"/images/productos/{prod.Sku}.png";
+            }
+
+            if (!existingProducts.TryGetValue(prod.Sku, out var existing))
             {
                 context.Productos.Add(prod);
+            }
+            else if (string.IsNullOrWhiteSpace(existing.RutaImagen))
+            {
+                var tracked = await context.Productos.FindAsync(existing.Id);
+                if (tracked != null) tracked.RutaImagen = prod.RutaImagen;
             }
         }
 
         await context.SaveChangesAsync();
+
+        // 3. Semillas de Cotizaciones Aprobadas y Órdenes de Venta Confirmadas (Año y Fechas Actuales)
+        if (!await context.Cotizaciones.AnyAsync())
+        {
+            var clienteMinera = await context.Clientes.FirstOrDefaultAsync(c => c.Ruc == "20601234567");
+            var clientePacifico = await context.Clientes.FirstOrDefaultAsync(c => c.Ruc == "20548912340");
+            var clienteVial = await context.Clientes.FirstOrDefaultAsync(c => c.Ruc == "20492817263");
+            var casco = await context.Productos.FirstOrDefaultAsync(p => p.Sku == "CAS-3M-H700");
+            var lentes = await context.Productos.FirstOrDefaultAsync(p => p.Sku == "LEN-3M-VIRTUA");
+            var respirador = await context.Productos.FirstOrDefaultAsync(p => p.Sku == "RES-3M-6200");
+            var prov3M = await context.Proveedores.FirstOrDefaultAsync(p => p.Ruc == "20100138056");
+
+            var hoy = DateTime.UtcNow;
+            var currentYear = hoy.Year;
+
+            if (clienteVial != null && casco != null && lentes != null)
+            {
+                var cot1 = new Cotizacion
+                {
+                    Correlativo = $"COT-{currentYear}-0842",
+                    ClienteId = clienteVial.Id,
+                    FechaEmision = hoy.AddDays(-2),
+                    FechaVencimiento = hoy.AddDays(28),
+                    Estado = "Aprobada",
+                    CondicionPago = "Crédito 30 días",
+                    Subtotal = 4200.00m,
+                    Igv = 756.00m,
+                    Total = 4956.00m
+                };
+                context.Cotizaciones.Add(cot1);
+                await context.SaveChangesAsync();
+
+                var ov1 = new OrdenVenta
+                {
+                    CotizacionId = cot1.Id,
+                    FechaCreacion = hoy.AddDays(-2).AddHours(2),
+                    EstadoLogistico = "EnPreparacion"
+                };
+                context.OrdenesVenta.Add(ov1);
+                await context.SaveChangesAsync();
+
+                if (prov3M != null)
+                {
+                    var oc1 = new OrdenCompra
+                    {
+                        ProveedorId = prov3M.Id,
+                        OrdenVentaId = ov1.Id,
+                        FechaCompra = hoy.AddDays(-1),
+                        Estado = "Recibida",
+                        Total = 3200.00m
+                    };
+                    context.OrdenesCompra.Add(oc1);
+                    await context.SaveChangesAsync();
+                }
+            }
+
+            if (clienteMinera != null && respirador != null)
+            {
+                var cot2 = new Cotizacion
+                {
+                    Correlativo = $"COT-{currentYear}-0839",
+                    ClienteId = clienteMinera.Id,
+                    FechaEmision = hoy.AddDays(-2),
+                    FechaVencimiento = hoy.AddDays(15),
+                    Estado = "Aprobada",
+                    CondicionPago = "Crédito 15 días",
+                    Subtotal = 3850.00m,
+                    Igv = 693.00m,
+                    Total = 4543.00m
+                };
+                context.Cotizaciones.Add(cot2);
+                await context.SaveChangesAsync();
+
+                var ov2 = new OrdenVenta
+                {
+                    CotizacionId = cot2.Id,
+                    FechaCreacion = hoy.AddDays(-2).AddHours(4),
+                    EstadoLogistico = "EnPreparacion"
+                };
+                context.OrdenesVenta.Add(ov2);
+                await context.SaveChangesAsync();
+            }
+
+            if (clientePacifico != null && casco != null)
+            {
+                var cot3 = new Cotizacion
+                {
+                    Correlativo = $"COT-{currentYear}-0824",
+                    ClienteId = clientePacifico.Id,
+                    FechaEmision = hoy.AddDays(-4),
+                    FechaVencimiento = hoy.AddDays(10),
+                    Estado = "Aprobada",
+                    CondicionPago = "Crédito 15 días",
+                    Subtotal = 5100.00m,
+                    Igv = 918.00m,
+                    Total = 6018.00m
+                };
+                context.Cotizaciones.Add(cot3);
+                await context.SaveChangesAsync();
+
+                var ov3 = new OrdenVenta
+                {
+                    CotizacionId = cot3.Id,
+                    FechaCreacion = hoy.AddDays(-4).AddHours(3),
+                    EstadoLogistico = "Despachado"
+                };
+                context.OrdenesVenta.Add(ov3);
+                await context.SaveChangesAsync();
+            }
+        }
     }
 }

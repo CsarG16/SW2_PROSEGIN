@@ -12,10 +12,12 @@ public class Producto
     public int StockDisponible { get; set; }
     public string? RutaFichaTecnicaPdf { get; set; }
     public string? NombreArchivoPdf { get; set; }
+    public string? RutaImagen { get; set; }
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     public bool Activo { get; set; } = true;
 
     // Navegación
+    public ICollection<Proveedor> Proveedores { get; set; } = new List<Proveedor>();
     public ICollection<CotizacionDetalle> CotizacionDetalles { get; set; } = new List<CotizacionDetalle>();
     public ICollection<OrdenCompraDetalle> OrdenCompraDetalles { get; set; } = new List<OrdenCompraDetalle>();
 }

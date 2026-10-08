@@ -3,7 +3,7 @@
 
 @{
     ViewData["Title"] = "Generar Cotización";
-    var cotizacionGuardada = TempData["SuccessMessage"] != null;
+    var cotizacionGuardada = TempData["CotizacionGuardada"] is true;
     var noPuedeVender = !string.Equals(Model.EstadoSunat, "ACTIVO", StringComparison.OrdinalIgnoreCase)
         || !string.Equals(Model.CondicionSunat, "HABIDO", StringComparison.OrdinalIgnoreCase);
 }
@@ -15,15 +15,18 @@
                 <h1 class="page-title">Generar Cotización</h1>
                 <p class="page-subtitle">Validación fiscal SUNAT, cálculo de márgenes comerciales y cotización formal de EPP</p>
             </div>
-            <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary">
+            <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary" data-cancel-quote>
                 <i class="bi bi-arrow-left"></i> Volver a Clientes
             </a>
         </div>
     </div>
 
-    @if (cotizacionGuardada)
+    @if (TempData["SuccessMessage"] != null && !cotizacionGuardada)
     {
-        <div class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]</div>
+        <div class="alert alert-success d-flex align-items-center mb-4 border border-success border-opacity-25 rounded-2" style="background-color: #d1e7dd; color: #0f5132; padding: 1rem 1.25rem;">
+            <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+            <span class="fw-medium">@TempData["SuccessMessage"]</span>
+        </div>
     }
 
     @if (TempData["ErrorMessage"] != null)
@@ -31,7 +34,10 @@
         <div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]</div>
     }
 
-    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+    }
 
     @if (Model.DatosSunatDesactualizados)
     {
@@ -61,7 +67,7 @@
         </div>
     }
 
-    <form asp-action="Create" method="post" id="formCotizacion" data-cotizacion-guardada="@(cotizacionGuardada ? "true" : "false")">
+    <form asp-action="Create" method="post" id="formCotizacion" data-cliente-id="@Model.ClienteId" data-post-invalido="@(ViewData["CotizacionPostInvalido"] is true ? "true" : "false")" data-cotizacion-guardada="@(cotizacionGuardada ? "true" : "false")">
         @Html.AntiForgeryToken()
         <input asp-for="ClienteId" type="hidden" />
 
@@ -94,84 +100,196 @@
             </div>
         </section>
 
-                <div class="quote-workspace" data-quote-panel="productos">
-                    <section class="quote-panel quote-products-panel">
-                        <div class="quote-product-entry">
-                <label class="quote-field quote-search-field" for="filtroProductos">Búsqueda
-                    <input id="filtroProductos" type="search" placeholder="Buscar por código, descripción o categoría" autocomplete="off" aria-label="Buscar productos del catálogo" />
-                    <div class="quote-search-results" id="resultadosBusqueda" role="listbox" aria-label="Productos encontrados" hidden></div>
-                    <span class="quote-search-feedback" id="estadoBusqueda" aria-live="polite"></span>
-                </label>
-                <label class="quote-field quote-product-field" for="selectorProducto">Producto
-                    <select id="selectorProducto" aria-label="Selecciona un producto">
-                        <option value="">Selecciona un producto del catálogo</option>
-                        @foreach (var producto in Model.ProductosDisponibles)
-                        {
-                            <option value="@producto.ProductoId" data-search="@($"{producto.Sku} {producto.Nombre} {producto.Categoria}".ToLowerInvariant())">@producto.Sku · @producto.Nombre</option>
-                        }
-                    </select>
-                </label>
-                <label class="quote-field quote-quantity-field" for="cantidadAgregar">Cantidad
-                    <input id="cantidadAgregar" type="number" min="1" value="1" inputmode="numeric" />
-                </label>
-                <label class="quote-field quote-price-field" for="precioSeleccionado">Precio estimado
-                    <input id="precioSeleccionado" type="text" value="S/ 0.00" readonly />
-                </label>
-                <label class="quote-field quote-stock-field" for="stockSeleccionado">Stock
-                    <input id="stockSeleccionado" type="text" value="-" readonly />
-                </label>
-                <button type="button" class="quote-add-button" id="agregarProducto" disabled><i class="bi bi-plus-lg"></i>Agregar</button>
+        <div class="mt-4 w-100" data-quote-panel="productos" style="display: block;">
+
+            <div class="row g-3 mb-3">
+                <!-- Panel izquierdo: Búsqueda y Agregar -->
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow-sm rounded-4 h-100">
+                        <div class="card-body p-4">
+                            <div class="mb-3 position-relative">
+                                <label class="form-label fw-bold text-secondary small mb-1" for="filtroProductos">Búsqueda de Catálogo</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                                    <input id="filtroProductos" type="search" class="form-control border-start-0 ps-0" placeholder="Buscar por código, descripción o categoría (ej: Casco dieléctrico, bota, EPP-BOT-0104...)" autocomplete="off" />
+                                </div>
+                                <div class="list-group position-absolute w-100 shadow-sm mt-1" id="resultadosBusqueda" style="z-index: 1000; max-height: 250px; overflow-y: auto;" hidden></div>
+                            </div>
+
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-5">
+                                    <label class="form-label fw-bold text-secondary small mb-1">Producto EPP</label>
+                                    <input type="text" id="productoSeleccionadoDesc" class="form-control bg-light" readonly placeholder="-" />
+                                    <input type="hidden" id="selectorProducto" value="" />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label fw-bold text-secondary small mb-1">Cantidad</label>
+                                    <input id="cantidadAgregar" type="number" class="form-control" min="1" max="2147483647" step="1" value="1" aria-describedby="errorCantidadAgregar" />
+                                    <span id="errorCantidadAgregar" class="text-danger small" role="alert" hidden></span>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label fw-bold text-secondary small mb-1">U.M.</label>
+                                    <input type="text" id="unidadSeleccionada" class="form-control bg-light text-center" readonly placeholder="-" />
+                                </div>
+                                <div class="col-md-3 d-flex gap-2">
+                                    <div class="flex-grow-1">
+                                        <label class="form-label fw-bold text-secondary small mb-1">Costo Base (S/.)</label>
+                                        <input type="text" id="precioSeleccionado" class="form-control bg-light" readonly placeholder="S/ 0.00" />
+                                    </div>
+                                    <button type="button" class="btn px-3 fw-bold text-white" id="agregarProducto" disabled style="background-color: #0B1727; border-color: #0B1727;">+Agregar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel derecho: Resumen -->
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm rounded-4 h-100">
+                        <div class="card-body p-4 d-flex flex-column">
+                            <h6 class="fw-bold text-secondary mb-4 d-flex align-items-center gap-2">
+                                <i class="bi bi-receipt"></i> RESUMEN
+                            </h6>
+                            <div class="d-flex justify-content-between mb-2 small text-secondary">
+                                <span>Subtotal</span>
+                                <strong id="subtotalCotizacion" class="text-dark">S/ 0.00</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2 small text-secondary">
+                                <span>IGV (18%)</span>
+                                <strong id="igvCotizacion" class="text-dark">S/ 0.00</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-4 small text-secondary pb-3 border-bottom">
+                                <span>Margen Estimado</span>
+                                <strong id="margenEstimadoCotizacion" class="text-success fw-bold">+0.0% (S/ 0.00)</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-auto">
+                                <span class="fw-bold text-dark">Total General</span>
+                                <h4 class="mb-0 fw-bold text-dark" id="totalCotizacion">S/ 0.00</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            @if (Model.ProductosDisponibles.Count == 0)
-            {
-                <div class="alert alert-warning mb-0">No hay productos activos en el catálogo.</div>
-            }
-            else
-            {
-                <div class="quote-table-wrap">
-                    <table class="quote-product-table">
-                        <thead>
-                            <tr><th>#</th><th>Código</th><th>Descripción</th><th>UM</th><th>Cantidad</th><th class="text-end">P. bruto</th><th class="text-center">%</th><th class="text-end">P. final</th><th class="text-end">Total</th><th class="text-center">Opciones</th></tr>
+            <div id="productosError" class="alert alert-danger" role="alert" hidden></div>
+            <!-- Alerta de validación de precio en tiempo real -->
+            <div id="alertaPrecioError" class="alert alert-danger alert-dismissible fade show d-none align-items-center mb-3 shadow-sm rounded-4 border-0 py-3 px-4" role="alert" style="background-color: #f8d7da; color: #842029;">
+                <i class="bi bi-exclamation-octagon-fill me-2 fs-5"></i>
+                <span id="alertaPrecioErrorTexto" class="fw-semibold">El precio cotizado no puede ser menor al costo base registrado</span>
+                <button type="button" class="btn-close ms-auto" aria-label="Close" onclick="this.parentElement.classList.add('d-none')"></button>
+            </div>
+
+            <!-- Tabla de productos -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle mb-0" style="min-width: 860px;">
+                        <thead class="border-bottom">
+                            <tr>
+                                <th class="text-secondary small fw-bold py-3 ps-4" style="width: 4%;">#</th>
+                                <th class="text-secondary small fw-bold py-3" style="width: 12%;">CÓDIGO SKU</th>
+                                <th class="text-secondary small fw-bold py-3" style="width: 32%;">DESCRIPCIÓN DEL EPP</th>
+                                <th class="text-secondary small fw-bold py-3 text-center" style="width: 6%;">U.M.</th>
+                                <th class="text-secondary small fw-bold py-3 text-center" style="width: 8%;">CANTIDAD</th>
+                                <th class="text-secondary small fw-bold py-3 text-end" style="width: 11%;">COSTO BASE<br>UNIT.</th>
+                                <th class="text-secondary small fw-bold py-3 text-center" style="width: 14%;">PRECIO UNIT. (S/.)</th>
+                                <th class="text-secondary small fw-bold py-3 text-end" style="width: 9%;">SUBTOTAL</th>
+                                <th class="text-secondary small fw-bold py-3 text-center pe-4" style="width: 4%;">Opciones</th>
+                            </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="tablaProductosBody">
                             @for (var i = 0; i < Model.ProductosDisponibles.Count; i++)
                             {
                                 var producto = Model.ProductosDisponibles[i];
-                                <tr class="quote-product-row @(producto.Seleccionado ? "is-selected" : "")" data-product-row data-product-id="@producto.ProductoId" data-cost="@producto.CostoReferencial.ToString(CultureInfo.InvariantCulture)" data-stock="@producto.StockDisponible" data-unit="@producto.UnidadMedida" data-search="@($"{producto.Sku} {producto.Nombre} {producto.Categoria}".ToLowerInvariant())">
-                                    <td class="quote-row-number">@(i + 1)</td>
-                                    <td class="font-monospace fw-semibold"><input asp-for="ProductosDisponibles[i].ProductoId" type="hidden" />@producto.Sku</td>
-                                    <td><span class="quote-row-description">@producto.Nombre</span><span class="quote-row-category">@producto.Categoria</span></td>
-                                    <td>@producto.UnidadMedida</td>
-                                    <td><input asp-for="ProductosDisponibles[i].Cantidad" class="quote-line-input" type="number" min="1" aria-label="Cantidad de @producto.Nombre" /></td>
-                                    <td class="text-end font-monospace">@producto.CostoReferencial.ToString("N2", new CultureInfo("es-PE"))</td>
-                                    <td><input asp-for="ProductosDisponibles[i].MargenPorcentaje" class="quote-line-input quote-margin-input" type="number" min="0" max="100" step="0.01" aria-label="Margen de @producto.Nombre en porcentaje" /></td>
-                                    <td class="text-end font-monospace" data-unit-price>S/ 0.00</td>
-                                    <td class="text-end font-monospace fw-semibold" data-line-subtotal>—</td>
+                                var precioInicial = producto.PrecioUnitario > 0 ? producto.PrecioUnitario : producto.CostoReferencial;
+                                <tr class="border-bottom @(producto.Seleccionado ? "" : "d-none")"
+                                    data-product-row
+                                    data-product-id="@producto.ProductoId"
+                                    data-cost="@producto.CostoReferencial.ToString(CultureInfo.InvariantCulture)"
+                                    data-unit="@producto.UnidadMedida"
+                                    data-img="@(string.IsNullOrEmpty(producto.RutaImagen) ? $"/images/productos/{producto.Sku}.png" : producto.RutaImagen)"
+                                    data-search="@($"{producto.Sku} {producto.Nombre} {producto.Categoria}".ToLowerInvariant())">
+                                    <td class="ps-4 text-muted small" data-row-number></td>
+                                    <td class="fw-bold small text-dark">
+                                        <input asp-for="ProductosDisponibles[i].ProductoId" type="hidden" />
+                                        @producto.Sku
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <img src="@(string.IsNullOrEmpty(producto.RutaImagen) ? $"/images/productos/{producto.Sku}.png" : producto.RutaImagen)" style="width: 40px; height: 40px; object-fit: contain; border-radius: 4px; border: 1px solid #dee2e6; background: #fff;" onerror="this.style.display='none';" />
+                                            <div>
+                                                <div class="fw-bold small text-dark quote-row-description">@producto.Nombre</div>
+                                                <div class="text-muted" style="font-size: 0.75rem;">Categoría: @producto.Categoria</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center small text-secondary">@producto.UnidadMedida</td>
                                     <td class="text-center">
-                                        <input asp-for="ProductosDisponibles[i].Seleccionado" class="quote-selection-input" aria-label="Incluir @producto.Nombre en la cotización" />
-                                        <button type="button" class="quote-remove-button" data-remove-product aria-label="Quitar @producto.Nombre" title="Quitar producto"><i class="bi bi-trash3"></i></button>
+                                        <input asp-for="ProductosDisponibles[i].Cantidad"
+                                               class="form-control form-control-sm text-center mx-auto quote-quantity-input"
+                                               type="number"
+                                               min="1"
+                                               max="2147483647"
+                                               step="1"
+                                               disabled="@(!producto.Seleccionado)"
+                                               aria-label="Cantidad de @producto.Nombre"
+                                               style="width: 70px;" />
+                                    </td>
+                                    <td class="text-end small text-secondary fw-medium" data-cost-base>
+                                        S/ @producto.CostoReferencial.ToString("N2", new CultureInfo("es-PE"))
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-inline-flex flex-column align-items-center">
+                                            <div class="input-group input-group-sm" style="width: 105px;">
+                                                <span class="input-group-text bg-light text-muted border-end-0 small px-2">S/</span>
+                                                <input asp-for="ProductosDisponibles[i].PrecioUnitario"
+                                                       type="number"
+                                                       step="0.01"
+                                                       max="999999.99"
+                                                       disabled="@(!producto.Seleccionado)"
+                                                       aria-label="Precio unitario de @producto.Nombre"
+                                                       min="@producto.CostoReferencial.ToString(CultureInfo.InvariantCulture)"
+                                                       class="form-control form-control-sm text-end fw-bold quote-price-input ps-1 pe-2 border-start-0"
+                                                       data-cost-base="@producto.CostoReferencial.ToString(CultureInfo.InvariantCulture)"
+                                                       value="@precioInicial.ToString("F2", CultureInfo.InvariantCulture)" />
+                                            </div>
+                                            <span class="quote-margin-badge text-success small mt-1" style="font-size: 0.75rem; font-weight: 500;">+0% margen</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end fw-bold small text-dark" data-line-subtotal>S/ 0.00</td>
+                                    <td class="text-center pe-4">
+                                        <input asp-for="ProductosDisponibles[i].Seleccionado" type="checkbox" class="d-none quote-selection-input" />
+                                        <input asp-for="ProductosDisponibles[i].MargenPorcentaje" type="hidden" value="@producto.MargenPorcentaje" class="quote-margin-input" />
+                                        <button type="button" class="btn btn-sm btn-link text-muted p-0 quote-remove-btn" data-remove-product title="Eliminar"><i class="bi bi-trash"></i></button>
                                     </td>
                                 </tr>
                             }
                         </tbody>
                     </table>
-                    <div class="quote-empty-lines" id="productosVacios" @(Model.ProductosDisponibles.Any(producto => producto.Seleccionado) ? "hidden" : null)>
-                        <i class="bi bi-cart3"></i><span>Agrega productos para preparar la cotización.</span>
+                    <div id="productosVacios" class="text-center py-5 text-muted @(Model.ProductosDisponibles.Any(p => p.Seleccionado) ? "d-none" : "")">
+                        <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                        Agrega productos para preparar la cotización.
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+                    <span class="small text-dark fw-bold">
+                        <i class="bi bi-circle-fill me-2" style="font-size: 6px;"></i><span id="cantidadProductos">0</span> productos en propuesta
+                        <span class="text-muted fw-normal mx-2">|</span>
+                        <span class="text-muted fw-normal"><i class="bi bi-info-circle me-1"></i>Regla de negocio: El precio unitario cotizado no puede ser menor al costo base unitario.</span>
+                    </span>
+                    <span class="small fw-bold text-secondary">Moneda: PEN (S/.)</span>
+                </div>
+            </div>
+
+            <!-- Notificación de éxito centrada estilo píldora -->
+            @if (cotizacionGuardada)
+            {
+                <div class="text-center my-3">
+                    <div class="d-inline-flex align-items-center py-2 px-4 rounded-pill border shadow-sm" style="background-color: #E8F8F2; border-color: #A3E6CD; color: #0D8A58; font-weight: 500; font-size: 0.95rem;">
+                        <i class="bi bi-check-lg me-2 fs-5"></i> @TempData["SuccessMessage"]
                     </div>
                 </div>
             }
-            <div class="quote-table-footer"><span><strong id="cantidadProductos">0</strong> productos seleccionados</span><span>Moneda: <strong>PEN · S/</strong></span></div>
-          </section>
-          <aside class="quote-side-summary" aria-label="Resumen de importes">
-              <h2><i class="bi bi-calculator me-2"></i>Resumen</h2>
-              <div class="quote-totals" aria-live="polite">
-                  <div><span>Exonerada</span><strong>S/ 0.00</strong></div>
-                  <div><span>Subtotal</span><strong id="subtotalCotizacion">S/ 0.00</strong></div>
-                  <div><span>IGV (18 %)</span><strong id="igvCotizacion">S/ 0.00</strong></div>
-                  <div class="quote-grand-total"><span>Total general</span><strong id="totalCotizacion">S/ 0.00</strong></div>
-              </div>
-          </aside>
+
         </div>
 
         <section class="quote-panel" data-quote-panel="condiciones" hidden>
@@ -203,199 +321,12 @@
             <div class="quote-actions">
                 <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary"><i class="bi bi-arrow-left"></i>Atrás</a>
                 <button type="button" class="quote-clear-button" id="limpiarProductos"><i class="bi bi-dash-square"></i>Limpiar</button>
-                <button type="submit" class="btn-prosegin-primary" @(noPuedeVender || Model.DatosSunatDesactualizados || Model.ClienteBloqueado ? "disabled" : null)><i class="bi bi-save"></i>Grabar cotización</button>
+                <button type="submit" class="btn-prosegin-primary" id="btnGrabarCotizacion" @(noPuedeVender || Model.DatosSunatDesactualizados || Model.ClienteBloqueado ? "disabled" : null)><i class="bi bi-save"></i>Grabar cotización</button>
             </div>
         </div>
     </form>
 </div>
 
-<script>
-    (() => {
-        const storageKey = "prosegin.quote.cart.v1";
-        const rows = Array.from(document.querySelectorAll("[data-product-row]"));
-        const productSelector = document.getElementById("selectorProducto");
-        const productSearch = document.getElementById("filtroProductos");
-        const searchResults = document.getElementById("resultadosBusqueda");
-        const searchFeedback = document.getElementById("estadoBusqueda");
-        const addButton = document.getElementById("agregarProducto");
-        const emptyLines = document.getElementById("productosVacios");
-        const currency = new Intl.NumberFormat("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const formatAmount = (amount) => `S/ ${currency.format(amount)}`;
-        const hasServerSelection = rows.some(row => row.querySelector('input[name$=".Seleccionado"]').checked);
-
-        document.querySelectorAll("[data-quote-tab]").forEach((tab) => {
-            tab.addEventListener("click", () => {
-                const selectedTab = tab.dataset.quoteTab;
-                document.querySelectorAll("[data-quote-tab]").forEach((item) => {
-                    item.setAttribute("aria-selected", String(item === tab));
-                });
-                document.querySelectorAll("[data-quote-panel]").forEach((panel) => {
-                    panel.hidden = panel.dataset.quotePanel !== selectedTab;
-                });
-            });
-        });
-
-        if (!hasServerSelection) {
-            try {
-                const cart = JSON.parse(sessionStorage.getItem(storageKey) || "[]");
-                cart.forEach(item => {
-                    const row = rows.find(candidate => Number(candidate.dataset.productId) === Number(item.id));
-                    if (!row) return;
-                    row.querySelector('input[name$=".Seleccionado"]').checked = true;
-                    row.querySelector('input[name$=".Cantidad"]').value = Math.max(1, Number(item.quantity) || 1);
-                });
-            } catch {
-                sessionStorage.removeItem(storageKey);
-            }
-        }
-
-        const getSelection = row => row.querySelector('input[name$=".Seleccionado"]');
-        const getQuantity = row => row.querySelector('input[name$=".Cantidad"]');
-        const getMargin = row => row.querySelector('input[name$=".MargenPorcentaje"]');
-
-        const updateSelectedProduct = () => {
-            const option = productSelector?.selectedOptions[0];
-            const row = option?.value ? rows.find(candidate => Number(candidate.dataset.productId) === Number(option.value)) : null;
-            addButton.disabled = !row;
-            document.getElementById("stockSeleccionado").value = row
-                ? `${row.dataset.stock} ${row.dataset.unit}`
-                : "-";
-            if (row) {
-                const margin = Number(getMargin(row).value) || 0;
-                const price = Number(row.dataset.cost) * (1 + margin / 100);
-                document.getElementById("precioSeleccionado").value = formatAmount(Math.round((price + Number.EPSILON) * 100) / 100);
-            } else {
-                document.getElementById("precioSeleccionado").value = "S/ 0.00";
-            }
-        };
-
-        const chooseProduct = row => {
-            productSelector.value = row.dataset.productId;
-            searchResults.hidden = true;
-            searchFeedback.textContent = `${row.querySelector(".quote-row-description").textContent} seleccionado. Pulsa Agregar.`;
-            updateSelectedProduct();
-        };
-
-        productSearch?.addEventListener("input", () => {
-            const term = productSearch.value.trim().toLocaleLowerCase();
-            const matches = term ? rows.filter(row => row.dataset.search.includes(term)) : [];
-            Array.from(productSelector.options).forEach((option, index) => {
-                if (index === 0) return;
-                option.hidden = term.length > 0 && !option.dataset.search.includes(term);
-            });
-
-            searchResults.replaceChildren();
-            searchResults.hidden = term.length === 0;
-            searchFeedback.textContent = "";
-
-            if (term.length > 0 && matches.length === 0) {
-                const emptyResult = document.createElement("span");
-                emptyResult.className = "quote-search-empty";
-                emptyResult.textContent = "No se encontraron productos.";
-                searchResults.append(emptyResult);
-                productSelector.value = "";
-            } else if (matches.length > 0) {
-                matches.slice(0, 8).forEach(row => {
-                    const result = document.createElement("button");
-                    result.type = "button";
-                    result.className = "quote-search-result";
-                    result.setAttribute("role", "option");
-                    result.textContent = `${row.querySelector("td:nth-child(2)").textContent.trim()} · ${row.querySelector(".quote-row-description").textContent.trim()}`;
-                    result.addEventListener("click", () => chooseProduct(row));
-                    searchResults.append(result);
-                });
-
-                if (matches.length === 1) {
-                    productSelector.value = matches[0].dataset.productId;
-                    searchFeedback.textContent = "Producto seleccionado. Pulsa Agregar.";
-                } else {
-                    productSelector.value = "";
-                    searchFeedback.textContent = `${matches.length} productos encontrados. Elige uno de la lista.`;
-                }
-            } else {
-                productSelector.value = "";
-            }
-            updateSelectedProduct();
-        });
-        productSelector?.addEventListener("change", () => {
-            updateSelectedProduct();
-            const row = rows.find(candidate => Number(candidate.dataset.productId) === Number(productSelector.value));
-            if (row) searchFeedback.textContent = `${row.querySelector(".quote-row-description").textContent} seleccionado. Pulsa Agregar.`;
-        });
-
-        addButton?.addEventListener("click", () => {
-            const productId = Number(productSelector.value);
-            const row = rows.find(candidate => Number(candidate.dataset.productId) === productId);
-            if (!row) return;
-            const quantity = Math.max(1, Math.floor(Number(document.getElementById("cantidadAgregar").value) || 1));
-            getQuantity(row).value = quantity;
-            getSelection(row).checked = true;
-            row.classList.add("is-selected");
-            updateTotals();
-            productSelector.value = "";
-            productSearch.value = "";
-            Array.from(productSelector.options).forEach(option => { option.hidden = false; });
-            searchResults.replaceChildren();
-            searchResults.hidden = true;
-            searchFeedback.textContent = "";
-            document.getElementById("cantidadAgregar").value = "1";
-            updateSelectedProduct();
-        });
-
-        const updateTotals = () => {
-            let subtotal = 0;
-            const selectedProducts = [];
-            rows.forEach((row) => {
-                const selected = getSelection(row);
-                const quantity = Math.max(1, Math.floor(Number(getQuantity(row).value) || 1));
-                const margin = Number(getMargin(row).value) || 0;
-                const cost = Number(row.dataset.cost) || 0;
-                const unitPrice = Math.round((cost * (1 + margin / 100) + Number.EPSILON) * 100) / 100;
-                const lineSubtotal = selected.checked ? Math.round((unitPrice * quantity + Number.EPSILON) * 100) / 100 : 0;
-                row.querySelector("[data-unit-price]").textContent = formatAmount(unitPrice);
-                row.querySelector("[data-line-subtotal]").textContent = selected.checked ? formatAmount(lineSubtotal) : "—";
-                row.classList.toggle("is-selected", selected.checked);
-                subtotal += lineSubtotal;
-                if (selected.checked) {
-                    selectedProducts.push({ id: Number(row.dataset.productId), quantity });
-                }
-            });
-
-            subtotal = Math.round((subtotal + Number.EPSILON) * 100) / 100;
-            const igv = Math.round((subtotal * 0.18 + Number.EPSILON) * 100) / 100;
-            document.getElementById("subtotalCotizacion").textContent = formatAmount(subtotal);
-            document.getElementById("igvCotizacion").textContent = formatAmount(igv);
-            document.getElementById("totalCotizacion").textContent = formatAmount(subtotal + igv);
-            document.getElementById("cantidadProductos").textContent = String(selectedProducts.length);
-            if (emptyLines) emptyLines.hidden = selectedProducts.length > 0;
-            sessionStorage.setItem(storageKey, JSON.stringify(selectedProducts));
-        };
-
-        rows.forEach((row) => {
-            getSelection(row).addEventListener("change", updateTotals);
-            getQuantity(row).addEventListener("input", updateTotals);
-            getMargin(row).addEventListener("input", () => {
-                updateTotals();
-                if (Number(productSelector?.value) === Number(row.dataset.productId)) updateSelectedProduct();
-            });
-            row.querySelector("[data-remove-product]").addEventListener("click", () => {
-                getSelection(row).checked = false;
-                updateTotals();
-            });
-        });
-
-        document.getElementById("limpiarProductos")?.addEventListener("click", () => {
-            rows.forEach((row) => {
-                getSelection(row).checked = false;
-                getQuantity(row).value = "1";
-            });
-            updateTotals();
-        });
-
-        updateTotals();
-        updateSelectedProduct();
-        if (document.getElementById("formCotizacion").dataset.cotizacionGuardada === "true") {
-            sessionStorage.removeItem(storageKey);
-        }
-    })();
-</script>
+@section Scripts {
+    <script src="~/js/cotizacion-productos.js" asp-append-version="true"></script>
+}

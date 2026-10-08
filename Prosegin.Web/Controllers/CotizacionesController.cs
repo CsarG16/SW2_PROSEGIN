@@ -36,7 +36,7 @@ public class CotizacionesController : Controller
             return NotFound();
         }
 
-        var productosEnviados = model.ProductosDisponibles;
+        var productosEnviados = model.ProductosDisponibles ?? new();
         foreach (var producto in current.ProductosDisponibles)
         {
             var enviado = productosEnviados.FirstOrDefault(p => p.ProductoId == producto.ProductoId);
@@ -48,6 +48,7 @@ public class CotizacionesController : Controller
             producto.Seleccionado = enviado.Seleccionado;
             producto.Cantidad = enviado.Cantidad;
             producto.MargenPorcentaje = enviado.MargenPorcentaje;
+            producto.PrecioUnitario = enviado.PrecioUnitario > 0 ? enviado.PrecioUnitario : producto.CostoReferencial;
         }
 
         if (!CondicionPagoRules.EsPlazoCreditoValido(model.CondicionPago))
@@ -99,31 +100,58 @@ public class CotizacionesController : Controller
         var detalles = new List<CotizacionDetalle>();
         foreach (var seleccionado in productosSeleccionados)
         {
+            var indice = productosEnviados.IndexOf(seleccionado);
+            if (seleccionado.Cantidad < 1)
+            {
+                ModelState.AddModelError($"ProductosDisponibles[{indice}].Cantidad", "La cantidad debe ser un número entero mayor a cero.");
+            }
+
+            if (seleccionado.MargenPorcentaje is < 0 or > 1000)
+            {
+                ModelState.AddModelError($"ProductosDisponibles[{indice}].MargenPorcentaje", "El margen debe estar entre 0 y 1000 %.");
+            }
+
             if (!productosActivos.TryGetValue(seleccionado.ProductoId, out var producto)
-                || seleccionado.Cantidad < 1
-                || seleccionado.MargenPorcentaje is < 0 or > 100)
+                || seleccionado.Cantidad < 1)
             {
                 continue;
             }
 
-            var precioVenta = Math.Round(producto.CostoReferencial * (1 + seleccionado.MargenPorcentaje / 100m), 2);
+            var precioUnitario = ModelState.ContainsKey($"ProductosDisponibles[{indice}].PrecioUnitario")
+                ? seleccionado.PrecioUnitario : producto.CostoReferencial;
+            if (!CotizacionPrecioRules.EsPrecioValido(precioUnitario, producto.CostoReferencial))
+            {
+                ModelState.AddModelError(string.Empty, CotizacionPrecioRules.MensajePrecioMenorACosto);
+                precioUnitario = producto.CostoReferencial;
+            }
+
+            var subtotalLinea = CotizacionPrecioRules.CalcularSubtotalItem(seleccionado.Cantidad, precioUnitario);
+            var margenDeseado = producto.CostoReferencial > 0
+                ? (precioUnitario - producto.CostoReferencial) / producto.CostoReferencial
+                : 0m;
+
             detalles.Add(new CotizacionDetalle
             {
                 ProductoId = producto.Id,
                 Cantidad = seleccionado.Cantidad,
                 CostoProveedorReferencial = producto.CostoReferencial,
-                MargenDeseado = seleccionado.MargenPorcentaje / 100m,
-                PrecioVentaCalculado = precioVenta,
-                Subtotal = Math.Round(precioVenta * seleccionado.Cantidad, 2)
+                MargenDeseado = Math.Round(margenDeseado, 4, MidpointRounding.AwayFromZero),
+                PrecioVentaCalculado = precioUnitario,
+                Subtotal = subtotalLinea
             });
         }
 
         var subtotal = detalles.Sum(d => d.Subtotal);
-        var igv = Math.Round(subtotal * 0.18m, 2);
-        current.Total = subtotal + igv;
+        var igv = CotizacionPrecioRules.CalcularIgv(subtotal);
+        var total = CotizacionPrecioRules.CalcularTotal(subtotal, igv);
+        current.Subtotal = subtotal;
+        current.Igv = igv;
+        current.Total = total;
 
         if (!ModelState.IsValid)
         {
+            ReordenarEstadoProductos(current, productosEnviados);
+            ViewData["CotizacionPostInvalido"] = true;
             return View(current);
         }
 
@@ -134,14 +162,15 @@ public class CotizacionesController : Controller
             CondicionPago = current.CondicionPago,
             Subtotal = subtotal,
             Igv = igv,
-            Total = current.Total,
+            Total = total,
             Estado = "Borrador",
             Detalles = detalles
         };
 
         _context.Cotizaciones.Add(cotizacion);
         await _context.SaveChangesAsync(cancellationToken);
-        TempData["SuccessMessage"] = $"Cotización {cotizacion.Correlativo} creada correctamente.";
+        TempData["SuccessMessage"] = CotizacionPrecioRules.MensajeGuardadoExitoso;
+        TempData["CotizacionGuardada"] = true;
         return RedirectToAction(nameof(Create), new { clienteId = current.ClienteId });
     }
 
@@ -174,6 +203,44 @@ public class CotizacionesController : Controller
 
         TempData["SuccessMessage"] = "Los datos fiscales fueron actualizados con la información más reciente de SUNAT.";
         return RedirectToAction(nameof(Create), new { clienteId });
+    }
+
+    private void ReordenarEstadoProductos(CotizacionClienteViewModel current, List<ProductoCotizacionViewModel> enviados)
+    {
+        // El catálogo puede cambiar entre GET y POST. Razor prioriza ModelState:
+        // sus índices deben corresponder al catálogo actual, nunca a otra fila.
+        const string prefijo = "ProductosDisponibles[";
+        // Copiar los valores antes de modificar el diccionario: un nuevo índice
+        // puede reutilizar el mismo ModelStateEntry que otra fila tenía antes.
+        var estados = ModelState.Where(e => e.Key.StartsWith(prefijo, StringComparison.Ordinal))
+            .Select(e => new
+            {
+                e.Key,
+                RawValue = e.Value?.RawValue,
+                AttemptedValue = e.Value?.AttemptedValue,
+                Errores = e.Value?.Errors.Select(error => string.IsNullOrEmpty(error.ErrorMessage)
+                    ? "El valor ingresado para el producto no es válido." : error.ErrorMessage).ToArray() ?? Array.Empty<string>()
+            }).ToList();
+        foreach (var estado in estados) ModelState.Remove(estado.Key);
+
+        foreach (var estado in estados)
+        {
+            var cierre = estado.Key.IndexOf(']');
+            var indiceActual = -1;
+            if (cierre > prefijo.Length && int.TryParse(estado.Key[prefijo.Length..cierre], out var indiceEnviado)
+                && indiceEnviado >= 0 && indiceEnviado < enviados.Count)
+            {
+                indiceActual = current.ProductosDisponibles.FindIndex(p => p.ProductoId == enviados[indiceEnviado].ProductoId);
+            }
+
+            var campo = cierre >= 0 ? estado.Key[(cierre + 1)..] : "";
+            var clave = indiceActual >= 0 && campo is ".Cantidad" or ".MargenPorcentaje" or ".Seleccionado" or ".PrecioUnitario"
+                ? $"ProductosDisponibles[{indiceActual}]{campo}" : string.Empty;
+            if (clave.Length > 0)
+                ModelState.SetModelValue(clave, estado.RawValue, estado.AttemptedValue);
+
+            foreach (var error in estado.Errores) ModelState.AddModelError(clave, error);
+        }
     }
 
     private async Task<CotizacionClienteViewModel?> BuildModelAsync(int clienteId, CancellationToken cancellationToken)
@@ -235,7 +302,9 @@ public class CotizacionesController : Controller
                 Categoria = p.Categoria,
                 UnidadMedida = p.UnidadMedida,
                 CostoReferencial = p.CostoReferencial,
-                StockDisponible = p.StockDisponible
+                PrecioUnitario = p.CostoReferencial,
+                StockDisponible = p.StockDisponible,
+                RutaImagen = p.RutaImagen ?? string.Empty
             })
             .ToListAsync(cancellationToken);
 

@@ -115,3 +115,51 @@ Documentación central de contexto de negocio, arquitectura y requerimientos par
    $$\text{Precio Venta} = \frac{\text{Costo Proveedor}}{1 - \text{Margen Deseado}}$$
 3. **Almacenamiento de Fichas Técnicas:** Los archivos físicos PDF se guardan en el servidor (ej. `wwwroot/uploads/fichas/` o servicio de almacenamiento). En MySQL solo se almacena la ruta relativa, nombre original y metadata.
 4. **Protección Contra Morosidad:** Al crear o aprobar una cotización a crédito, el sistema debe verificar de forma obligatoria si el cliente posee facturas impagas vencidas. Si existe deuda vencida, se debe restringir o requerir autorización gerencial.
+
+---
+
+## 6. METODOLOGÍA DE DESARROLLO Y GESTIÓN ÁGIL (SCRUM)
+
+El proyecto se gestiona y ejecuta siguiendo el marco de trabajo **Scrum**, adaptado a ciclos iterativos de desarrollo de software con entregas continuas de valor funcional e incremental.
+
+### 6.1. Jerarquía de Trabajo y Artefactos:
+1. **Épicas (Epics):**
+   - Grandes iniciativas de negocio o módulos completos del sistema con impacto a medio/largo plazo.
+   - *Ejemplos:*
+     - `EPIC-01: Gestión Corporativa de Clientes y Verificación SUNAT`.
+     - `EPIC-02: Catálogo Centralizado de EPP y Repositorio de Fichas Técnicas`.
+     - `EPIC-03: Motor de Cotizaciones Dinámicas con Cálculo de Margen y Anexo PDF`.
+     - `EPIC-04: Abastecimiento y Órdenes de Compra JIT en Las Malvinas`.
+     - `EPIC-05: Facturación Electrónica, GRE y Gestión de Cobranzas/Riesgo Crediticio`.
+
+2. **Historias de Usuario (User Stories):**
+   - Requerimientos funcionales expresados desde la perspectiva del usuario final (Asesor Comercial, Asistente de Despacho, Gerente Financiero, Administrador).
+   - **Estructura Requerida:**
+     ```markdown
+     Como [rol de usuario]
+     Quiero [acción o funcionalidad requerida]
+     Para [beneficio o valor que aporta al negocio]
+     ```
+   - **Criterios de Aceptación (Acceptance Criteria):** Cada historia debe contener condiciones verificables (formato *Dado que / Cuando / Entonces* o lista de comprobación funcional) que determinen si está lista.
+
+3. **Historias Técnicas (Technical Stories / Enablers / Spikes):**
+   - Ítems de trabajo orientados a la arquitectura, infraestructura, migraciones de base de datos (`Prosegin.Data`), integración de APIs (SUNAT/RENIEC), configuración de librerías (generación/fusión de PDFs), refactorizaciones y suites de pruebas unitarias (`Prosegin.Tests`).
+   - Sientan las bases técnicas necesarias para habilitar las Historias de Usuario.
+
+4. **Product Backlog:**
+   - Inventario centralizado, priorizado y vivo de todas las Épicas, Historias de Usuario, Historias Técnicas y Deuda Técnica pendientes.
+   - Priorización basada en el valor aportado a la reducción del cuello de botella comercial (emitir cotizaciones en < 12 minutos y asegurar compras/cobros).
+
+5. **Sprints y Sprint Backlog:**
+   - **Sprints:** Iteraciones de desarrollo de duración fija (típicamente 1 a 2 semanas) con un **Sprint Goal** (Objetivo del Sprint) medible.
+   - **Sprint Backlog:** Conjunto de Historias de Usuario y Técnicas seleccionadas durante el *Sprint Planning* para ser construidas durante la iteración activa, descompuestas en tareas técnicas de programación (backend, frontend, base de datos y tests).
+
+### 6.2. Definición de Hecho (Definition of Done - DoD):
+Para que una Historia de Usuario o Técnica se considere terminada (Done), debe cumplir:
+- [ ] **Compilación:** Código C# (.NET 8) compila limpiamente sin errores ni advertencias.
+- [ ] **Lógica y Reglas de Negocio:** La fórmula de margen y las validaciones de crédito se ejecutan en el servidor (`Prosegin.Web/Services/` o `Prosegin.Data/Validation/`).
+- [ ] **Pruebas:** Pruebas unitarias creadas o actualizadas en `Prosegin.Tests` y ejecutadas con resultado exitoso.
+- [ ] **Base de Datos:** Migraciones de EF Core generadas y probadas si hubo cambios en modelos.
+- [ ] **UI/UX:** Vistas Razor alineadas al Sistema de Diseño (`ui_guidelines.md`): tarjetas `.prosegin-card`, acento corporativo dorado, badges de estado `.badge-status` y tablas `.prosegin-table`.
+- [ ] **Revisión de Código:** Cumplimiento de convenciones de nomenclatura y asincronía (`async`/`await` con `CancellationToken`).
+

@@ -22,6 +22,21 @@ namespace Prosegin.Data.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
+            modelBuilder.Entity("ProductoProveedor", b =>
+                {
+                    b.Property<int>("ProductoId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProveedorId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ProductoId", "ProveedorId");
+
+                    b.HasIndex("ProveedorId");
+
+                    b.ToTable("ProductoProveedores", (string)null);
+                });
+
             modelBuilder.Entity("Prosegin.Data.Entities.Cliente", b =>
                 {
                     b.Property<int>("Id")
@@ -392,6 +407,9 @@ namespace Prosegin.Data.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("varchar(300)");
 
+                    b.Property<string>("RutaImagen")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("Sku")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -408,6 +426,9 @@ namespace Prosegin.Data.Migrations
                         .HasColumnType("varchar(20)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Sku")
+                        .IsUnique();
 
                     b.ToTable("Productos", (string)null);
                 });
@@ -504,6 +525,21 @@ namespace Prosegin.Data.Migrations
                     b.HasIndex("ClienteId");
 
                     b.ToTable("PuntosEntrega");
+                });
+
+            modelBuilder.Entity("ProductoProveedor", b =>
+                {
+                    b.HasOne("Prosegin.Data.Entities.Producto", null)
+                        .WithMany()
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Prosegin.Data.Entities.Proveedor", null)
+                        .WithMany()
+                        .HasForeignKey("ProveedorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Prosegin.Data.Entities.ContactoCliente", b =>
