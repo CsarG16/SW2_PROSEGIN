@@ -76,7 +76,13 @@
         @Html.AntiForgeryToken()
         <input asp-for="ClienteId" type="hidden" />
 
-
+        <nav class="quote-tabs" role="tablist" aria-label="Secciones de la cotización">
+            <button type="button" role="tab" aria-selected="false" data-quote-tab="cliente"><i class="bi bi-person me-1"></i>Cliente</button>
+            <button type="button" role="tab" aria-selected="false" data-quote-tab="cabecera"><i class="bi bi-file-earmark-text me-1"></i>Cabecera</button>
+            <button type="button" role="tab" aria-selected="true" data-quote-tab="productos"><i class="bi bi-box-seam me-1"></i>Productos</button>
+            <button type="button" role="tab" aria-selected="false" data-quote-tab="condiciones"><i class="bi bi-credit-card me-1"></i>Condiciones</button>
+            <button type="button" role="tab" aria-selected="false" data-quote-tab="observaciones"><i class="bi bi-chat-left-text me-1"></i>Observaciones</button>
+        </nav>
 
         <section class="quote-panel" data-quote-panel="cliente" hidden>
             <div class="quote-panel-heading"><div><span>CLIENTE</span><h2>Datos del cliente</h2></div><span class="quote-status @(noPuedeVender ? "is-danger" : "is-ok")">@(noPuedeVender ? "VENTA RESTRINGIDA" : "HABILITADO")</span></div>
@@ -100,7 +106,7 @@
         </section>
 
         <div class="mt-4 w-100" data-quote-panel="productos" style="display: block;">
-            
+
             <div class="row g-3 mb-3">
                 <!-- Panel izquierdo: Búsqueda y Agregar -->
                 <div class="col-lg-8">
@@ -114,7 +120,7 @@
                                 </div>
                                 <div class="list-group position-absolute w-100 shadow-sm mt-1" id="resultadosBusqueda" style="z-index: 1000; max-height: 250px; overflow-y: auto;" hidden></div>
                             </div>
-                            
+
                             <div class="row g-2 align-items-end">
                                 <div class="col-md-5">
                                     <label class="form-label fw-bold text-secondary small mb-1">Producto EPP</label>
@@ -291,27 +297,42 @@
 
         </div>
 
-        <!-- Condiciones (Oculto, pero necesario para el form submit si se requiere) -->
-        <section class="quote-panel d-none" data-quote-panel="condiciones">
-            <select asp-for="CondicionPago">
-                <option value="7 días">Crédito a 7 días</option>
-            </select>
+        <section class="quote-panel" data-quote-panel="condiciones" hidden>
+            <div class="quote-panel-heading"><div><span>CONDICIONES</span><h2>Condiciones comerciales</h2></div></div>
+            <div class="quote-conditions-grid">
+                <label asp-for="CondicionPago" class="quote-field">Condición de pago
+                    <select asp-for="CondicionPago">
+                        <option value="7 días">Crédito a 7 días</option>
+                        <option value="15 días">Crédito a 15 días</option>
+                        <option value="30 días">Crédito a 30 días</option>
+                    </select>
+                    <span asp-validation-for="CondicionPago" class="text-danger small"></span>
+                </label>
+                <div><span>Saldo pendiente</span><strong>@Model.SaldoPendiente.ToString("C", new CultureInfo("es-PE"))</strong></div>
+                <div><span>Saldo vencido</span><strong>@Model.SaldoVencido.ToString("C", new CultureInfo("es-PE"))</strong></div>
+                <div><span>Días de mora</span><strong>@Model.DiasMora</strong></div>
+            </div>
         </section>
 
-        <!-- Barra inferior de acciones -->
-        <div class="d-flex justify-content-between align-items-center mt-4 bg-white p-3 rounded-4 shadow-sm border">
-            <a asp-controller="Clientes" asp-action="Index" class="btn btn-light border px-4" data-cancel-quote><i class="bi bi-arrow-left me-2"></i>Atrás</a>
-            <div class="d-flex gap-2">
-                <button type="button" class="btn btn-outline-primary px-4 d-flex align-items-center gap-2" id="generarPdf"
+        <section class="quote-panel" data-quote-panel="observaciones" hidden>
+            <div class="quote-panel-heading"><div><span>OBSERVACIONES</span><h2>Validaciones de la cotización</h2></div></div>
+            <div class="quote-observation-note @(noPuedeVender || Model.DatosSunatDesactualizados || Model.ClienteBloqueado ? "is-warning" : "")">
+                <i class="bi @(noPuedeVender || Model.DatosSunatDesactualizados || Model.ClienteBloqueado ? "bi-exclamation-triangle" : "bi-info-circle")"></i>
+                <p>@(Model.DatosSunatDesactualizados ? "Actualiza los datos fiscales del cliente desde SUNAT antes de emitir la cotización." : noPuedeVender ? "La cotización no se puede generar hasta que el cliente figure ACTIVO y HABIDO en SUNAT." : Model.ClienteBloqueado ? $"Cliente bloqueado por mora: {Model.MotivoBloqueo} No se permite generar la cotización a crédito." : "La información fiscal y crediticia se vuelve a validar al guardar. Las observaciones libres aún no forman parte del registro de cotizaciones.")</p>
+            </div>
+        </section>
+
+        <div class="quote-bottom-bar">
+            <div class="quote-actions">
+                <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary"><i class="bi bi-arrow-left"></i>Atrás</a>
+                <button type="button" class="btn-prosegin-secondary" id="generarPdf"
                         data-bs-toggle="modal" data-bs-target="#cotizacionPdfModal"
                         disabled="@(!tieneCotizacionGuardada)"
                         title="@(tieneCotizacionGuardada ? "Ver y generar el PDF" : "Guarda la cotización antes de generar el PDF")">
                     <i class="bi bi-file-earmark-pdf"></i> Generar PDF
                 </button>
-                <button type="button" class="btn btn-light border px-4" id="limpiarProductos"><i class="bi bi-arrow-counterclockwise me-2"></i>Limpiar</button>
-                <button type="submit" class="btn btn-dark px-4 py-2 fw-bold text-white d-flex align-items-center gap-2" id="btnGrabarCotizacion" @(noPuedeVender || Model.DatosSunatDesactualizados ? "disabled" : null) style="background-color: #0B1727; border-color: #0B1727;">
-                    <i class="bi bi-box-arrow-down"></i> Grabar cotización
-                </button>
+                <button type="button" class="quote-clear-button" id="limpiarProductos"><i class="bi bi-dash-square"></i>Limpiar</button>
+                <button type="submit" class="btn-prosegin-primary" id="btnGrabarCotizacion" @(noPuedeVender || Model.DatosSunatDesactualizados || Model.ClienteBloqueado ? "disabled" : null)><i class="bi bi-save"></i>Grabar cotización</button>
             </div>
         </div>
     </form>
