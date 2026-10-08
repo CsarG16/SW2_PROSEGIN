@@ -19,6 +19,10 @@ namespace Prosegin.Web.ViewModels.Clientes
         [Display(Name = "Dirección Fiscal Completa")]
         public string DireccionFiscal { get; set; } = string.Empty;
 
+        [StringLength(250, ErrorMessage = "La referencia no puede exceder los 250 caracteres.")]
+        [Display(Name = "Referencia de Ubicación")]
+        public string? Referencia { get; set; }
+
         [StringLength(20, ErrorMessage = "El teléfono no puede exceder los 20 caracteres.")]
         [Display(Name = "Teléfono de Contacto Fiscal")]
         public string? Telefono { get; set; }
@@ -45,17 +49,9 @@ namespace Prosegin.Web.ViewModels.Clientes
         public string? Ubigeo { get; set; }
 
         [Display(Name = "Estado SUNAT")]
-        public string EstadoSunat { get; set; } = "ACTIVO";
+        public string EstadoSunat { get; set; } = "NO VERIFICADO";
 
         [Display(Name = "Condición SUNAT")]
-        public string CondicionSunat { get; set; } = "HABIDO";
-
-        [StringLength(200, ErrorMessage = "El representante legal no puede exceder los 200 caracteres.")]
-        [Display(Name = "Representante Legal")]
-        public string? RepresentanteLegal { get; set; }
-
-        [Range(0, double.MaxValue, ErrorMessage = "El límite de crédito no puede ser negativo.")]
-        [Display(Name = "Límite de Crédito")]
-        public decimal LimiteCredito { get; set; }
+        public string CondicionSunat { get; set; } = "NO VERIFICADO";
     }
 }

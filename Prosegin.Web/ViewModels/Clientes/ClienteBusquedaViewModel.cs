@@ -21,10 +21,8 @@ public class ClienteBusquedaItemViewModel
     public string? Departamento { get; set; }
     public string? Provincia { get; set; }
     public string? Distrito { get; set; }
-    public string? RepresentanteLegal { get; set; }
     public string EstadoSunat { get; set; } = string.Empty;
     public string CondicionSunat { get; set; } = string.Empty;
-    public decimal LimiteCredito { get; set; }
     public decimal SaldoVencido { get; set; }
     public int DiasMora { get; set; }
     public bool CreditoExcedido { get; set; }
@@ -32,4 +30,6 @@ public class ClienteBusquedaItemViewModel
     public string EstadoCredito { get; set; } = string.Empty;
     public string? MensajeBloqueo { get; set; }
     public DateTime FechaCreacion { get; set; }
+    public string TipoCliente { get; set; } = "Cliente Corporativo";
+    public int CantidadSedes { get; set; } = 1;
 }

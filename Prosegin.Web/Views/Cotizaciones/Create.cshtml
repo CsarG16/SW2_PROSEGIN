@@ -2,19 +2,23 @@
 @using System.Globalization
 
 @{
-    ViewData["Title"] = "Nueva Cotización";
+    ViewData["Title"] = "Generar Cotización";
     var cotizacionGuardada = TempData["SuccessMessage"] != null;
     var noPuedeVender = !string.Equals(Model.EstadoSunat, "ACTIVO", StringComparison.OrdinalIgnoreCase)
         || !string.Equals(Model.CondicionSunat, "HABIDO", StringComparison.OrdinalIgnoreCase);
 }
 
 <div class="container-fluid px-0">
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-        <div>
-            <h4 class="fw-bold text-dark mb-1"><i class="bi bi-file-earmark-text text-warning me-2"></i>NUEVA COTIZACIÓN</h4>
-            <p class="text-muted small mb-0">La validación fiscal y crediticia se ejecuta nuevamente al guardar.</p>
+    <div class="prosegin-card mb-4 p-3 p-md-4">
+        <div class="prosegin-page-header--accent" style="margin-bottom: 0;">
+            <div class="header-content">
+                <h1 class="page-title">Generar Cotización</h1>
+                <p class="page-subtitle">Validación fiscal SUNAT, cálculo de márgenes comerciales y cotización formal de EPP</p>
+            </div>
+            <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary">
+                <i class="bi bi-arrow-left"></i> Volver a Clientes
+            </a>
         </div>
-        <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary"><i class="bi bi-arrow-left me-1"></i>VOLVER A CLIENTES</a>
     </div>
 
     @if (cotizacionGuardada)
@@ -33,7 +37,7 @@
     {
         <div class="alert alert-warning border-warning shadow-sm">
             <i class="bi bi-arrow-repeat me-2"></i>
-            <strong>ACTUALIZACIÓN OBLIGATORIA:</strong> la dirección o el representante legal difiere de SUNAT.
+            <strong>ACTUALIZACIÓN OBLIGATORIA:</strong> la dirección fiscal difiere de SUNAT.
             <form asp-action="ActualizarDesdeSunat" method="post" class="d-inline ms-2">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="clienteId" value="@Model.ClienteId" />
@@ -175,23 +179,23 @@
             <div class="quote-conditions-grid">
                 <label asp-for="CondicionPago" class="quote-field">Condición de pago
                     <select asp-for="CondicionPago">
-                        <option value="Contado">Contado</option>
                         <option value="7 días">Crédito a 7 días</option>
                         <option value="15 días">Crédito a 15 días</option>
                         <option value="30 días">Crédito a 30 días</option>
                     </select>
+                    <span asp-validation-for="CondicionPago" class="text-danger small"></span>
                 </label>
-                <div><span>Límite de crédito</span><strong>@Model.LimiteCredito.ToString("C", new CultureInfo("es-PE"))</strong></div>
                 <div><span>Saldo pendiente</span><strong>@Model.SaldoPendiente.ToString("C", new CultureInfo("es-PE"))</strong></div>
                 <div><span>Saldo vencido</span><strong>@Model.SaldoVencido.ToString("C", new CultureInfo("es-PE"))</strong></div>
+                <div><span>Días de mora</span><strong>@Model.DiasMora</strong></div>
             </div>
         </section>
 
         <section class="quote-panel" data-quote-panel="observaciones" hidden>
             <div class="quote-panel-heading"><div><span>OBSERVACIONES</span><h2>Validaciones de la cotización</h2></div></div>
-            <div class="quote-observation-note @(noPuedeVender || Model.DatosSunatDesactualizados ? "is-warning" : "")">
-                <i class="bi @(noPuedeVender || Model.DatosSunatDesactualizados ? "bi-exclamation-triangle" : "bi-info-circle")"></i>
-                <p>@(Model.DatosSunatDesactualizados ? "Actualiza los datos fiscales del cliente desde SUNAT antes de emitir la cotización." : noPuedeVender ? "La cotización no se puede emitir hasta que el cliente figure ACTIVO y HABIDO en SUNAT." : "La información fiscal y crediticia se vuelve a validar al guardar. Las observaciones libres aún no forman parte del registro de cotizaciones.")</p>
+            <div class="quote-observation-note @(noPuedeVender || Model.DatosSunatDesactualizados || Model.ClienteBloqueado ? "is-warning" : "")">
+                <i class="bi @(noPuedeVender || Model.DatosSunatDesactualizados || Model.ClienteBloqueado ? "bi-exclamation-triangle" : "bi-info-circle")"></i>
+                <p>@(Model.DatosSunatDesactualizados ? "Actualiza los datos fiscales del cliente desde SUNAT antes de emitir la cotización." : noPuedeVender ? "La cotización no se puede generar hasta que el cliente figure ACTIVO y HABIDO en SUNAT." : Model.ClienteBloqueado ? $"Cliente bloqueado por mora: {Model.MotivoBloqueo} No se permite generar la cotización a crédito." : "La información fiscal y crediticia se vuelve a validar al guardar. Las observaciones libres aún no forman parte del registro de cotizaciones.")</p>
             </div>
         </section>
 
@@ -199,7 +203,7 @@
             <div class="quote-actions">
                 <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary"><i class="bi bi-arrow-left"></i>Atrás</a>
                 <button type="button" class="quote-clear-button" id="limpiarProductos"><i class="bi bi-dash-square"></i>Limpiar</button>
-                <button type="submit" class="btn-prosegin-primary" @(noPuedeVender || Model.DatosSunatDesactualizados ? "disabled" : null)><i class="bi bi-save"></i>Grabar cotización</button>
+                <button type="submit" class="btn-prosegin-primary" @(noPuedeVender || Model.DatosSunatDesactualizados || Model.ClienteBloqueado ? "disabled" : null)><i class="bi bi-save"></i>Grabar cotización</button>
             </div>
         </div>
     </form>

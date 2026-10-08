@@ -8,7 +8,7 @@ public class Cotizacion
     public DateTime FechaEmision { get; set; } = DateTime.UtcNow;
     public DateTime? FechaVencimiento { get; set; }
     public string Estado { get; set; } = "Borrador"; // Borrador, Enviada, Aprobada, Rechazada
-    public string CondicionPago { get; set; } = "Contado"; // Contado, 7 dias, 15 dias, 30 dias
+    public string CondicionPago { get; set; } = Prosegin.Data.Validation.CondicionPagoRules.PlazoCreditoPredeterminado;
     
     public decimal Subtotal { get; set; }
     public decimal Igv { get; set; }

@@ -24,6 +24,10 @@ public class ProductoCreateViewModel
     [StringLength(20, ErrorMessage = "La unidad no puede superar los 20 caracteres.")]
     public string UnidadMedida { get; set; } = "UND";
 
+    [Display(Name = "Marca / Fabricante")]
+    [StringLength(100, ErrorMessage = "La marca no puede superar los 100 caracteres.")]
+    public string? Marca { get; set; }
+
     [Required(ErrorMessage = "Ingrese el costo base de adquisición.")]
     [Range(typeof(decimal), "0.01", "9999999999999999.99", ErrorMessage = "Ingrese un costo base mayor a cero.")]
     [Display(Name = "Costo base de adquisición")]

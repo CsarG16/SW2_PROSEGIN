@@ -60,12 +60,6 @@ namespace Prosegin.Data.Migrations
                     b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<decimal>("LimiteCredito")
-                        .ValueGeneratedOnAdd()
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)")
-                        .HasDefaultValue(0m);
-
                     b.Property<string>("Provincia")
                         .HasColumnType("longtext");
 
@@ -74,9 +68,9 @@ namespace Prosegin.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
-                    b.Property<string>("RepresentanteLegal")
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
+                    b.Property<string>("Referencia")
+                        .HasMaxLength(250)
+                        .HasColumnType("varchar(250)");
 
                     b.Property<string>("Ruc")
                         .IsRequired()
@@ -465,11 +459,44 @@ namespace Prosegin.Data.Migrations
                     b.Property<int>("ClienteId")
                         .HasColumnType("int");
 
+                    b.Property<string>("ContactoRecepcion")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Departamento")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("Direccion")
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("Distrito")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("EsPredeterminada")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("HorarioRecepcion")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("NombreAlias")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Provincia")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("Referencia")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("RestriccionesAcceso")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TelefonoMovil")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TipoSede")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Ubigeo")
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");

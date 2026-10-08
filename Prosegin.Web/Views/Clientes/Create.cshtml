@@ -2,19 +2,20 @@
 @using Prosegin.Data.Entities
 
 @{
-    ViewData["Title"] = "Registro de Datos Tributarios";
+    ViewData["Title"] = "Registrar cliente";
 }
 
 <div class="container-fluid px-0">
     <!-- Encabezado Principal del Registro -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-        <div class="page-header-prosegin">
-            <h4>
-                <i class="bi bi-file-earmark-text text-warning me-2"></i> Registrar Datos Tributarios
-            </h4>
-            <p>
-                Ingrese la información fiscal del cliente para la correcta emisión de comprobantes de pago (Facturas y Guías de Remisión).
-            </p>
+    <div class="prosegin-card mb-4 p-3 p-md-4">
+        <div class="prosegin-page-header--accent" style="margin-bottom: 0;">
+            <div class="header-content">
+                <h1 class="page-title">Registrar cliente</h1>
+                <p class="page-subtitle">Información fiscal SUNAT para comprobantes de pago (Facturas y Guías de Remisión)</p>
+            </div>
+            <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary">
+                <i class="bi bi-arrow-left"></i> Volver a Clientes
+            </a>
         </div>
     </div>
 
@@ -44,8 +45,8 @@
 
     <form asp-action="Create" method="post" id="formDatosTributarios" novalidate>
         @Html.AntiForgeryToken()
-        <input type="hidden" asp-for="EstadoSunat" id="hiddenEstadoSunat" value="ACTIVO" />
-        <input type="hidden" asp-for="CondicionSunat" id="hiddenCondicionSunat" value="HABIDO" />
+        <input type="hidden" asp-for="EstadoSunat" id="hiddenEstadoSunat" value="NO VERIFICADO" />
+        <input type="hidden" asp-for="CondicionSunat" id="hiddenCondicionSunat" value="NO VERIFICADO" />
 
         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
 
@@ -65,7 +66,6 @@
                 <!-- SECCIÓN 1: DATOS PRINCIPALES -->
                 <div class="prosegin-card mb-4">
                     <div class="prosegin-card-header--section">
-                        <span class="section-step-number">1</span>
                         <span class="section-step-title">
                             <i class="bi bi-building me-1"></i> Datos Principales
                         </span>
@@ -84,7 +84,7 @@
                                 <input asp-for="Ruc" id="txtRuc" class="form-control form-control-prosegin font-monospace fw-bold fs-6 border-start-0" 
                                        placeholder="Ej: 20100047218" maxlength="11" autocomplete="off"
                                        inputmode="numeric" />
-                                <button type="button" class="btn btn-dark d-flex align-items-center gap-2 px-3 fw-bold" id="btnConsultarSunat">
+                                <button type="button" class="btn-prosegin-primary d-flex align-items-center gap-2 px-3 fw-bold" id="btnConsultarSunat">
                                     <i class="bi bi-search" id="iconConsultar"></i>
                                     <span id="textBtnConsultar">Consultar SUNAT</span>
                                 </button>
@@ -107,19 +107,6 @@
                             <input asp-for="RazonSocial" id="txtRazonSocial" class="form-control form-control-prosegin form-control-sm text-uppercase" 
                                    placeholder="Ej: DISTRIBUIDORA INDUSTRIAL DEL PERÚ S.A.C." autocomplete="off" />
                             <span asp-validation-for="RazonSocial" class="text-danger small d-block mt-1"></span>
-                        </div>
-
-                        <div class="row g-3 mt-1">
-                            <div class="col-md-8">
-                                <label asp-for="RepresentanteLegal" class="form-label-prosegin small text-uppercase fw-bold mb-1">Representante Legal</label>
-                                <input asp-for="RepresentanteLegal" class="form-control form-control-prosegin form-control-sm text-uppercase" placeholder="Según consulta SUNAT" />
-                                <span asp-validation-for="RepresentanteLegal" class="text-danger small d-block mt-1"></span>
-                            </div>
-                            <div class="col-md-4">
-                                <label asp-for="LimiteCredito" class="form-label-prosegin small text-uppercase fw-bold mb-1">Límite de Crédito</label>
-                                <input asp-for="LimiteCredito" class="form-control form-control-prosegin form-control-sm" type="number" min="0" step="0.01" />
-                                <span asp-validation-for="LimiteCredito" class="text-danger small d-block mt-1"></span>
-                            </div>
                         </div>
 
                         <!-- Nombre Comercial y Estado -->
@@ -162,7 +149,6 @@
                 <!-- SECCIÓN 2: DOMICILIO FISCAL -->
                 <div class="prosegin-card mb-4">
                     <div class="prosegin-card-header--section">
-                        <span class="section-step-number">2</span>
                         <span class="section-step-title">
                             <i class="bi bi-geo-alt me-1"></i> Domicilio Fiscal
                         </span>
@@ -199,11 +185,12 @@
                             </div>
                         </div>
 
-                        <!-- Referencia de Entrega -->
+                        <!-- Referencia de Domicilio Fiscal -->
                         <div>
-                            <label class="form-label-prosegin small text-uppercase fw-bold mb-1">Referencia</label>
-                            <input type="text" class="form-control form-control-prosegin form-control-sm" 
-                                   placeholder="Ej: A media cuadra de Av. Colonial, portón plomo" />
+                            <label asp-for="Referencia" class="form-label-prosegin small text-uppercase fw-bold mb-1">Referencia</label>
+                            <input asp-for="Referencia" type="text" id="txtReferencia" class="form-control form-control-prosegin form-control-sm" 
+                                   placeholder="Ej: A media cuadra de Av. Colonial, portón plomo" autocomplete="off" />
+                            <span asp-validation-for="Referencia" class="text-danger small d-block mt-1"></span>
                         </div>
                     </div>
                 </div>
@@ -211,7 +198,6 @@
                 <!-- SECCIÓN 3: PREFERENCIAS DE EMISIÓN Y CONTACTO -->
                 <div class="prosegin-card mb-4">
                     <div class="prosegin-card-header--section">
-                        <span class="section-step-number">3</span>
                         <span class="section-step-title">
                             <i class="bi bi-receipt me-1"></i> Contacto y Emisión
                         </span>
@@ -339,18 +325,23 @@
         </div>
 
         <!-- BARRA DE ACCIÓN INFERIOR: BOTONES DE GUARDADO -->
+        <input type="hidden" name="accion" id="hiddenAccion" value="guardar" />
+
         <div class="form-action-bar mt-3 mb-4">
             <div class="form-status-pill" id="formStatusIndicator">
                 <span class="status-dot" id="statusDot"></span>
                 <span id="statusLabel">Formulario Pendiente</span>
             </div>
 
-            <div class="d-flex align-items-center gap-2">
-                <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary py-2 px-3">
-                    <i class="bi bi-people me-1"></i> Ver Directorio
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <a asp-controller="Clientes" asp-action="Create" class="btn-prosegin-secondary py-2 px-3" title="Cancelar y descartar el registro">
+                    <i class="bi bi-x-circle me-1"></i> Cancelar
                 </a>
-                <button type="submit" id="btnGuardarCliente" class="btn-prosegin-primary py-2 px-4 fw-bold">
-                    <i class="bi bi-save me-1"></i> Guardar Datos del Cliente
+                <button type="submit" id="btnGuardarCliente" class="btn-prosegin-secondary-orange py-2 px-3 fw-bold" disabled onclick="document.getElementById('hiddenAccion').value='guardar';" title="Guarda el cliente en el sistema">
+                    <i class="bi bi-check2-circle me-1"></i> Guardar Cliente
+                </button>
+                <button type="submit" id="btnGuardarYDirecciones" class="btn-prosegin-primary py-2 px-4 fw-bold" disabled onclick="document.getElementById('hiddenAccion').value='direcciones';" title="Guarda el cliente y habilita automáticamente su dirección fiscal para ver y gestionar sus sedes">
+                    <i class="bi bi-geo-alt-fill me-1"></i> Guardar y ver direcciones de entrega
                 </button>
             </div>
         </div>
@@ -374,9 +365,24 @@
             const btnConsultar = document.getElementById('btnConsultarSunat');
             const iconConsultar = document.getElementById('iconConsultar');
             const textBtnConsultar = document.getElementById('textBtnConsultar');
-            const btnGuardar = document.getElementById('btnGuardarCliente');
+            const btnGuardarCliente = document.getElementById('btnGuardarCliente');
+            const btnGuardarYDirecciones = document.getElementById('btnGuardarYDirecciones');
+            const hiddenAccion = document.getElementById('hiddenAccion');
+            let accionSeleccionada = 'guardar';
 
-            // Campos ocultos para base de datos
+            if (btnGuardarCliente) {
+                btnGuardarCliente.addEventListener('click', function () {
+                    accionSeleccionada = 'guardar';
+                    if (hiddenAccion) hiddenAccion.value = 'guardar';
+                });
+            }
+
+            if (btnGuardarYDirecciones) {
+                btnGuardarYDirecciones.addEventListener('click', function () {
+                    accionSeleccionada = 'direcciones';
+                    if (hiddenAccion) hiddenAccion.value = 'direcciones';
+                });
+            }
             const hiddenEstadoSunat = document.getElementById('hiddenEstadoSunat');
             const hiddenCondicionSunat = document.getElementById('hiddenCondicionSunat');
 
@@ -413,6 +419,7 @@
             const statusLabel = document.getElementById('statusLabel');
 
             let sunatConsultado = false;
+            let rucConsultado = '';
 
             // Función reactiva centralizada para estado y condición SUNAT
             function actualizarEstadoTributarioVisual(estado, condicion, consultando = false) {
@@ -491,7 +498,7 @@
                 if (!ruc || ruc.length !== 11 || !/^\d+$/.test(ruc)) return false;
 
                 const prefijo = ruc.substring(0, 2);
-                if (!['10', '15', '17', '20'].includes(prefijo)) return false;
+                if (!['10', '20'].includes(prefijo)) return false;
 
                 const factores = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
                 let suma = 0;
@@ -512,6 +519,22 @@
             // 1. Filtrar RUC para aceptar exclusivamente números y permitir Enter para consultar
             txtRuc.addEventListener('input', function () {
                 this.value = this.value.replace(/[^0-9]/g, '');
+                const rucActual = this.value.trim();
+                if (rucConsultado && rucActual !== rucConsultado) {
+                    rucConsultado = '';
+                    sunatConsultado = false;
+                    txtRazonSocial.value = '';
+                    txtDireccion.value = '';
+                    txtDepartamento.value = '';
+                    txtProvincia.value = '';
+                    txtDistrito.value = '';
+                    txtUbigeo.value = '';
+                    hiddenEstadoSunat.value = 'NO VERIFICADO';
+                    hiddenCondicionSunat.value = 'NO VERIFICADO';
+                    previewRazonSocial.textContent = 'Razón social del cliente';
+                    previewRazonSocial.classList.remove('filled');
+                    actualizarEstadoTributarioVisual('Pendiente', 'Pendiente');
+                }
                 evaluarRucEnTiempoReal();
             });
 
@@ -623,6 +646,7 @@
                 try {
                     const response = await fetch(`/Clientes/ConsultarSunat?ruc=${encodeURIComponent(rucNumero)}`);
                     const data = await response.json();
+                    if (txtRuc.value.trim() !== rucNumero) return;
 
                     if (!data.success && data.yaRegistrado) {
                         // HU 1.1: Interrumpir la operación y mostrar advertencia emergente
@@ -634,6 +658,7 @@
                         setCheck(iconChkSunat, lblChkSunat, false, 'Ya registrado en padrón');
                         actualizarEstadoTributarioVisual('Pendiente', 'Pendiente');
                         sunatConsultado = false;
+                        rucConsultado = '';
 
                         ProseginAlert.warning(
                             data.message || "El RUC ingresado ya se encuentra registrado en el padrón de clientes.",
@@ -651,8 +676,8 @@
                         txtUbigeo.value = data.ubigeo || '150101';
 
                         // Actualizar campos ocultos para persistencia
-                        hiddenEstadoSunat.value = data.estado || 'ACTIVO';
-                        hiddenCondicionSunat.value = data.condicion || 'HABIDO';
+                        hiddenEstadoSunat.value = data.estado || 'NO VERIFICADO';
+                        hiddenCondicionSunat.value = data.condicion || 'NO VERIFICADO';
 
                         txtRazonSocial.classList.remove('is-invalid');
                         txtDireccion.classList.remove('is-invalid');
@@ -669,7 +694,7 @@
                             alertaRiesgo.classList.add('d-none');
                         }
 
-                        actualizarEstadoTributarioVisual(data.estado || 'ACTIVO', data.condicion || 'HABIDO');
+                        actualizarEstadoTributarioVisual(data.estado || 'NO VERIFICADO', data.condicion || 'NO VERIFICADO');
 
                         previewRazonSocial.textContent = data.razonSocial;
                         previewRazonSocial.classList.add('filled');
@@ -684,6 +709,7 @@
                         rucStatusText.className = 'text-success fw-bold';
                         rucStatusText.innerHTML = `<i class="bi bi-check-circle-fill"></i> RUC validado en SUNAT (${data.condicion})`;
                         sunatConsultado = true;
+                        rucConsultado = rucNumero;
                     } else {
                         alertaRiesgo.classList.add('d-none');
                         rucStatusText.className = 'text-danger fw-bold';
@@ -691,12 +717,20 @@
                         setCheck(iconChkSunat, lblChkSunat, false, 'No encontrado en SUNAT');
                         actualizarEstadoTributarioVisual('Pendiente', 'Pendiente');
                         sunatConsultado = false;
+                        rucConsultado = rucNumero;
+                        hiddenEstadoSunat.value = 'NO VERIFICADO';
+                        hiddenCondicionSunat.value = 'NO VERIFICADO';
                     }
                 } catch (error) {
+                    if (txtRuc.value.trim() !== rucNumero) return;
                     alertaRiesgo.classList.add('d-none');
                     rucStatusText.className = 'text-danger fw-bold';
                     rucStatusText.innerHTML = '<i class="bi bi-x-circle-fill"></i> Error al conectar con el servicio de SUNAT.';
                     actualizarEstadoTributarioVisual('Pendiente', 'Pendiente');
+                    sunatConsultado = false;
+                    rucConsultado = rucNumero;
+                    hiddenEstadoSunat.value = 'NO VERIFICADO';
+                    hiddenCondicionSunat.value = 'NO VERIFICADO';
                 } finally {
                     btnConsultar.disabled = false;
                     iconConsultar.className = 'bi bi-search';
@@ -729,9 +763,9 @@
                 consultarSunatApi(rucVal);
             });
 
-            // Sincronizar Razón Social manual
-            txtRazonSocial.addEventListener('input', function () {
-                const val = this.value.trim();
+            // Sincronizar Razón Social manual y eventos reactivos
+            function onRazonSocialChanged() {
+                const val = txtRazonSocial.value.trim();
                 if (val.length > 0) {
                     previewRazonSocial.textContent = val.toUpperCase();
                     previewRazonSocial.classList.add('filled');
@@ -741,29 +775,50 @@
                     previewRazonSocial.classList.remove('filled');
                 }
                 actualizarEstadoFormulario();
+            }
+
+            ['input', 'change', 'keyup'].forEach(evt => {
+                txtRazonSocial.addEventListener(evt, onRazonSocialChanged);
             });
 
-            txtDireccion.addEventListener('input', function () {
-                if (this.value.trim().length > 0) {
+            // Sincronizar Dirección Fiscal y eventos reactivos
+            function onDireccionChanged() {
+                if (txtDireccion.value.trim().length > 0) {
                     txtDireccion.classList.remove('is-invalid');
                     setCheck(iconChkDireccion, lblChkDireccion, true, 'Dirección registrada');
+                } else {
+                    setCheck(iconChkDireccion, lblChkDireccion, false, 'Dirección registrada');
                 }
                 actualizarEstadoFormulario();
+            }
+
+            ['input', 'change', 'keyup'].forEach(evt => {
+                txtDireccion.addEventListener(evt, onDireccionChanged);
             });
 
             function actualizarEstadoFormulario() {
-                const rucValido = txtRuc.value.trim().length === 11 && validarModulo11Sunat(txtRuc.value.trim());
+                const rucVal = txtRuc.value.trim();
+                const rucValido = rucVal.length === 11 && validarModulo11Sunat(rucVal);
                 const razonValida = txtRazonSocial.value.trim().length > 0;
                 const dirValida = txtDireccion.value.trim().length > 0;
 
-                if (rucValido && razonValida && dirValida) {
+                const consultaVigente = rucConsultado === rucVal;
+                const esFormularioValido = rucValido && consultaVigente && razonValida && dirValida;
+
+                if (esFormularioValido) {
                     statusDot.className = 'status-dot';
                     formStatusIndicator.classList.add('ready');
                     statusLabel.textContent = 'Formulario Listo para Guardar';
+
+                    if (btnGuardarCliente) btnGuardarCliente.disabled = false;
+                    if (btnGuardarYDirecciones) btnGuardarYDirecciones.disabled = false;
                 } else {
                     statusDot.className = 'status-dot';
                     formStatusIndicator.classList.remove('ready');
                     statusLabel.textContent = 'Formulario Pendiente — Complete los campos obligatorios (*)';
+
+                    if (btnGuardarCliente) btnGuardarCliente.disabled = true;
+                    if (btnGuardarYDirecciones) btnGuardarYDirecciones.disabled = true;
                 }
             }
 
@@ -772,6 +827,12 @@
                 let esValido = true;
 
                 const ruc = txtRuc.value.trim();
+                if (rucConsultado !== ruc) {
+                    rucStatusText.className = 'text-danger fw-bold';
+                    rucStatusText.textContent = 'Consulte este RUC antes de guardar.';
+                    btnConsultar.focus();
+                    esValido = false;
+                }
                 if (ruc.length !== 11) {
                     txtRuc.classList.add('is-invalid');
                     txtRuc.focus();
@@ -806,22 +867,34 @@
                     return false;
                 }
 
-                btnGuardar.disabled = true;
-                btnGuardar.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Guardando en Base de Datos...';
-                form.submit();
+                // Feedback visual de guardado y prevención de doble submit
+                if (accionSeleccionada === 'direcciones') {
+                    if (btnGuardarYDirecciones) {
+                        btnGuardarYDirecciones.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Guardando y continuando...';
+                        btnGuardarYDirecciones.style.pointerEvents = 'none';
+                    }
+                    if (btnGuardarCliente) btnGuardarCliente.style.pointerEvents = 'none';
+                } else {
+                    if (btnGuardarCliente) {
+                        btnGuardarCliente.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Guardando cliente...';
+                        btnGuardarCliente.style.pointerEvents = 'none';
+                    }
+                    if (btnGuardarYDirecciones) btnGuardarYDirecciones.style.pointerEvents = 'none';
+                }
             });
 
             // Inicialización de estado tributario si ya viene precargado
             const rucInicial = txtRuc.value.trim();
             if (rucInicial.length === 11 && validarModulo11Sunat(rucInicial)) {
                 if (txtRazonSocial.value.trim().length > 0) {
-                    actualizarEstadoTributarioVisual(hiddenEstadoSunat.value || 'ACTIVO', hiddenCondicionSunat.value || 'HABIDO');
+                    actualizarEstadoTributarioVisual(hiddenEstadoSunat.value || 'NO VERIFICADO', hiddenCondicionSunat.value || 'NO VERIFICADO');
                     setCheck(iconChkDigitos, lblChkDigitos, true, 'RUC válido (Módulo 11)');
                     setCheck(iconChkSunat, lblChkSunat, true, `SUNAT: ${hiddenCondicionSunat.value} y ${hiddenEstadoSunat.value}`);
                     if (txtDireccion.value.trim().length > 0) {
                         setCheck(iconChkDireccion, lblChkDireccion, true, 'Dirección registrada');
                     }
                     sunatConsultado = true;
+                    rucConsultado = rucInicial;
                 } else {
                     evaluarRucEnTiempoReal();
                 }

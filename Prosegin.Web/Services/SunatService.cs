@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Prosegin.Data.Validation;
 
 namespace Prosegin.Web.Services
 {
@@ -15,53 +16,7 @@ namespace Prosegin.Web.Services
 
         public bool ValidarFormatoRuc(string ruc, out string? mensajeError)
         {
-            mensajeError = null;
-
-            if (string.IsNullOrWhiteSpace(ruc))
-            {
-                mensajeError = "Debe ingresar un número de RUC.";
-                return false;
-            }
-
-            ruc = ruc.Trim();
-
-            if (ruc.Length != 11 || !ruc.All(char.IsDigit))
-            {
-                mensajeError = "Número de RUC inválido";
-                return false;
-            }
-
-            // 1. Validación de prefijos oficiales de SUNAT
-            if (!ruc.StartsWith("10") && !ruc.StartsWith("15") && !ruc.StartsWith("17") && !ruc.StartsWith("20"))
-            {
-                mensajeError = "Número de RUC inválido";
-                return false;
-            }
-
-            // 2. Algoritmo Módulo 11 oficial de SUNAT
-            int[] factores = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
-            int suma = 0;
-
-            for (int i = 0; i < 10; i++)
-            {
-                suma += (ruc[i] - '0') * factores[i];
-            }
-
-            int residuo = suma % 11;
-            int digitoCalculado = 11 - residuo;
-
-            if (digitoCalculado == 10) digitoCalculado = 0;
-            else if (digitoCalculado == 11) digitoCalculado = 1;
-
-            int digitoVerificadorReal = ruc[10] - '0';
-
-            if (digitoCalculado != digitoVerificadorReal)
-            {
-                mensajeError = "Número de RUC inválido";
-                return false;
-            }
-
-            return true;
+            return RucValidator.ValidarFormato(ruc, out mensajeError);
         }
 
         public async Task<SunatConsultaResult> ConsultarRucAsync(string ruc, CancellationToken cancellationToken = default)
@@ -103,8 +58,10 @@ namespace Prosegin.Web.Services
 
                     var razonSocial = root.TryGetProperty("nombre", out var n) ? n.GetString() ?? "" : "";
                     var direccion = root.TryGetProperty("direccion", out var d) ? d.GetString() ?? "" : "";
-                    var estado = root.TryGetProperty("estado", out var e) ? e.GetString()?.Trim().ToUpper() ?? "ACTIVO" : "ACTIVO";
-                    var condicion = root.TryGetProperty("condicion", out var c) ? c.GetString()?.Trim().ToUpper() ?? "HABIDO" : "HABIDO";
+                    var estado = root.TryGetProperty("estado", out var e) ? e.GetString()?.Trim().ToUpper() : null;
+                    var condicion = root.TryGetProperty("condicion", out var c) ? c.GetString()?.Trim().ToUpper() : null;
+                    estado = string.IsNullOrWhiteSpace(estado) ? "NO VERIFICADO" : estado;
+                    condicion = string.IsNullOrWhiteSpace(condicion) ? "NO VERIFICADO" : condicion;
                     var representanteLegal = root.TryGetProperty("representanteLegal", out var rep) ? rep.GetString()?.Trim() : null;
                     var departamento = root.TryGetProperty("departamento", out var dep) ? dep.GetString() ?? "LIMA" : "LIMA";
                     var provincia = root.TryGetProperty("provincia", out var prov) ? prov.GetString() ?? "LIMA" : "LIMA";

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Prosegin.Data.Validation;
 
 namespace Prosegin.Web.ViewModels.Cotizaciones;
 
@@ -8,10 +9,8 @@ public class CotizacionClienteViewModel
     public string Ruc { get; set; } = string.Empty;
     public string RazonSocial { get; set; } = string.Empty;
     public string DireccionFiscal { get; set; } = string.Empty;
-    public string? RepresentanteLegal { get; set; }
     public string EstadoSunat { get; set; } = string.Empty;
     public string CondicionSunat { get; set; } = string.Empty;
-    public decimal LimiteCredito { get; set; }
     public decimal SaldoPendiente { get; set; }
     public decimal SaldoVencido { get; set; }
     public int DiasMora { get; set; }
@@ -20,7 +19,7 @@ public class CotizacionClienteViewModel
     public bool DatosSunatDesactualizados { get; set; }
 
     [Required]
-    public string CondicionPago { get; set; } = "Contado";
+    public string CondicionPago { get; set; } = CondicionPagoRules.PlazoCreditoPredeterminado;
 
     public decimal Total { get; set; }
 
