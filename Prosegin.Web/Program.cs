@@ -1,4 +1,5 @@
 // PROSEGIN Core - Inicialización de la aplicación Web
+using Microsoft.EntityFrameworkCore;
 using Prosegin.Data;
 using Prosegin.Web.Services;
 
@@ -81,6 +82,13 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// Aplicar cambios de esquema antes de consultar o sembrar datos.
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
+    await context.Database.MigrateAsync();
+}
 
 // Sembrado de datos de clientes si no existen
 await ClienteDataSeeder.SeedAsync(app.Services);

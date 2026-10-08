@@ -24,6 +24,12 @@ class Element {
         for (const callback of this.listeners[type] ?? []) callback(event);
         return event;
     }
+    async fireAsync(type, extra = {}) {
+        const event = { target: this, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; }, ...extra };
+        for (const callback of this.listeners[type] ?? []) await callback(event);
+        return event;
+    }
+    click() { this.clicked = true; this.fire('click'); }
     setCustomValidity(message) { this.validationMessage = message; }
     focus() { this.focused = true; }
     replaceChildren() { this.children = []; }
@@ -33,14 +39,21 @@ class Element {
     contains(element) { return this.children.includes(element); }
 }
 
-function screen({ storage = new Map(), clientId = 1, saved = false, invalidPost = false, serverQuantity } = {}) {
+function screen({ storage = new Map(), clientId = 1, saved = false, invalidPost = false, serverQuantity,
+    onFetch = async () => { throw new Error('Unexpected PDF request'); } } = {}) {
     const ids = {};
     for (const id of ['formCotizacion', 'selectorProducto', 'filtroProductos', 'resultadosBusqueda',
         'agregarProducto', 'cantidadAgregar', 'errorCantidadAgregar', 'productosError',
         'productoSeleccionadoDesc', 'unidadSeleccionada', 'precioSeleccionado',
         'subtotalCotizacion', 'igvCotizacion', 'totalCotizacion', 'cantidadProductos',
-        'productosVacios', 'limpiarProductos', 'margenEstimadoCotizacion', 'alertaPrecioError', 'alertaPrecioErrorTexto']) ids[id] = new Element();
+        'productosVacios', 'limpiarProductos', 'margenEstimadoCotizacion', 'alertaPrecioError', 'alertaPrecioErrorTexto',
+        'cotizacionPdfModal', 'confirmarDescargaPdf', 'pdfDownloadError', 'pdfDownloadSuccess', 'cotizacionPdfEstado']) ids[id] = new Element();
     ids.formCotizacion.dataset = { clienteId: String(clientId), cotizacionGuardada: String(saved), postInvalido: String(invalidPost) };
+    ids.cotizacionPdfModal.dataset = { downloadUrl: '/Cotizaciones/DescargarPdf', cotizacionId: '42', downloadFilename: 'COT-2026-cliente.pdf' };
+    ids.cotizacionPdfEstado.textContent = 'LISTO PARA ENVÍO';
+    ids.pdfDownloadSuccess.hidden = true;
+    const token = new Element(); token.value = 'token-de-prueba';
+    ids.formCotizacion.querySelector = () => token;
     ids.cantidadAgregar.value = '1';
     const rows = [1, 2].map(id => {
         const row = new Element();
@@ -59,13 +72,19 @@ function screen({ storage = new Map(), clientId = 1, saved = false, invalidPost 
     });
     const cancelLinks = [new Element(), new Element()];
     const document = new Element();
+    document.body = new Element();
+    document.createdElements = [];
     document.getElementById = id => ids[id];
     document.querySelectorAll = selector => selector === '[data-product-row]' ? rows : cancelLinks;
-    document.createElement = () => new Element();
+    document.createElement = () => { const element = new Element(); document.createdElements.push(element); return element; };
     const window = new Element();
+    window.setTimeout = callback => callback();
     const sessionStorage = { getItem: key => storage.get(key) ?? null,
         setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) };
-    runInNewContext(script, { document, window, sessionStorage, Intl });
+    let modalHidden = false;
+    const bootstrap = { Modal: { getOrCreateInstance: () => ({ hide: () => { modalHidden = true; } }) } };
+    const URLApi = { createObjectURL: () => 'blob:cotizacion', revokeObjectURL: () => {} };
+    runInNewContext(script, { document, window, sessionStorage, Intl, URL: URLApi, URLSearchParams, bootstrap, fetch: onFetch, console });
     const choose = (id = 1) => {
         ids.filtroProductos.fire('focus');
         ids.resultadosBusqueda.children[id - 1].fire('click');
@@ -73,7 +92,8 @@ function screen({ storage = new Map(), clientId = 1, saved = false, invalidPost 
     const add = (value, id = 1) => {
         choose(id); ids.cantidadAgregar.value = String(value); ids.agregarProducto.fire('click');
     };
-    return { ids, rows, storage, window, cancelLinks, choose, add, key: `prosegin.quote.cart.v2.${clientId}` };
+    return { ids, rows, storage, window, cancelLinks, document, choose, add, get modalHidden() { return modalHidden; },
+        key: `prosegin.quote.cart.v2.${clientId}` };
 }
 
 test('Agregar muestra datos del catálogo, cantidad, contador y total', () => {
@@ -191,6 +211,31 @@ test('No se permite grabar una lista vacía', () => {
     const ui = screen();
     assert.equal(ui.ids.formCotizacion.fire('submit').defaultPrevented, true);
     assert.match(ui.ids.productosError.textContent, /al menos un producto/);
+});
+
+test('HU 3.3: confirmar descarga el PDF, cierra la vista previa y muestra el éxito', async () => {
+    const requests = [];
+    const ui = screen({ onFetch: async (url, options) => {
+        requests.push({ url, options });
+        return {
+            ok: true, status: 200,
+            headers: { get: name => name === 'content-type' ? 'application/pdf' : null },
+            blob: async () => ({ size: 10 })
+        };
+    } });
+
+    await ui.ids.confirmarDescargaPdf.fireAsync('click');
+
+    assert.equal(requests.length, 1);
+    assert.equal(requests[0].url, '/Cotizaciones/DescargarPdf');
+    assert.match(requests[0].options.body.toString(), /cotizacionId=42/);
+    assert.equal(ui.ids.cotizacionPdfEstado.textContent, 'ENVIADA');
+    assert.equal(ui.ids.pdfDownloadSuccess.hidden, false);
+    assert.equal(ui.ids.pdfDownloadError.hidden, true);
+    assert.equal(ui.modalHidden, true);
+    const downloadLink = ui.document.createdElements.find(element => element.download);
+    assert.equal(downloadLink.download, 'COT-2026-cliente.pdf');
+    assert.equal(downloadLink.clicked, true);
 });
 
 test('Modificar la búsqueda invalida el producto previamente elegido', () => {

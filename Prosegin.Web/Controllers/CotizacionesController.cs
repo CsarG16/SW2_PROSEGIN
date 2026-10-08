@@ -10,6 +10,7 @@ namespace Prosegin.Web.Controllers;
 
 public class CotizacionesController : Controller
 {
+    private const int CotizacionesPorPagina = 10;
     private readonly ProseginDbContext _context;
     private readonly ISunatService _sunatService;
 
@@ -20,10 +21,140 @@ public class CotizacionesController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Create(int clienteId, CancellationToken cancellationToken)
+    public async Task<IActionResult> Index(string estado = "Todas", string busqueda = "", int pagina = 1, CancellationToken cancellationToken = default)
+    {
+        const string todas = "Todas";
+        var estadosPermitidos = new[] { todas, "Enviada", "Vencida", "Aprobada" };
+        if (!estadosPermitidos.Contains(estado, StringComparer.OrdinalIgnoreCase))
+        {
+            estado = todas;
+        }
+        else
+        {
+            estado = estadosPermitidos.First(value => value.Equals(estado, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var ahora = DateTime.UtcNow;
+        var cotizacionesEmitidas = await _context.Cotizaciones
+            .AsNoTracking()
+            .Where(c => c.Estado == "Enviada" || c.Estado == "Aprobada")
+            .OrderByDescending(c => c.FechaEmision)
+            .ThenByDescending(c => c.Id)
+            .Select(c => new CotizacionBandejaItemViewModel
+            {
+                Id = c.Id,
+                Correlativo = c.Correlativo,
+                Cliente = c.Cliente.RazonSocial,
+                Ruc = c.Cliente.Ruc,
+                FechaEmision = c.FechaEmision,
+                FechaVencimiento = c.FechaVencimiento ?? c.FechaEmision.AddHours(48),
+                Total = c.Total,
+                Estado = c.Estado
+            })
+            .ToListAsync(cancellationToken);
+
+        foreach (var cotizacion in cotizacionesEmitidas)
+        {
+            if (cotizacion.Estado == "Enviada" && cotizacion.FechaVencimiento <= ahora)
+            {
+                cotizacion.Estado = "Vencida";
+            }
+        }
+
+        var coincidenciasBusqueda = string.IsNullOrWhiteSpace(busqueda)
+            ? cotizacionesEmitidas
+            : cotizacionesEmitidas.Where(c =>
+                c.Correlativo.Contains(busqueda.Trim(), StringComparison.OrdinalIgnoreCase)
+                || c.Cliente.Contains(busqueda.Trim(), StringComparison.OrdinalIgnoreCase)
+                || c.Ruc.Contains(busqueda.Trim(), StringComparison.OrdinalIgnoreCase)).ToList();
+        var cotizacionesFiltradas = estado.Equals(todas, StringComparison.OrdinalIgnoreCase)
+            ? coincidenciasBusqueda
+            : coincidenciasBusqueda.Where(c => c.Estado.Equals(estado, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        var totalPaginas = Math.Max(1, (int)Math.Ceiling(cotizacionesFiltradas.Count / (double)CotizacionesPorPagina));
+        pagina = Math.Clamp(pagina, 1, totalPaginas);
+        var model = new CotizacionBandejaViewModel
+        {
+            EstadoFiltro = estado,
+            Busqueda = busqueda.Trim(),
+            Pagina = pagina,
+            TotalPaginas = totalPaginas,
+            TotalResultados = cotizacionesFiltradas.Count,
+            ResultadosTodas = coincidenciasBusqueda.Count,
+            ResultadosEnviadas = coincidenciasBusqueda.Count(c => c.Estado == "Enviada"),
+            ResultadosVencidas = coincidenciasBusqueda.Count(c => c.Estado == "Vencida"),
+            ResultadosAprobadas = coincidenciasBusqueda.Count(c => c.Estado == "Aprobada"),
+            Cotizaciones = cotizacionesFiltradas
+                .Skip((pagina - 1) * CotizacionesPorPagina)
+                .Take(CotizacionesPorPagina)
+                .ToList()
+        };
+
+        ViewData["Title"] = "Cotizaciones";
+        return View("Index", model);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Create(int clienteId, int? cotizacionId, CancellationToken cancellationToken)
     {
         var model = await BuildModelAsync(clienteId, cancellationToken);
-        return model == null ? NotFound() : View(model);
+        if (model == null)
+        {
+            return NotFound();
+        }
+
+        if (cotizacionId.HasValue)
+        {
+            var cotizacion = await _context.Cotizaciones
+                .AsNoTracking()
+                .Include(c => c.Detalles)
+                    .ThenInclude(d => d.Producto)
+                .FirstOrDefaultAsync(c => c.Id == cotizacionId.Value && c.ClienteId == clienteId, cancellationToken);
+            if (cotizacion == null)
+            {
+                return NotFound();
+            }
+
+            model.CotizacionId = cotizacion.Id;
+            model.Correlativo = cotizacion.Correlativo;
+            model.FechaEmision = cotizacion.FechaEmision;
+            model.EstadoCotizacion = cotizacion.Estado;
+            model.CondicionPago = cotizacion.CondicionPago;
+            model.Subtotal = cotizacion.Subtotal;
+            model.Igv = cotizacion.Igv;
+            model.Total = cotizacion.Total;
+            model.ProductosCotizacionGuardada = cotizacion.Detalles
+                .OrderBy(d => d.Id)
+                .Select(d => new ProductoCotizacionGuardadaViewModel
+                {
+                    ProductoId = d.ProductoId,
+                    Sku = d.Producto.Sku,
+                    Nombre = d.Producto.Nombre,
+                    UnidadMedida = d.Producto.UnidadMedida,
+                    Cantidad = d.Cantidad,
+                    PrecioUnitario = d.PrecioVentaCalculado,
+                    Subtotal = d.Subtotal,
+                    RutaFichaTecnicaPdf = d.Producto.RutaFichaTecnicaPdf,
+                    NombreArchivoPdf = d.Producto.NombreArchivoPdf
+                })
+                .ToList();
+
+            foreach (var producto in model.ProductosDisponibles)
+            {
+                var detalle = cotizacion.Detalles.FirstOrDefault(d => d.ProductoId == producto.ProductoId);
+                if (detalle == null)
+                {
+                    continue;
+                }
+
+                producto.Seleccionado = true;
+                producto.Cantidad = detalle.Cantidad;
+                producto.PrecioUnitario = detalle.PrecioVentaCalculado;
+                producto.MargenPorcentaje = detalle.MargenDeseado * 100m;
+            }
+        }
+
+        return View(model);
     }
 
     [HttpPost]
@@ -155,10 +286,11 @@ public class CotizacionesController : Controller
             return View(current);
         }
 
+        var fechaEmision = DateTime.UtcNow;
         var cotizacion = new Cotizacion
         {
             ClienteId = current.ClienteId,
-            Correlativo = $"COT-{DateTime.UtcNow:yyyyMMddHHmmss}",
+            FechaEmision = fechaEmision,
             CondicionPago = current.CondicionPago,
             Subtotal = subtotal,
             Igv = igv,
@@ -167,11 +299,150 @@ public class CotizacionesController : Controller
             Detalles = detalles
         };
 
-        _context.Cotizaciones.Add(cotizacion);
-        await _context.SaveChangesAsync(cancellationToken);
+        await GuardarCotizacionConCorrelativoAsync(cotizacion, fechaEmision, cancellationToken);
         TempData["SuccessMessage"] = CotizacionPrecioRules.MensajeGuardadoExitoso;
         TempData["CotizacionGuardada"] = true;
-        return RedirectToAction(nameof(Create), new { clienteId = current.ClienteId });
+        return RedirectToAction(nameof(Create), new { clienteId = current.ClienteId, cotizacionId = cotizacion.Id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DescargarPdf(int cotizacionId, CancellationToken cancellationToken)
+    {
+        var cotizacion = await _context.Cotizaciones
+            .Include(c => c.Cliente)
+            .Include(c => c.Detalles)
+                .ThenInclude(d => d.Producto)
+            .FirstOrDefaultAsync(c => c.Id == cotizacionId, cancellationToken);
+        if (cotizacion == null)
+        {
+            return NotFound();
+        }
+
+        if (cotizacion.Detalles.Count == 0)
+        {
+            return BadRequest("La cotización no contiene productos para generar el PDF.");
+        }
+
+        var emitirPorPrimeraVez = !string.Equals(cotizacion.Estado, "Enviada", StringComparison.Ordinal);
+        if (emitirPorPrimeraVez)
+        {
+            var fechaEmision = DateTime.UtcNow;
+            cotizacion.Estado = "Enviada";
+            cotizacion.FechaEmision = fechaEmision;
+            cotizacion.FechaVencimiento = fechaEmision.AddHours(48);
+        }
+
+        var pdf = GenerarPdf(cotizacion);
+        if (emitirPorPrimeraVez)
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        var fileName = NombreArchivoPdf(cotizacion);
+        return File(pdf, "application/pdf", fileName);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> VerPdf(int id, CancellationToken cancellationToken)
+    {
+        var cotizacion = await ObtenerCotizacionPdfAsync(id, cancellationToken);
+        if (cotizacion == null)
+        {
+            return NotFound();
+        }
+
+        if (cotizacion.Detalles.Count == 0)
+        {
+            return BadRequest("La cotización no contiene productos para generar el PDF.");
+        }
+
+        Response.Headers["Content-Disposition"] = $"inline; filename=\"{NombreArchivoPdf(cotizacion)}\"";
+        return File(GenerarPdf(cotizacion), "application/pdf");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Actualizar(int id, CancellationToken cancellationToken)
+    {
+        var cotizacionVencida = await _context.Cotizaciones
+            .Include(c => c.Detalles)
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        if (cotizacionVencida == null)
+        {
+            return NotFound();
+        }
+
+        var ahora = DateTime.UtcNow;
+        var fechaVencimiento = cotizacionVencida.FechaVencimiento ?? cotizacionVencida.FechaEmision.AddHours(48);
+        if (cotizacionVencida.Estado != "Enviada" || fechaVencimiento > ahora)
+        {
+            TempData["ErrorMessage"] = "Solo se pueden actualizar cotizaciones vencidas.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        if (cotizacionVencida.Detalles.Count == 0)
+        {
+            TempData["ErrorMessage"] = "La cotización vencida no contiene productos para actualizar.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var productoIds = cotizacionVencida.Detalles.Select(d => d.ProductoId).Distinct().ToList();
+        var productosActuales = await _context.Productos
+            .Where(p => p.Activo && productoIds.Contains(p.Id))
+            .ToDictionaryAsync(p => p.Id, cancellationToken);
+        if (productosActuales.Count != productoIds.Count)
+        {
+            TempData["ErrorMessage"] = "No se pudo actualizar la cotización porque uno o más productos ya no están activos en el catálogo.";
+            return RedirectToAction(nameof(Index), new { estado = "Vencida" });
+        }
+
+        var detalles = new List<CotizacionDetalle>();
+        foreach (var detalleAnterior in cotizacionVencida.Detalles)
+        {
+            var producto = productosActuales[detalleAnterior.ProductoId];
+            var precioActualizado = Math.Round(
+                producto.CostoReferencial * (1m + detalleAnterior.MargenDeseado),
+                2,
+                MidpointRounding.AwayFromZero);
+            if (!CotizacionPrecioRules.EsPrecioValido(precioActualizado, producto.CostoReferencial)
+                || precioActualizado > 999999.99m)
+            {
+                TempData["ErrorMessage"] = $"El precio actualizado de {producto.Sku} excede el límite permitido. Ajusta el catálogo antes de renovar la cotización.";
+                return RedirectToAction(nameof(Index), new { estado = "Vencida" });
+            }
+
+            detalles.Add(new CotizacionDetalle
+            {
+                ProductoId = producto.Id,
+                Cantidad = detalleAnterior.Cantidad,
+                CostoProveedorReferencial = producto.CostoReferencial,
+                MargenDeseado = producto.CostoReferencial > 0m
+                    ? Math.Round((precioActualizado - producto.CostoReferencial) / producto.CostoReferencial, 4, MidpointRounding.AwayFromZero)
+                    : 0m,
+                PrecioVentaCalculado = precioActualizado,
+                Subtotal = CotizacionPrecioRules.CalcularSubtotalItem(detalleAnterior.Cantidad, precioActualizado)
+            });
+        }
+
+        var subtotal = detalles.Sum(d => d.Subtotal);
+        var igv = CotizacionPrecioRules.CalcularIgv(subtotal);
+        var nuevaCotizacion = new Cotizacion
+        {
+            ClienteId = cotizacionVencida.ClienteId,
+            FechaEmision = ahora,
+            FechaVencimiento = ahora.AddHours(48),
+            Estado = "Enviada",
+            CondicionPago = cotizacionVencida.CondicionPago,
+            Subtotal = subtotal,
+            Igv = igv,
+            Total = CotizacionPrecioRules.CalcularTotal(subtotal, igv),
+            Detalles = detalles
+        };
+
+        await GuardarCotizacionConCorrelativoAsync(nuevaCotizacion, ahora, cancellationToken);
+        TempData["SuccessMessage"] = $"Se creó la cotización {nuevaCotizacion.Correlativo} con vigencia de 48 horas.";
+        return RedirectToAction(nameof(Index), new { estado = "Enviada" });
     }
 
     [HttpPost]
@@ -304,10 +575,51 @@ public class CotizacionesController : Controller
                 CostoReferencial = p.CostoReferencial,
                 PrecioUnitario = p.CostoReferencial,
                 StockDisponible = p.StockDisponible,
-                RutaImagen = p.RutaImagen ?? string.Empty
+                RutaImagen = p.RutaImagen ?? string.Empty,
+                RutaFichaTecnicaPdf = p.RutaFichaTecnicaPdf,
+                NombreArchivoPdf = p.NombreArchivoPdf
             })
             .ToListAsync(cancellationToken);
 
         return model;
+    }
+
+    private async Task GuardarCotizacionConCorrelativoAsync(
+        Cotizacion cotizacion,
+        DateTime fechaEmision,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        _context.Cotizaciones.Add(cotizacion);
+        await _context.SaveChangesAsync(cancellationToken);
+        cotizacion.Correlativo = $"COT-{fechaEmision:yyyy}-{cotizacion.Id:D4}";
+        await _context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    private byte[] GenerarPdf(Cotizacion cotizacion) => CotizacionPdfGenerator.Generate(
+        cotizacion,
+        productoId => Url.Action("VerFicha", "Catalogo", new { id = productoId }, Request.Scheme));
+
+    private async Task<Cotizacion?> ObtenerCotizacionPdfAsync(int id, CancellationToken cancellationToken) =>
+        await _context.Cotizaciones
+            .AsNoTracking()
+            .Include(c => c.Cliente)
+            .Include(c => c.Detalles)
+                .ThenInclude(d => d.Producto)
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+
+    private static string NombreArchivoPdf(Cotizacion cotizacion) =>
+        $"{SanitizeFileName(cotizacion.Correlativo)}_{SanitizeFileName(cotizacion.Cliente.RazonSocial)}.pdf";
+
+    private static string SanitizeFileName(string value)
+    {
+        var invalidCharacters = Path.GetInvalidFileNameChars().Concat("<>:\"/\\|?*").ToHashSet();
+        var safeName = new string(value
+            .Select(character => invalidCharacters.Contains(character) || char.IsControl(character) ? '_' : character)
+            .ToArray())
+            .Trim()
+            .Trim('.');
+        return string.IsNullOrWhiteSpace(safeName) ? "Cliente" : safeName;
     }
 }

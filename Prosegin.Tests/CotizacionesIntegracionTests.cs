@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Prosegin.Data;
 using Prosegin.Data.Entities;
+using Prosegin.Data.Validation;
 using Prosegin.Web.Controllers;
 using Prosegin.Web.Services;
 using Xunit;
@@ -66,6 +67,12 @@ public sealed class CotizacionesTestHost : IAsyncLifetime
         await action(scope.ServiceProvider.GetRequiredService<ProseginDbContext>());
     }
 
+    public async Task<T> WithDatabaseAsyncResultAsync<T>(Func<ProseginDbContext, Task<T>> action)
+    {
+        using var scope = _app.Services.CreateScope();
+        return await action(scope.ServiceProvider.GetRequiredService<ProseginDbContext>());
+    }
+
     public async Task<HttpResponseMessage> PostAsync(Dictionary<string, string> fields, string action = "Create", string controller = "Cotizaciones")
     {
         var html = await Client.GetStringAsync("/Cotizaciones/Create?clienteId=1");
@@ -107,6 +114,42 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
         ["ProductosDisponibles[0].MargenPorcentaje"] = "0"
     };
 
+    private async Task<int> SeedCotizacionAsync(string estado, DateTime fechaEmision, DateTime? fechaVencimiento, decimal precio = 12m)
+    {
+        var quoteId = 0;
+        await _host.WithDatabaseAsync(async context =>
+        {
+            var quote = new Cotizacion
+            {
+                Correlativo = $"COT-2026-TEST-{Guid.NewGuid():N}",
+                ClienteId = 1,
+                FechaEmision = fechaEmision,
+                FechaVencimiento = fechaVencimiento,
+                Estado = estado,
+                CondicionPago = "7 días",
+                Subtotal = precio * 2,
+                Igv = CotizacionPrecioRules.CalcularIgv(precio * 2),
+                Total = CotizacionPrecioRules.CalcularTotal(precio * 2, CotizacionPrecioRules.CalcularIgv(precio * 2)),
+                Detalles = new List<CotizacionDetalle>
+                {
+                    new()
+                    {
+                        ProductoId = 1,
+                        Cantidad = 2,
+                        CostoProveedorReferencial = 10m,
+                        MargenDeseado = (precio - 10m) / 10m,
+                        PrecioVentaCalculado = precio,
+                        Subtotal = precio * 2
+                    }
+                }
+            };
+            context.Cotizaciones.Add(quote);
+            await context.SaveChangesAsync();
+            quoteId = quote.Id;
+        });
+        return quoteId;
+    }
+
     [Fact]
     public async Task Grabar_PersisteProductosCantidadesImportesYMensaje()
     {
@@ -114,9 +157,13 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
         form["ProductosDisponibles[0].CostoReferencial"] = "999";
         var response = await _host.PostAsync(form);
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Contains("cotizacionId=", response.Headers.Location!.OriginalString);
         var html = WebUtility.HtmlDecode(await _host.Client.GetStringAsync(response.Headers.Location));
         Assert.Contains("Productos guardados correctamente", html);
         Assert.Contains("data-cotizacion-guardada=\"true\"", html);
+        Assert.Contains("id=\"generarPdf\"", html);
+        Assert.Contains("Vista Previa de Cotización", html);
+        Assert.Contains("No disponible", html);
         await _host.WithDatabaseAsync(async context =>
         {
             var quote = Assert.Single(await context.Cotizaciones.Include(q => q.Detalles).AsNoTracking().ToListAsync());
@@ -130,6 +177,47 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
             Assert.Equal(3.60m, quote.Igv);
             Assert.Equal(23.60m, quote.Total);
         });
+    }
+
+    [Fact]
+    public async Task DescargarPdf_GeneraArchivoYMarcaLaCotizacionComoEnviada()
+    {
+        await _host.WithDatabaseAsync(async context =>
+        {
+            var product = await context.Productos.SingleAsync(p => p.Id == 1);
+            product.RutaFichaTecnicaPdf = "/uploads/fichas/HU31-CASCO.pdf";
+            product.NombreArchivoPdf = "HU31-CASCO.pdf";
+            await context.SaveChangesAsync();
+        });
+        var saveResponse = await _host.PostAsync(ProductForm());
+        Assert.Equal(HttpStatusCode.Redirect, saveResponse.StatusCode);
+        var location = saveResponse.Headers.Location!;
+        var cotizacionId = int.Parse(
+            Regex.Match(location.OriginalString, @"[?&]cotizacionId=(\d+)").Groups[1].Value,
+            System.Globalization.CultureInfo.InvariantCulture);
+        var preview = WebUtility.HtmlDecode(await _host.Client.GetStringAsync(location));
+        Assert.Contains("HU31-CASCO", preview);
+        Assert.Contains("target=\"_blank\"", preview);
+        Assert.Contains("Abrir ficha técnica", preview);
+
+        var downloadResponse = await _host.PostAsync(new() { ["cotizacionId"] = cotizacionId.ToString() }, "DescargarPdf");
+
+        Assert.Equal(HttpStatusCode.OK, downloadResponse.StatusCode);
+        Assert.Equal("application/pdf", downloadResponse.Content.Headers.ContentType?.MediaType);
+        Assert.StartsWith($"COT-{DateTime.UtcNow:yyyy}-",
+            downloadResponse.Content.Headers.ContentDisposition?.FileName?.Trim('"'));
+        var bytes = await downloadResponse.Content.ReadAsByteArrayAsync();
+        Assert.True(bytes.AsSpan().StartsWith("%PDF-"u8));
+        Assert.Contains("/Catalogo/VerFicha/1", System.Text.Encoding.Latin1.GetString(bytes));
+        await _host.WithDatabaseAsync(async context =>
+        {
+            var quote = await context.Cotizaciones.SingleAsync(q => q.Id == cotizacionId);
+            Assert.Equal("Enviada", quote.Estado);
+            Assert.NotNull(quote.FechaVencimiento);
+            Assert.InRange((quote.FechaVencimiento!.Value - quote.FechaEmision).TotalHours, 47.99, 48.01);
+        });
+        var sentHtml = WebUtility.HtmlDecode(await _host.Client.GetStringAsync(location));
+        Assert.Contains("ENVIADA", sentHtml);
     }
 
     [Theory]
@@ -197,6 +285,108 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Bandeja_FiltraEstadosBusquedaYOrdenaPorEmision()
+    {
+        var now = DateTime.UtcNow;
+        await SeedCotizacionAsync("Enviada", now.AddHours(-3), now.AddHours(45));
+        await SeedCotizacionAsync("Enviada", now.AddHours(-55), now.AddHours(-7));
+        await SeedCotizacionAsync("Aprobada", now.AddDays(-2), null);
+        await SeedCotizacionAsync("Borrador", now, null);
+
+        var allHtml = WebUtility.HtmlDecode(await _host.Client.GetStringAsync("/Cotizaciones"));
+        Assert.Contains("Cotizaciones", allHtml);
+        Assert.Contains("Enviada", allHtml);
+        Assert.Contains("Vencida", allHtml);
+        Assert.Contains("Aprobada", allHtml);
+        Assert.DoesNotContain("Borrador", allHtml);
+        Assert.Contains("COT-2026-TEST-", allHtml);
+        Assert.Contains("Cotizaciones", allHtml);
+
+        var expiredHtml = WebUtility.HtmlDecode(await _host.Client.GetStringAsync("/Cotizaciones?estado=Vencida"));
+        Assert.Contains("Expiró hace", expiredHtml);
+        Assert.Contains("Actualizar cotización", expiredHtml);
+        Assert.DoesNotContain("Cerrada por aceptación", expiredHtml);
+
+        var searchHtml = WebUtility.HtmlDecode(await _host.Client.GetStringAsync("/Cotizaciones?busqueda=Cliente%20de%20prueba%20A"));
+        Assert.Contains("COT-2026-TEST-", searchHtml);
+        Assert.Contains("Cliente de prueba A", searchHtml);
+
+        var quoteId = await _host.WithDatabaseAsyncResultAsync(async context =>
+            await context.Cotizaciones.Where(c => c.Estado == "Aprobada").Select(c => c.Id).SingleAsync());
+        var approvedPdf = await _host.Client.GetAsync($"/Cotizaciones/VerPdf/{quoteId}");
+        Assert.Equal(HttpStatusCode.OK, approvedPdf.StatusCode);
+        Assert.Equal("inline", approvedPdf.Content.Headers.ContentDisposition?.DispositionType);
+        Assert.Equal("application/pdf", approvedPdf.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
+    public async Task Bandeja_BuscaPorCorrelativo()
+    {
+        var quoteId = await SeedCotizacionAsync("Enviada", DateTime.UtcNow, DateTime.UtcNow.AddHours(48));
+        var correlativo = await _host.WithDatabaseAsyncResultAsync(async context =>
+            await context.Cotizaciones.Where(c => c.Id == quoteId).Select(c => c.Correlativo).SingleAsync());
+
+        var html = WebUtility.HtmlDecode(await _host.Client.GetStringAsync($"/Cotizaciones?busqueda={Uri.EscapeDataString(correlativo)}"));
+
+        Assert.Contains(correlativo, html);
+        Assert.Contains("Mostrando 1 de 1 cotizaciones emitidas", html);
+    }
+
+    [Fact]
+    public async Task Actualizar_CotizacionVencidaCreaUnaNuevaConPrecioActualYConservaLaAnterior()
+    {
+        var oldQuoteId = await SeedCotizacionAsync("Enviada", DateTime.UtcNow.AddHours(-60), DateTime.UtcNow.AddHours(-12), 12m);
+        await _host.WithDatabaseAsync(async context =>
+        {
+            var product = await context.Productos.SingleAsync(p => p.Id == 1);
+            product.CostoReferencial = 20m;
+            await context.SaveChangesAsync();
+        });
+
+        var response = await _host.PostAsync(new() { ["id"] = oldQuoteId.ToString() }, "Actualizar");
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Contains("estado=Enviada", response.Headers.Location!.OriginalString);
+        await _host.WithDatabaseAsync(async context =>
+        {
+            var quotes = await context.Cotizaciones
+                .Include(q => q.Detalles)
+                .OrderBy(q => q.Id)
+                .AsNoTracking()
+                .ToListAsync();
+            Assert.Equal(2, quotes.Count);
+            var previous = Assert.Single(quotes.Where(q => q.Id == oldQuoteId));
+            var renewed = Assert.Single(quotes.Where(q => q.Id != oldQuoteId));
+            Assert.Equal("Enviada", previous.Estado);
+            Assert.Equal(12m, previous.Detalles.Single().PrecioVentaCalculado);
+            Assert.Equal(1, renewed.ClienteId);
+            Assert.Equal("Enviada", renewed.Estado);
+            Assert.NotEqual(previous.Correlativo, renewed.Correlativo);
+            Assert.Matches(@"^COT-\d{4}-\d{4,}$", renewed.Correlativo);
+            Assert.InRange((renewed.FechaVencimiento!.Value - renewed.FechaEmision).TotalHours, 47.99, 48.01);
+            var renewedLine = Assert.Single(renewed.Detalles);
+            Assert.Equal(2, renewedLine.Cantidad);
+            Assert.Equal(20m, renewedLine.CostoProveedorReferencial);
+            Assert.Equal(24m, renewedLine.PrecioVentaCalculado);
+            Assert.Equal(48m, renewed.Subtotal);
+            Assert.Equal(56.64m, renewed.Total);
+        });
+    }
+
+    [Fact]
+    public async Task Actualizar_RechazaCotizacionAunVigente()
+    {
+        var activeQuoteId = await SeedCotizacionAsync("Enviada", DateTime.UtcNow, DateTime.UtcNow.AddHours(48));
+
+        var response = await _host.PostAsync(new() { ["id"] = activeQuoteId.ToString() }, "Actualizar");
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        var html = WebUtility.HtmlDecode(await _host.Client.GetStringAsync(response.Headers.Location));
+        Assert.Contains("Solo se pueden actualizar cotizaciones vencidas", html);
+        await _host.WithDatabaseAsync(async context => Assert.Single(await context.Cotizaciones.ToListAsync()));
+    }
+
+    [Fact]
     public async Task Grabar_VariosProductosConservaCantidadesYRedondeo()
     {
         var form = ProductForm("3");
@@ -238,6 +428,10 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
         Assert.Contains("Total General", html);
         Assert.Contains("Opciones", html);
         Assert.Contains("data-cliente-id=\"2\"", html);
+        Assert.Contains("id=\"generarPdf\"", html);
+        Assert.DoesNotContain("id=\"cotizacionPdfModal\"", html);
+        var pdfButton = Regex.Match(html, "<button[^>]*id=\"generarPdf\"[^>]*>").Value;
+        Assert.Contains("disabled", pdfButton);
         Assert.Contains("cotizacion-productos.js", html);
         Assert.DoesNotContain("select2", html);
     }

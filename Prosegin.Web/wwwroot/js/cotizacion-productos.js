@@ -256,6 +256,60 @@
     });
     document.getElementById("limpiarProductos").addEventListener("click", clearProducts);
     document.querySelectorAll("[data-cancel-quote]").forEach(link => link.addEventListener("click", clearProducts));
+    const pdfModal = document.getElementById("cotizacionPdfModal");
+    if (pdfModal) {
+        const downloadButton = document.getElementById("confirmarDescargaPdf");
+        const downloadError = document.getElementById("pdfDownloadError");
+        const downloadSuccess = document.getElementById("pdfDownloadSuccess");
+        downloadButton.addEventListener("click", async () => {
+            const token = form.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            if (!token) {
+                downloadError.textContent = "No se pudo validar la solicitud. Recarga la página e inténtalo de nuevo.";
+                downloadError.hidden = false;
+                return;
+            }
+
+            downloadButton.disabled = true;
+            downloadError.hidden = true;
+            const originalText = downloadButton.textContent;
+            downloadButton.textContent = "Generando PDF...";
+            try {
+                const response = await fetch(pdfModal.dataset.downloadUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+                    body: new URLSearchParams({ __RequestVerificationToken: token, cotizacionId: pdfModal.dataset.cotizacionId })
+                });
+                if (!response.ok || !response.headers.get("content-type")?.includes("application/pdf")) {
+                    throw new Error(`La generación del PDF falló (HTTP ${response.status}).`);
+                }
+
+                const pdf = await response.blob();
+                if (pdf.size === 0) throw new Error("El archivo PDF recibido está vacío.");
+                const downloadUrl = URL.createObjectURL(pdf);
+                const link = document.createElement("a");
+                link.href = downloadUrl;
+                link.download = (pdfModal.dataset.downloadFilename || "cotizacion.pdf").replace(/[\\/:*?"<>|]/g, "_");
+                document.body.append(link);
+                link.click();
+                link.remove();
+                window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+
+                const status = document.getElementById("cotizacionPdfEstado");
+                status.textContent = "ENVIADA";
+                status.classList.remove("text-bg-success");
+                status.classList.add("text-bg-primary");
+                downloadSuccess.hidden = false;
+                bootstrap.Modal.getOrCreateInstance(pdfModal).hide();
+            } catch (error) {
+                console.error("No se pudo descargar la cotización PDF.", error);
+                downloadError.textContent = "No se pudo generar o descargar el PDF. Verifica tu conexión e inténtalo de nuevo.";
+                downloadError.hidden = false;
+            } finally {
+                downloadButton.disabled = false;
+                downloadButton.textContent = originalText;
+            }
+        });
+    }
     form.addEventListener("submit", event => {
         const valid = updateTotals();
         if (!valid || !rows.some(row => selection(row).checked)) {
