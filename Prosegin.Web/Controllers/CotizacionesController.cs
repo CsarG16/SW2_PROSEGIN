@@ -13,11 +13,13 @@ public class CotizacionesController : Controller
     private const int CotizacionesPorPagina = 10;
     private readonly ProseginDbContext _context;
     private readonly ISunatService _sunatService;
+    private readonly IWebHostEnvironment _env;
 
-    public CotizacionesController(ProseginDbContext context, ISunatService sunatService)
+    public CotizacionesController(ProseginDbContext context, ISunatService sunatService, IWebHostEnvironment env)
     {
         _context = context;
         _sunatService = sunatService;
+        _env = env;
     }
 
     [HttpGet]
@@ -599,7 +601,8 @@ public class CotizacionesController : Controller
 
     private byte[] GenerarPdf(Cotizacion cotizacion) => CotizacionPdfGenerator.Generate(
         cotizacion,
-        productoId => Url.Action("VerFicha", "Catalogo", new { id = productoId }, Request.Scheme));
+        productoId => Url.Action("VerFicha", "Catalogo", new { id = productoId }, Request.Scheme),
+        logoPath: Path.Combine(_env.WebRootPath, "logo_horizontal.png"));
 
     private async Task<Cotizacion?> ObtenerCotizacionPdfAsync(int id, CancellationToken cancellationToken) =>
         await _context.Cotizaciones
