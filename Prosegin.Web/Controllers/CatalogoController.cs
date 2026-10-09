@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -288,7 +289,11 @@ public class CatalogoController : Controller
             : producto.NombreArchivoPdf;
 
         // Configurar Content-Disposition inline para visualización directa en el navegador
-        Response.Headers["Content-Disposition"] = $"inline; filename=\"{fileName}\"";
+        var contentDisposition = new ContentDispositionHeaderValue("inline")
+        {
+            FileNameStar = fileName
+        };
+        Response.Headers.ContentDisposition = contentDisposition.ToString();
         return PhysicalFile(filePath, "application/pdf");
     }
 
