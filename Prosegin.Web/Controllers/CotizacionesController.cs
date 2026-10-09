@@ -324,7 +324,7 @@ public class CotizacionesController : Controller
             return BadRequest("La cotización no contiene productos para generar el PDF.");
         }
 
-        var emitirPorPrimeraVez = !string.Equals(cotizacion.Estado, "Enviada", StringComparison.Ordinal);
+        var emitirPorPrimeraVez = string.Equals(cotizacion.Estado, "Borrador", StringComparison.Ordinal);
         if (emitirPorPrimeraVez)
         {
             var fechaEmision = DateTime.UtcNow;

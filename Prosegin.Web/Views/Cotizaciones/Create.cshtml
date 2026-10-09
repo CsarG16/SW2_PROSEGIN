@@ -68,7 +68,7 @@
         </div>
     }
 
-    <div id="pdfDownloadSuccess" class="alert alert-success d-flex align-items-center mb-4" role="status" hidden>
+    <div id="pdfDownloadSuccess" class="alert alert-success d-flex align-items-center mb-4 d-none" role="status">
         <i class="bi bi-check-circle-fill me-2"></i>Documento PDF descargado correctamente.
     </div>
 
@@ -343,6 +343,7 @@
     <div class="modal fade" id="cotizacionPdfModal" tabindex="-1" aria-labelledby="cotizacionPdfModalTitle" aria-hidden="true"
          data-download-url="@Url.Action("DescargarPdf", "Cotizaciones")"
          data-cotizacion-id="@Model.CotizacionId"
+         data-cotizacion-estado="@Model.EstadoCotizacion"
          data-download-filename="@($"COT-{Model.FechaEmision:yyyy}-{Model.Correlativo}_{Model.RazonSocial}.pdf")">
         <div class="modal-dialog modal-xl modal-dialog-centered quote-pdf-dialog">
             <div class="modal-content quote-pdf-modal">
@@ -439,8 +440,8 @@
                             <div class="quote-pdf-controls">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h3 class="small fw-bold text-uppercase mb-0">Control de emisión</h3>
-                                    <span class="badge @(Model.EstadoCotizacion == "Enviada" ? "text-bg-primary" : "text-bg-success")" id="cotizacionPdfEstado">
-                                        @(Model.EstadoCotizacion == "Enviada" ? "ENVIADA" : "LISTO PARA ENVÍO")
+                                    <span class="badge @(Model.EstadoCotizacion == "Enviada" ? "text-bg-primary" : Model.EstadoCotizacion == "Aprobada" ? "text-bg-success" : "text-bg-secondary")" id="cotizacionPdfEstado">
+                                        @(Model.EstadoCotizacion == "Enviada" ? "ENVIADA" : Model.EstadoCotizacion == "Aprobada" ? "APROBADA" : "LISTO PARA ENVÍO")
                                     </span>
                                 </div>
                                 <div class="quote-pdf-summary">

@@ -294,12 +294,22 @@
                 link.remove();
                 window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
 
-                const status = document.getElementById("cotizacionPdfEstado");
-                status.textContent = "ENVIADA";
-                status.classList.remove("text-bg-success");
-                status.classList.add("text-bg-primary");
-                downloadSuccess.hidden = false;
-                bootstrap.Modal.getOrCreateInstance(pdfModal).hide();
+                if (pdfModal.dataset.cotizacionEstado === "Borrador") {
+                    const status = document.getElementById("cotizacionPdfEstado");
+                    status.textContent = "ENVIADA";
+                    status.classList.remove("text-bg-secondary");
+                    status.classList.add("text-bg-primary");
+                    pdfModal.dataset.cotizacionEstado = "Enviada";
+                }
+                downloadSuccess.classList.remove("d-none");
+                const closePreview = () => {
+                    if (!pdfModal.classList.contains("show")) return;
+                    bootstrap.Modal.getOrCreateInstance(pdfModal).hide();
+                    if (pdfModal.classList.contains("show")) {
+                        pdfModal.addEventListener("shown.bs.modal", closePreview, { once: true });
+                    }
+                };
+                closePreview();
             } catch (error) {
                 console.error("No se pudo descargar la cotización PDF.", error);
                 downloadError.textContent = "No se pudo generar o descargar el PDF. Verifica tu conexión e inténtalo de nuevo.";

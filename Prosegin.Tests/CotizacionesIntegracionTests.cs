@@ -199,6 +199,7 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
         Assert.Contains("HU31-CASCO", preview);
         Assert.Contains("target=\"_blank\"", preview);
         Assert.Contains("Abrir ficha técnica", preview);
+        Assert.Matches(@"<div id=""pdfDownloadSuccess"" class=""[^""]*\bd-none\b[^""]*"" role=""status"">", preview);
 
         var downloadResponse = await _host.PostAsync(new() { ["cotizacionId"] = cotizacionId.ToString() }, "DescargarPdf");
 
@@ -281,6 +282,26 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
             Assert.Equal(0.25m, quote.Subtotal);
             Assert.Equal(0.05m, quote.Igv);
             Assert.Equal(0.30m, quote.Total);
+        });
+    }
+
+    [Fact]
+    public async Task DescargarPdf_DeCotizacionAprobadaNoRevierteSuEstadoNiSuVigencia()
+    {
+        var issueDate = DateTime.UtcNow.AddDays(-1);
+        var expiryDate = DateTime.UtcNow.AddDays(1);
+        var quoteId = await SeedCotizacionAsync("Aprobada", issueDate, expiryDate);
+
+        var response = await _host.PostAsync(new() { ["cotizacionId"] = quoteId.ToString() }, "DescargarPdf");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("application/pdf", response.Content.Headers.ContentType?.MediaType);
+        await _host.WithDatabaseAsync(async context =>
+        {
+            var quote = await context.Cotizaciones.SingleAsync(q => q.Id == quoteId);
+            Assert.Equal("Aprobada", quote.Estado);
+            Assert.Equal(issueDate, quote.FechaEmision);
+            Assert.Equal(expiryDate, quote.FechaVencimiento);
         });
     }
 
