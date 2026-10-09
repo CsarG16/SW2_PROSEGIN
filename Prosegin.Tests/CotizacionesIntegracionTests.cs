@@ -313,9 +313,17 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
 
         var quoteId = await _host.WithDatabaseAsyncResultAsync(async context =>
             await context.Cotizaciones.Where(c => c.Estado == "Aprobada").Select(c => c.Id).SingleAsync());
+        await _host.WithDatabaseAsync(async context =>
+        {
+            var client = await context.Clientes.SingleAsync(c => c.Id == 1);
+            client.RazonSocial = "CLIENTE ÍÑIGO";
+            await context.SaveChangesAsync();
+        });
         var approvedPdf = await _host.Client.GetAsync($"/Cotizaciones/VerPdf/{quoteId}");
         Assert.Equal(HttpStatusCode.OK, approvedPdf.StatusCode);
         Assert.Equal("inline", approvedPdf.Content.Headers.ContentDisposition?.DispositionType);
+        Assert.Contains("filename*=utf-8''", approvedPdf.Content.Headers.ContentDisposition?.ToString());
+        Assert.DoesNotContain("Í", approvedPdf.Content.Headers.ContentDisposition?.ToString());
         Assert.Equal("application/pdf", approvedPdf.Content.Headers.ContentType?.MediaType);
     }
 

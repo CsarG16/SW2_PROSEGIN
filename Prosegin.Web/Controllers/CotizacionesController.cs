@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Prosegin.Data;
@@ -359,7 +360,11 @@ public class CotizacionesController : Controller
             return BadRequest("La cotización no contiene productos para generar el PDF.");
         }
 
-        Response.Headers["Content-Disposition"] = $"inline; filename=\"{NombreArchivoPdf(cotizacion)}\"";
+        var contentDisposition = new ContentDispositionHeaderValue("inline")
+        {
+            FileNameStar = NombreArchivoPdf(cotizacion)
+        };
+        Response.Headers.ContentDisposition = contentDisposition.ToString();
         return File(GenerarPdf(cotizacion), "application/pdf");
     }
 
