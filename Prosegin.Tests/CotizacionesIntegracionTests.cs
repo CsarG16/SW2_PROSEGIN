@@ -1,4 +1,6 @@
 using System.Net;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -7,6 +9,7 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using PdfSharp.Pdf;
 using Prosegin.Data;
 using Prosegin.Data.Entities;
 using Prosegin.Data.Validation;
@@ -24,6 +27,7 @@ public sealed class CotizacionesTestHost : IAsyncLifetime
     private readonly string _database = Path.Combine(Path.GetTempPath(), $"prosegin-hu31-{Guid.NewGuid():N}.db");
     public HttpClient Client { get; private set; } = null!;
     public Uri BaseAddress { get; private set; } = null!;
+    public string OrdenesCompraDirectory { get; private set; } = null!;
     public SunatPrueba Sunat { get; } = new();
 
     public async Task InitializeAsync()
@@ -36,6 +40,7 @@ public sealed class CotizacionesTestHost : IAsyncLifetime
             ContentRootPath = Path.Combine(root!.FullName, "Prosegin.Web"),
             EnvironmentName = "Development"
         });
+        OrdenesCompraDirectory = Path.Combine(builder.Environment.ContentRootPath, "App_Data", "OrdenesCompraCliente");
         builder.Logging.ClearProviders();
         builder.WebHost.UseUrls("http://127.0.0.1:0");
         builder.Services.AddControllersWithViews().AddApplicationPart(typeof(CotizacionesController).Assembly);
@@ -81,6 +86,30 @@ public sealed class CotizacionesTestHost : IAsyncLifetime
         return await Client.PostAsync($"/{controller}/{action}", new FormUrlEncodedContent(fields));
     }
 
+    public async Task<HttpResponseMessage> PostPdfAsync(
+        int cotizacionId,
+        string action,
+        byte[] contenido,
+        string nombreArchivo,
+        string? numeroOrdenCompra = "PO-TEST-001")
+    {
+        var html = await Client.GetStringAsync("/Cotizaciones/Create?clienteId=1");
+        var input = Regex.Match(html, "<input[^>]*name=\"__RequestVerificationToken\"[^>]*>").Value;
+        var token = WebUtility.HtmlDecode(Regex.Match(input, "value=\"([^\"]+)\"").Groups[1].Value);
+        using var form = new MultipartFormDataContent();
+        form.Add(new StringContent(token), "__RequestVerificationToken");
+        form.Add(new StringContent(cotizacionId.ToString()), "id");
+        if (numeroOrdenCompra != null)
+        {
+            form.Add(new StringContent(numeroOrdenCompra), "numeroOrdenCompraCliente");
+        }
+
+        var archivo = new ByteArrayContent(contenido);
+        archivo.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+        form.Add(archivo, "archivoOrdenCompra", nombreArchivo);
+        return await Client.PostAsync($"/Cotizaciones/{action}", form);
+    }
+
     public async Task DisposeAsync()
     {
         Client.Dispose();
@@ -113,6 +142,15 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
         ["ProductosDisponibles[0].Cantidad"] = quantity,
         ["ProductosDisponibles[0].MargenPorcentaje"] = "0"
     };
+
+    private static byte[] CrearPdfValido()
+    {
+        var document = new PdfDocument();
+        document.AddPage();
+        using var contenido = new MemoryStream();
+        document.Save(contenido, false);
+        return contenido.ToArray();
+    }
 
     private async Task<int> SeedCotizacionAsync(string estado, DateTime fechaEmision, DateTime? fechaVencimiento, decimal precio = 12m)
     {
@@ -148,6 +186,40 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
             quoteId = quote.Id;
         });
         return quoteId;
+    }
+
+    private async Task<(int CotizacionId, string NombreArchivo)> SeedApprovedWithOcAsync(bool withPurchaseOrder = false)
+    {
+        var quoteId = await SeedCotizacionAsync("Aprobada", DateTime.UtcNow.AddHours(-1), DateTime.UtcNow.AddHours(47));
+        var nombreArchivo = $"{Guid.NewGuid():N}.pdf";
+        Directory.CreateDirectory(_host.OrdenesCompraDirectory);
+        await File.WriteAllTextAsync(Path.Combine(_host.OrdenesCompraDirectory, nombreArchivo), "%PDF-1.7 OC anterior");
+
+        await _host.WithDatabaseAsync(async context =>
+        {
+            var cotizacion = await context.Cotizaciones.SingleAsync(c => c.Id == quoteId);
+            cotizacion.NumeroOrdenCompraCliente = "PO-OLD-001";
+            cotizacion.RutaOrdenCompraCliente = nombreArchivo;
+            cotizacion.NombreArchivoOrdenCompraCliente = "oc-anterior.pdf";
+
+            var venta = new OrdenVenta { CotizacionId = cotizacion.Id };
+            if (withPurchaseOrder)
+            {
+                var proveedor = new Proveedor
+                {
+                    Ruc = $"20{Guid.NewGuid():N}"[..11],
+                    RazonSocial = "Proveedor de prueba",
+                    UbicacionMalvinas = "Lima",
+                    Telefono = "999999999",
+                    Contacto = "Contacto"
+                };
+                venta.OrdenesCompra.Add(new OrdenCompra { Proveedor = proveedor, Total = 10m });
+            }
+            context.OrdenesVenta.Add(venta);
+            await context.SaveChangesAsync();
+        });
+
+        return (quoteId, nombreArchivo);
     }
 
     [Fact]
@@ -218,6 +290,55 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
         });
         var sentHtml = WebUtility.HtmlDecode(await _host.Client.GetStringAsync(location));
         Assert.Contains("ENVIADA", sentHtml);
+    }
+
+    [Fact]
+    public async Task DescargarPdf_NoRevierteCotizacionAprobada()
+    {
+        var quoteId = await SeedCotizacionAsync("Aprobada", DateTime.UtcNow.AddDays(-2), DateTime.UtcNow.AddDays(-1));
+
+        var response = await _host.PostAsync(
+            new() { ["cotizacionId"] = quoteId.ToString() },
+            "DescargarPdf");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await _host.WithDatabaseAsync(async context =>
+        {
+            var cotizacion = await context.Cotizaciones.AsNoTracking().SingleAsync(c => c.Id == quoteId);
+            Assert.Equal("Aprobada", cotizacion.Estado);
+            Assert.Equal(DateTime.UtcNow.AddDays(-2).Date, cotizacion.FechaEmision.Date);
+            Assert.Equal(DateTime.UtcNow.AddDays(-1).Date, cotizacion.FechaVencimiento!.Value.Date);
+        });
+    }
+
+    [Fact]
+    public async Task Create_NoPermiteAbrirCotizacionAprobadaParaEdicion()
+    {
+        var quoteId = await SeedCotizacionAsync("Aprobada", DateTime.UtcNow.AddDays(-1), null);
+
+        var response = await _host.Client.GetAsync($"/Cotizaciones/Create?clienteId=1&cotizacionId={quoteId}");
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Contains("estado=Aprobada", response.Headers.Location!.OriginalString);
+    }
+
+    [Fact]
+    public async Task Create_PostManipuladoNoCreaUnaCotizacionDesdeUnaAprobada()
+    {
+        var quoteId = await SeedCotizacionAsync("Aprobada", DateTime.UtcNow.AddDays(-1), null);
+
+        var response = await _host.PostAsync(new()
+        {
+            ["ClienteId"] = "1",
+            ["CotizacionId"] = quoteId.ToString()
+        });
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        await _host.WithDatabaseAsync(async context =>
+        {
+            Assert.Equal(1, await context.Cotizaciones.CountAsync());
+            Assert.Equal("Aprobada", (await context.Cotizaciones.SingleAsync()).Estado);
+        });
     }
 
     [Theory]
@@ -596,6 +717,162 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
             Assert.Equal("Protección cabeza", product.Categoria);
             Assert.Equal(11.50m, product.CostoReferencial);
         });
+    }
+
+    [Fact]
+    public async Task Bandeja_IncluyeScriptDeConversionDeCotizaciones()
+    {
+        var html = await _host.Client.GetStringAsync("/Cotizaciones?estado=Enviada");
+
+        Assert.Contains("/js/cotizaciones.js", html);
+    }
+
+    [Fact]
+    public async Task ConvertirAVenta_AdjuntaPdfApruebaCotizacionYCreaOrdenVenta()
+    {
+        var quoteId = await SeedCotizacionAsync("Enviada", DateTime.UtcNow.AddHours(-1), DateTime.UtcNow.AddHours(47));
+        var pdf = CrearPdfValido();
+        string? nombreAlmacenado = null;
+
+        try
+        {
+            var response = await _host.PostPdfAsync(quoteId, "ConvertirAVenta", pdf, "oc-cliente.pdf");
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+
+            await _host.WithDatabaseAsync(async context =>
+            {
+                var cotizacion = await context.Cotizaciones
+                    .Include(c => c.Detalles)
+                    .Include(c => c.OrdenVenta)
+                    .AsNoTracking()
+                    .SingleAsync(c => c.Id == quoteId);
+                Assert.Equal("Aprobada", cotizacion.Estado);
+                Assert.Equal("PO-TEST-001", cotizacion.NumeroOrdenCompraCliente);
+                Assert.Equal("oc-cliente.pdf", cotizacion.NombreArchivoOrdenCompraCliente);
+                Assert.NotNull(cotizacion.RutaOrdenCompraCliente);
+                nombreAlmacenado = cotizacion.RutaOrdenCompraCliente;
+                Assert.NotNull(cotizacion.OrdenVenta);
+                Assert.Single(cotizacion.Detalles);
+                Assert.Equal(2, cotizacion.Detalles.Single().Cantidad);
+                Assert.Equal(12m, cotizacion.Detalles.Single().PrecioVentaCalculado);
+            });
+
+            var pdfResponse = await _host.Client.GetAsync($"/Cotizaciones/VerOrdenCompra?id={quoteId}");
+            Assert.Equal(HttpStatusCode.OK, pdfResponse.StatusCode);
+            Assert.Equal(pdf, await pdfResponse.Content.ReadAsByteArrayAsync());
+
+            var html = WebUtility.HtmlDecode(await _host.Client.GetStringAsync("/Cotizaciones?estado=Aprobada"));
+            Assert.Contains("Solo lectura", html);
+            Assert.Contains("Casco de prueba", html);
+            Assert.Contains("PO-TEST-001", html);
+        }
+        finally
+        {
+            if (nombreAlmacenado != null)
+            {
+                var path = Path.Combine(_host.OrdenesCompraDirectory, nombreAlmacenado);
+                if (File.Exists(path)) File.Delete(path);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task ConvertirAVenta_RechazaArchivoQueNoTieneFirmaPdf()
+    {
+        var quoteId = await SeedCotizacionAsync("Enviada", DateTime.UtcNow.AddHours(-1), DateTime.UtcNow.AddHours(47));
+
+        var response = await _host.PostPdfAsync(
+            quoteId,
+            "ConvertirAVenta",
+            Encoding.ASCII.GetBytes("contenido falso"),
+            "oc-cliente.pdf");
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Contains("panelId=", response.Headers.Location!.OriginalString);
+        await _host.WithDatabaseAsync(async context =>
+        {
+            var cotizacion = await context.Cotizaciones.AsNoTracking().SingleAsync(c => c.Id == quoteId);
+            Assert.Equal("Enviada", cotizacion.Estado);
+            Assert.Null(cotizacion.RutaOrdenCompraCliente);
+            Assert.Null(await context.OrdenesVenta.SingleOrDefaultAsync(o => o.CotizacionId == quoteId));
+        });
+    }
+
+    [Fact]
+    public async Task ReemplazarOrdenCompra_ReemplazaDocumentoSinCambiarEstadoAprobado()
+    {
+        var (quoteId, archivoAnterior) = await SeedApprovedWithOcAsync();
+        var pdf = CrearPdfValido();
+        string? archivoNuevo = null;
+
+        try
+        {
+            var response = await _host.PostPdfAsync(
+                quoteId,
+                "ReemplazarOrdenCompra",
+                pdf,
+                "oc-nueva.pdf",
+                "PO-NEW-002");
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+
+            await _host.WithDatabaseAsync(async context =>
+            {
+                var cotizacion = await context.Cotizaciones
+                    .Include(c => c.OrdenVenta)
+                    .AsNoTracking()
+                    .SingleAsync(c => c.Id == quoteId);
+                Assert.Equal("Aprobada", cotizacion.Estado);
+                Assert.Equal("PO-NEW-002", cotizacion.NumeroOrdenCompraCliente);
+                Assert.Equal("oc-nueva.pdf", cotizacion.NombreArchivoOrdenCompraCliente);
+                Assert.NotNull(cotizacion.RutaOrdenCompraCliente);
+                archivoNuevo = cotizacion.RutaOrdenCompraCliente;
+                Assert.NotEqual(archivoAnterior, archivoNuevo);
+                Assert.NotNull(cotizacion.OrdenVenta);
+            });
+
+            Assert.False(File.Exists(Path.Combine(_host.OrdenesCompraDirectory, archivoAnterior)));
+            var pdfResponse = await _host.Client.GetAsync($"/Cotizaciones/VerOrdenCompra?id={quoteId}");
+            Assert.Equal(HttpStatusCode.OK, pdfResponse.StatusCode);
+            Assert.Equal(pdf, await pdfResponse.Content.ReadAsByteArrayAsync());
+        }
+        finally
+        {
+            foreach (var name in new[] { archivoAnterior, archivoNuevo })
+            {
+                if (name == null) continue;
+                var path = Path.Combine(_host.OrdenesCompraDirectory, name);
+                if (File.Exists(path)) File.Delete(path);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task ReemplazarOrdenCompra_NoPermiteCambioSiYaHayOrdenesAProveedor()
+    {
+        var (quoteId, archivoAnterior) = await SeedApprovedWithOcAsync(withPurchaseOrder: true);
+        try
+        {
+            var response = await _host.PostPdfAsync(
+                quoteId,
+                "ReemplazarOrdenCompra",
+                Encoding.ASCII.GetBytes("%PDF-1.7 intento"),
+                "oc-nueva.pdf");
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+
+            await _host.WithDatabaseAsync(async context =>
+            {
+                var cotizacion = await context.Cotizaciones.AsNoTracking().SingleAsync(c => c.Id == quoteId);
+                Assert.Equal("Aprobada", cotizacion.Estado);
+                Assert.Equal(archivoAnterior, cotizacion.RutaOrdenCompraCliente);
+                Assert.Equal(1, await context.OrdenesCompra.CountAsync());
+            });
+            Assert.True(File.Exists(Path.Combine(_host.OrdenesCompraDirectory, archivoAnterior)));
+        }
+        finally
+        {
+            var path = Path.Combine(_host.OrdenesCompraDirectory, archivoAnterior);
+            if (File.Exists(path)) File.Delete(path);
+        }
     }
 
     private Task AssertNoQuotesAsync() => _host.WithDatabaseAsync(async context =>

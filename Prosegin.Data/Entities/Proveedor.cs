@@ -10,6 +10,6 @@ public class Proveedor
     public string Contacto { get; set; } = string.Empty;
 
     // Navegación
-    public ICollection<Producto> Productos { get; set; } = new List<Producto>();
+    public ICollection<ProductoProveedor> ProductosAutorizados { get; set; } = new List<ProductoProveedor>();
     public ICollection<OrdenCompra> OrdenesCompra { get; set; } = new List<OrdenCompra>();
 }

@@ -115,23 +115,195 @@
                                     }
                                 </td>
                                 <td class="text-end fw-bold">S/ @cotizacion.Total.ToString("N2", peruCulture)</td>
-                                <td><span class="quote-inbox-status @cotizacion.Estado.ToLowerInvariant()"><i></i>@cotizacion.Estado</span></td>
-                                <td class="text-end text-nowrap">
-                                    <a asp-controller="Cotizaciones" asp-action="VerPdf" asp-route-id="@cotizacion.Id"
-                                       target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-light border">
-                                        <i class="bi bi-file-earmark-pdf me-1"></i>Ver PDF
-                                    </a>
-                                    @if (cotizacion.Estado == "Vencida")
+                                <td>
+                                    <span class="quote-inbox-status @cotizacion.Estado.ToLowerInvariant()"><i></i>@cotizacion.Estado</span>
+                                    @if (cotizacion.Estado == "Aprobada")
                                     {
-                                        <form asp-controller="Cotizaciones" asp-action="Actualizar" asp-route-id="@cotizacion.Id"
-                                              method="post" class="d-inline">
-                                            <button type="submit" class="btn btn-sm btn-warning fw-semibold ms-1">
-                                                <i class="bi bi-arrow-repeat me-1"></i>Actualizar cotización
-                                            </button>
-                                        </form>
+                                        <span class="quote-readonly-badge">Solo lectura</span>
+                                        @if (!string.IsNullOrWhiteSpace(cotizacion.NombreArchivoOrdenCompraCliente))
+                                        {
+                                            <span class="quote-oc-badge"><i class="bi bi-file-earmark-pdf"></i> OC: @cotizacion.NombreArchivoOrdenCompraCliente</span>
+                                        }
                                     }
                                 </td>
+                                <td class="text-end text-nowrap">
+                                    <div class="dropdown">
+                                        <button type="button" class="btn btn-sm btn-light border quote-row-menu"
+                                                data-bs-toggle="dropdown" aria-expanded="false"
+                                                data-quote-row-menu
+                                                aria-label="Acciones para @cotizacion.Correlativo">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <a asp-controller="Cotizaciones" asp-action="VerPdf" asp-route-id="@cotizacion.Id"
+                                                   target="_blank" rel="noopener noreferrer" class="dropdown-item">
+                                                    <i class="bi bi-file-earmark-pdf me-2"></i>Ver PDF
+                                                </a>
+                                            </li>
+                                            @if (cotizacion.Estado == "Enviada")
+                                            {
+                                                <li>
+                                                    <button type="button" class="dropdown-item" data-toggle-quote-panel="@cotizacion.Id">
+                                                        <i class="bi bi-arrow-left-right me-2"></i>Convertir a Venta
+                                                    </button>
+                                                </li>
+                                            }
+                                            else if (cotizacion.Estado == "Vencida")
+                                            {
+                                                <li>
+                                                    <form asp-controller="Cotizaciones" asp-action="Actualizar" asp-route-id="@cotizacion.Id" method="post">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="dropdown-item">
+                                                            <i class="bi bi-arrow-repeat me-2"></i>Actualizar cotización
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            }
+                                            else if (cotizacion.Estado == "Aprobada")
+                                            {
+                                                <li>
+                                                    <a asp-controller="Cotizaciones" asp-action="VerOrdenCompra" asp-route-id="@cotizacion.Id"
+                                                       target="_blank" rel="noopener noreferrer" class="dropdown-item">
+                                                        <i class="bi bi-file-earmark-check me-2"></i>Ver OC
+                                                    </a>
+                                                </li>
+                                                @if (cotizacion.PuedeReemplazarOrdenCompra)
+                                                {
+                                                    <li>
+                                                        <button type="button" class="dropdown-item" data-toggle-quote-panel="@cotizacion.Id">
+                                                            <i class="bi bi-arrow-repeat me-2"></i>Reemplazar Orden de Compra
+                                                        </button>
+                                                    </li>
+                                                }
+                                            }
+                                        </ul>
+                                    </div>
+                                </td>
                             </tr>
+                            @if (cotizacion.Estado == "Aprobada")
+                            {
+                                <tr class="quote-approved-details-row">
+                                    <td colspan="7">
+                                        <details class="quote-approved-details">
+                                            <summary>Productos, cantidades y precios <span>Solo lectura</span></summary>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>SKU</th>
+                                                            <th>Producto</th>
+                                                            <th class="text-end">Cantidad</th>
+                                                            <th class="text-end">Precio unitario</th>
+                                                            <th class="text-end">Subtotal</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var detalle in cotizacion.Detalles)
+                                                        {
+                                                            <tr>
+                                                                <td>@detalle.Sku</td>
+                                                                <td>@detalle.Producto</td>
+                                                                <td class="text-end">@detalle.Cantidad</td>
+                                                                <td class="text-end">S/ @detalle.PrecioUnitario.ToString("N2", peruCulture)</td>
+                                                                <td class="text-end">S/ @detalle.Subtotal.ToString("N2", peruCulture)</td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </details>
+                                    </td>
+                                </tr>
+                            }
+                            @if (cotizacion.Estado == "Enviada")
+                            {
+                                <tr class="quote-upload-row" data-quote-upload-row="@cotizacion.Id"
+                                    hidden="@(Model.PanelAbiertoId == cotizacion.Id ? null : "hidden")">
+                                    <td colspan="7">
+                                        <form asp-controller="Cotizaciones" asp-action="ConvertirAVenta"
+                                              method="post" enctype="multipart/form-data" class="quote-upload-panel"
+                                              data-quote-upload-form>
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@cotizacion.Id" />
+                                            <div class="quote-upload-heading">
+                                                <div><i class="bi bi-file-earmark-plus"></i><strong>Adjuntar Orden de Compra (OC) del cliente</strong></div>
+                                                <span><i class="bi bi-hash"></i> Código único de pedido: <strong>@cotizacion.Correlativo</strong></span>
+                                            </div>
+                                            <div class="quote-upload-fields">
+                                                <div>
+                                                    <button type="button" class="quote-drop-zone" data-file-trigger>
+                                                        <i class="bi bi-cloud-arrow-up"></i>
+                                                        <strong>Arrastra el archivo PDF o selecciona desde tu equipo</strong>
+                                                        <small>Exclusivamente formato PDF (máx. 10 MB)</small>
+                                                    </button>
+                                                    <input class="quote-file-input" type="file" name="archivoOrdenCompra"
+                                                           accept=".pdf,application/pdf" required data-pdf-input />
+                                                    <div class="quote-selected-file" data-file-name aria-live="polite">Ningún archivo seleccionado</div>
+                                                </div>
+                                                <label class="quote-reference-field">
+                                                    N° de Orden de Compra de referencia *
+                                                    <input type="text" name="numeroOrdenCompraCliente" maxlength="100"
+                                                           required placeholder="Ej. PO-CLIENTE-88492" />
+                                                </label>
+                                            </div>
+                                            <div class="quote-upload-actions">
+                                                <button type="button" class="btn btn-link text-secondary" data-cancel-quote-panel>Cancelar</button>
+                                                <button type="submit" class="btn btn-dark">
+                                                    <i class="bi bi-check-circle"></i> Confirmar Conversión
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                            else if (cotizacion.PuedeReemplazarOrdenCompra)
+                            {
+                                <tr class="quote-upload-row" data-quote-upload-row="@cotizacion.Id"
+                                    hidden="@(Model.PanelAbiertoId == cotizacion.Id ? null : "hidden")">
+                                    <td colspan="7">
+                                        <form asp-controller="Cotizaciones" asp-action="ReemplazarOrdenCompra"
+                                              method="post" enctype="multipart/form-data" class="quote-upload-panel"
+                                              data-quote-upload-form>
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@cotizacion.Id" />
+                                            <div class="quote-upload-heading">
+                                                <div><i class="bi bi-arrow-repeat"></i><strong>Reemplazar Orden de Compra del cliente</strong></div>
+                                                <span>La cotización conserva el estado Aprobada.</span>
+                                            </div>
+                                            <p class="quote-current-file">
+                                                Documento actual:
+                                                <a asp-controller="Cotizaciones" asp-action="VerOrdenCompra" asp-route-id="@cotizacion.Id"
+                                                   target="_blank" rel="noopener noreferrer">@cotizacion.NombreArchivoOrdenCompraCliente</a>
+                                                <span>N° @cotizacion.NumeroOrdenCompraCliente</span>
+                                            </p>
+                                            <div class="quote-upload-fields">
+                                                <div>
+                                                    <button type="button" class="quote-drop-zone" data-file-trigger>
+                                                        <i class="bi bi-cloud-arrow-up"></i>
+                                                        <strong>Arrastra el nuevo PDF o selecciónalo desde tu equipo</strong>
+                                                        <small>Exclusivamente formato PDF (máx. 10 MB)</small>
+                                                    </button>
+                                                    <input class="quote-file-input" type="file" name="archivoOrdenCompra"
+                                                           accept=".pdf,application/pdf" required data-pdf-input />
+                                                    <div class="quote-selected-file" data-file-name aria-live="polite">Ningún archivo seleccionado</div>
+                                                </div>
+                                                <label class="quote-reference-field">
+                                                    N° de Orden de Compra de referencia
+                                                    <input type="text" name="numeroOrdenCompraCliente" maxlength="100"
+                                                           value="@cotizacion.NumeroOrdenCompraCliente" />
+                                                </label>
+                                            </div>
+                                            <div class="quote-upload-actions">
+                                                <button type="button" class="btn btn-link text-secondary" data-cancel-quote-panel>Cancelar</button>
+                                                <button type="submit" class="btn btn-dark">
+                                                    <i class="bi bi-arrow-repeat"></i> Confirmar reemplazo
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
                         }
                     }
                 </tbody>
@@ -154,3 +326,7 @@
         </footer>
     </section>
 </div>
+
+@section Scripts {
+    <script src="~/js/cotizaciones.js" asp-append-version="true"></script>
+}

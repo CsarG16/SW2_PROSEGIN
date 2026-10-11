@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Prosegin.Data;
 
@@ -11,9 +12,11 @@ using Prosegin.Data;
 namespace Prosegin.Data.Migrations
 {
     [DbContext(typeof(ProseginDbContext))]
-    partial class ProseginDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261011000709_AgregarOrdenCompraCliente")]
+    partial class AgregarOrdenCompraCliente
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -22,26 +25,10 @@ namespace Prosegin.Data.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
-            modelBuilder.Entity("Prosegin.Data.Entities.ProductoProveedor", b =>
+            modelBuilder.Entity("ProductoProveedor", b =>
                 {
-                    b.Property<decimal>("CostoCompra")
-                        .ValueGeneratedOnAdd()
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)")
-                        .HasDefaultValue(0m);
-
-                    b.Property<bool>("EsPrincipal")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("tinyint(1)")
-                        .HasDefaultValue(false);
-
                     b.Property<int>("ProductoId")
                         .HasColumnType("int");
-
-                    b.Property<int>("PlazoEntregaHoras")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(24);
 
                     b.Property<int>("ProveedorId")
                         .HasColumnType("int");
@@ -555,23 +542,19 @@ namespace Prosegin.Data.Migrations
                     b.ToTable("PuntosEntrega");
                 });
 
-            modelBuilder.Entity("Prosegin.Data.Entities.ProductoProveedor", b =>
+            modelBuilder.Entity("ProductoProveedor", b =>
                 {
-                    b.HasOne("Prosegin.Data.Entities.Producto", "Producto")
-                        .WithMany("ProveedoresAutorizados")
+                    b.HasOne("Prosegin.Data.Entities.Producto", null)
+                        .WithMany()
                         .HasForeignKey("ProductoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Prosegin.Data.Entities.Proveedor", "Proveedor")
-                        .WithMany("ProductosAutorizados")
+                    b.HasOne("Prosegin.Data.Entities.Proveedor", null)
+                        .WithMany()
                         .HasForeignKey("ProveedorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Producto");
-
-                    b.Navigation("Proveedor");
                 });
 
             modelBuilder.Entity("Prosegin.Data.Entities.ContactoCliente", b =>
@@ -727,15 +710,11 @@ namespace Prosegin.Data.Migrations
                     b.Navigation("CotizacionDetalles");
 
                     b.Navigation("OrdenCompraDetalles");
-
-                    b.Navigation("ProveedoresAutorizados");
                 });
 
             modelBuilder.Entity("Prosegin.Data.Entities.Proveedor", b =>
                 {
                     b.Navigation("OrdenesCompra");
-
-                    b.Navigation("ProductosAutorizados");
                 });
 #pragma warning restore 612, 618
         }

@@ -58,7 +58,18 @@ public class CatalogoController : Controller
                 StockDisponible = p.StockDisponible,
                 RutaFichaTecnicaPdf = p.RutaFichaTecnicaPdf,
                 NombreArchivoPdf = p.NombreArchivoPdf,
-                RutaImagen = p.RutaImagen
+                RutaImagen = p.RutaImagen,
+                TarifasProveedor = p.ProveedoresAutorizados
+                    .OrderBy(pp => pp.Proveedor.RazonSocial)
+                    .Select(pp => new ProveedorTarifaCatalogoViewModel
+                    {
+                        ProveedorId = pp.ProveedorId,
+                        Proveedor = pp.Proveedor.RazonSocial,
+                        CostoCompra = pp.CostoCompra,
+                        PlazoEntregaHoras = pp.PlazoEntregaHoras,
+                        EsPrincipal = pp.EsPrincipal
+                    })
+                    .ToList()
             })
             .ToListAsync();
 
@@ -130,6 +141,34 @@ public class CatalogoController : Controller
             ModelState.AddModelError(nameof(model.ProveedorIds), "Seleccione al menos un proveedor autorizado de la lista.");
         }
 
+        var tarifas = model.TarifasProveedores
+            .Where(t => proveedorIds.Contains(t.ProveedorId))
+            .ToList();
+        if (tarifas.Select(t => t.ProveedorId).Distinct().Count() != proveedorIds.Count)
+        {
+            ModelState.AddModelError(nameof(model.TarifasProveedores), "Indique la tarifa de cada proveedor autorizado.");
+        }
+
+        foreach (var tarifa in tarifas)
+        {
+            if (tarifa.CostoCompra <= 0 || tarifa.CostoCompra != decimal.Round(tarifa.CostoCompra, 2))
+            {
+                ModelState.AddModelError(nameof(model.TarifasProveedores), "Cada tarifa debe ser mayor a cero y tener hasta dos decimales.");
+                break;
+            }
+
+            if (tarifa.PlazoEntregaHoras is < 1 or > 720)
+            {
+                ModelState.AddModelError(nameof(model.TarifasProveedores), "El plazo de entrega debe estar entre 1 y 720 horas.");
+                break;
+            }
+        }
+
+        if (!model.ProveedorPrincipalId.HasValue || !proveedorIds.Contains(model.ProveedorPrincipalId.Value))
+        {
+            ModelState.AddModelError(nameof(model.ProveedorPrincipalId), "Seleccione como principal uno de los proveedores autorizados.");
+        }
+
         if (!string.IsNullOrWhiteSpace(model.Sku))
         {
             var skuNormalizado = model.Sku.Trim().ToUpperInvariant();
@@ -171,7 +210,18 @@ public class CatalogoController : Controller
             Descripcion = string.IsNullOrWhiteSpace(model.Marca)
                 ? string.Empty
                 : $"Marca: {model.Marca.Trim()}",
-            Proveedores = proveedores,
+            ProveedoresAutorizados = proveedorIds.Select(proveedorId =>
+            {
+                var tarifa = tarifas.Single(t => t.ProveedorId == proveedorId);
+                return new ProductoProveedor
+                {
+                    ProveedorId = proveedorId,
+                    Proveedor = proveedores.Single(p => p.Id == proveedorId),
+                    CostoCompra = tarifa.CostoCompra,
+                    EsPrincipal = model.ProveedorPrincipalId == proveedorId,
+                    PlazoEntregaHoras = tarifa.PlazoEntregaHoras
+                };
+            }).ToList(),
             FechaCreacion = DateTime.UtcNow,
             Activo = true
         };
@@ -214,55 +264,89 @@ public class CatalogoController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditarProducto(int Id, string Nombre, string Categoria, decimal Precio, IFormFile? FichaTecnica, CancellationToken cancellationToken)
+    public async Task<IActionResult> EditarProducto(
+        int Id,
+        string Nombre,
+        string Categoria,
+        decimal Precio,
+        IFormFile? FichaTecnica,
+        List<TarifaProveedorEditarViewModel>? tarifasProveedores,
+        int? proveedorPrincipalId,
+        CancellationToken cancellationToken)
     {
-        var producto = await _context.Productos.FirstOrDefaultAsync(p => p.Id == Id, cancellationToken);
-        if (producto != null)
+        var producto = await _context.Productos
+            .Include(p => p.ProveedoresAutorizados)
+            .FirstOrDefaultAsync(p => p.Id == Id, cancellationToken);
+        if (producto == null)
         {
-            producto.Nombre = Nombre?.Trim().ToUpperInvariant() ?? producto.Nombre;
-            producto.Categoria = Categoria?.Trim() ?? string.Empty;
-            producto.CostoReferencial = Precio;
+            TempData["ModalError"] = "No se encontró el producto a editar.";
+            return RedirectToAction(nameof(Index));
+        }
 
-            if (FichaTecnica != null && FichaTecnica.Length > 0)
+        tarifasProveedores ??= new();
+        var tarifasActuales = producto.ProveedoresAutorizados.ToDictionary(p => p.ProveedorId);
+        var tarifasInvalidas = tarifasActuales.Count == 0
+            ? tarifasProveedores.Count != 0 || proveedorPrincipalId.HasValue
+            : tarifasProveedores.Count != tarifasActuales.Count
+                || tarifasProveedores.Select(t => t.ProveedorId).Distinct().Count() != tarifasActuales.Count
+                || tarifasProveedores.Any(t => !tarifasActuales.ContainsKey(t.ProveedorId))
+                || !proveedorPrincipalId.HasValue
+                || !tarifasActuales.ContainsKey(proveedorPrincipalId.Value)
+                || tarifasProveedores.Any(t => t.CostoCompra <= 0
+                    || t.CostoCompra != decimal.Round(t.CostoCompra, 2)
+                    || t.PlazoEntregaHoras is < 1 or > 720);
+        if (tarifasInvalidas)
+        {
+            TempData["ModalError"] = "Revisa las tarifas y selecciona como principal uno de los proveedores autorizados del producto.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        producto.Nombre = Nombre?.Trim().ToUpperInvariant() ?? producto.Nombre;
+        producto.Categoria = Categoria?.Trim() ?? string.Empty;
+        producto.CostoReferencial = Precio;
+        foreach (var tarifa in tarifasProveedores)
+        {
+            var existente = tarifasActuales[tarifa.ProveedorId];
+            existente.CostoCompra = tarifa.CostoCompra;
+            existente.EsPrincipal = tarifa.ProveedorId == proveedorPrincipalId;
+            existente.PlazoEntregaHoras = tarifa.PlazoEntregaHoras;
+        }
+
+        string? rutaAnterior = null;
+        if (FichaTecnica != null && FichaTecnica.Length > 0)
+        {
+            var webRoot = _webHostEnvironment.WebRootPath;
+            if (string.IsNullOrWhiteSpace(webRoot))
             {
-                var webRoot = _webHostEnvironment.WebRootPath;
-                if (string.IsNullOrWhiteSpace(webRoot))
-                {
-                    webRoot = Path.Combine(_webHostEnvironment.ContentRootPath, "wwwroot");
-                }
-                var carpetaFichas = Path.Combine(webRoot, "uploads", "fichas");
-                Directory.CreateDirectory(carpetaFichas);
+                webRoot = Path.Combine(_webHostEnvironment.ContentRootPath, "wwwroot");
+            }
+            var carpetaFichas = Path.Combine(webRoot, "uploads", "fichas");
+            Directory.CreateDirectory(carpetaFichas);
 
-                var nombreUnico = $"{Guid.NewGuid():N}.pdf";
-                var rutaFisica = Path.Combine(carpetaFichas, nombreUnico);
+            var nombreUnico = $"{Guid.NewGuid():N}.pdf";
+            var rutaFisica = Path.Combine(carpetaFichas, nombreUnico);
 
-                await using (var stream = new FileStream(rutaFisica, FileMode.CreateNew))
-                {
-                    await FichaTecnica.CopyToAsync(stream, cancellationToken);
-                }
-
-                // Si ya tenía una ficha previa en uploads/fichas, eliminamos el archivo anterior
-                if (!string.IsNullOrWhiteSpace(producto.RutaFichaTecnicaPdf) && producto.RutaFichaTecnicaPdf.Contains("uploads/fichas", StringComparison.OrdinalIgnoreCase))
-                {
-                    var rutaAnterior = ResolvePdfPath(producto.RutaFichaTecnicaPdf);
-                    if (System.IO.File.Exists(rutaAnterior))
-                    {
-                        try { System.IO.File.Delete(rutaAnterior); } catch { /* ignorar si está en uso */ }
-                    }
-                }
-
-                producto.RutaFichaTecnicaPdf = $"/uploads/fichas/{nombreUnico}";
-                producto.NombreArchivoPdf = Path.GetFileName(FichaTecnica.FileName);
+            await using (var stream = new FileStream(rutaFisica, FileMode.CreateNew))
+            {
+                await FichaTecnica.CopyToAsync(stream, cancellationToken);
             }
 
-            await _context.SaveChangesAsync(cancellationToken);
-            TempData["SuccessMessage"] = "Producto actualizado correctamente.";
-        }
-        else
-        {
-            TempData["ErrorMessage"] = "No se encontró el producto a editar.";
+            if (!string.IsNullOrWhiteSpace(producto.RutaFichaTecnicaPdf)
+                && producto.RutaFichaTecnicaPdf.Contains("uploads/fichas", StringComparison.OrdinalIgnoreCase))
+            {
+                rutaAnterior = ResolvePdfPath(producto.RutaFichaTecnicaPdf);
+            }
+
+            producto.RutaFichaTecnicaPdf = $"/uploads/fichas/{nombreUnico}";
+            producto.NombreArchivoPdf = Path.GetFileName(FichaTecnica.FileName);
         }
 
+        await _context.SaveChangesAsync(cancellationToken);
+        if (rutaAnterior != null && System.IO.File.Exists(rutaAnterior))
+        {
+            System.IO.File.Delete(rutaAnterior);
+        }
+        TempData["SuccessMessage"] = "Producto y tarifas por proveedor actualizados correctamente.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -337,5 +421,24 @@ public class CatalogoController : Controller
             .OrderBy(p => p.RazonSocial)
             .Select(p => new ProveedorOpcionViewModel { Id = p.Id, RazonSocial = p.RazonSocial, Ruc = p.Ruc })
             .ToListAsync(cancellationToken);
+
+        var tarifasExistentes = model.TarifasProveedores.ToDictionary(t => t.ProveedorId);
+        model.TarifasProveedores = model.ProveedoresDisponibles
+            .Select(proveedor => tarifasExistentes.TryGetValue(proveedor.Id, out var tarifa)
+                ? tarifa
+                : new TarifaProveedorCreateViewModel
+                {
+                    ProveedorId = proveedor.Id,
+                    CostoCompra = model.CostoBaseAdquisicion,
+                    PlazoEntregaHoras = 24
+                })
+            .ToList();
+
+        if (!model.ProveedorPrincipalId.HasValue)
+        {
+            model.ProveedorPrincipalId = model.ProveedorIds.FirstOrDefault() is var proveedorId && proveedorId > 0
+                ? proveedorId
+                : model.ProveedoresDisponibles.FirstOrDefault()?.Id;
+        }
     }
 }

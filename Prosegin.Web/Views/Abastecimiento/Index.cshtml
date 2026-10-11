@@ -1,0 +1,169 @@
+@model Prosegin.Web.ViewModels.Pedidos.AbastecimientoViewModel
+@using System.Text.Json
+@using System.Globalization
+
+@{
+    ViewData["Title"] = $"Abastecimiento de Pedido: {Model.NumeroPedido}";
+    var opcionesJson = JsonSerializer.Serialize(Model.Productos);
+    var urlCancelar = Url.Action("Index", "Pedidos", new
+    {
+        termino = Model.NumeroPedido,
+        estado = "ALL",
+        abrirDetalle = Model.NumeroPedido
+    });
+}
+
+<div class="container-fluid py-4">
+    <div class="prosegin-card p-3 p-md-4 mb-3">
+        <div class="prosegin-page-header--accent" style="margin-bottom: 0;">
+            <div class="header-content">
+                <h1 class="page-title">Abastecimiento de Pedido: @Model.NumeroPedido</h1>
+                <p class="page-subtitle">Selecciona el proveedor autorizado y su tarifa para cada producto solicitado.</p>
+                <p class="small text-muted mb-0">La sugerencia automática pondera por igual el sobrecosto relativo y la consolidación en menos proveedores; puedes cambiar cualquier selección.</p>
+            </div>
+        </div>
+        <div class="row g-3 mt-2 small">
+            <div class="col-md-4"><span class="text-muted d-block text-uppercase fw-bold">Cliente</span><span class="fw-semibold">@Model.Cliente</span></div>
+            <div class="col-md-4"><span class="text-muted d-block text-uppercase fw-bold">Orden de compra del cliente</span><span class="fw-semibold">@Model.NumeroOrdenCompraCliente</span></div>
+            <div class="col-md-4"><span class="text-muted d-block text-uppercase fw-bold">Punto de entrega</span><span class="fw-semibold">@Model.DireccionEntrega</span></div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Error))
+    {
+        <div class="alert alert-warning d-flex align-items-start gap-2" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>@Model.Error</span>
+        </div>
+    }
+
+    <form asp-controller="Abastecimiento" asp-action="GenerarOrdenesCompra" method="post" id="abastecimientoForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="ordenVentaId" value="@Model.OrdenVentaId" />
+
+        <div class="prosegin-card overflow-hidden mb-3">
+            <div class="table-responsive">
+                <table class="prosegin-table mb-0" id="tablaAbastecimiento">
+                    <thead>
+                        <tr>
+                            <th>Producto solicitado</th>
+                            <th class="text-end">Cant. requerida</th>
+                            <th style="min-width: 360px;">Selección de proveedor autorizado</th>
+                            <th class="text-end">Subtotal compra (S/)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < Model.Productos.Count; i++)
+                        {
+                            var producto = Model.Productos[i];
+                            <tr data-product-row data-product-index="@i">
+                                <td>
+                                    <input type="hidden" name="selecciones[@i].ProductoId" value="@producto.ProductoId" />
+                                    <span class="fw-semibold d-block">@producto.Nombre</span>
+                                    <span class="small text-muted">@producto.Sku</span>
+                                </td>
+                                <td class="text-end text-nowrap fw-semibold">
+                                    @producto.Cantidad <span class="small text-muted">@producto.UnidadMedida</span>
+                                </td>
+                                <td>
+                                    @if (producto.Proveedores.Count == 0)
+                                    {
+                                        <span class="text-danger small">Sin proveedores autorizados con tarifa.</span>
+                                    }
+                                    else
+                                    {
+                                        <select name="selecciones[@i].ProveedorId"
+                                                class="form-select form-control-prosegin proveedor-abastecimiento"
+                                                data-product-index="@i"
+                                                required
+                                                aria-label="Proveedor autorizado para @producto.Nombre">
+                                            @foreach (var proveedor in producto.Proveedores)
+                                            {
+                                                var costo = proveedor.CostoUnitario.ToString("F2", CultureInfo.InvariantCulture);
+                                                <option value="@proveedor.Id"
+                                                        data-provider-name="@proveedor.RazonSocial"
+                                                        data-unit-price="@costo"
+                                                        data-lead-hours="@proveedor.PlazoEntregaHoras"
+                                                        data-main="@proveedor.EsPrincipal.ToString().ToLowerInvariant()"
+                                                        selected="@(producto.ProveedorSeleccionadoId == proveedor.Id)">
+                                                    @proveedor.RazonSocial — S/ @costo / @producto.UnidadMedida (@proveedor.PlazoEntregaHoras hrs)@(proveedor.EsPrincipal ? " · Principal" : "")
+                                                </option>
+                                            }
+                                        </select>
+                                    }
+                                </td>
+                                <td class="text-end fw-bold font-monospace" data-product-subtotal>S/ 0.00</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="prosegin-card p-3 p-md-4 mb-3">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 border-bottom pb-3 mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-box-seam text-warning"></i>
+                    <h2 class="h6 fw-bold text-uppercase mb-0">Resumen de órdenes de compra por proveedor</h2>
+                </div>
+                <span class="badge text-bg-light border" id="cantidadOrdenes">0 órdenes agrupadas</span>
+            </div>
+            <div class="row g-3">
+                <div class="col-lg-8">
+                    <div class="d-flex flex-column gap-2" id="resumenProveedores" aria-live="polite"></div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="border rounded-3 p-3 h-100 bg-white">
+                        <span class="small fw-bold text-uppercase text-muted">Total consolidado de adquisición</span>
+                        <div class="fs-3 fw-bold font-monospace mt-1" id="totalConsolidado">S/ 0.00</div>
+                        <span class="small text-muted">PEN · Incluye todos los proveedores seleccionados</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex flex-column flex-sm-row justify-content-between gap-2">
+            <a href="@urlCancelar" class="btn-prosegin-secondary" id="cancelarAbastecimiento">
+                <i class="bi bi-x-circle me-1"></i> Cancelar Selección
+            </a>
+            <button type="submit" class="btn-prosegin-primary" id="generarOrdenes"
+                    disabled="@(Model.Productos.Count == 0 || Model.Productos.Any(p => p.Proveedores.Count == 0) || !string.IsNullOrWhiteSpace(Model.Error))">
+                <i class="bi bi-box-seam me-1"></i> GENERAR ÓRDENES DE COMPRA TOTALES
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="modal fade" id="vistaPreviaOrdenCompra" tabindex="-1" aria-labelledby="vistaPreviaTitulo" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <span class="small text-muted text-uppercase fw-bold">Documento borrador</span>
+                    <h2 class="modal-title fs-5 fw-bold" id="vistaPreviaTitulo">Orden de compra</h2>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2 mb-3 small">
+                    <div class="col-sm-6"><span class="text-muted d-block">Pedido</span><strong>@Model.NumeroPedido</strong></div>
+                    <div class="col-sm-6"><span class="text-muted d-block">OC del cliente</span><strong>@Model.NumeroOrdenCompraCliente</strong></div>
+                    <div class="col-12"><span class="text-muted d-block">Cliente</span><strong>@Model.Cliente</strong></div>
+                </div>
+                <div class="table-responsive border rounded">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light"><tr><th>Producto</th><th class="text-end">Cantidad</th><th class="text-end">Costo unitario</th><th class="text-end">Subtotal</th></tr></thead>
+                        <tbody id="vistaPreviaLineas"></tbody>
+                        <tfoot><tr><th colspan="3" class="text-end">Total PEN</th><th class="text-end font-monospace" id="vistaPreviaTotal">S/ 0.00</th></tr></tfoot>
+                    </table>
+                </div>
+                <p class="small text-muted mt-3 mb-0">Previsualización de borrador; la orden solo se registra al generar las órdenes totales.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.abastecimientoProductos = @Html.Raw(opcionesJson);
+</script>
+<script src="~/js/abastecimiento.js" asp-append-version="true"></script>

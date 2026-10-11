@@ -517,11 +517,13 @@
             </div>
         </div>
 
-        <!-- Modal Footer Actions: Solo botón Cerrar oficial -->
-        <div class="d-flex align-items-center justify-content-end gap-2 pt-3 border-top">
+        <div class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center justify-content-between gap-2 pt-3 border-top">
             <button type="button" class="btn-prosegin-secondary" style="min-width: 120px;" onclick="closeDetailModal()">
                 Cerrar
             </button>
+            <a href="#" class="btn-prosegin-primary d-none" id="modalGeneratePurchase">
+                <i class="bi bi-box-seam me-1"></i> GENERAR ORDEN DE COMPRA A PROVEEDORES
+            </a>
         </div>
     </div>
 </div>
@@ -529,6 +531,7 @@
 <script>
     // Almacén de pedidos serializados para apertura instantánea del modal
     const pedidosDataset = @Html.Raw(pedidosJson);
+    const abastecimientoUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("Index", "Abastecimiento")));
     function openDetailModal(orderId) {
         const pedido = pedidosDataset.find(p => p.NumeroPedido.toLowerCase() === orderId.toLowerCase());
         if (!pedido) {
@@ -542,11 +545,16 @@
         document.getElementById('modalDelivery').innerText = pedido.FechaEntregaTexto;
         document.getElementById('modalOrigin').innerText = pedido.AlmacenOrigen || 'Central Huachipa';
         document.getElementById('modalPackaging').innerText = pedido.Embalaje || 'Packs Paletizados';
-        document.getElementById('modalAddress').innerHTML = '<i class="bi bi-geo-alt-fill me-1" style="color: var(--accent, #f59e0b);"></i> ' + pedido.DireccionEntrega;
+        const address = document.getElementById('modalAddress');
+        address.replaceChildren();
+        const addressIcon = document.createElement('i');
+        addressIcon.className = 'bi bi-geo-alt-fill me-1';
+        addressIcon.style.color = 'var(--accent, #f59e0b)';
+        address.append(addressIcon, document.createTextNode(pedido.DireccionEntrega || 'Sin dirección registrada'));
 
         // Inyectar ítems de seguridad
         const itemsContainer = document.getElementById('modalItemsContainer');
-        itemsContainer.innerHTML = '';
+        itemsContainer.replaceChildren();
 
         if (pedido.Items && pedido.Items.length > 0) {
             pedido.Items.forEach(item => {
@@ -554,16 +562,33 @@
                 itemDiv.className = 'd-flex align-items-center justify-content-between py-2 border-bottom';
                 itemDiv.style.borderColor = '#e2e8f0';
                 itemDiv.style.fontSize = '0.85rem';
-                itemDiv.innerHTML = `
-                    <span style="color: #1e293b; font-weight: 500;">${item.Descripcion}</span>
-                    <span class="fw-bold font-monospace" style="color: #0f172a; font-size: 0.85rem;">${item.Cantidad} ${item.UnidadMedida}</span>
-                `;
+                const description = document.createElement('span');
+                description.style.color = '#1e293b';
+                description.style.fontWeight = '500';
+                description.textContent = item.Descripcion;
+                const quantity = document.createElement('span');
+                quantity.className = 'fw-bold font-monospace';
+                quantity.style.color = '#0f172a';
+                quantity.style.fontSize = '0.85rem';
+                quantity.textContent = `${item.Cantidad} ${item.UnidadMedida}`;
+                itemDiv.append(description, quantity);
                 itemsContainer.appendChild(itemDiv);
             });
         } else {
-            itemsContainer.innerHTML = '<span class="text-muted" style="font-size: 0.85rem;">Sin ítems registrados.</span>';
+            const empty = document.createElement('span');
+            empty.className = 'text-muted';
+            empty.style.fontSize = '0.85rem';
+            empty.textContent = 'Sin ítems registrados.';
+            itemsContainer.append(empty);
         }
 
+        const abastecimiento = document.getElementById('modalGeneratePurchase');
+        abastecimiento.classList.toggle('d-none', !pedido.PuedeGenerarOrdenesCompra);
+        if (pedido.PuedeGenerarOrdenesCompra) {
+            const url = new URL(abastecimientoUrl, window.location.origin);
+            url.searchParams.set('id', String(pedido.Id));
+            abastecimiento.href = url.pathname + url.search;
+        }
         document.getElementById('detailModal').classList.remove('d-none');
     }
 
@@ -575,5 +600,9 @@
         if (e.target.id === 'detailModal') {
             closeDetailModal();
         }
+    }
+    const pedidoParaAbrir = @Html.Raw(JsonSerializer.Serialize(Context.Request.Query["abrirDetalle"].ToString()));
+    if (pedidoParaAbrir) {
+        openDetailModal(pedidoParaAbrir);
     }
 </script>

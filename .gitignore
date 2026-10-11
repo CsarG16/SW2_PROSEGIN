@@ -42,6 +42,7 @@ runtimeconfig.template.json
 # (Ignora archivos subidos en tiempo de ejecución pero conserva la estructura)
 **/uploads/**
 !**/uploads/**/.gitkeep
+**/App_Data/OrdenesCompraCliente/**
 
 # 6. Archivos del sistema operativo (Windows / macOS / Linux)
 Thumbs.db
