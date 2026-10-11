@@ -15,16 +15,27 @@ public class CotizacionesController : Controller
     private readonly ProseginDbContext _context;
     private readonly ISunatService _sunatService;
     private readonly IWebHostEnvironment _env;
+    private readonly ILogger<CotizacionesController> _logger;
 
-    public CotizacionesController(ProseginDbContext context, ISunatService sunatService, IWebHostEnvironment env)
+    public CotizacionesController(
+        ProseginDbContext context,
+        ISunatService sunatService,
+        IWebHostEnvironment env,
+        ILogger<CotizacionesController> logger)
     {
         _context = context;
         _sunatService = sunatService;
         _env = env;
+        _logger = logger;
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(string estado = "Todas", string busqueda = "", int pagina = 1, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Index(
+        string estado = "Todas",
+        string busqueda = "",
+        int pagina = 1,
+        int? panelId = null,
+        CancellationToken cancellationToken = default)
     {
         const string todas = "Todas";
         var estadosPermitidos = new[] { todas, "Enviada", "Vencida", "Aprobada" };
@@ -52,7 +63,23 @@ public class CotizacionesController : Controller
                 FechaEmision = c.FechaEmision,
                 FechaVencimiento = c.FechaVencimiento ?? c.FechaEmision.AddHours(48),
                 Total = c.Total,
-                Estado = c.Estado
+                Estado = c.Estado,
+                NumeroOrdenCompraCliente = c.NumeroOrdenCompraCliente,
+                NombreArchivoOrdenCompraCliente = c.NombreArchivoOrdenCompraCliente,
+                PuedeReemplazarOrdenCompra = c.Estado == "Aprobada"
+                    && c.RutaOrdenCompraCliente != null
+                    && (c.OrdenVenta == null || !c.OrdenVenta.OrdenesCompra.Any()),
+                Detalles = c.Detalles
+                    .OrderBy(d => d.Id)
+                    .Select(d => new CotizacionBandejaDetalleViewModel
+                    {
+                        Sku = d.Producto.Sku,
+                        Producto = d.Producto.Nombre,
+                        Cantidad = d.Cantidad,
+                        PrecioUnitario = d.PrecioVentaCalculado,
+                        Subtotal = d.Subtotal
+                    })
+                    .ToList()
             })
             .ToListAsync(cancellationToken);
 
@@ -80,6 +107,7 @@ public class CotizacionesController : Controller
         {
             EstadoFiltro = estado,
             Busqueda = busqueda.Trim(),
+            PanelAbiertoId = panelId,
             Pagina = pagina,
             TotalPaginas = totalPaginas,
             TotalResultados = cotizacionesFiltradas.Count,
@@ -100,6 +128,22 @@ public class CotizacionesController : Controller
     [HttpGet]
     public async Task<IActionResult> Create(int clienteId, int? cotizacionId, CancellationToken cancellationToken)
     {
+        if (cotizacionId.HasValue)
+        {
+            var cotizacionExistente = await _context.Cotizaciones
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == cotizacionId.Value && c.ClienteId == clienteId, cancellationToken);
+            if (cotizacionExistente == null)
+            {
+                return NotFound();
+            }
+
+            if (cotizacionExistente.Estado == "Aprobada")
+            {
+                return RedirectToAction(nameof(Index), new { estado = "Aprobada" });
+            }
+        }
+
         var model = await BuildModelAsync(clienteId, cancellationToken);
         if (model == null)
         {
@@ -164,6 +208,22 @@ public class CotizacionesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CotizacionClienteViewModel model, CancellationToken cancellationToken)
     {
+        if (model.CotizacionId.HasValue)
+        {
+            var cotizacionExistente = await _context.Cotizaciones
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == model.CotizacionId.Value, cancellationToken);
+            if (cotizacionExistente == null)
+            {
+                return NotFound();
+            }
+
+            TempData["ErrorMessage"] = cotizacionExistente.Estado == "Aprobada"
+                ? "Una cotización aprobada es de solo lectura y no puede modificarse."
+                : "La cotización indicada no se puede modificar desde este formulario.";
+            return RedirectToAction(nameof(Index), new { estado = cotizacionExistente.Estado });
+        }
+
         var current = await BuildModelAsync(model.ClienteId, cancellationToken);
         if (current == null)
         {
@@ -327,7 +387,7 @@ public class CotizacionesController : Controller
             return BadRequest("La cotización no contiene productos para generar el PDF.");
         }
 
-        var emitirPorPrimeraVez = !string.Equals(cotizacion.Estado, "Enviada", StringComparison.Ordinal);
+        var emitirPorPrimeraVez = string.Equals(cotizacion.Estado, "Borrador", StringComparison.Ordinal);
         if (emitirPorPrimeraVez)
         {
             var fechaEmision = DateTime.UtcNow;
@@ -366,6 +426,250 @@ public class CotizacionesController : Controller
         };
         Response.Headers.ContentDisposition = contentDisposition.ToString();
         return File(GenerarPdf(cotizacion), "application/pdf");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequestSizeLimit(OrdenCompraPdfValidator.TamanoMaximoBytes + 1024 * 1024)]
+    public async Task<IActionResult> ConvertirAVenta(
+        int id,
+        string? numeroOrdenCompraCliente,
+        IFormFile? archivoOrdenCompra,
+        CancellationToken cancellationToken)
+    {
+        var cotizacion = await _context.Cotizaciones
+            .Include(c => c.OrdenVenta)
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        if (cotizacion == null)
+        {
+            return NotFound();
+        }
+
+        var fechaVencimiento = cotizacion.FechaVencimiento ?? cotizacion.FechaEmision.AddHours(48);
+        if (cotizacion.Estado != "Enviada" || fechaVencimiento <= DateTime.UtcNow)
+        {
+            TempData["ErrorMessage"] = "Solo se puede convertir una cotización Enviada y vigente.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        if (cotizacion.OrdenVenta != null)
+        {
+            TempData["ErrorMessage"] = "La cotización ya fue registrada como venta.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        if (string.IsNullOrWhiteSpace(numeroOrdenCompraCliente)
+            || numeroOrdenCompraCliente.Trim().Length > 100)
+        {
+            TempData["ErrorMessage"] = "Ingresa un número de Orden de Compra de referencia válido (máximo 100 caracteres).";
+            return RedirectToAction(nameof(Index), new { panelId = id });
+        }
+
+        var errorArchivo = await ValidarOrdenCompraAsync(archivoOrdenCompra, cancellationToken);
+        if (errorArchivo != null)
+        {
+            TempData["ErrorMessage"] = errorArchivo;
+            return RedirectToAction(nameof(Index), new { panelId = id });
+        }
+
+        var archivoGuardado = await GuardarOrdenCompraAsync(archivoOrdenCompra!, id, cancellationToken);
+        try
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+            cotizacion.Estado = "Aprobada";
+            cotizacion.NumeroOrdenCompraCliente = numeroOrdenCompraCliente.Trim();
+            cotizacion.RutaOrdenCompraCliente = archivoGuardado.NombreAlmacenado;
+            cotizacion.NombreArchivoOrdenCompraCliente = ObtenerNombreArchivo(archivoOrdenCompra!.FileName);
+            _context.OrdenesVenta.Add(new OrdenVenta { CotizacionId = cotizacion.Id });
+
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            EliminarArchivoSiExiste(archivoGuardado.RutaFisica, id);
+            throw;
+        }
+
+        TempData["SuccessMessage"] = $"La cotización {cotizacion.Correlativo} fue aprobada y registrada como venta.";
+        return RedirectToAction(nameof(Index), new { estado = "Aprobada" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequestSizeLimit(OrdenCompraPdfValidator.TamanoMaximoBytes + 1024 * 1024)]
+    public async Task<IActionResult> ReemplazarOrdenCompra(
+        int id,
+        string? numeroOrdenCompraCliente,
+        IFormFile? archivoOrdenCompra,
+        CancellationToken cancellationToken)
+    {
+        var cotizacion = await _context.Cotizaciones
+            .Include(c => c.OrdenVenta)
+                .ThenInclude(o => o!.OrdenesCompra)
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        if (cotizacion == null)
+        {
+            return NotFound();
+        }
+
+        if (cotizacion.Estado != "Aprobada"
+            || string.IsNullOrWhiteSpace(cotizacion.RutaOrdenCompraCliente)
+            || cotizacion.OrdenVenta?.OrdenesCompra.Count > 0)
+        {
+            TempData["ErrorMessage"] = "La Orden de Compra solo puede reemplazarse en una venta aprobada que aún no tenga órdenes de compra a proveedores.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        if (!string.IsNullOrWhiteSpace(numeroOrdenCompraCliente)
+            && numeroOrdenCompraCliente.Trim().Length > 100)
+        {
+            TempData["ErrorMessage"] = "El número de Orden de Compra no puede superar los 100 caracteres.";
+            return RedirectToAction(nameof(Index), new { panelId = id });
+        }
+
+        var errorArchivo = await ValidarOrdenCompraAsync(archivoOrdenCompra, cancellationToken);
+        if (errorArchivo != null)
+        {
+            TempData["ErrorMessage"] = errorArchivo;
+            return RedirectToAction(nameof(Index), new { panelId = id });
+        }
+
+        var archivoAnterior = cotizacion.RutaOrdenCompraCliente;
+        var archivoGuardado = await GuardarOrdenCompraAsync(archivoOrdenCompra!, id, cancellationToken);
+        try
+        {
+            cotizacion.RutaOrdenCompraCliente = archivoGuardado.NombreAlmacenado;
+            cotizacion.NombreArchivoOrdenCompraCliente = ObtenerNombreArchivo(archivoOrdenCompra!.FileName);
+            if (!string.IsNullOrWhiteSpace(numeroOrdenCompraCliente))
+            {
+                cotizacion.NumeroOrdenCompraCliente = numeroOrdenCompraCliente.Trim();
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch
+        {
+            EliminarArchivoSiExiste(archivoGuardado.RutaFisica, id);
+            throw;
+        }
+
+        EliminarArchivoAnterior(archivoAnterior, id);
+        TempData["SuccessMessage"] = $"La Orden de Compra de {cotizacion.Correlativo} fue reemplazada.";
+        return RedirectToAction(nameof(Index), new { estado = "Aprobada" });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> VerOrdenCompra(int id, CancellationToken cancellationToken)
+    {
+        var cotizacion = await _context.Cotizaciones
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == id && c.Estado == "Aprobada", cancellationToken);
+        if (cotizacion == null || string.IsNullOrWhiteSpace(cotizacion.RutaOrdenCompraCliente))
+        {
+            return NotFound();
+        }
+
+        var nombreAlmacenado = Path.GetFileName(cotizacion.RutaOrdenCompraCliente);
+        if (!string.Equals(nombreAlmacenado, cotizacion.RutaOrdenCompraCliente, StringComparison.Ordinal)
+            || !string.Equals(Path.GetExtension(nombreAlmacenado), ".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogError("La ruta de la Orden de Compra de la cotización {CotizacionId} no es válida.", id);
+            return NotFound();
+        }
+
+        var rutaFisica = Path.Combine(ObtenerDirectorioOrdenesCompra(), nombreAlmacenado);
+        if (!System.IO.File.Exists(rutaFisica))
+        {
+            _logger.LogError("No se encontró el archivo de Orden de Compra para la cotización {CotizacionId}.", id);
+            return NotFound();
+        }
+
+        var nombreDescarga = ObtenerNombreArchivo(cotizacion.NombreArchivoOrdenCompraCliente ?? nombreAlmacenado);
+        Response.Headers.ContentDisposition = new ContentDispositionHeaderValue("inline")
+        {
+            FileNameStar = nombreDescarga
+        }.ToString();
+        return File(System.IO.File.OpenRead(rutaFisica), "application/pdf");
+    }
+
+    private async Task<string?> ValidarOrdenCompraAsync(
+        IFormFile? archivo,
+        CancellationToken cancellationToken)
+    {
+        if (archivo == null)
+        {
+            return "Adjunta la Orden de Compra del cliente en formato PDF.";
+        }
+
+        await using var stream = archivo.OpenReadStream();
+        return await OrdenCompraPdfValidator.ValidarAsync(
+            archivo.FileName,
+            archivo.Length,
+            stream,
+            cancellationToken);
+    }
+
+    private async Task<(string NombreAlmacenado, string RutaFisica)> GuardarOrdenCompraAsync(
+        IFormFile archivo,
+        int cotizacionId,
+        CancellationToken cancellationToken)
+    {
+        var nombreAlmacenado = $"{Guid.NewGuid():N}.pdf";
+        var rutaFisica = Path.Combine(ObtenerDirectorioOrdenesCompra(), nombreAlmacenado);
+        Directory.CreateDirectory(Path.GetDirectoryName(rutaFisica)!);
+
+        try
+        {
+            await using var destino = new FileStream(rutaFisica, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+            await archivo.CopyToAsync(destino, cancellationToken);
+            return (nombreAlmacenado, rutaFisica);
+        }
+        catch
+        {
+            EliminarArchivoSiExiste(rutaFisica, cotizacionId);
+            throw;
+        }
+    }
+
+    private string ObtenerDirectorioOrdenesCompra() =>
+        Path.Combine(_env.ContentRootPath, "App_Data", "OrdenesCompraCliente");
+
+    private static string ObtenerNombreArchivo(string nombreArchivo)
+    {
+        var nombreSeguro = Path.GetFileName(nombreArchivo);
+        return nombreSeguro.Length <= 255 ? nombreSeguro : nombreSeguro[..255];
+    }
+
+    private void EliminarArchivoAnterior(string nombreAlmacenado, int cotizacionId)
+    {
+        var nombreSeguro = Path.GetFileName(nombreAlmacenado);
+        if (!string.Equals(nombreSeguro, nombreAlmacenado, StringComparison.Ordinal))
+        {
+            _logger.LogError("La ruta anterior de la Orden de Compra de la cotización {CotizacionId} no es válida.", cotizacionId);
+            return;
+        }
+
+        EliminarArchivoSiExiste(Path.Combine(ObtenerDirectorioOrdenesCompra(), nombreSeguro), cotizacionId);
+    }
+
+    private void EliminarArchivoSiExiste(string rutaFisica, int cotizacionId)
+    {
+        try
+        {
+            if (System.IO.File.Exists(rutaFisica))
+            {
+                System.IO.File.Delete(rutaFisica);
+            }
+        }
+        catch (IOException exception)
+        {
+            _logger.LogError(exception, "No se pudo limpiar el archivo de Orden de Compra de la cotización {CotizacionId}.", cotizacionId);
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            _logger.LogError(exception, "No se pudo limpiar el archivo de Orden de Compra de la cotización {CotizacionId}.", cotizacionId);
+        }
     }
 
     [HttpPost]

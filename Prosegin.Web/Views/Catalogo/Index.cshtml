@@ -1,5 +1,6 @@
 @model Prosegin.Web.ViewModels.Catalogo.CatalogoIndexViewModel
 @using System.Globalization
+@using System.Text.Json
 
 @{
     ViewData["Title"] = "Catálogo de EPP";
@@ -93,7 +94,7 @@
                             <strong class="text-dark d-block fw-bold" style="font-size: 1.25rem;">S/ @product.Precio.ToString("N2", new CultureInfo("es-PE"))</strong>
                         </div>
                         <div class="catalog-add-controls justify-content-end">
-                            <button type="button" class="btn btn-dark px-3 py-2 fw-semibold text-white d-flex align-items-center gap-2 shadow-sm rounded-3" style="background-color: #0B1727; border-color: #0B1727; font-size: 0.85rem;" data-bs-toggle="modal" data-bs-target="#editProductModal" onclick="populateEditModal(this)" data-id="@product.Id" data-sku="@product.Sku" data-name="@product.Nombre" data-category="@product.Categoria" data-stock="@product.StockDisponible" data-cost="@product.Precio.ToString(CultureInfo.InvariantCulture)">
+                            <button type="button" class="btn btn-dark px-3 py-2 fw-semibold text-white d-flex align-items-center gap-2 shadow-sm rounded-3" style="background-color: #0B1727; border-color: #0B1727; font-size: 0.85rem;" data-bs-toggle="modal" data-bs-target="#editProductModal" onclick="populateEditModal(this)" data-id="@product.Id" data-sku="@product.Sku" data-name="@product.Nombre" data-category="@product.Categoria" data-stock="@product.StockDisponible" data-cost="@product.Precio.ToString(CultureInfo.InvariantCulture)" data-tarifas="@JsonSerializer.Serialize(product.TarifasProveedor)">
                                 <i class="bi bi-pencil-square"></i><span>Editar</span>
                             </button>
                         </div>
@@ -154,6 +155,20 @@
                             <input type="number" step="0.01" min="0.01" class="form-control border-start-0 ps-1 fw-bold" id="editProductCost" name="Precio" placeholder="0.00" required />
                         </div>
                         <small class="text-muted" style="font-size: 0.72rem;">Costo de referencia mayorista registrado en base de datos.</small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-secondary text-uppercase mb-1">Tarifas de proveedores autorizados</label>
+                        <div class="table-responsive border rounded-3">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr><th>Proveedor</th><th>Tarifa de compra (S/.)</th><th>Plazo (h)</th><th>Principal</th></tr>
+                                </thead>
+                                <tbody id="editProviderTariffs">
+                                    <tr><td colspan="4" class="small text-muted p-3">Selecciona un producto para cargar sus proveedores autorizados.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <div class="mb-4">
@@ -317,6 +332,58 @@
             document.getElementById('editProductName').value = btn.dataset.name;
             document.getElementById('editProductCategory').value = btn.dataset.category;
             document.getElementById('editProductCost').value = btn.dataset.cost;
+
+            const container = document.getElementById('editProviderTariffs');
+            container.replaceChildren();
+            const tarifas = JSON.parse(btn.dataset.tarifas || '[]');
+            tarifas.forEach((tarifa, index) => {
+                const row = document.createElement('tr');
+                const supplier = document.createElement('td');
+                supplier.textContent = tarifa.Proveedor;
+
+                const priceCell = document.createElement('td');
+                const price = document.createElement('input');
+                price.type = 'number';
+                price.min = '0.01';
+                price.step = '0.01';
+                price.required = true;
+                price.name = `tarifasProveedores[${index}].CostoCompra`;
+                price.value = Number(tarifa.CostoCompra).toFixed(2);
+                price.className = 'form-control form-control-sm';
+                priceCell.append(price);
+
+                const leadCell = document.createElement('td');
+                const lead = document.createElement('input');
+                lead.type = 'number';
+                lead.min = '1';
+                lead.max = '720';
+                lead.required = true;
+                lead.name = `tarifasProveedores[${index}].PlazoEntregaHoras`;
+                lead.value = tarifa.PlazoEntregaHoras;
+                lead.className = 'form-control form-control-sm';
+                leadCell.append(lead);
+
+                const principalCell = document.createElement('td');
+                principalCell.className = 'text-center';
+                const principal = document.createElement('input');
+                principal.type = 'radio';
+                principal.name = 'proveedorPrincipalId';
+                principal.value = tarifa.ProveedorId;
+                principal.checked = tarifa.EsPrincipal;
+                principal.required = true;
+                principal.className = 'form-check-input';
+                principal.setAttribute('aria-label', `Marcar ${tarifa.Proveedor} como principal`);
+                principalCell.append(principal);
+
+                const providerId = document.createElement('input');
+                providerId.type = 'hidden';
+                providerId.name = `tarifasProveedores[${index}].ProveedorId`;
+                providerId.value = tarifa.ProveedorId;
+                supplier.append(providerId);
+
+                row.append(supplier, priceCell, leadCell, principalCell);
+                container.append(row);
+            });
         }
     </script>
 }

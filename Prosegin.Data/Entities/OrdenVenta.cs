@@ -6,8 +6,8 @@ public class OrdenVenta
     public int CotizacionId { get; set; }
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     
-    // EnPreparacion, EnConsolidacion, Despachado, Entregado
-    public string EstadoLogistico { get; set; } = "EnPreparacion";
+    // PorPreparar, EnPreparacion, EnConsolidacion, Despachado, Entregado
+    public string EstadoLogistico { get; set; } = "PorPreparar";
 
     // Navegación
     public Cotizacion Cotizacion { get; set; } = null!;

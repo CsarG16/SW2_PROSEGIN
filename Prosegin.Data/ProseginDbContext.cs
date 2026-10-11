@@ -17,6 +17,7 @@ public class ProseginDbContext : DbContext
     public DbSet<CotizacionDetalle> CotizacionDetalles { get; set; }
     public DbSet<OrdenVenta> OrdenesVenta { get; set; }
     public DbSet<Proveedor> Proveedores { get; set; }
+    public DbSet<ProductoProveedor> ProductoProveedores { get; set; }
     public DbSet<OrdenCompra> OrdenesCompra { get; set; }
     public DbSet<OrdenCompraDetalle> OrdenCompraDetalles { get; set; }
     public DbSet<Factura> Facturas { get; set; }
@@ -52,17 +53,6 @@ public class ProseginDbContext : DbContext
             entity.Property(e => e.StockDisponible).HasDefaultValue(0);
             entity.Property(e => e.RutaFichaTecnicaPdf).HasMaxLength(300);
             entity.Property(e => e.NombreArchivoPdf).HasMaxLength(150);
-            entity.HasMany(e => e.Proveedores)
-                .WithMany(e => e.Productos)
-                .UsingEntity<Dictionary<string, object>>(
-                    "ProductoProveedor",
-                    right => right.HasOne<Proveedor>().WithMany().HasForeignKey("ProveedorId"),
-                    left => left.HasOne<Producto>().WithMany().HasForeignKey("ProductoId"),
-                    join =>
-                    {
-                        join.ToTable("ProductoProveedores");
-                        join.HasKey("ProductoId", "ProveedorId");
-                    });
         });
 
         modelBuilder.Entity<Cotizacion>(entity =>
@@ -71,6 +61,9 @@ public class ProseginDbContext : DbContext
             entity.Property(e => e.Subtotal).HasPrecision(18, 2);
             entity.Property(e => e.Igv).HasPrecision(18, 2);
             entity.Property(e => e.Total).HasPrecision(18, 2);
+            entity.Property(e => e.NumeroOrdenCompraCliente).HasMaxLength(100);
+            entity.Property(e => e.RutaOrdenCompraCliente).HasMaxLength(40);
+            entity.Property(e => e.NombreArchivoOrdenCompraCliente).HasMaxLength(255);
         });
 
         modelBuilder.Entity<CotizacionDetalle>(entity =>
@@ -86,6 +79,21 @@ public class ProseginDbContext : DbContext
         {
             entity.ToTable("OrdenesCompra");
             entity.Property(e => e.Total).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<ProductoProveedor>(entity =>
+        {
+            entity.ToTable("ProductoProveedores");
+            entity.HasKey(e => new { e.ProductoId, e.ProveedorId });
+            entity.Property(e => e.CostoCompra).HasPrecision(18, 2).HasDefaultValue(0m);
+            entity.Property(e => e.EsPrincipal).HasDefaultValue(false);
+            entity.Property(e => e.PlazoEntregaHoras).HasDefaultValue(24);
+            entity.HasOne(e => e.Producto)
+                .WithMany(e => e.ProveedoresAutorizados)
+                .HasForeignKey(e => e.ProductoId);
+            entity.HasOne(e => e.Proveedor)
+                .WithMany(e => e.ProductosAutorizados)
+                .HasForeignKey(e => e.ProveedorId);
         });
 
         modelBuilder.Entity<OrdenCompraDetalle>(entity =>
