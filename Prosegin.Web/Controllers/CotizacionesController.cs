@@ -74,7 +74,7 @@ public class CotizacionesController : Controller
                     .Select(d => new CotizacionBandejaDetalleViewModel
                     {
                         Sku = d.Producto.Sku,
-                        Producto = d.Producto.Nombre,
+                        Producto = d.NombreProducto,
                         Cantidad = d.Cantidad,
                         PrecioUnitario = d.PrecioVentaCalculado,
                         Subtotal = d.Subtotal
@@ -327,6 +327,7 @@ public class CotizacionesController : Controller
             detalles.Add(new CotizacionDetalle
             {
                 ProductoId = producto.Id,
+                NombreProducto = producto.Nombre,
                 Cantidad = seleccionado.Cantidad,
                 CostoProveedorReferencial = producto.CostoReferencial,
                 MargenDeseado = Math.Round(margenDeseado, 4, MidpointRounding.AwayFromZero),
@@ -435,6 +436,9 @@ public class CotizacionesController : Controller
         int id,
         string? numeroOrdenCompraCliente,
         IFormFile? archivoOrdenCompra,
+        string busqueda,
+        string estado,
+        int pagina,
         CancellationToken cancellationToken)
     {
         var cotizacion = await _context.Cotizaciones
@@ -449,27 +453,27 @@ public class CotizacionesController : Controller
         if (cotizacion.Estado != "Enviada" || fechaVencimiento <= DateTime.UtcNow)
         {
             TempData["ErrorMessage"] = "Solo se puede convertir una cotización Enviada y vigente.";
-            return RedirectToAction(nameof(Index));
+            return RedirigirAListado(busqueda, estado, pagina);
         }
 
         if (cotizacion.OrdenVenta != null)
         {
             TempData["ErrorMessage"] = "La cotización ya fue registrada como venta.";
-            return RedirectToAction(nameof(Index));
+            return RedirigirAListado(busqueda, estado, pagina);
         }
 
         if (string.IsNullOrWhiteSpace(numeroOrdenCompraCliente)
             || numeroOrdenCompraCliente.Trim().Length > 100)
         {
             TempData["ErrorMessage"] = "Ingresa un número de Orden de Compra de referencia válido (máximo 100 caracteres).";
-            return RedirectToAction(nameof(Index), new { panelId = id });
+            return RedirigirAListado(busqueda, estado, pagina, id);
         }
 
         var errorArchivo = await ValidarOrdenCompraAsync(archivoOrdenCompra, cancellationToken);
         if (errorArchivo != null)
         {
             TempData["ErrorMessage"] = errorArchivo;
-            return RedirectToAction(nameof(Index), new { panelId = id });
+            return RedirigirAListado(busqueda, estado, pagina, id);
         }
 
         var archivoGuardado = await GuardarOrdenCompraAsync(archivoOrdenCompra!, id, cancellationToken);
@@ -484,6 +488,18 @@ public class CotizacionesController : Controller
 
             await _context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            EliminarArchivoSiExiste(archivoGuardado.RutaFisica, id);
+            _context.ChangeTracker.Clear();
+            if (await _context.OrdenesVenta.AnyAsync(o => o.CotizacionId == id, cancellationToken))
+            {
+                TempData["ErrorMessage"] = "La cotización ya fue convertida a venta por otra operación.";
+                return RedirigirAListado(busqueda, "Aprobada", pagina);
+            }
+
+            throw;
         }
         catch
         {
@@ -502,6 +518,9 @@ public class CotizacionesController : Controller
         int id,
         string? numeroOrdenCompraCliente,
         IFormFile? archivoOrdenCompra,
+        string busqueda,
+        string estado,
+        int pagina,
         CancellationToken cancellationToken)
     {
         var cotizacion = await _context.Cotizaciones
@@ -518,27 +537,51 @@ public class CotizacionesController : Controller
             || cotizacion.OrdenVenta?.OrdenesCompra.Count > 0)
         {
             TempData["ErrorMessage"] = "La Orden de Compra solo puede reemplazarse en una venta aprobada que aún no tenga órdenes de compra a proveedores.";
-            return RedirectToAction(nameof(Index));
+            return RedirigirAListado(busqueda, estado, pagina, id);
         }
 
         if (!string.IsNullOrWhiteSpace(numeroOrdenCompraCliente)
             && numeroOrdenCompraCliente.Trim().Length > 100)
         {
             TempData["ErrorMessage"] = "El número de Orden de Compra no puede superar los 100 caracteres.";
-            return RedirectToAction(nameof(Index), new { panelId = id });
+            return RedirigirAListado(busqueda, estado, pagina, id);
         }
 
         var errorArchivo = await ValidarOrdenCompraAsync(archivoOrdenCompra, cancellationToken);
         if (errorArchivo != null)
         {
             TempData["ErrorMessage"] = errorArchivo;
-            return RedirectToAction(nameof(Index), new { panelId = id });
+            return RedirigirAListado(busqueda, estado, pagina, id);
         }
 
-        var archivoAnterior = cotizacion.RutaOrdenCompraCliente;
         var archivoGuardado = await GuardarOrdenCompraAsync(archivoOrdenCompra!, id, cancellationToken);
+        string? archivoAnterior = null;
         try
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+            _context.ChangeTracker.Clear();
+            cotizacion = await _context.Cotizaciones
+                .Include(c => c.OrdenVenta)
+                    .ThenInclude(o => o!.OrdenesCompra)
+                .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+            if (cotizacion == null)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                EliminarArchivoSiExiste(archivoGuardado.RutaFisica, id);
+                return NotFound();
+            }
+
+            if (cotizacion.Estado != "Aprobada"
+                || string.IsNullOrWhiteSpace(cotizacion.RutaOrdenCompraCliente)
+                || cotizacion.OrdenVenta?.OrdenesCompra.Count > 0)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                EliminarArchivoSiExiste(archivoGuardado.RutaFisica, id);
+                TempData["ErrorMessage"] = "La Orden de Compra no puede reemplazarse porque el pedido ya cambió o tiene órdenes de compra a proveedores.";
+                return RedirigirAListado(busqueda, "Aprobada", pagina, id);
+            }
+
+            archivoAnterior = cotizacion.RutaOrdenCompraCliente;
             cotizacion.RutaOrdenCompraCliente = archivoGuardado.NombreAlmacenado;
             cotizacion.NombreArchivoOrdenCompraCliente = ObtenerNombreArchivo(archivoOrdenCompra!.FileName);
             if (!string.IsNullOrWhiteSpace(numeroOrdenCompraCliente))
@@ -546,7 +589,19 @@ public class CotizacionesController : Controller
                 cotizacion.NumeroOrdenCompraCliente = numeroOrdenCompraCliente.Trim();
             }
 
+            if (cotizacion.OrdenVenta != null)
+            {
+                cotizacion.OrdenVenta.Revision++;
+            }
+
             await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            EliminarArchivoSiExiste(archivoGuardado.RutaFisica, id);
+            TempData["ErrorMessage"] = "El pedido se actualizó en otra operación. No se reemplazó la Orden de Compra; verifica su estado e inténtalo nuevamente.";
+            return RedirigirAListado(busqueda, "Aprobada", pagina, id);
         }
         catch
         {
@@ -556,7 +611,7 @@ public class CotizacionesController : Controller
 
         EliminarArchivoAnterior(archivoAnterior, id);
         TempData["SuccessMessage"] = $"La Orden de Compra de {cotizacion.Correlativo} fue reemplazada.";
-        return RedirectToAction(nameof(Index), new { estado = "Aprobada" });
+        return RedirigirAListado(busqueda, "Aprobada", pagina);
     }
 
     [HttpGet]
@@ -726,6 +781,7 @@ public class CotizacionesController : Controller
             detalles.Add(new CotizacionDetalle
             {
                 ProductoId = producto.Id,
+                NombreProducto = producto.Nombre,
                 Cantidad = detalleAnterior.Cantidad,
                 CostoProveedorReferencial = producto.CostoReferencial,
                 MargenDeseado = producto.CostoReferencial > 0m
@@ -912,6 +968,19 @@ public class CotizacionesController : Controller
         cotizacion,
         productoId => Url.Action("VerFicha", "Catalogo", new { id = productoId }, Request.Scheme),
         logoPath: Path.Combine(_env.WebRootPath, "logo_horizontal.png"));
+
+    private RedirectToActionResult RedirigirAListado(
+        string busqueda,
+        string estado,
+        int pagina,
+        int? panelId = null) =>
+        RedirectToAction(nameof(Index), new
+        {
+            busqueda = busqueda?.Trim() ?? string.Empty,
+            estado = string.IsNullOrWhiteSpace(estado) ? "Todas" : estado,
+            pagina = Math.Max(1, pagina),
+            panelId
+        });
 
     private async Task<Cotizacion?> ObtenerCotizacionPdfAsync(int id, CancellationToken cancellationToken) =>
         await _context.Cotizaciones

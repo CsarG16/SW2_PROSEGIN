@@ -52,6 +52,8 @@ public class AbastecimientoController : Controller
         List<OrdenProveedorSeleccionViewModel> selecciones,
         CancellationToken cancellationToken)
     {
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        _context.ChangeTracker.Clear();
         var ordenVenta = await ObtenerOrdenVentaAsync(ordenVentaId, cancellationToken);
         if (ordenVenta == null)
         {
@@ -87,10 +89,35 @@ public class AbastecimientoController : Controller
                 return RedirectToAction(nameof(Index), new { id = ordenVentaId });
             }
 
+            if (seleccion.CostoCompra.HasValue
+                && Math.Abs(tarifa.CostoCompra - seleccion.CostoCompra.Value) > 0.009m)
+            {
+                TempData["ModalError"] = $"La tarifa de {detalle.Producto.Nombre} cambió desde que se abrió la pantalla. Revisa los costos antes de confirmar la compra.";
+                return RedirectToAction(nameof(Index), new { id = ordenVentaId });
+            }
+
             costosPorDetalle.Add(detalle.Id, (tarifa, detalle));
         }
 
-        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        var ordenYaProcesada = await _context.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE OrdenesVenta SET EstadoLogistico = 'EnPreparacion', Revision = Revision + 1 WHERE Id = {ordenVentaId} AND EstadoLogistico = 'PorPreparar' AND 0 = (SELECT COUNT(*) FROM OrdenesCompra WHERE OrdenVentaId = {ordenVentaId})",
+            cancellationToken);
+
+        if (ordenYaProcesada == 0)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            TempData["ModalError"] = "El pedido ya fue procesado por otra operación. Las órdenes de compra ya fueron generadas.";
+            return RedirectToAction(nameof(Index), new { id = ordenVentaId });
+        }
+
+        var registroActualizado = await _context.OrdenesVenta.AsNoTracking().SingleOrDefaultAsync(ov => ov.Id == ordenVentaId, cancellationToken);
+        if (registroActualizado == null || registroActualizado.EstadoLogistico != "EnPreparacion")
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            TempData["ModalError"] = "El pedido ya fue procesado por otra operación. Las órdenes de compra ya fueron generadas.";
+            return RedirectToAction(nameof(Index), new { id = ordenVentaId });
+        }
+
         foreach (var grupo in costosPorDetalle.Values.GroupBy(item => item.Tarifa.ProveedorId))
         {
             var lineas = grupo.Select(item =>
@@ -118,9 +145,21 @@ public class AbastecimientoController : Controller
             });
         }
 
-        ordenVenta.EstadoLogistico = "EnPreparacion";
-        await _context.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            TempData["ModalError"] = "El pedido fue actualizado por otra operación. No se generaron órdenes; vuelve a revisar el estado del pedido.";
+            return RedirectToAction("Index", "Pedidos", new
+            {
+                termino = ordenVenta.Cotizacion.Correlativo,
+                estado = PedidoLogisticaRules.EstadoTodos
+            });
+        }
 
         TempData["ModalSuccess"] = "Órdenes de compra generadas y consolidadas con éxito";
         return RedirectToAction("Index", "Pedidos", new { estado = PedidoLogisticaRules.EstadoEnPreparacion });
@@ -156,7 +195,7 @@ public class AbastecimientoController : Controller
             {
                 ProductoId = detalle.ProductoId,
                 Sku = detalle.Producto.Sku,
-                Nombre = detalle.Producto.Nombre,
+                Nombre = detalle.NombreProducto,
                 Cantidad = detalle.Cantidad,
                 UnidadMedida = detalle.Producto.UnidadMedida,
                 Proveedores = detalle.Producto.ProveedoresAutorizados

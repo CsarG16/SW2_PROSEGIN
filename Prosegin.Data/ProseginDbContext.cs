@@ -69,6 +69,7 @@ public class ProseginDbContext : DbContext
         modelBuilder.Entity<CotizacionDetalle>(entity =>
         {
             entity.ToTable("CotizacionDetalles");
+            entity.Property(e => e.NombreProducto).HasMaxLength(200).IsRequired();
             entity.Property(e => e.CostoProveedorReferencial).HasPrecision(18, 2);
             entity.Property(e => e.MargenDeseado).HasPrecision(18, 2);
             entity.Property(e => e.PrecioVentaCalculado).HasPrecision(18, 2);
@@ -114,5 +115,9 @@ public class ProseginDbContext : DbContext
             .HasOne(c => c.OrdenVenta)
             .WithOne(o => o.Cotizacion)
             .HasForeignKey<OrdenVenta>(o => o.CotizacionId);
+
+        modelBuilder.Entity<OrdenVenta>()
+            .Property(e => e.Revision)
+            .IsConcurrencyToken();
     }
 }

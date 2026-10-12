@@ -35,4 +35,5 @@ public class OrdenProveedorSeleccionViewModel
 {
     public int ProductoId { get; set; }
     public int ProveedorId { get; set; }
+    public decimal? CostoCompra { get; set; }
 }

@@ -54,5 +54,13 @@ public static class OrdenCompraPdfValidator
         {
             return "El archivo seleccionado no es un PDF válido.";
         }
+        catch (ArgumentOutOfRangeException)
+        {
+            return "El archivo seleccionado no es un PDF válido.";
+        }
+        catch (EndOfStreamException)
+        {
+            return "El archivo seleccionado no es un PDF válido.";
+        }
     }
 }

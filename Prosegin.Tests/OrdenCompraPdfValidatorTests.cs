@@ -38,6 +38,19 @@ public class OrdenCompraPdfValidatorTests
     }
 
     [Fact]
+    public async Task ValidarAsync_RechazaPdfCorruptoSinPropagarErrorDelLector()
+    {
+        await using var contenido = new MemoryStream(Encoding.ASCII.GetBytes("%PDF-1.7 roto"));
+
+        var error = await OrdenCompraPdfValidator.ValidarAsync(
+            "oc-corrupta.pdf",
+            contenido.Length,
+            contenido);
+
+        Assert.Equal("El archivo seleccionado no es un PDF válido.", error);
+    }
+
+    [Fact]
     public async Task ValidarAsync_RechazaArchivoMayorA10Mb()
     {
         await using var contenido = new MemoryStream(Encoding.ASCII.GetBytes("%PDF-1.7"));

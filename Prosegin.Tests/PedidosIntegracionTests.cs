@@ -172,10 +172,65 @@ public class PedidosIntegracionTests : IAsyncLifetime
                 .ThenInclude(oc => oc.Detalles)
             .SingleAsync(ov => ov.Id == 1);
         Assert.Equal("EnPreparacion", order.EstadoLogistico);
+        Assert.Equal(1, order.Revision);
         Assert.Equal(2, order.OrdenesCompra.Count);
         Assert.Equal(25.00m, order.OrdenesCompra.Single(oc => oc.ProveedorId == 1).Total);
         Assert.Equal(68.25m, order.OrdenesCompra.Single(oc => oc.ProveedorId == 2).Total);
         Assert.Equal(2, order.OrdenesCompra.Sum(oc => oc.Detalles.Count));
+    }
+
+    [Fact]
+    public async Task GenerarOrdenesCompra_ClaimConcurrente_BloqueaLaSegundaEjecucion()
+    {
+        using var scope = _app.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
+
+        var primeraEjecucion = await context.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE OrdenesVenta SET EstadoLogistico = 'EnPreparacion', Revision = Revision + 1 WHERE Id = 1 AND EstadoLogistico = 'PorPreparar' AND 0 = (SELECT COUNT(*) FROM OrdenesCompra WHERE OrdenVentaId = 1)");
+        var segundaEjecucion = await context.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE OrdenesVenta SET EstadoLogistico = 'EnPreparacion', Revision = Revision + 1 WHERE Id = 1 AND EstadoLogistico = 'PorPreparar' AND 0 = (SELECT COUNT(*) FROM OrdenesCompra WHERE OrdenVentaId = 1)");
+
+        Assert.Equal(1, primeraEjecucion);
+        Assert.Equal(0, segundaEjecucion);
+    }
+
+    [Fact]
+    public async Task GenerarOrdenesCompra_RechazaTarifaCambiadaDesdeQueSeAbrioLaPantalla()
+    {
+        var abastecimientoHtml = await _client.GetStringAsync("/Abastecimiento/Index?id=1");
+        var tokenInput = Regex.Match(abastecimientoHtml, "<input[^>]*name=\"__RequestVerificationToken\"[^>]*>").Value;
+        var token = WebUtility.HtmlDecode(Regex.Match(tokenInput, "value=\"([^\"]+)\"").Groups[1].Value);
+
+        using (var scope = _app.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
+            var tarifa = await context.ProductoProveedores.SingleAsync(pp => pp.ProductoId == 1 && pp.ProveedorId == 1);
+            tarifa.CostoCompra = 15.00m;
+            await context.SaveChangesAsync();
+        }
+
+        using var form = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = token,
+            ["ordenVentaId"] = "1",
+            ["selecciones[0].ProductoId"] = "1",
+            ["selecciones[0].ProveedorId"] = "1",
+            ["selecciones[0].CostoCompra"] = "12.50",
+            ["selecciones[1].ProductoId"] = "2",
+            ["selecciones[1].ProveedorId"] = "2",
+            ["selecciones[1].CostoCompra"] = "22.75"
+        });
+
+        var response = await _client.PostAsync("/Abastecimiento/GenerarOrdenesCompra", form);
+        var payload = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("La tarifa de", payload);
+        using var scopeAfter = _app.Services.CreateScope();
+        var contextAfter = scopeAfter.ServiceProvider.GetRequiredService<ProseginDbContext>();
+        var order = await contextAfter.OrdenesVenta.Include(ov => ov.OrdenesCompra).SingleAsync(ov => ov.Id == 1);
+        Assert.Equal("PorPreparar", order.EstadoLogistico);
+        Assert.Empty(order.OrdenesCompra);
     }
 
     [Fact]
