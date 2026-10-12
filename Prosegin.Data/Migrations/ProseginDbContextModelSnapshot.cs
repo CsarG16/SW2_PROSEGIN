@@ -22,37 +22,6 @@ namespace Prosegin.Data.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
-            modelBuilder.Entity("Prosegin.Data.Entities.ProductoProveedor", b =>
-                {
-                    b.Property<decimal>("CostoCompra")
-                        .ValueGeneratedOnAdd()
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)")
-                        .HasDefaultValue(0m);
-
-                    b.Property<bool>("EsPrincipal")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("tinyint(1)")
-                        .HasDefaultValue(false);
-
-                    b.Property<int>("ProductoId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PlazoEntregaHoras")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(24);
-
-                    b.Property<int>("ProveedorId")
-                        .HasColumnType("int");
-
-                    b.HasKey("ProductoId", "ProveedorId");
-
-                    b.HasIndex("ProveedorId");
-
-                    b.ToTable("ProductoProveedores", (string)null);
-                });
-
             modelBuilder.Entity("Prosegin.Data.Entities.Cliente", b =>
                 {
                     b.Property<int>("Id")
@@ -240,6 +209,11 @@ namespace Prosegin.Data.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("NombreProducto")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
                     b.Property<decimal>("PrecioVentaCalculado")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -387,6 +361,10 @@ namespace Prosegin.Data.Migrations
                     b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<int>("Revision")
+                        .IsConcurrencyToken()
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CotizacionId")
@@ -459,6 +437,37 @@ namespace Prosegin.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("Productos", (string)null);
+                });
+
+            modelBuilder.Entity("Prosegin.Data.Entities.ProductoProveedor", b =>
+                {
+                    b.Property<int>("ProductoId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProveedorId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("CostoCompra")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m);
+
+                    b.Property<bool>("EsPrincipal")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("PlazoEntregaHoras")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(24);
+
+                    b.HasKey("ProductoId", "ProveedorId");
+
+                    b.HasIndex("ProveedorId");
+
+                    b.ToTable("ProductoProveedores", (string)null);
                 });
 
             modelBuilder.Entity("Prosegin.Data.Entities.Proveedor", b =>
@@ -553,25 +562,6 @@ namespace Prosegin.Data.Migrations
                     b.HasIndex("ClienteId");
 
                     b.ToTable("PuntosEntrega");
-                });
-
-            modelBuilder.Entity("Prosegin.Data.Entities.ProductoProveedor", b =>
-                {
-                    b.HasOne("Prosegin.Data.Entities.Producto", "Producto")
-                        .WithMany("ProveedoresAutorizados")
-                        .HasForeignKey("ProductoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Prosegin.Data.Entities.Proveedor", "Proveedor")
-                        .WithMany("ProductosAutorizados")
-                        .HasForeignKey("ProveedorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Producto");
-
-                    b.Navigation("Proveedor");
                 });
 
             modelBuilder.Entity("Prosegin.Data.Entities.ContactoCliente", b =>
@@ -679,6 +669,25 @@ namespace Prosegin.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Cotizacion");
+                });
+
+            modelBuilder.Entity("Prosegin.Data.Entities.ProductoProveedor", b =>
+                {
+                    b.HasOne("Prosegin.Data.Entities.Producto", "Producto")
+                        .WithMany("ProveedoresAutorizados")
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Prosegin.Data.Entities.Proveedor", "Proveedor")
+                        .WithMany("ProductosAutorizados")
+                        .HasForeignKey("ProveedorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Producto");
+
+                    b.Navigation("Proveedor");
                 });
 
             modelBuilder.Entity("Prosegin.Data.Entities.PuntoEntrega", b =>

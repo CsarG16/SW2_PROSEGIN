@@ -5,6 +5,7 @@ public class CotizacionDetalle
     public int Id { get; set; }
     public int CotizacionId { get; set; }
     public int ProductoId { get; set; }
+    public string NombreProducto { get; set; } = string.Empty;
     public int Cantidad { get; set; }
     
     public decimal CostoProveedorReferencial { get; set; }

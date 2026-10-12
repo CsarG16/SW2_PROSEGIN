@@ -226,6 +226,9 @@
                                               data-quote-upload-form>
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="id" value="@cotizacion.Id" />
+                                            <input type="hidden" name="busqueda" value="@Model.Busqueda" />
+                                            <input type="hidden" name="estado" value="@Model.EstadoFiltro" />
+                                            <input type="hidden" name="pagina" value="@Model.Pagina" />
                                             <div class="quote-upload-heading">
                                                 <div><i class="bi bi-file-earmark-plus"></i><strong>Adjuntar Orden de Compra (OC) del cliente</strong></div>
                                                 <span><i class="bi bi-hash"></i> Código único de pedido: <strong>@cotizacion.Correlativo</strong></span>
@@ -267,6 +270,9 @@
                                               data-quote-upload-form>
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="id" value="@cotizacion.Id" />
+                                            <input type="hidden" name="busqueda" value="@Model.Busqueda" />
+                                            <input type="hidden" name="estado" value="@Model.EstadoFiltro" />
+                                            <input type="hidden" name="pagina" value="@Model.Pagina" />
                                             <div class="quote-upload-heading">
                                                 <div><i class="bi bi-arrow-repeat"></i><strong>Reemplazar Orden de Compra del cliente</strong></div>
                                                 <span>La cotización conserva el estado Aprobada.</span>

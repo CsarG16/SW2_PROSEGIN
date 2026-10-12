@@ -78,6 +78,8 @@ public sealed class CotizacionesTestHost : IAsyncLifetime
         return await action(scope.ServiceProvider.GetRequiredService<ProseginDbContext>());
     }
 
+    public IServiceScope CreateScope() => _app.Services.CreateScope();
+
     public async Task<HttpResponseMessage> PostAsync(Dictionary<string, string> fields, string action = "Create", string controller = "Cotizaciones")
     {
         var html = await Client.GetStringAsync("/Cotizaciones/Create?clienteId=1");
@@ -91,7 +93,10 @@ public sealed class CotizacionesTestHost : IAsyncLifetime
         string action,
         byte[] contenido,
         string nombreArchivo,
-        string? numeroOrdenCompra = "PO-TEST-001")
+        string? numeroOrdenCompra = "PO-TEST-001",
+        string busqueda = "",
+        string estado = "Todas",
+        int pagina = 1)
     {
         var html = await Client.GetStringAsync("/Cotizaciones/Create?clienteId=1");
         var input = Regex.Match(html, "<input[^>]*name=\"__RequestVerificationToken\"[^>]*>").Value;
@@ -99,6 +104,9 @@ public sealed class CotizacionesTestHost : IAsyncLifetime
         using var form = new MultipartFormDataContent();
         form.Add(new StringContent(token), "__RequestVerificationToken");
         form.Add(new StringContent(cotizacionId.ToString()), "id");
+        form.Add(new StringContent(busqueda), "busqueda");
+        form.Add(new StringContent(estado), "estado");
+        form.Add(new StringContent(pagina.ToString()), "pagina");
         if (numeroOrdenCompra != null)
         {
             form.Add(new StringContent(numeroOrdenCompra), "numeroOrdenCompraCliente");
@@ -173,6 +181,7 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
                     new()
                     {
                         ProductoId = 1,
+                        NombreProducto = "Casco de prueba",
                         Cantidad = 2,
                         CostoProveedorReferencial = 10m,
                         MargenDeseado = (precio - 10m) / 10m,
@@ -720,6 +729,24 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Bandeja_CotizacionAprobadaConservaNombreDelProductoTrasEditarCatalogo()
+    {
+        await SeedCotizacionAsync("Aprobada", DateTime.UtcNow.AddHours(-1), DateTime.UtcNow.AddHours(47));
+        await _host.PostAsync(new()
+        {
+            ["Id"] = "1",
+            ["Nombre"] = "Guante QA cambiado",
+            ["Categoria"] = "Protección",
+            ["Precio"] = "11.50"
+        }, "EditarProducto", "Catalogo");
+
+        var html = WebUtility.HtmlDecode(await _host.Client.GetStringAsync("/Cotizaciones?estado=Aprobada"));
+
+        Assert.Contains("Casco de prueba", html);
+        Assert.DoesNotContain("GUANTE QA CAMBIADO", html);
+    }
+
+    [Fact]
     public async Task Bandeja_IncluyeScriptDeConversionDeCotizaciones()
     {
         var html = await _host.Client.GetStringAsync("/Cotizaciones?estado=Enviada");
@@ -787,7 +814,8 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
             Encoding.ASCII.GetBytes("contenido falso"),
             "oc-cliente.pdf");
 
-        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.True(response.StatusCode == HttpStatusCode.Redirect,
+            await response.Content.ReadAsStringAsync());
         Assert.Contains("panelId=", response.Headers.Location!.OriginalString);
         await _host.WithDatabaseAsync(async context =>
         {
@@ -795,6 +823,44 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
             Assert.Equal("Enviada", cotizacion.Estado);
             Assert.Null(cotizacion.RutaOrdenCompraCliente);
             Assert.Null(await context.OrdenesVenta.SingleOrDefaultAsync(o => o.CotizacionId == quoteId));
+        });
+    }
+
+    [Fact]
+    public async Task ConvertirAVenta_PdfCorruptoConservaBusquedaPaginaYPanelParaCorregir()
+    {
+        var ahora = DateTime.UtcNow;
+        for (var hora = 1; hora <= 11; hora++)
+        {
+            await SeedCotizacionAsync("Enviada", ahora.AddHours(-hora), ahora.AddHours(47));
+        }
+        var cotizacionId = await SeedCotizacionAsync("Enviada", ahora.AddHours(-12), ahora.AddHours(36));
+
+        var response = await _host.PostPdfAsync(
+            cotizacionId,
+            "ConvertirAVenta",
+            Encoding.ASCII.GetBytes("%PDF-1.7 roto"),
+            "oc-corrupta.pdf",
+            busqueda: "Cliente de prueba A",
+            estado: "Enviada",
+            pagina: 2);
+
+        Assert.True(response.StatusCode == HttpStatusCode.Redirect,
+            await response.Content.ReadAsStringAsync());
+        var location = response.Headers.Location!.OriginalString;
+        Assert.Contains("busqueda=", location);
+        Assert.Contains("estado=Enviada", location);
+        Assert.Contains("pagina=2", location);
+        Assert.Contains($"panelId={cotizacionId}", location);
+        var html = WebUtility.HtmlDecode(await _host.Client.GetStringAsync(response.Headers.Location));
+        Assert.Contains("El archivo seleccionado no es un PDF válido.", html);
+        Assert.Contains($"data-quote-upload-row=\"{cotizacionId}\"", html);
+        Assert.Contains("Cliente de prueba A", html);
+        await _host.WithDatabaseAsync(async context =>
+        {
+            var cotizacion = await context.Cotizaciones.AsNoTracking().SingleAsync(c => c.Id == cotizacionId);
+            Assert.Equal("Enviada", cotizacion.Estado);
+            Assert.Null(await context.OrdenesVenta.SingleOrDefaultAsync(o => o.CotizacionId == cotizacionId));
         });
     }
 
@@ -813,7 +879,8 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
                 pdf,
                 "oc-nueva.pdf",
                 "PO-NEW-002");
-            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+            Assert.True(response.StatusCode == HttpStatusCode.Redirect,
+                await response.Content.ReadAsStringAsync());
 
             await _host.WithDatabaseAsync(async context =>
             {
@@ -828,6 +895,7 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
                 archivoNuevo = cotizacion.RutaOrdenCompraCliente;
                 Assert.NotEqual(archivoAnterior, archivoNuevo);
                 Assert.NotNull(cotizacion.OrdenVenta);
+                Assert.Equal(1, cotizacion.OrdenVenta.Revision);
             });
 
             Assert.False(File.Exists(Path.Combine(_host.OrdenesCompraDirectory, archivoAnterior)));
@@ -843,6 +911,38 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
                 var path = Path.Combine(_host.OrdenesCompraDirectory, name);
                 if (File.Exists(path)) File.Delete(path);
             }
+        }
+    }
+
+    [Fact]
+    public async Task OrdenVenta_RevisionDetectaActualizacionConcurrenteEntreReemplazoYCompra()
+    {
+        var (quoteId, archivoAnterior) = await SeedApprovedWithOcAsync();
+        try
+        {
+            using var reemplazoScope = _host.CreateScope();
+            using var compraScope = _host.CreateScope();
+            var dbReemplazo = reemplazoScope.ServiceProvider.GetRequiredService<ProseginDbContext>();
+            var dbCompra = compraScope.ServiceProvider.GetRequiredService<ProseginDbContext>();
+            var ventaReemplazo = await dbReemplazo.OrdenesVenta.SingleAsync(v => v.CotizacionId == quoteId);
+            var ventaCompra = await dbCompra.OrdenesVenta.SingleAsync(v => v.CotizacionId == quoteId);
+
+            ventaCompra.Revision++;
+            await dbCompra.SaveChangesAsync();
+            ventaReemplazo.Revision++;
+
+            await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => dbReemplazo.SaveChangesAsync());
+            var revision = await _host.WithDatabaseAsyncResultAsync(context =>
+                context.OrdenesVenta.AsNoTracking()
+                    .Where(v => v.CotizacionId == quoteId)
+                    .Select(v => v.Revision)
+                    .SingleAsync());
+            Assert.Equal(1, revision);
+        }
+        finally
+        {
+            var path = Path.Combine(_host.OrdenesCompraDirectory, archivoAnterior);
+            if (File.Exists(path)) File.Delete(path);
         }
     }
 

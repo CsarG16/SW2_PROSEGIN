@@ -115,7 +115,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     filas.forEach(fila => {
         const selector = fila.querySelector('.proveedor-abastecimiento');
-        if (selector) selector.addEventListener('change', actualizarResumen);
+        const costoInput = fila.querySelector('[data-costo-actual]');
+        if (selector) {
+            selector.addEventListener('change', () => {
+                const opcion = selector.selectedOptions[0];
+                const costo = opcion ? Number(opcion.dataset.unitPrice || 0) : 0;
+                if (costoInput) {
+                    costoInput.value = Number.isFinite(costo) ? costo.toFixed(2) : '0.00';
+                }
+                actualizarResumen();
+            });
+        }
     });
 
     actualizarResumen();

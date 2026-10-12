@@ -314,7 +314,7 @@ public static class CotizacionPdfGenerator
         {
             lineNum.ToString(CultureInfo.InvariantCulture),
             det.Producto.Sku,
-            det.Producto.Nombre,
+            det.NombreProducto,
             det.Cantidad.ToString("N0", PeruCulture),
             FormatMoney(det.PrecioVentaCalculado),
             FormatMoney(det.Subtotal),
