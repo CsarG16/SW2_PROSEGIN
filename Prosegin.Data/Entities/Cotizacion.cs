@@ -9,6 +9,9 @@ public class Cotizacion
     public DateTime? FechaVencimiento { get; set; }
     public string Estado { get; set; } = "Borrador"; // Borrador, Enviada, Aprobada, Rechazada
     public string CondicionPago { get; set; } = Prosegin.Data.Validation.CondicionPagoRules.PlazoCreditoPredeterminado;
+    public string? NumeroOrdenCompraCliente { get; set; }
+    public string? RutaOrdenCompraCliente { get; set; }
+    public string? NombreArchivoOrdenCompraCliente { get; set; }
     
     public decimal Subtotal { get; set; }
     public decimal Igv { get; set; }

@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const chevron = document.getElementById('dropdownChevron');
     const dropdownWrapper = document.getElementById('proveedoresDropdownWrapper');
     const checks = [...document.querySelectorAll('.proveedor-check')];
+    const tarifaRows = [...document.querySelectorAll('[data-proveedor-tarifa-row]')];
+    const principalRadios = [...document.querySelectorAll('.proveedor-principal')];
     const etiquetas = document.getElementById('proveedoresSeleccionados');
     const proveedorError = document.getElementById('proveedoresError');
     const archivo = document.getElementById('txtFichaTecnica');
@@ -33,9 +35,53 @@ document.addEventListener('DOMContentLoaded', () => {
         return costo.value !== '' && Number(costo.value) > 0 && costo.validity.valid;
     }
 
+    function actualizarTarifasProveedores() {
+        tarifaRows.forEach(row => {
+            const providerId = row.dataset.proveedorTarifaRow;
+            const seleccionado = checks.some(check => check.checked && check.value === providerId);
+            const precio = row.querySelector('.proveedor-tarifa-costo');
+            const plazo = row.querySelector('.proveedor-tarifa-plazo');
+            const principal = row.querySelector('.proveedor-principal');
+            precio.disabled = !seleccionado;
+            plazo.disabled = !seleccionado;
+            principal.disabled = !seleccionado;
+            precio.required = seleccionado;
+            plazo.required = seleccionado;
+            const estado = row.querySelector('.badge, .text-muted');
+            if (estado) {
+                estado.textContent = seleccionado ? 'Autorizado' : 'No seleccionado';
+                estado.classList.toggle('badge', seleccionado);
+                estado.classList.toggle('text-bg-light', seleccionado);
+                estado.classList.toggle('border', seleccionado);
+                estado.classList.toggle('text-muted', !seleccionado);
+            }
+            if (seleccionado && precio.dataset.custom !== 'true'
+                && Number(precio.value) <= 0 && Number(costo.value) > 0) {
+                precio.value = costo.value;
+            }
+        });
+
+        const seleccionados = checks.filter(check => check.checked).map(check => check.value);
+        const principalActivo = principalRadios.some(radio => radio.checked && seleccionados.includes(radio.value));
+        if (!principalActivo && seleccionados.length) {
+            const sugerido = principalRadios.find(radio => radio.value === seleccionados[0]);
+            if (sugerido) sugerido.checked = true;
+        }
+    }
+
     function actualizarEstado() {
+        actualizarTarifasProveedores();
+        const proveedoresActivos = checks.filter(c => c.checked).map(c => c.value);
+        const principalValido = principalRadios.some(radio => radio.checked && proveedoresActivos.includes(radio.value));
+        const tarifasValidas = tarifaRows.every(row => {
+            if (!proveedoresActivos.includes(row.dataset.proveedorTarifaRow)) return true;
+            const precio = row.querySelector('.proveedor-tarifa-costo');
+            const plazo = row.querySelector('.proveedor-tarifa-plazo');
+            return Number(precio.value) > 0 && precio.validity.valid && plazo.checkValidity();
+        });
         const completo = sku.value.trim() && skuVerificado && nombre.value.trim()
-            && categoria.value && costoValido() && checks.some(c => c.checked) && fichaValidada;
+            && categoria.value && costoValido() && proveedoresActivos.length > 0
+            && principalValido && tarifasValidas && fichaValidada;
         document.getElementById('statusIcon').className = completo
             ? 'bi bi-check-circle-fill text-success fs-5' : 'bi bi-check-circle text-muted fs-5';
         const label = document.getElementById('statusLabel');
@@ -197,6 +243,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     checks.forEach(check => check.addEventListener('change', actualizarProveedores));
+    tarifaRows.forEach(row => {
+        const precio = row.querySelector('.proveedor-tarifa-costo');
+        precio.addEventListener('input', () => {
+            precio.dataset.custom = 'true';
+            actualizarEstado();
+        });
+        row.querySelector('.proveedor-tarifa-plazo').addEventListener('input', actualizarEstado);
+    });
+    principalRadios.forEach(radio => radio.addEventListener('change', actualizarEstado));
 
     async function validarSku(version) {
         const valor = sku.value.trim();
@@ -308,6 +363,16 @@ document.addEventListener('DOMContentLoaded', () => {
     [nombre, categoria, costo].forEach(control => {
         control.addEventListener('input', actualizarEstado);
         control.addEventListener('change', actualizarEstado);
+    });
+    costo.addEventListener('input', () => {
+        tarifaRows.forEach(row => {
+            const precio = row.querySelector('.proveedor-tarifa-costo');
+            const check = checks.find(option => option.value === row.dataset.proveedorTarifaRow);
+            if (check && check.checked && precio.dataset.custom !== 'true') {
+                precio.value = costo.value;
+            }
+        });
+        actualizarEstado();
     });
 
     form.addEventListener('submit', e => {

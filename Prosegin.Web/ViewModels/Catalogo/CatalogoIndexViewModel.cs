@@ -20,4 +20,14 @@ public class ProductoCatalogoItemViewModel
     public string? RutaFichaTecnicaPdf { get; set; }
     public string? NombreArchivoPdf { get; set; }
     public string? RutaImagen { get; set; }
+    public List<ProveedorTarifaCatalogoViewModel> TarifasProveedor { get; set; } = new();
+}
+
+public class ProveedorTarifaCatalogoViewModel
+{
+    public int ProveedorId { get; set; }
+    public string Proveedor { get; set; } = string.Empty;
+    public decimal CostoCompra { get; set; }
+    public int PlazoEntregaHoras { get; set; }
+    public bool EsPrincipal { get; set; }
 }

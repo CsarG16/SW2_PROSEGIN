@@ -27,6 +27,7 @@ public class PedidoDetalleViewModel
     public string Embalaje { get; set; } = "Packs Paletizados";
 
     public bool VentaAprobada { get; set; } = true;
+    public bool PuedeGenerarOrdenesCompra { get; set; }
 
     public List<PedidoItemViewModel> Items { get; set; } = new();
 }

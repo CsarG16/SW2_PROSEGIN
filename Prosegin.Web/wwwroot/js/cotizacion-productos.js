@@ -2,6 +2,38 @@
     const form = document.getElementById("formCotizacion");
     if (!form) return;
 
+    const tabs = Array.from(form.querySelectorAll("[data-quote-tab]"));
+    const panels = Array.from(form.querySelectorAll("[data-quote-panel]"));
+    const activateTab = tab => {
+        tabs.forEach(item => {
+            const selected = item === tab;
+            item.setAttribute("aria-selected", String(selected));
+            item.tabIndex = selected ? 0 : -1;
+        });
+        panels.forEach(panel => {
+            panel.hidden = panel.dataset.quotePanel !== tab.dataset.quoteTab;
+        });
+    };
+    const initialTab = tabs.find(tab => tab.getAttribute("aria-selected") === "true") || tabs[0];
+    if (initialTab) {
+        activateTab(initialTab);
+    }
+    tabs.forEach((tab, index) => {
+        tab.addEventListener("click", () => activateTab(tab));
+        tab.addEventListener("keydown", event => {
+            let nextIndex;
+            if (event.key === "ArrowRight") nextIndex = (index + 1) % tabs.length;
+            else if (event.key === "ArrowLeft") nextIndex = (index - 1 + tabs.length) % tabs.length;
+            else if (event.key === "Home") nextIndex = 0;
+            else if (event.key === "End") nextIndex = tabs.length - 1;
+            else return;
+
+            event.preventDefault();
+            tabs[nextIndex].focus();
+            activateTab(tabs[nextIndex]);
+        });
+    });
+
     const storageKey = `prosegin.quote.cart.v2.${form.dataset.clienteId}`;
     const pendingKey = "prosegin.quote.pending.v1";
     const rows = Array.from(document.querySelectorAll("[data-product-row]"));

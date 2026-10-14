@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -10,98 +10,56 @@ namespace Prosegin.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "LimiteCredito",
-                table: "Clientes");
+            void DropColumnIfExists(string table, string column)
+            {
+                migrationBuilder.Sql($@"
+                    SET @dbname = DATABASE();
+                    SET @tablename = '{table}';
+                    SET @colname = '{column}';
+                    SET @sql = (SELECT IF(
+                        (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = @tablename AND COLUMN_NAME = @colname) > 0,
+                        'ALTER TABLE `{table}` DROP COLUMN `{column}`',
+                        'SELECT 1'
+                    ));
+                    PREPARE stmt FROM @sql;
+                    EXECUTE stmt;
+                    DEALLOCATE PREPARE stmt;
+                ");
+            }
 
-            migrationBuilder.DropColumn(
-                name: "RepresentanteLegal",
-                table: "Clientes");
+            void AddColumnIfNotExists(string table, string column, string columnDef)
+            {
+                migrationBuilder.Sql($@"
+                    SET @dbname = DATABASE();
+                    SET @tablename = '{table}';
+                    SET @colname = '{column}';
+                    SET @sql = (SELECT IF(
+                        (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = @tablename AND COLUMN_NAME = @colname) = 0,
+                        'ALTER TABLE `{table}` ADD `{column}` {columnDef}',
+                        'SELECT 1'
+                    ));
+                    PREPARE stmt FROM @sql;
+                    EXECUTE stmt;
+                    DEALLOCATE PREPARE stmt;
+                ");
+            }
 
-            migrationBuilder.AddColumn<string>(
-                name: "ContactoRecepcion",
-                table: "PuntosEntrega",
-                type: "longtext",
-                nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
+            DropColumnIfExists("Clientes", "LimiteCredito");
+            DropColumnIfExists("Clientes", "RepresentanteLegal");
 
-            migrationBuilder.AddColumn<string>(
-                name: "Departamento",
-                table: "PuntosEntrega",
-                type: "longtext",
-                nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
+            AddColumnIfNotExists("PuntosEntrega", "ContactoRecepcion", "longtext CHARACTER SET utf8mb4 NULL");
+            AddColumnIfNotExists("PuntosEntrega", "Departamento", "longtext CHARACTER SET utf8mb4 NULL");
+            AddColumnIfNotExists("PuntosEntrega", "Distrito", "longtext CHARACTER SET utf8mb4 NULL");
+            AddColumnIfNotExists("PuntosEntrega", "EsPredeterminada", "tinyint(1) NOT NULL DEFAULT 0");
+            AddColumnIfNotExists("PuntosEntrega", "HorarioRecepcion", "longtext CHARACTER SET utf8mb4 NULL");
+            AddColumnIfNotExists("PuntosEntrega", "NombreAlias", "longtext CHARACTER SET utf8mb4 NULL");
+            AddColumnIfNotExists("PuntosEntrega", "Provincia", "longtext CHARACTER SET utf8mb4 NULL");
+            AddColumnIfNotExists("PuntosEntrega", "RestriccionesAcceso", "longtext CHARACTER SET utf8mb4 NULL");
+            AddColumnIfNotExists("PuntosEntrega", "TelefonoMovil", "longtext CHARACTER SET utf8mb4 NULL");
+            AddColumnIfNotExists("PuntosEntrega", "TipoSede", "longtext CHARACTER SET utf8mb4 NULL");
+            AddColumnIfNotExists("PuntosEntrega", "Ubigeo", "longtext CHARACTER SET utf8mb4 NULL");
 
-            migrationBuilder.AddColumn<string>(
-                name: "Distrito",
-                table: "PuntosEntrega",
-                type: "longtext",
-                nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.AddColumn<bool>(
-                name: "EsPredeterminada",
-                table: "PuntosEntrega",
-                type: "tinyint(1)",
-                nullable: false,
-                defaultValue: false);
-
-            migrationBuilder.AddColumn<string>(
-                name: "HorarioRecepcion",
-                table: "PuntosEntrega",
-                type: "longtext",
-                nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.AddColumn<string>(
-                name: "NombreAlias",
-                table: "PuntosEntrega",
-                type: "longtext",
-                nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.AddColumn<string>(
-                name: "Provincia",
-                table: "PuntosEntrega",
-                type: "longtext",
-                nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.AddColumn<string>(
-                name: "RestriccionesAcceso",
-                table: "PuntosEntrega",
-                type: "longtext",
-                nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.AddColumn<string>(
-                name: "TelefonoMovil",
-                table: "PuntosEntrega",
-                type: "longtext",
-                nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.AddColumn<string>(
-                name: "TipoSede",
-                table: "PuntosEntrega",
-                type: "longtext",
-                nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.AddColumn<string>(
-                name: "Ubigeo",
-                table: "PuntosEntrega",
-                type: "longtext",
-                nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.AddColumn<string>(
-                name: "Referencia",
-                table: "Clientes",
-                type: "varchar(250)",
-                maxLength: 250,
-                nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
+            AddColumnIfNotExists("Clientes", "Referencia", "varchar(250) CHARACTER SET utf8mb4 NULL");
         }
 
         /// <inheritdoc />

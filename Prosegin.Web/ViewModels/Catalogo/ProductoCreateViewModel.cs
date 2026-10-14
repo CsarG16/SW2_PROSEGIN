@@ -40,6 +40,11 @@ public class ProductoCreateViewModel : IValidatableObject
     [Display(Name = "Proveedores autorizados")]
     public List<int> ProveedorIds { get; set; } = new();
 
+    [Display(Name = "Proveedor principal")]
+    public int? ProveedorPrincipalId { get; set; }
+
+    public List<TarifaProveedorCreateViewModel> TarifasProveedores { get; set; } = new();
+
     [BindNever]
     public List<ProveedorOpcionViewModel> ProveedoresDisponibles { get; set; } = new();
 
@@ -55,6 +60,20 @@ public class ProductoCreateViewModel : IValidatableObject
                 new[] { nameof(CostoBaseAdquisicion) });
         }
     }
+}
+
+public class TarifaProveedorCreateViewModel
+{
+    public int ProveedorId { get; set; }
+    public decimal CostoCompra { get; set; }
+    public int PlazoEntregaHoras { get; set; } = 24;
+}
+
+public class TarifaProveedorEditarViewModel
+{
+    public int ProveedorId { get; set; }
+    public decimal CostoCompra { get; set; }
+    public int PlazoEntregaHoras { get; set; }
 }
 
 public class ProveedorOpcionViewModel

@@ -513,6 +513,39 @@ public static class DbSeeder
 
         await context.SaveChangesAsync();
 
+        var proveedoresRegistrados = await context.Proveedores.AsNoTracking().ToListAsync();
+        var productosConProveedores = await context.Productos
+            .Include(p => p.ProveedoresAutorizados)
+            .ToListAsync();
+        foreach (var producto in productosConProveedores.Where(p => p.ProveedoresAutorizados.Count == 0))
+        {
+            var nombres = producto.Descripcion
+                .Split("Proveedor:", StringSplitOptions.RemoveEmptyEntries)
+                .LastOrDefault()?
+                .Split('/', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                ?? Array.Empty<string>();
+            var proveedoresAsignados = nombres
+                .Select(nombre => proveedoresRegistrados.FirstOrDefault(proveedor =>
+                    proveedor.RazonSocial.Contains(nombre, StringComparison.OrdinalIgnoreCase)
+                    || nombre.Contains(proveedor.RazonSocial, StringComparison.OrdinalIgnoreCase)))
+                .Where(proveedor => proveedor != null)
+                .DistinctBy(proveedor => proveedor!.Id)
+                .ToList();
+
+            for (var index = 0; index < proveedoresAsignados.Count; index++)
+            {
+                var proveedor = proveedoresAsignados[index]!;
+                producto.ProveedoresAutorizados.Add(new ProductoProveedor
+                {
+                    ProveedorId = proveedor.Id,
+                    CostoCompra = producto.CostoReferencial,
+                    EsPrincipal = index == 0,
+                    PlazoEntregaHoras = 24
+                });
+            }
+        }
+        await context.SaveChangesAsync();
+
         // 3. Semillas de Cotizaciones Aprobadas y Órdenes de Venta Confirmadas (Año y Fechas Actuales)
         if (!await context.Cotizaciones.AnyAsync())
         {
