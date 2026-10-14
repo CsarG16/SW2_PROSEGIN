@@ -14,6 +14,8 @@ public static class CotizacionPdfGenerator
     private const double PageW = 595.28; // A4 width in points
     private const double TableHeaderHeight = 26;
     private const double ProductRowHeight = 42;
+    private const double ProductDescriptionLineHeight = 11;
+    private const int ProductDescriptionMaxLines = 3;
 
     // Brand colours
     private static readonly XColor Navy      = XColor.FromArgb(11, 23, 39);
@@ -60,7 +62,8 @@ public static class CotizacionPdfGenerator
         for (int i = 0; i < items.Count; i++)
         {
             var det = items[i];
-            if (y + ProductRowHeight > page.Height - 180)
+            double rowHeight = ProductRowHeightFor(gfx, det, fonts);
+            if (y + rowHeight > page.Height - 180)
             {
                 DrawFooter(gfx, page, fonts.Small, cotizacion.Correlativo);
                 gfx.Dispose();
@@ -75,8 +78,9 @@ public static class CotizacionPdfGenerator
                 y = tableY + TableHeaderHeight;
             }
 
-            DrawProductRow(page, gfx, y, i + 1, det, technicalSheetUrl, fonts);
-            y += ProductRowHeight;
+            rowHeight = ProductRowHeightFor(gfx, det, fonts);
+            DrawProductRow(page, gfx, y, rowHeight, i + 1, det, technicalSheetUrl, fonts);
+            y += rowHeight;
         }
 
         // Totals
@@ -214,14 +218,16 @@ public static class CotizacionPdfGenerator
 
         // Label CLIENTE
         DrawMiniLabel(gfx, "CLIENTE", lx, r1y, f.Small);
-        gfx.DrawString(cliente.RazonSocial, f.Bold10, new XSolidBrush(Navy),
-            new XRect(lx, r1y + 10, w * 0.55, 14), XStringFormats.TopLeft);
-
         // Dates block on right
         double dateColW = 110;
+        double dateStart = rx - dateColW * 2 - 12;
+        double clientNameW = dateStart - lx - 12;
+        gfx.DrawString(TruncateText(gfx, cliente.RazonSocial, clientNameW, f.Bold10), f.Bold10, new XSolidBrush(Navy),
+            new XRect(lx, r1y + 10, clientNameW, 14), XStringFormats.TopLeft);
+
         DrawInfoPair(gfx, "FECHA DE EMISIÓN",
             cot.FechaEmision.ToLocalTime().ToString("dd/MM/yyyy", PeruCulture),
-            rx - dateColW * 2 - 12, r1y, dateColW, f);
+            dateStart, r1y, dateColW, f);
 
         DrawInfoPair(gfx, "CONDICIÓN DE PAGO",
             cot.CondicionPago,
@@ -231,11 +237,14 @@ public static class CotizacionPdfGenerator
         double r2y = r1y + 36;
         gfx.DrawLine(new XPen(Divider), lx, r2y - 4, page.Width - Margin - 14, r2y - 4);
 
-        double col1w = 80, col2w = w * 0.42, col3w = 90;
+        double contentW = page.Width - Margin - 14 - lx;
+        double col1w = 78;
+        double col3w = string.IsNullOrWhiteSpace(cliente.Telefono) ? 0 : 90;
+        double col2w = contentW - col1w - (col3w > 0 ? col3w + 18 : 10);
         DrawInfoPair(gfx, "RUC", cliente.Ruc, lx, r2y, col1w, f);
         DrawInfoPair(gfx, "DIRECCIÓN FISCAL", cliente.DireccionFiscal, lx + col1w + 10, r2y, col2w, f);
-        if (!string.IsNullOrWhiteSpace(cliente.Telefono))
-            DrawInfoPair(gfx, "TELÉFONO", cliente.Telefono, lx + col1w + 10 + col2w + 8, r2y, col3w, f);
+        if (col3w > 0)
+            DrawInfoPair(gfx, "TELÉFONO", cliente.Telefono!, lx + col1w + 10 + col2w + 8, r2y, col3w, f);
 
         // ── Row 3 (optional): Distrito / Dpto + Correo ──
         bool hasUbigeo = !string.IsNullOrWhiteSpace(cliente.Distrito);
@@ -246,25 +255,27 @@ public static class CotizacionPdfGenerator
             double r3y = r2y + 30;
             gfx.DrawLine(new XPen(Divider), lx, r3y - 4, page.Width - Margin - 14, r3y - 4);
 
+            double gap = hasUbigeo && hasEmail ? 14 : 0;
+            double firstW = hasUbigeo && hasEmail ? (contentW - gap) * 0.52 : contentW;
             if (hasUbigeo)
             {
                 var ubigeoStr = string.Join(", ",
                     new[] { cliente.Distrito, cliente.Provincia, cliente.Departamento }
                     .Where(s => !string.IsNullOrWhiteSpace(s)));
-                DrawInfoPair(gfx, "UBICACIÓN", ubigeoStr, lx, r3y, w * 0.5, f);
+                DrawInfoPair(gfx, "UBICACIÓN", ubigeoStr, lx, r3y, firstW, f);
             }
 
             if (hasEmail)
-                DrawInfoPair(gfx, "CORREO ELECTRÓNICO", cliente.CorreoElectronico,
-                    hasUbigeo ? lx + w * 0.5 + 10 : lx, r3y, w * 0.45, f);
+                DrawInfoPair(gfx, "CORREO ELECTRÓNICO", cliente.CorreoElectronico!,
+                    hasUbigeo ? lx + firstW + gap : lx, r3y, hasUbigeo ? contentW - firstW - gap : contentW, f);
         }
     }
 
     private static void DrawInfoPair(XGraphics gfx, string label, string value, double x, double y, double maxW, FontBundle f)
     {
-        DrawMiniLabel(gfx, label, x, y, f.Small);
-        // Truncate if too long
-        gfx.DrawString(TruncateText(value, maxW, f.Body), f.Bold8, new XSolidBrush(Navy),
+        gfx.DrawString(TruncateText(gfx, label, maxW, f.Small), f.Small, new XSolidBrush(Muted),
+            new XRect(x, y, maxW, 10), XStringFormats.TopLeft);
+        gfx.DrawString(TruncateText(gfx, value, maxW, f.Bold8), f.Bold8, new XSolidBrush(Navy),
             new XRect(x, y + 10, maxW, 14), XStringFormats.TopLeft);
     }
 
@@ -298,6 +309,7 @@ public static class CotizacionPdfGenerator
         PdfPage page,
         XGraphics gfx,
         double y,
+        double rowHeight,
         int lineNum,
         CotizacionDetalle det,
         Func<int, string?> fichaUrl,
@@ -305,9 +317,10 @@ public static class CotizacionPdfGenerator
     {
         bool isEven = lineNum % 2 == 0;
         if (isEven)
-            gfx.DrawRectangle(new XSolidBrush(LightBg), Margin, y, TableWidth, ProductRowHeight);
+            gfx.DrawRectangle(new XSolidBrush(LightBg), Margin, y, TableWidth, rowHeight);
 
-        gfx.DrawLine(new XPen(Divider), Margin, y + ProductRowHeight, Margin + TableWidth, y + ProductRowHeight);
+        gfx.DrawLine(new XPen(Divider), Margin, y + rowHeight, Margin + TableWidth, y + rowHeight);
+        var descriptionLines = WrapText(gfx, det.NombreProducto, ColW[2] - 16, f.Body, ProductDescriptionMaxLines);
 
         bool hasFicha = !string.IsNullOrWhiteSpace(det.Producto.RutaFichaTecnicaPdf);
         var values = new[]
@@ -325,7 +338,7 @@ public static class CotizacionPdfGenerator
         for (int i = 0; i < ColW.Length; i++)
         {
             double cx = x + 4;
-            double cy = y + 8;
+            double cy = y + Math.Max(6, (rowHeight - 18) / 2);
             double cw = ColW[i] - 8;
 
             if (i == 0)
@@ -342,10 +355,14 @@ public static class CotizacionPdfGenerator
             }
             else if (i == 2)
             {
-                gfx.DrawString(TruncateText(values[i], cw, f.Body), f.Body, new XSolidBrush(Navy),
-                    new XRect(cx, cy, cw, 14), XStringFormats.TopLeft);
+                for (int line = 0; line < descriptionLines.Count; line++)
+                {
+                    gfx.DrawString(descriptionLines[line], f.Body, new XSolidBrush(Navy),
+                        new XRect(cx, y + 6 + line * ProductDescriptionLineHeight, cw, ProductDescriptionLineHeight),
+                        XStringFormats.TopLeft);
+                }
                 gfx.DrawString($"U.M.: {det.Producto.UnidadMedida}", f.Small, new XSolidBrush(Muted),
-                    new XRect(cx, cy + 17, cw, 12), XStringFormats.TopLeft);
+                    new XRect(cx, y + 8 + descriptionLines.Count * ProductDescriptionLineHeight, cw, 10), XStringFormats.TopLeft);
             }
             else if (i == ColW.Length - 1 && hasFicha)
             {
@@ -364,6 +381,12 @@ public static class CotizacionPdfGenerator
 
             x += ColW[i];
         }
+    }
+
+    private static double ProductRowHeightFor(XGraphics gfx, CotizacionDetalle det, FontBundle fonts)
+    {
+        var lines = WrapText(gfx, det.NombreProducto, ColW[2] - 16, fonts.Body, ProductDescriptionMaxLines);
+        return Math.Max(ProductRowHeight, 14 + lines.Count * ProductDescriptionLineHeight + 14);
     }
 
     // ─────────────────────────── Totals ──────────────────────────────────
@@ -386,10 +409,12 @@ public static class CotizacionPdfGenerator
         // Total box
         gfx.DrawRoundedRectangle(new XSolidBrush(Navy), panelX, y, panelW, 36, 4, 4);
         gfx.DrawRoundedRectangle(new XSolidBrush(Orange), panelX, y, 4, 36, 2, 2);
+        const double totalPadding = 12;
+        const double totalLabelW = 94;
         gfx.DrawString("TOTAL A PAGAR", f.Bold10, XBrushes.White,
-            new XRect(panelX + 12, y + 10, panelW * 0.5, 18), XStringFormats.TopLeft);
-        gfx.DrawString($"{FormatMoney(cot.Total)} PEN", f.Bold10, XBrushes.White,
-            new XRect(panelX + 12, y + 10, panelW - 16, 18), XStringFormats.TopRight);
+            new XRect(panelX + totalPadding, y + 10, totalLabelW, 18), XStringFormats.TopLeft);
+        gfx.DrawString($"{FormatMoney(cot.Total)} PEN", f.Bold8, XBrushes.White,
+            new XRect(panelX + totalPadding + totalLabelW, y + 10, panelW - totalPadding - totalLabelW - 8, 18), XStringFormats.TopRight);
         y += 48;
 
         // Amount in words
@@ -399,10 +424,11 @@ public static class CotizacionPdfGenerator
 
     private static void DrawTotalRow(XGraphics gfx, string label, string value, double x, double y, double w, FontBundle f, bool subtle)
     {
+        double labelW = w * 0.57;
         gfx.DrawString(label, f.Body, new XSolidBrush(subtle ? Muted : Navy),
-            new XRect(x, y, w * 0.55, 16), XStringFormats.TopLeft);
+            new XRect(x, y, labelW, 16), XStringFormats.TopLeft);
         gfx.DrawString(value, f.Bold8, new XSolidBrush(Navy),
-            new XRect(x, y, w - 2, 16), XStringFormats.TopRight);
+            new XRect(x + labelW + 4, y, w - labelW - 4, 16), XStringFormats.TopRight);
     }
 
     // ─────────────────────────── Conditions ──────────────────────────────
@@ -420,7 +446,7 @@ public static class CotizacionPdfGenerator
             new XRect(lx, panelY + 8, 200, 14), XStringFormats.TopLeft);
 
         string condText = $"• Pago: {cot.CondicionPago}   • Moneda: PEN (Soles)   • Validez: 48 horas desde la emisión   • Precios incluyen IGV (18%)";
-        gfx.DrawString(condText, f.Small, new XSolidBrush(Muted),
+        gfx.DrawString(TruncateText(gfx, condText, page.Width - Margin * 2 - 20, f.Small), f.Small, new XSolidBrush(Muted),
             new XRect(lx, panelY + 24, page.Width - Margin * 2 - 20, 14), XStringFormats.TopLeft);
     }
 
@@ -432,22 +458,75 @@ public static class CotizacionPdfGenerator
         // Orange top line
         gfx.DrawLine(new XPen(Orange, 1), Margin, fy - 24, page.Width - Margin, fy - 24);
 
-        gfx.DrawString("Prosegin S.A.C. – Equipos de Protección Personal | Las Malvinas, Lima, Perú",
-            font, new XSolidBrush(Muted),
-            new XRect(Margin, fy - 18, page.Width - Margin * 2, 12), XStringFormats.TopLeft);
-
-        gfx.DrawString(correlativo, font, new XSolidBrush(Muted),
-            new XRect(Margin, fy - 18, page.Width - Margin * 2, 12), XStringFormats.TopRight);
+        const double correlationWidth = 112;
+        double footerTextWidth = page.Width - Margin * 2 - correlationWidth - 12;
+        var footerText = "Prosegin S.A.C. – Equipos de Protección Personal | Las Malvinas, Lima, Perú";
+        gfx.DrawString(TruncateText(gfx, footerText, footerTextWidth, font),
+            font, new XSolidBrush(Muted), new XRect(Margin, fy - 18, footerTextWidth, 12), XStringFormats.TopLeft);
+        gfx.DrawString(TruncateText(gfx, correlativo, correlationWidth, font), font, new XSolidBrush(Muted),
+            new XRect(page.Width - Margin - correlationWidth, fy - 18, correlationWidth, 12), XStringFormats.TopRight);
     }
 
     // ─────────────────────────── Helpers ─────────────────────────────────
 
-    private static string TruncateText(string text, double maxW, XFont font)
+    private static string TruncateText(XGraphics gfx, string text, double maxW, XFont font)
     {
-        // Rough estimate: avg char ~5.5 points wide at 8pt
-        int maxChars = (int)(maxW / 5.5);
-        if (text.Length <= maxChars) return text;
-        return text[..(maxChars - 1)] + "…";
+        if (gfx.MeasureString(text, font).Width <= maxW) return text;
+        const string ellipsis = "…";
+        var shortened = text.Trim();
+        while (shortened.Length > 0 && gfx.MeasureString(shortened + ellipsis, font).Width > maxW)
+        {
+            shortened = shortened[..^1];
+        }
+
+        return shortened.Length == 0 ? string.Empty : shortened + ellipsis;
+    }
+
+    private static List<string> WrapText(XGraphics gfx, string text, double maxW, XFont font, int maxLines)
+    {
+        var words = (text ?? string.Empty).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+        var lines = new List<string>();
+        var current = string.Empty;
+        var truncated = false;
+
+        for (var index = 0; index < words.Length; index++)
+        {
+            var word = words[index];
+            var candidate = current.Length == 0 ? word : $"{current} {word}";
+            if (gfx.MeasureString(candidate, font).Width <= maxW)
+            {
+                current = candidate;
+                continue;
+            }
+
+            if (current.Length > 0)
+            {
+                lines.Add(current);
+                if (lines.Count >= maxLines)
+                {
+                    truncated = index < words.Length;
+                    current = string.Empty;
+                    break;
+                }
+                current = word;
+            }
+            else
+            {
+                lines.Add(TruncateText(gfx, word, maxW, font));
+                truncated = index < words.Length - 1;
+                if (lines.Count >= maxLines || truncated)
+                {
+                    current = string.Empty;
+                    break;
+                }
+            }
+        }
+
+        if (current.Length > 0 && lines.Count < maxLines) lines.Add(current);
+        if (lines.Count == 0) lines.Add(string.Empty);
+        if (truncated && lines.Count > 0)
+            lines[^1] = TruncateText(gfx, lines[^1] + "…", maxW, font);
+        return lines;
     }
 
     private static string FormatMoney(decimal amount) => $"S/ {amount.ToString("N2", PeruCulture)}";
