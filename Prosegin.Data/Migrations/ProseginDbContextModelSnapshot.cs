@@ -156,6 +156,9 @@ namespace Prosegin.Data.Migrations
                     b.Property<DateTime?>("FechaVencimiento")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<bool>("FueActualizada")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<decimal>("Igv")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
