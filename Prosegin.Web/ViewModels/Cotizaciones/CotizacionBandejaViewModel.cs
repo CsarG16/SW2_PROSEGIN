@@ -25,6 +25,7 @@ public class CotizacionBandejaItemViewModel
     public DateTime FechaVencimiento { get; set; }
     public decimal Total { get; set; }
     public string Estado { get; set; } = string.Empty;
+    public bool FueActualizada { get; set; }
     public string? NumeroOrdenCompraCliente { get; set; }
     public string? NombreArchivoOrdenCompraCliente { get; set; }
     public bool PuedeReemplazarOrdenCompra { get; set; }
