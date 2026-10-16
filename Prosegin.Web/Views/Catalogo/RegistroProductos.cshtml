@@ -130,9 +130,6 @@
                 <span class="fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 0.92rem;">
                     <i class="bi bi-wallet2 text-dark"></i> Costo Base y Proveedores Autorizados
                 </span>
-                <span class="badge bg-light text-secondary border font-monospace px-2 py-1" style="font-size: 0.74rem;">
-                    Compras JIT Las Malvinas
-                </span>
             </div>
 
             <div class="p-3 p-md-4">
@@ -222,7 +219,7 @@
                                 <!-- Footer del Dropdown con botón Listo -->
                                 <div class="p-2 border-top bg-light bg-opacity-50 d-flex justify-content-between align-items-center">
                                     <span class="small text-muted" id="proveedoresFooterCount" style="font-size: 0.75rem;">0 seleccionados</span>
-                                    <button type="button" class="btn btn-sm btn-dark px-3 py-1 fw-bold text-white rounded-2" id="btnCerrarProveedores" style="background-color: #0B1727; font-size: 0.76rem;">
+                                    <button type="button" class="btn btn-sm btn-dark px-3 py-1 fw-bold text-white rounded-2" id="btnCerrarProveedores" style="font-size: 0.76rem;">
                                         Listo
                                     </button>
                                 </div>
@@ -384,22 +381,22 @@
         background-color: #f8fafc;
     }
     #btnDropdownProveedores:focus {
-        border-color: #0B1727 !important;
-        box-shadow: 0 0 0 3px rgba(11, 23, 39, 0.12) !important;
+        border-color: var(--dark) !important;
+        box-shadow: 0 0 0 3px rgba(0, 13, 49, 0.12) !important;
     }
     .proveedor-opcion:hover {
         background-color: #f8fafc !important;
     }
     .proveedor-check:focus {
-        box-shadow: 0 0 0 2px rgba(11, 23, 39, 0.15) !important;
-        border-color: #0B1727 !important;
+        box-shadow: 0 0 0 2px rgba(0, 13, 49, 0.15) !important;
+        border-color: var(--dark) !important;
     }
     .proveedor-check:checked {
-        background-color: #0B1727 !important;
-        border-color: #0B1727 !important;
+        background-color: var(--dark) !important;
+        border-color: var(--dark) !important;
     }
     #txtProveedorBusqueda:focus {
-        border-color: #0B1727 !important;
+        border-color: var(--dark) !important;
         box-shadow: none !important;
     }
     #proveedoresItemsContainer::-webkit-scrollbar {

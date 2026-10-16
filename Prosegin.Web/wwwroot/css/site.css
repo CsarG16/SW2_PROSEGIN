@@ -9,12 +9,12 @@
      🎨 COLOR DE ACENTO CENTRAL — CAMBIA AQUÍ TODO EL SISTEMA
      Para cambiar el tema de PROSEGIN, solo modifica estas 4 líneas.
      ============================================================ */
-  --accent: #f59e0b;                /* Dorado/Ámbar Corporativo PROSEGIN */
-  --accent-hover: #d97706;          /* Hover del acento */
-  --accent-light: #fef3c7;          /* Fondo sutil del acento */
-  --accent-text: #b45309;           /* Texto sobre fondo sutil del acento */
-  --accent-on: #0f172a;             /* Texto legible SOBRE el botón de acento */
-  --accent-shadow: rgba(245, 158, 11, 0.30); /* Sombra del acento */
+  --accent: #F7A702;                /* Dorado/Ámbar Corporativo Real PROSEGIN (del logo) */
+  --accent-hover: #D98A00;          /* Hover del acento */
+  --accent-light: #FEF6E6;          /* Fondo sutil del acento */
+  --accent-text: #B46500;           /* Texto sobre fondo sutil del acento */
+  --accent-on: #000D31;             /* Texto legible SOBRE el botón de acento (Azul logo) */
+  --accent-shadow: rgba(247, 167, 2, 0.32); /* Sombra del acento */
 
   /* Aliases legacy (retrocompatibilidad con vistas existentes) */
   --prosegin-orange: var(--accent);
@@ -25,9 +25,9 @@
   /* Tipografía */
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-  /* Contraste Industrial Sobrio (Midnight Navy) */
-  --dark: #0f1b2b;
-  --dark-hover: #1a2c42;
+  /* Contraste Industrial Sobrio (Azul Noche Corporativo Real PROSEGIN - del logo) */
+  --dark: #000D31;
+  --dark-hover: #07194D;
   --dark-text: #ffffff;
 
   /* Fondo de la barra lateral (Sidebar Blanco Minimalista - Figma) */
@@ -44,7 +44,7 @@
   --bg-card-subtle: #f8fafc;
   
   /* Textos */
-  --text-dark: #0f172a;       /* Títulos y textos principales */
+  --text-dark: #000D31;       /* Títulos y textos principales (Azul Profundo Logo) */
   --text-body: #334155;       /* Texto general */
   --text-muted: #64748b;      /* Textos secundarios / etiquetas */
   --text-subtle: #94a3b8;     /* Placeholders y detalles */
@@ -191,7 +191,7 @@ body {
 .btn-prosegin-secondary-orange:hover:not(:disabled) {
   background-color: var(--prosegin-orange);
   border-color: var(--prosegin-orange);
-  color: #0f172a;
+  color: var(--dark);
   transform: translateY(-1px);
   box-shadow: 0 2px 5px rgba(245, 158, 11, 0.3);
 }
@@ -230,27 +230,61 @@ body {
   color: var(--text-dark);
 }
 
-/* Botón Oscuro / Acción Especial (Midnight Navy — usa --dark) */
-.btn-prosegin-dark {
-  background-color: var(--dark);
-  border: 1px solid var(--dark);
-  color: var(--dark-text);
+/* Botón Oscuro / Acción Especial (Azul Medianoche del Logo — usa --dark) */
+.btn-prosegin-dark,
+.btn-dark {
+  background-color: var(--dark) !important;
+  border-color: var(--dark) !important;
+  color: var(--dark-text) !important;
   font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 13, 49, 0.2);
+}
+
+.btn-prosegin-dark {
   font-size: 0.82rem;
   padding: 0.6rem 1.2rem;
-  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.2s ease;
   letter-spacing: 0.02em;
-  cursor: pointer;
   text-decoration: none;
 }
-.btn-prosegin-dark:hover {
-  background-color: var(--dark-hover);
-  color: var(--dark-text);
+
+.btn-prosegin-dark:hover,
+.btn-prosegin-dark:focus,
+.btn-dark:hover,
+.btn-dark:focus,
+.btn-dark:active {
+  background-color: var(--dark-hover) !important;
+  border-color: var(--dark-hover) !important;
+  color: var(--dark-text) !important;
   transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 13, 49, 0.25);
+}
+
+.btn-outline-dark {
+  color: var(--dark) !important;
+  border-color: var(--dark) !important;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-dark:hover,
+.btn-outline-dark:focus,
+.btn-outline-dark:active {
+  background-color: var(--dark) !important;
+  border-color: var(--dark) !important;
+  color: #ffffff !important;
+}
+
+.text-dark {
+  color: var(--text-dark) !important;
+}
+
+.bg-dark {
+  background-color: var(--dark) !important;
 }
 
 /* ============================================================
@@ -669,8 +703,8 @@ body {
 }
 
 .form-control-prosegin:focus {
-  border-color: #0B1727;
-  box-shadow: 0 0 0 3px rgba(11, 23, 39, 0.12);
+  border-color: var(--dark);
+  box-shadow: 0 0 0 3px rgba(0, 13, 49, 0.12);
   outline: none;
 }
 
@@ -679,6 +713,122 @@ body {
   font-weight: 600;
   color: var(--text-dark);
   margin-bottom: 0.35rem;
+}
+
+/* Select de Formularios Prosegin */
+.form-select-prosegin {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.65rem 2.2rem 0.65rem 0.9rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-dark);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23000D31' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  background-size: 14px 10px;
+}
+
+.form-select-prosegin:focus {
+  border-color: var(--dark);
+  box-shadow: 0 0 0 3px rgba(0, 13, 49, 0.12);
+  outline: none;
+}
+
+/* ============================================================
+   DROPDOWNS CORPORATIVOS PROSEGIN (MINIMALISTAS Y PROFESIONALES)
+   ============================================================ */
+
+.dropdown-menu-prosegin {
+  background: #ffffff;
+  border: 1px solid var(--border-card);
+  border-radius: 10px;
+  box-shadow: 0 10px 25px -5px rgba(0, 13, 49, 0.10), 
+              0 8px 10px -6px rgba(0, 13, 49, 0.05);
+  padding: 0.45rem;
+  min-width: 190px;
+  animation: proseginDropdownFadeIn 0.16s ease-out;
+}
+
+@keyframes proseginDropdownFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-menu-prosegin .dropdown-header {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding: 0.4rem 0.75rem 0.25rem;
+}
+
+.dropdown-menu-prosegin .dropdown-divider {
+  border-top: 1px solid var(--border-light);
+  margin: 0.35rem 0;
+}
+
+.dropdown-menu-prosegin .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--text-dark);
+  transition: all 0.15s ease;
+}
+
+.dropdown-menu-prosegin .dropdown-item i {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  transition: color 0.15s ease;
+}
+
+.dropdown-menu-prosegin .dropdown-item:hover,
+.dropdown-menu-prosegin .dropdown-item:focus {
+  background-color: #f8fafc;
+  color: var(--dark);
+}
+
+.dropdown-menu-prosegin .dropdown-item:hover i {
+  color: var(--accent);
+}
+
+.dropdown-menu-prosegin .dropdown-item.text-danger:hover {
+  background-color: var(--state-danger-bg);
+  color: var(--state-danger-text);
+}
+
+.dropdown-menu-prosegin .dropdown-item.text-danger i {
+  color: var(--state-danger);
+}
+
+.btn-prosegin-dropdown-trigger {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+}
+
+.btn-prosegin-dropdown-trigger:hover,
+.btn-prosegin-dropdown-trigger:focus,
+.btn-prosegin-dropdown-trigger[aria-expanded="true"] {
+  background: var(--bg-card-subtle);
+  border-color: var(--border-card);
+  color: var(--text-dark);
 }
 
 /* 4. Badges / Pastillas de Estado (Según Screenshot) */
@@ -773,35 +923,6 @@ body {
   gap: 0.35rem;
 }
 
-/* 6. Tablas Estándar */
-.table-prosegin {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-.table-prosegin thead th {
-  background-color: #f8fafc;
-  color: var(--text-muted);
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border-card);
-}
-
-.table-prosegin tbody td {
-  padding: 1rem;
-  font-size: 0.88rem;
-  color: var(--text-body);
-  border-bottom: 1px solid var(--border-light);
-  vertical-align: middle;
-}
-
-.table-prosegin tbody tr:hover {
-  background-color: #f8fafc;
-}
 
 .catalog-shopping {
   --catalog-ink: var(--text-dark);
@@ -888,10 +1009,10 @@ body {
 
 .catalog-category.active {
   color: #ffffff;
-  background: var(--dark, #0f1b2b);
-  border-color: var(--dark, #0f1b2b);
+  background: var(--dark);
+  border-color: var(--dark);
   font-weight: 700;
-  box-shadow: 0 2px 6px rgba(15, 27, 43, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 13, 49, 0.25);
 }
 
 .catalog-layout {
@@ -949,8 +1070,8 @@ body {
 }
 
 .catalog-product:hover .catalog-product-mark {
-  border-color: var(--dark, #0f1b2b);
-  box-shadow: 0 4px 10px rgba(15, 27, 43, 0.15);
+  border-color: var(--dark);
+  box-shadow: 0 4px 10px rgba(0, 13, 49, 0.15);
   transform: translateY(-2px);
 }
 
@@ -1628,7 +1749,7 @@ body {
 .prosegin-alert-title {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-dark);
   margin-bottom: 10px;
   letter-spacing: -0.01em;
 }
@@ -2281,8 +2402,8 @@ body {
 .quote-pdf-brand {
   display: inline-block;
   padding-left: 0.6rem;
-  border-left: 4px solid #ee911c;
-  color: #0b1727;
+  border-left: 4px solid var(--accent);
+  color: var(--dark);
   font-size: 1.2rem;
   font-weight: 800;
 }
@@ -2310,7 +2431,7 @@ body {
 }
 
 .quote-pdf-number strong {
-  color: #0b1727;
+  color: var(--dark);
   font-size: 0.85rem;
 }
 
@@ -2378,7 +2499,7 @@ body {
 .quote-pdf-totals .quote-pdf-total {
   margin-top: 0.35rem;
   padding: 0.65rem;
-  background: #0b1727;
+  background: var(--dark);
   color: #fff;
   font-weight: 700;
 }
@@ -2806,7 +2927,7 @@ body {
   height: 2rem;
   place-items: center;
   border-radius: 0.25rem;
-  background: #0f1b2b;
+  background: var(--dark);
   color: #fff;
 }
 

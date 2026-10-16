@@ -49,6 +49,25 @@ builder.Services.AddScoped<ISunatService, SunatService>();
 builder.Services.AddScoped<IPedidosService, PedidosService>();
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
 
+// Infraestructura de Conexión Nubefact (Historia Técnica HT-03)
+builder.Services.Configure<Prosegin.Web.Services.Nubefact.NubefactSettings>(
+    builder.Configuration.GetSection(Prosegin.Web.Services.Nubefact.NubefactSettings.SectionName));
+
+builder.Services.AddHttpClient<Prosegin.Web.Services.Nubefact.INubefactService, Prosegin.Web.Services.Nubefact.NubefactService>((sp, client) =>
+{
+    var settings = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<Prosegin.Web.Services.Nubefact.NubefactSettings>>().Value;
+    if (!string.IsNullOrWhiteSpace(settings.BaseUrl))
+    {
+        client.BaseAddress = new Uri(settings.BaseUrl);
+    }
+    if (!string.IsNullOrWhiteSpace(settings.Token))
+    {
+        // En Nubefact el token se envía directo sin la palabra "Bearer"
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", settings.Token.Trim());
+    }
+    client.Timeout = TimeSpan.FromSeconds(settings.TimeoutSeconds > 0 ? settings.TimeoutSeconds : 10);
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

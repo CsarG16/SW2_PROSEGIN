@@ -161,7 +161,7 @@
 
 .sidebar-nav-link:hover {
   background-color: #f8fafc;
-  color: #0f172a;
+  color: var(--text-dark, #000D31);
   border-color: #f1f5f9;
 }
 
@@ -180,7 +180,7 @@
    ============================================================ */
 .sidebar-nav-link.active {
   background-color: #ffffff !important;
-  color: #0f172a !important;
+  color: var(--text-dark, #000D31) !important;
   font-weight: 600;
   border: 1px solid rgba(226, 232, 240, 0.9) !important;
   box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.08), 0 2px 4px -1px rgba(15, 23, 42, 0.04) !important;
@@ -230,7 +230,7 @@
 .user-avatar-sq {
   width: 36px;
   height: 36px;
-  background-color: #0c1524;
+  background-color: var(--dark, #000D31);
   color: #ffffff;
   font-weight: 800;
   font-size: 0.82rem;
@@ -253,7 +253,7 @@
 .user-name {
   font-size: 0.86rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-dark, #000D31);
   line-height: 1.2;
 }
 
@@ -499,7 +499,7 @@
     left: calc(100% + 14px);
     top: 50%;
     transform: translateY(-50%) translateX(-6px);
-    background: #0f172a;
+    background: var(--dark, #000D31);
     color: #ffffff;
     font-size: 0.82rem;
     font-weight: 600;
@@ -507,7 +507,7 @@
     white-space: nowrap;
     padding: 0.45rem 0.85rem;
     border-radius: 8px;
-    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.35), 0 4px 8px -2px rgba(15, 23, 42, 0.2);
+    box-shadow: 0 10px 25px -5px rgba(0, 13, 49, 0.35), 0 4px 8px -2px rgba(0, 13, 49, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.12);
     opacity: 0;
     visibility: hidden;
@@ -528,7 +528,7 @@
     transform: translateY(-50%);
     border-width: 6px;
     border-style: solid;
-    border-color: transparent #0f172a transparent transparent;
+    border-color: transparent var(--dark, #000D31) transparent transparent;
   }
 
   /* Al pasar el mouse: el tag aparece suavemente con slide */
