@@ -401,6 +401,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (!valido || (window.jQuery && !window.jQuery(form).valid())) {
             e.preventDefault();
+            if (window.ProseginToast) {
+                ProseginToast.error('Por favor completa o corrige los campos obligatorios marcados en rojo.');
+            }
             return;
         }
         guardar.disabled = true;

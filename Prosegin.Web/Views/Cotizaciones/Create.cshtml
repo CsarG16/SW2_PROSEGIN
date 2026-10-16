@@ -22,19 +22,6 @@
         </div>
     </div>
 
-    @if (TempData["SuccessMessage"] != null && !cotizacionGuardada)
-    {
-        <div class="alert alert-success d-flex align-items-center mb-4 border border-success border-opacity-25 rounded-2" style="background-color: #d1e7dd; color: #0f5132; padding: 1rem 1.25rem;">
-            <i class="bi bi-check-circle-fill me-2 fs-5"></i>
-            <span class="fw-medium">@TempData["SuccessMessage"]</span>
-        </div>
-    }
-
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]</div>
-    }
-
     @if (!ViewData.ModelState.IsValid)
     {
         <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>

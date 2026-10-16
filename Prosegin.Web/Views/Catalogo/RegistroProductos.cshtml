@@ -17,18 +17,6 @@
         </h1>
     </div>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4 d-flex align-items-center shadow-sm" role="alert">
-            <i class="bi bi-check-circle-fill fs-4 me-3 text-success"></i>
-            <div>
-                <strong class="d-block">¡Registro Exitoso!</strong>
-                <span>@TempData["SuccessMessage"]</span>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-
     <form asp-controller="Catalogo" asp-action="RegistroProductos" method="post" enctype="multipart/form-data" id="formRegistroProducto" novalidate>
         @Html.AntiForgeryToken()
 
@@ -266,14 +254,7 @@
                                             <td>
                                                 <input asp-for="TarifasProveedores[i].ProveedorId" type="hidden" />
                                                 <span class="fw-semibold">@proveedor.RazonSocial</span>
-                                                @if (seleccionado)
-                                                {
-                                                    <span class="badge text-bg-light border ms-1">Autorizado</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="small text-muted ms-1">No seleccionado</span>
-                                                }
+                                                
                                             </td>
                                             <td>
                                                 <div class="input-group input-group-sm">

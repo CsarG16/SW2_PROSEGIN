@@ -1,0 +1,59 @@
+@* 
+    _Notifications.cshtml - Manejador global de notificaciones Toast para PROSEGIN Core
+    Lee los mensajes emitidos por C# (TempData), los expone de forma accesible y los dispara con ProseginToast.
+*@
+
+@{
+    var successMsg = TempData["ToastSuccess"]?.ToString() 
+                  ?? TempData["SuccessMessage"]?.ToString() 
+                  ?? TempData["ModalSuccess"]?.ToString();
+
+    var errorMsg = TempData["ToastError"]?.ToString() 
+                ?? TempData["ErrorMessage"]?.ToString() 
+                ?? TempData["ModalError"]?.ToString();
+
+    var warningMsg = TempData["ToastWarning"]?.ToString() 
+                  ?? TempData["WarningMessage"]?.ToString() 
+                  ?? TempData["ModalWarning"]?.ToString();
+
+    var infoMsg = TempData["ToastInfo"]?.ToString() 
+               ?? TempData["InfoMessage"]?.ToString();
+}
+
+@if (!string.IsNullOrWhiteSpace(successMsg) || !string.IsNullOrWhiteSpace(errorMsg) || !string.IsNullOrWhiteSpace(warningMsg) || !string.IsNullOrWhiteSpace(infoMsg))
+{
+    <!-- Contenedor semántico accesible para mensajes del servidor (detectable por tests y lectores de pantalla) -->
+    <div id="proseginServerNotifications" class="visually-hidden" aria-live="polite">
+        @if (!string.IsNullOrWhiteSpace(successMsg)) { <span data-type="success">@successMsg</span> }
+        @if (!string.IsNullOrWhiteSpace(errorMsg)) { <span data-type="error">@errorMsg</span> }
+        @if (!string.IsNullOrWhiteSpace(warningMsg)) { <span data-type="warning">@warningMsg</span> }
+        @if (!string.IsNullOrWhiteSpace(infoMsg)) { <span data-type="info">@infoMsg</span> }
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const container = document.getElementById('proseginServerNotifications');
+            if (!container || !window.ProseginToast) return;
+
+            const successSpan = container.querySelector('[data-type="success"]');
+            if (successSpan && successSpan.textContent) {
+                ProseginToast.success(successSpan.textContent.trim());
+            }
+
+            const errorSpan = container.querySelector('[data-type="error"]');
+            if (errorSpan && errorSpan.textContent) {
+                ProseginToast.error(errorSpan.textContent.trim());
+            }
+
+            const warningSpan = container.querySelector('[data-type="warning"]');
+            if (warningSpan && warningSpan.textContent) {
+                ProseginToast.warning(warningSpan.textContent.trim());
+            }
+
+            const infoSpan = container.querySelector('[data-type="info"]');
+            if (infoSpan && infoSpan.textContent) {
+                ProseginToast.info(infoSpan.textContent.trim());
+            }
+        });
+    </script>
+}

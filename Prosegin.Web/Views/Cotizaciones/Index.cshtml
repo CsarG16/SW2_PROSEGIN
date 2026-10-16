@@ -22,19 +22,6 @@
         <span class="quote-inbox-brand"><i class="bi bi-square-fill"></i><strong>PROSEGIN</strong><span>PREVENCIÓN INTEGRAL</span></span>
     </header>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success d-flex align-items-center mt-3" role="status">
-            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
-        </div>
-    }
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger d-flex align-items-center mt-3" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
-        </div>
-    }
-
     <section class="quote-inbox-toolbar">
         <form asp-controller="Cotizaciones" asp-action="Index" method="get" class="quote-inbox-search">
             <label class="visually-hidden" for="buscarCotizacion">Buscar por código o cliente</label>
