@@ -41,10 +41,10 @@ public class NubefactGuiaRequest
     public string FechaDeInicioDeTraslado { get; set; } = DateTime.Now.ToString("dd-MM-yyyy");
 
     /// <summary>
-    /// 1 = Venta, 14 = Venta con entrega a terceros, etc.
+    /// 01 = Venta, 14 = Venta con entrega a terceros, etc.
     /// </summary>
     [JsonPropertyName("motivo_de_traslado")]
-    public int MotivoDeTraslado { get; set; } = 1;
+    public string MotivoDeTraslado { get; set; } = "01";
 
     [JsonPropertyName("peso_bruto_total")]
     public decimal PesoBrutoTotal { get; set; }
@@ -56,10 +56,10 @@ public class NubefactGuiaRequest
     public int NumeroDeBultos { get; set; } = 1;
 
     /// <summary>
-    /// 1 = Transporte Público, 2 = Transporte Privado
+    /// 01 = Transporte Público, 02 = Transporte Privado.
     /// </summary>
-    [JsonPropertyName("modalidad_de_traslado")]
-    public int ModalidadDeTraslado { get; set; } = 1;
+    [JsonPropertyName("tipo_de_transporte")]
+    public string TipoDeTransporte { get; set; } = "02";
 
     [JsonPropertyName("punto_de_partida_ubigeo")]
     public string PuntoDePartidaUbigeo { get; set; } = string.Empty;

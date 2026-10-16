@@ -16,6 +16,7 @@ public class ProductoCatalogoItemViewModel
     public string Nombre { get; set; } = string.Empty;
     public string Categoria { get; set; } = string.Empty;
     public decimal Precio { get; set; }
+    public decimal PesoKg { get; set; }
     public int StockDisponible { get; set; }
     public string? RutaFichaTecnicaPdf { get; set; }
     public string? NombreArchivoPdf { get; set; }
