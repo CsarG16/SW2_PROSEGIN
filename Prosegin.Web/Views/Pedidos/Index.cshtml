@@ -214,6 +214,64 @@
         flex-direction: column;
         border: 1px solid var(--border-card, #e2e8f0);
     }
+
+    .prosegin-toast {
+        position: fixed;
+        top: 1.25rem;
+        right: 1.25rem;
+        z-index: 1200;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        width: min(420px, calc(100vw - 2rem));
+        padding: 14px 16px;
+        border: 1px solid var(--border-card, #e2e8f0);
+        border-left: 4px solid #16a34a;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 16px 35px rgba(15, 23, 42, 0.16);
+        color: #0f172a;
+        opacity: 0;
+        transform: translateY(-10px);
+        pointer-events: none;
+        transition: opacity .2s ease, transform .2s ease;
+    }
+    .prosegin-toast.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    .prosegin-toast.is-error {
+        border-left-color: #dc2626;
+    }
+    .prosegin-toast-icon {
+        color: #16a34a;
+        font-size: 1.25rem;
+        line-height: 1;
+    }
+    .prosegin-toast.is-error .prosegin-toast-icon {
+        color: #dc2626;
+    }
+    .prosegin-toast-title {
+        display: block;
+        font-size: .9rem;
+        font-weight: 800;
+        line-height: 1.25;
+    }
+    .prosegin-toast-message {
+        display: block;
+        margin-top: 3px;
+        color: #64748b;
+        font-size: .82rem;
+        line-height: 1.35;
+    }
+    .prosegin-toast-close {
+        margin-left: auto;
+        border: 0;
+        background: transparent;
+        color: #94a3b8;
+        cursor: pointer;
+        line-height: 1;
+    }
 </style>
 
 <div class="container-fluid px-0 font-prosegin">
@@ -521,9 +579,120 @@
             <button type="button" class="btn-prosegin-secondary" style="min-width: 120px;" onclick="closeDetailModal()">
                 Cerrar
             </button>
-            <a href="#" class="btn-prosegin-primary d-none" id="modalGeneratePurchase">
-                <i class="bi bi-box-seam me-1"></i> GENERAR ORDEN DE COMPRA A PROVEEDORES
-            </a>
+            <div class="d-flex flex-column flex-sm-row gap-2">
+                <a href="#" class="btn-prosegin-primary d-none" id="modalGeneratePurchase">
+                    <i class="bi bi-box-seam me-1"></i> GENERAR ORDEN DE COMPRA A PROVEEDORES
+                </a>
+                <button type="button" class="btn-prosegin-primary d-none" id="modalGenerateInvoice" onclick="openInvoicePreview()">
+                    <i class="bi bi-lightning-charge-fill me-1"></i> Factura Electrónica
+                </button>
+                <button type="button" class="btn-prosegin-primary d-none" id="modalGenerateGuide" onclick="openGuidePreview()">
+                    <i class="bi bi-truck me-1"></i> Guía de Remisión
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+<div id="invoiceToast" class="prosegin-toast" role="status" aria-live="polite">
+    <span id="invoiceToastIcon" class="material-symbols-outlined prosegin-toast-icon">check_circle</span>
+    <div>
+        <span id="invoiceToastTitle" class="prosegin-toast-title"></span>
+        <span id="invoiceToastMessage" class="prosegin-toast-message"></span>
+    </div>
+    <button type="button" class="prosegin-toast-close" onclick="hideInvoiceToast()" aria-label="Cerrar notificación">
+        <span class="material-symbols-outlined" style="font-size: 18px;">close</span>
+    </button>
+</div>
+
+<div id="invoiceModal" class="detail-modal-overlay d-none" onclick="closeInvoicePreview(event)">
+    <div class="detail-modal-box p-4" onclick="event.stopPropagation()" style="max-width: 900px;">
+        <div class="d-flex align-items-start justify-content-between pb-3 mb-3 border-bottom">
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge-dot dot-listo-despacho"></span>
+                    <span style="font-size: .9rem; font-weight: 800; text-transform: uppercase; color: #0f172a;">Previsualización de factura electrónica</span>
+                </div>
+                <span id="invoiceNumberPreview" class="text-muted" style="font-size: .8rem;"></span>
+            </div>
+            <button type="button" class="btn btn-sm btn-light border-0 rounded-circle p-1 text-muted" onclick="closeInvoicePreview()" aria-label="Cerrar previsualización">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-3 rounded-3 mb-3" style="background: #f8fafc; border: 1px solid var(--border-card, #e2e8f0);">
+            <div class="row g-3">
+                <div class="col-md-6"><small class="text-muted d-block">CLIENTE / ADQUIRENTE</small><strong id="invoiceClient"></strong><span id="invoiceRuc" class="d-block text-muted"></span></div>
+                <div class="col-md-6"><small class="text-muted d-block">DIRECCIÓN FISCAL</small><span id="invoiceAddress"></span></div>
+                <div class="col-md-6"><small class="text-muted d-block">FECHA DE EMISIÓN</small><span id="invoiceDate"></span></div>
+                <div class="col-md-6"><small class="text-muted d-block">CONDICIÓN DE PAGO</small><span id="invoicePayment"></span></div>
+            </div>
+        </div>
+        <div class="table-responsive mb-3">
+            <table class="table table-sm align-middle mb-0">
+                <thead><tr><th>CANT.</th><th>REF. / SKU</th><th>DESCRIPCIÓN</th><th class="text-end">VALOR UNIT.</th><th class="text-end">TOTAL</th></tr></thead>
+                <tbody id="invoiceItems"></tbody>
+            </table>
+        </div>
+        <div class="d-flex justify-content-end">
+            <div style="min-width: 260px;">
+                <div class="d-flex justify-content-between"><span>Subtotal ventas:</span><strong id="invoiceSubtotal"></strong></div>
+                <div class="d-flex justify-content-between"><span>IGV (18%):</span><strong id="invoiceIgv"></strong></div>
+                <div class="d-flex justify-content-between border-top pt-2 mt-2 fs-5"><span>Importe total:</span><strong id="invoiceTotal"></strong></div>
+            </div>
+        </div>
+        <div class="d-flex flex-column flex-sm-row justify-content-between gap-2 pt-3 mt-3 border-top">
+            <button type="button" class="btn-prosegin-secondary" onclick="closeInvoicePreview()">Cancelar / Volver</button>
+            <button type="button" class="btn-prosegin-primary" id="confirmInvoiceButton" onclick="emitInvoice()">
+                <i class="bi bi-lightning-charge-fill me-1"></i> GENERAR FACTURA ELECTRÓNICA
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="guideModal" class="detail-modal-overlay d-none" onclick="closeGuidePreview(event)">
+    <div class="detail-modal-box p-4" onclick="event.stopPropagation()" style="max-width: 900px;">
+        <div class="d-flex align-items-start justify-content-between pb-3 mb-3 border-bottom">
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge-dot dot-listo-despacho"></span>
+                    <span class="fw-bold text-uppercase" style="font-size:.9rem;">Previsualización de guía de remisión remitente</span>
+                </div>
+                <span id="guideNumberPreview" class="text-muted" style="font-size:.8rem;"></span>
+            </div>
+            <button type="button" class="btn btn-sm btn-light border-0 rounded-circle p-1 text-muted" onclick="closeGuidePreview()" aria-label="Cerrar previsualización">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-3 rounded-3 mb-3" style="background:#f8fafc;border:1px solid var(--border-card,#e2e8f0);">
+            <div class="row g-3">
+                <div class="col-md-6"><small class="text-muted d-block">DESTINATARIO</small><strong id="guideClient"></strong><span id="guideRuc" class="d-block text-muted"></span></div>
+                <div class="col-md-6"><small class="text-muted d-block">PUNTO DE PARTIDA</small><span id="guideOrigin"></span></div>
+                <div class="col-md-6"><small class="text-muted d-block">PUNTO DE LLEGADA</small><span id="guideDestination"></span></div>
+                <div class="col-md-6"><small class="text-muted d-block">PESO BRUTO TOTAL</small><strong id="guideWeight"></strong></div>
+            </div>
+        </div>
+        <div class="table-responsive mb-3">
+            <table class="table table-sm align-middle mb-0">
+                <thead><tr><th>REF. / SKU</th><th>DESCRIPCIÓN</th><th>CANTIDAD</th><th>UNIDAD</th><th class="text-end">PESO (KG)</th></tr></thead>
+                <tbody id="guideItems"></tbody>
+            </table>
+        </div>
+        <div class="p-3 rounded-3 mb-3" style="background:#fffbeb;border:1px solid rgba(245,158,11,.35);">
+            <div class="fw-bold text-uppercase mb-2" style="font-size:.78rem;">Transportista & unidad de transporte</div>
+            <div class="row g-3">
+                <div class="col-md-6"><label for="guideDriver" class="form-label small fw-bold">CONDUCTOR *</label><input id="guideDriver" class="form-control" maxlength="200" required></div>
+                <div class="col-md-6"><label for="guidePlate" class="form-label small fw-bold">PLACA DEL VEHÍCULO *</label><input id="guidePlate" class="form-control text-uppercase" maxlength="20" required></div>
+                <div class="col-md-6"><label for="guideDriverDocument" class="form-label small fw-bold">DNI DEL CONDUCTOR</label><input id="guideDriverDocument" class="form-control" maxlength="20"></div>
+                <div class="col-md-6"><label for="guideLicense" class="form-label small fw-bold">LICENCIA</label><input id="guideLicense" class="form-control" maxlength="30"></div>
+            </div>
+        </div>
+        <div class="d-flex flex-column flex-sm-row justify-content-between gap-2 pt-3 mt-3 border-top">
+            <button type="button" class="btn-prosegin-secondary" onclick="closeGuidePreview()">Cancelar / Volver</button>
+            <button type="button" class="btn-prosegin-primary" id="confirmGuideButton" onclick="emitGuide()">
+                <i class="bi bi-lightning-charge-fill me-1"></i> EMITIR GUÍA DE REMISIÓN
+            </button>
         </div>
     </div>
 </div>
@@ -532,6 +701,13 @@
     // Almacén de pedidos serializados para apertura instantánea del modal
     const pedidosDataset = @Html.Raw(pedidosJson);
     const abastecimientoUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("Index", "Abastecimiento")));
+    const invoicePreviewUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("PrevisualizarFactura", "Pedidos")));
+    const emitInvoiceUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("EmitirFactura", "Pedidos")));
+    const guidePreviewUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("PrevisualizarGuiaRemision", "Pedidos")));
+    const emitGuideUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("EmitirGuiaRemision", "Pedidos")));
+    let pedidoSeleccionado;
+    let facturaPreview;
+    let guiaPreview;
     function openDetailModal(orderId) {
         const pedido = pedidosDataset.find(p => p.NumeroPedido.toLowerCase() === orderId.toLowerCase());
         if (!pedido) {
@@ -589,6 +765,9 @@
             url.searchParams.set('id', String(pedido.Id));
             abastecimiento.href = url.pathname + url.search;
         }
+        pedidoSeleccionado = pedido;
+        document.getElementById('modalGenerateInvoice').classList.toggle('d-none', !pedido.PuedeGenerarFactura);
+        document.getElementById('modalGenerateGuide').classList.toggle('d-none', !pedido.PuedeGenerarGuiaRemision);
         document.getElementById('detailModal').classList.remove('d-none');
     }
 
@@ -601,6 +780,268 @@
             closeDetailModal();
         }
     }
+
+    async function openInvoicePreview() {
+        if (!pedidoSeleccionado) return;
+        const url = new URL(invoicePreviewUrl, window.location.origin);
+        url.searchParams.set('numeroPedido', pedidoSeleccionado.NumeroPedido);
+        const response = await fetch(url);
+        if (!response.ok) {
+            showInvoiceToast('No se pudo abrir la factura', await response.text(), true);
+            return;
+        }
+
+    window.openGuidePreview = async function () {
+            if (!pedidoSeleccionado) return;
+            const url = new URL(guidePreviewUrl, window.location.origin);
+            url.searchParams.set('numeroPedido', pedidoSeleccionado.NumeroPedido);
+            const response = await fetch(url);
+            if (!response.ok) {
+                showInvoiceToast('No se pudo abrir la guía', await response.text(), true);
+                return;
+            }
+            guiaPreview = await response.json();
+            document.getElementById('guideNumberPreview').textContent =
+                `${guiaPreview.serie}-${String(guiaPreview.numero).padStart(6, '0')} · ${guiaPreview.numeroPedido}`;
+            document.getElementById('guideClient').textContent = guiaPreview.clienteRazonSocial;
+            document.getElementById('guideRuc').textContent = `RUC: ${guiaPreview.clienteRuc}`;
+            document.getElementById('guideOrigin').textContent = guiaPreview.puntoPartidaDireccion;
+            document.getElementById('guideDestination').textContent = guiaPreview.puntoLlegadaDireccion;
+            document.getElementById('guideWeight').textContent = `${Number(guiaPreview.pesoBrutoTotal).toFixed(3)} kg`;
+            const items = document.getElementById('guideItems');
+            items.replaceChildren();
+            guiaPreview.items.forEach(item => {
+                const row = document.createElement('tr');
+                [item.codigo, item.descripcion, item.cantidad, item.unidadMedida, Number(item.pesoTotalKg).toFixed(3)]
+                    .forEach((value, index) => {
+                        const cell = document.createElement('td');
+                        cell.textContent = value;
+                        if (index === 4) cell.className = 'text-end';
+                        row.appendChild(cell);
+                    });
+                items.appendChild(row);
+            });
+            document.getElementById('guideDriver').value = '';
+            document.getElementById('guidePlate').value = '';
+            document.getElementById('guideDriverDocument').value = '';
+            document.getElementById('guideLicense').value = '';
+            closeDetailModal();
+            document.getElementById('guideModal').classList.remove('d-none');
+    }
+
+    window.emitGuide = async function () {
+            const driver = document.getElementById('guideDriver').value.trim();
+            const plate = document.getElementById('guidePlate').value.trim();
+            if (!driver || !plate) {
+                showInvoiceToast('Datos incompletos', 'Ingrese el nombre del conductor y la placa del vehículo.', true);
+                return;
+            }
+            const button = document.getElementById('confirmGuideButton');
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            button.disabled = true;
+            try {
+                const body = new URLSearchParams({
+                    numeroPedido: guiaPreview.numeroPedido,
+                    conductorNombre: driver,
+                    placaVehiculo: plate,
+                    conductorDocumento: document.getElementById('guideDriverDocument').value.trim(),
+                    conductorLicencia: document.getElementById('guideLicense').value.trim(),
+                    __RequestVerificationToken: token
+                });
+                const response = await fetch(emitGuideUrl, {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': token, 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    showInvoiceToast('No se pudo emitir la guía', result.mensaje || 'Intenta nuevamente.', true);
+                    return;
+                }
+                document.getElementById('guideModal').classList.add('d-none');
+                showInvoiceToast('Guía de remisión emitida con éxito',
+                    result.numeroGuia ? `Documento generado: ${result.numeroGuia}` : 'El documento fue validado correctamente.');
+                window.setTimeout(() => window.location.reload(), 2200);
+            } finally {
+                button.disabled = false;
+            }
+    }
+
+    window.closeGuidePreview = function (event) {
+            if (event && event.target.id !== 'guideModal') return;
+            document.getElementById('guideModal').classList.add('d-none');
+            if (pedidoSeleccionado) document.getElementById('detailModal').classList.remove('d-none');
+    }
+
+        facturaPreview = await response.json();
+        document.getElementById('invoiceNumberPreview').textContent =
+            `${facturaPreview.serie}-${String(facturaPreview.numero).padStart(6, '0')} · ${facturaPreview.numeroPedido}`;
+        document.getElementById('invoiceClient').textContent = facturaPreview.clienteRazonSocial;
+        document.getElementById('invoiceRuc').textContent = `RUC: ${facturaPreview.clienteRuc}`;
+        document.getElementById('invoiceAddress').textContent = facturaPreview.direccionFiscal;
+        document.getElementById('invoiceDate').textContent = new Date(facturaPreview.fechaEmision).toLocaleDateString('es-PE');
+        document.getElementById('invoicePayment').textContent = facturaPreview.condicionPago;
+        const items = document.getElementById('invoiceItems');
+        items.replaceChildren();
+        facturaPreview.items.forEach(item => {
+            const row = document.createElement('tr');
+            [item.cantidad, item.codigo, item.descripcion, formatMoney(item.precioUnitario), formatMoney(item.total)]
+                .forEach((value, index) => {
+                    const cell = document.createElement('td');
+                    cell.textContent = value;
+                    if (index > 2) cell.className = 'text-end';
+                    row.appendChild(cell);
+                });
+            items.appendChild(row);
+        });
+        document.getElementById('invoiceSubtotal').textContent = formatMoney(facturaPreview.subtotal);
+        document.getElementById('invoiceIgv').textContent = formatMoney(facturaPreview.igv);
+        document.getElementById('invoiceTotal').textContent = formatMoney(facturaPreview.total);
+        closeDetailModal();
+        document.getElementById('invoiceModal').classList.remove('d-none');
+    }
+
+    window.openGuidePreview = async function () {
+        if (!pedidoSeleccionado) return;
+        const url = new URL(guidePreviewUrl, window.location.origin);
+        url.searchParams.set('numeroPedido', pedidoSeleccionado.NumeroPedido);
+        const response = await fetch(url);
+        if (!response.ok) {
+            showInvoiceToast('No se pudo abrir la guía', await response.text(), true);
+            return;
+        }
+
+        guiaPreview = await response.json();
+        document.getElementById('guideNumberPreview').textContent =
+            `${guiaPreview.serie}-${String(guiaPreview.numero).padStart(6, '0')} · ${guiaPreview.numeroPedido}`;
+        document.getElementById('guideClient').textContent = guiaPreview.clienteRazonSocial;
+        document.getElementById('guideRuc').textContent = `RUC: ${guiaPreview.clienteRuc}`;
+        document.getElementById('guideOrigin').textContent = guiaPreview.puntoPartidaDireccion;
+        document.getElementById('guideDestination').textContent = guiaPreview.puntoLlegadaDireccion;
+        document.getElementById('guideWeight').textContent = `${Number(guiaPreview.pesoBrutoTotal).toFixed(3)} kg`;
+        const items = document.getElementById('guideItems');
+        items.replaceChildren();
+        guiaPreview.items.forEach(item => {
+            const row = document.createElement('tr');
+            [item.codigo, item.descripcion, item.cantidad, item.unidadMedida, Number(item.pesoTotalKg).toFixed(3)]
+                .forEach((value, index) => {
+                    const cell = document.createElement('td');
+                    cell.textContent = value;
+                    if (index === 4) cell.className = 'text-end';
+                    row.appendChild(cell);
+                });
+            items.appendChild(row);
+        });
+        document.getElementById('guideDriver').value = '';
+        document.getElementById('guidePlate').value = '';
+        document.getElementById('guideDriverDocument').value = '';
+        document.getElementById('guideLicense').value = '';
+        closeDetailModal();
+        document.getElementById('guideModal').classList.remove('d-none');
+    };
+
+    window.emitGuide = async function () {
+        const driver = document.getElementById('guideDriver').value.trim();
+        const plate = document.getElementById('guidePlate').value.trim();
+        if (!driver || !plate) {
+            showInvoiceToast('Datos incompletos', 'Ingrese el nombre del conductor y la placa del vehículo.', true);
+            return;
+        }
+        const button = document.getElementById('confirmGuideButton');
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        button.disabled = true;
+        try {
+            const body = new URLSearchParams({
+                numeroPedido: guiaPreview.numeroPedido,
+                conductorNombre: driver,
+                placaVehiculo: plate,
+                conductorDocumento: document.getElementById('guideDriverDocument').value.trim(),
+                conductorLicencia: document.getElementById('guideLicense').value.trim(),
+                __RequestVerificationToken: token
+            });
+            const response = await fetch(emitGuideUrl, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': token, 'Content-Type': 'application/x-www-form-urlencoded' },
+                body
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                showInvoiceToast('No se pudo emitir la guía', result.mensaje || 'Intenta nuevamente.', true);
+                return;
+            }
+            document.getElementById('guideModal').classList.add('d-none');
+            showInvoiceToast('Guía de remisión emitida con éxito',
+                result.numeroGuia ? `Documento generado: ${result.numeroGuia}` : 'El documento fue validado correctamente.');
+            window.setTimeout(() => window.location.reload(), 2200);
+        } finally {
+            button.disabled = false;
+        }
+    };
+
+    window.closeGuidePreview = function (event) {
+        if (event && event.target.id !== 'guideModal') return;
+        document.getElementById('guideModal').classList.add('d-none');
+        if (pedidoSeleccionado) document.getElementById('detailModal').classList.remove('d-none');
+    };
+
+    async function emitInvoice() {
+        const button = document.getElementById('confirmInvoiceButton');
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        button.disabled = true;
+        try {
+            const body = new URLSearchParams({
+                numeroPedido: facturaPreview.numeroPedido,
+                __RequestVerificationToken: token
+            });
+            const response = await fetch(emitInvoiceUrl, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': token, 'Content-Type': 'application/x-www-form-urlencoded' },
+                body
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                showInvoiceToast('No se pudo emitir la factura', result.mensaje || 'Intenta nuevamente.', true);
+                return;
+            }
+            document.getElementById('invoiceModal').classList.add('d-none');
+            showInvoiceToast(
+                'Factura emitida con éxito',
+                result.numeroFactura ? `Comprobante generado: ${result.numeroFactura}` : 'El comprobante fue validado correctamente.'
+            );
+            window.setTimeout(() => window.location.reload(), 2200);
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    function closeInvoicePreview(event) {
+        if (event && event.target.id !== 'invoiceModal') return;
+        document.getElementById('invoiceModal').classList.add('d-none');
+        if (pedidoSeleccionado) document.getElementById('detailModal').classList.remove('d-none');
+    }
+
+    function formatMoney(value) {
+        return Number(value).toLocaleString('es-PE', { style: 'currency', currency: 'PEN' });
+    }
+
+    let invoiceToastTimeout;
+
+    function showInvoiceToast(title, message, isError = false) {
+        const toast = document.getElementById('invoiceToast');
+        const icon = document.getElementById('invoiceToastIcon');
+        toast.classList.toggle('is-error', isError);
+        icon.textContent = isError ? 'error' : 'check_circle';
+        document.getElementById('invoiceToastTitle').textContent = title;
+        document.getElementById('invoiceToastMessage').textContent = message;
+        toast.classList.add('is-visible');
+        window.clearTimeout(invoiceToastTimeout);
+        invoiceToastTimeout = window.setTimeout(hideInvoiceToast, isError ? 6000 : 4500);
+    }
+
+    function hideInvoiceToast() {
+        document.getElementById('invoiceToast').classList.remove('is-visible');
+    }
+
     const pedidoParaAbrir = @Html.Raw(JsonSerializer.Serialize(Context.Request.Query["abrirDetalle"].ToString()));
     if (pedidoParaAbrir) {
         openDetailModal(pedidoParaAbrir);

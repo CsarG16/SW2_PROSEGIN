@@ -13,5 +13,6 @@ public class OrdenVenta
     // Navegación
     public Cotizacion Cotizacion { get; set; } = null!;
     public ICollection<Factura> Facturas { get; set; } = new List<Factura>();
+    public ICollection<GuiaRemision> GuiasRemision { get; set; } = new List<GuiaRemision>();
     public ICollection<OrdenCompra> OrdenesCompra { get; set; } = new List<OrdenCompra>();
 }

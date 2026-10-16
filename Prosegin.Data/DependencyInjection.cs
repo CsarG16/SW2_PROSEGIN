@@ -8,7 +8,6 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddDataServices(this IServiceCollection services, IConfiguration configuration)
     {
-        // 1. Priorizar variables de entorno (.env)
         var dbHost = Environment.GetEnvironmentVariable("DB_HOST");
         var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "3306";
         var dbName = Environment.GetEnvironmentVariable("DB_NAME");
@@ -18,11 +17,10 @@ public static class DependencyInjection
         string connectionString;
         if (!string.IsNullOrEmpty(dbHost) && !string.IsNullOrEmpty(dbName) && !string.IsNullOrEmpty(dbUser))
         {
-            connectionString = $"Server={dbHost};Port={dbPort};Database={dbName};User={dbUser};Password={dbPassword};";
+            connectionString = $"Server={dbHost};Port={dbPort};Database={dbName};User={dbUser};Password={dbPassword ?? string.Empty};";
         }
         else
         {
-            // 2. Fallback a appsettings.json si no hay variables de entorno
             connectionString = configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
         }
 
