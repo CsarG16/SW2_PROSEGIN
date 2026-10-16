@@ -512,6 +512,29 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Actualizar_CotizacionVencidaSoloPuedeRenovarseUnaVez()
+    {
+        var oldQuoteId = await SeedCotizacionAsync("Enviada", DateTime.UtcNow.AddHours(-60), DateTime.UtcNow.AddHours(-12), 12m);
+
+        var primeraRespuesta = await _host.PostAsync(new() { ["id"] = oldQuoteId.ToString() }, "Actualizar");
+        var segundaRespuesta = await _host.PostAsync(new() { ["id"] = oldQuoteId.ToString() }, "Actualizar");
+
+        Assert.Equal(HttpStatusCode.Redirect, primeraRespuesta.StatusCode);
+        Assert.Equal(HttpStatusCode.Redirect, segundaRespuesta.StatusCode);
+        var html = WebUtility.HtmlDecode(await _host.Client.GetStringAsync(segundaRespuesta.Headers.Location!));
+        Assert.Contains("Esta cotización ya fue actualizada anteriormente", html);
+        var bandejaVencidas = WebUtility.HtmlDecode(await _host.Client.GetStringAsync("/Cotizaciones?estado=Vencida"));
+        Assert.Contains("Ya fue actualizada", bandejaVencidas);
+        Assert.DoesNotContain("Actualizar cotización", bandejaVencidas);
+        await _host.WithDatabaseAsync(async context =>
+        {
+            var quotes = await context.Cotizaciones.AsNoTracking().ToListAsync();
+            Assert.Equal(2, quotes.Count);
+            Assert.True(quotes.Single(q => q.Id == oldQuoteId).FueActualizada);
+        });
+    }
+
+    [Fact]
     public async Task Actualizar_RechazaCotizacionAunVigente()
     {
         var activeQuoteId = await SeedCotizacionAsync("Enviada", DateTime.UtcNow, DateTime.UtcNow.AddHours(48));

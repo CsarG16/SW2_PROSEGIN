@@ -139,12 +139,21 @@
                                             else if (cotizacion.Estado == "Vencida")
                                             {
                                                 <li>
-                                                    <form asp-controller="Cotizaciones" asp-action="Actualizar" asp-route-id="@cotizacion.Id" method="post">
-                                                        @Html.AntiForgeryToken()
-                                                        <button type="submit" class="dropdown-item">
-                                                            <i class="bi bi-arrow-repeat me-2"></i>Actualizar cotización
-                                                        </button>
-                                                    </form>
+                                                    @if (cotizacion.FueActualizada)
+                                                    {
+                                                        <span class="dropdown-item-text text-muted">
+                                                            <i class="bi bi-check2 me-2"></i>Ya fue actualizada
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <form asp-controller="Cotizaciones" asp-action="Actualizar" asp-route-id="@cotizacion.Id" method="post">
+                                                            @Html.AntiForgeryToken()
+                                                            <button type="submit" class="dropdown-item">
+                                                                <i class="bi bi-arrow-repeat me-2"></i>Actualizar cotización
+                                                            </button>
+                                                        </form>
+                                                    }
                                                 </li>
                                             }
                                             else if (cotizacion.Estado == "Aprobada")

@@ -8,6 +8,7 @@ public class Cotizacion
     public DateTime FechaEmision { get; set; } = DateTime.UtcNow;
     public DateTime? FechaVencimiento { get; set; }
     public string Estado { get; set; } = "Borrador"; // Borrador, Enviada, Aprobada, Rechazada
+    public bool FueActualizada { get; set; }
     public string CondicionPago { get; set; } = Prosegin.Data.Validation.CondicionPagoRules.PlazoCreditoPredeterminado;
     public string? NumeroOrdenCompraCliente { get; set; }
     public string? RutaOrdenCompraCliente { get; set; }

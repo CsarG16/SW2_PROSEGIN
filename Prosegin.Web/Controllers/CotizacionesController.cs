@@ -64,6 +64,7 @@ public class CotizacionesController : Controller
                 FechaVencimiento = c.FechaVencimiento ?? c.FechaEmision.AddHours(48),
                 Total = c.Total,
                 Estado = c.Estado,
+                FueActualizada = c.FueActualizada,
                 NumeroOrdenCompraCliente = c.NumeroOrdenCompraCliente,
                 NombreArchivoOrdenCompraCliente = c.NombreArchivoOrdenCompraCliente,
                 PuedeReemplazarOrdenCompra = c.Estado == "Aprobada"
@@ -741,6 +742,12 @@ public class CotizacionesController : Controller
 
         var ahora = DateTime.UtcNow;
         var fechaVencimiento = cotizacionVencida.FechaVencimiento ?? cotizacionVencida.FechaEmision.AddHours(48);
+        if (cotizacionVencida.FueActualizada)
+        {
+            TempData["ErrorMessage"] = "Esta cotización ya fue actualizada anteriormente.";
+            return RedirectToAction(nameof(Index), new { estado = "Vencida" });
+        }
+
         if (cotizacionVencida.Estado != "Enviada" || fechaVencimiento > ahora)
         {
             TempData["ErrorMessage"] = "Solo se pueden actualizar cotizaciones vencidas.";
@@ -807,7 +814,22 @@ public class CotizacionesController : Controller
             Detalles = detalles
         };
 
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        var reclamada = await _context.Cotizaciones
+            .Where(c => c.Id == id
+                && !c.FueActualizada
+                && c.Estado == "Enviada"
+                && (c.FechaVencimiento ?? c.FechaEmision.AddHours(48)) <= ahora)
+            .ExecuteUpdateAsync(updates => updates.SetProperty(c => c.FueActualizada, true), cancellationToken);
+        if (reclamada == 0)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            TempData["ErrorMessage"] = "Esta cotización ya fue actualizada por otra operación.";
+            return RedirectToAction(nameof(Index), new { estado = "Vencida" });
+        }
+
         await GuardarCotizacionConCorrelativoAsync(nuevaCotizacion, ahora, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
         TempData["SuccessMessage"] = $"Se creó la cotización {nuevaCotizacion.Correlativo} con vigencia de 48 horas.";
         return RedirectToAction(nameof(Index), new { estado = "Enviada" });
     }
@@ -956,12 +978,17 @@ public class CotizacionesController : Controller
         DateTime fechaEmision,
         CancellationToken cancellationToken)
     {
-        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = _context.Database.CurrentTransaction == null
+            ? await _context.Database.BeginTransactionAsync(cancellationToken)
+            : null;
         _context.Cotizaciones.Add(cotizacion);
         await _context.SaveChangesAsync(cancellationToken);
         cotizacion.Correlativo = $"COT-{fechaEmision:yyyy}-{cotizacion.Id:D4}";
         await _context.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        if (transaction != null)
+        {
+            await transaction.CommitAsync(cancellationToken);
+        }
     }
 
     private byte[] GenerarPdf(Cotizacion cotizacion) => CotizacionPdfGenerator.Generate(
