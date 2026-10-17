@@ -36,6 +36,14 @@ if (envFilePath != null)
     }
 }
 
+var connectionArgIndex = Array.FindIndex(args, a => a.Equals("--connection", StringComparison.OrdinalIgnoreCase));
+if (connectionArgIndex >= 0 && connectionArgIndex + 1 < args.Length)
+{
+    var overrideConn = args[connectionArgIndex + 1];
+    builder.Configuration["ConnectionStrings:DefaultConnection"] = overrideConn;
+    Environment.SetEnvironmentVariable("DB_HOST", null);
+}
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddDataServices(builder.Configuration);
@@ -115,6 +123,30 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// Modo CLI para sembrado directo de datos si se pasa el flag --seed
+if (args.Contains("--seed", StringComparer.OrdinalIgnoreCase))
+{
+    Console.WriteLine("[PROSEGIN SEEDER] Aplicando migraciones pendientes...");
+    using (var scope = app.Services.CreateScope())
+    {
+        var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
+        await context.Database.MigrateAsync();
+    }
+
+    Console.WriteLine("[PROSEGIN SEEDER] Sembrando datos de Clientes...");
+    await ClienteDataSeeder.SeedAsync(app.Services);
+
+    Console.WriteLine("[PROSEGIN SEEDER] Sembrando Proveedores, Productos y Tarifas...");
+    using (var scope = app.Services.CreateScope())
+    {
+        var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
+        await DbSeeder.SeedAsync(context);
+    }
+
+    Console.WriteLine("[PROSEGIN SEEDER] ¡Datos iniciales sembrados con éxito en la base de datos!");
+    return;
+}
 
 // Aplicar cambios de esquema antes de consultar o sembrar datos.
 using (var scope = app.Services.CreateScope())
