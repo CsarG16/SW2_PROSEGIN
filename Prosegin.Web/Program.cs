@@ -68,6 +68,20 @@ builder.Services.AddHttpClient<Prosegin.Web.Services.Nubefact.INubefactService, 
     client.Timeout = TimeSpan.FromSeconds(settings.TimeoutSeconds > 0 ? settings.TimeoutSeconds : 10);
 });
 
+// Infraestructura de Almacenamiento en la Nube Supabase (Historia Técnica HT-02)
+builder.Services.Configure<Prosegin.Web.Services.Supabase.SupabaseSettings>(
+    builder.Configuration.GetSection(Prosegin.Web.Services.Supabase.SupabaseSettings.SectionName));
+
+builder.Services.AddHttpClient<Prosegin.Web.Services.Supabase.ISupabaseStorageService, Prosegin.Web.Services.Supabase.SupabaseStorageService>((sp, client) =>
+{
+    var settings = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<Prosegin.Web.Services.Supabase.SupabaseSettings>>().Value;
+    if (!string.IsNullOrWhiteSpace(settings.Url) && Uri.TryCreate(settings.Url, UriKind.Absolute, out var uri))
+    {
+        client.BaseAddress = uri;
+    }
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -8,6 +8,7 @@ using Prosegin.Data;
 using Prosegin.Data.Entities;
 using Prosegin.Web.ViewModels.Catalogo;
 using Prosegin.Web.Services;
+using Prosegin.Web.Services.Supabase;
 
 namespace Prosegin.Web.Controllers;
 
@@ -16,11 +17,16 @@ public class CatalogoController : Controller
     private const string MensajeSkuDuplicado = "El código SKU ya se encuentra registrado";
     private readonly ProseginDbContext _context;
     private readonly IWebHostEnvironment _webHostEnvironment;
+    private readonly ISupabaseStorageService _storageService;
 
-    public CatalogoController(ProseginDbContext context, IWebHostEnvironment webHostEnvironment)
+    public CatalogoController(
+        ProseginDbContext context,
+        IWebHostEnvironment webHostEnvironment,
+        ISupabaseStorageService storageService)
     {
         _context = context;
         _webHostEnvironment = webHostEnvironment;
+        _storageService = storageService;
     }
 
     [HttpGet]
@@ -184,20 +190,20 @@ public class CatalogoController : Controller
             return View(model);
         }
 
-        // 1. Guardar físicamente el PDF en wwwroot/uploads/fichas/
-        var webRoot = _webHostEnvironment.WebRootPath;
-        if (string.IsNullOrWhiteSpace(webRoot))
+        // 1. Subir físicamente el PDF a Supabase Storage
+        string urlFichaPublica;
+        try
         {
-            webRoot = Path.Combine(_webHostEnvironment.ContentRootPath, "wwwroot");
+            urlFichaPublica = await _storageService.SubirArchivoAsync(model.FichaTecnica!, "fichas", cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError(nameof(model.FichaTecnica), $"No se pudo almacenar la ficha técnica en la nube: {ex.Message}");
+            await CargarProveedoresAsync(model, cancellationToken);
+            return View(model);
         }
 
-        var carpetaFichas = Path.Combine(webRoot, "uploads", "fichas");
-        Directory.CreateDirectory(carpetaFichas);
-
-        var nombreUnico = $"{Guid.NewGuid():N}.pdf";
-        var rutaFisica = Path.Combine(carpetaFichas, nombreUnico);
-
-        // 2. Persistir en MySQL con la ruta relativa pública
+        // 2. Persistir en MySQL con la URL pública permanente de Supabase
         var producto = new Producto
         {
             Sku = model.Sku.Trim().ToUpperInvariant(),
@@ -205,7 +211,7 @@ public class CatalogoController : Controller
             Categoria = model.Categoria.Trim(),
             UnidadMedida = string.IsNullOrWhiteSpace(model.UnidadMedida) ? "UND" : model.UnidadMedida.Trim().ToUpperInvariant(),
             CostoReferencial = model.CostoBaseAdquisicion,
-            RutaFichaTecnicaPdf = $"/uploads/fichas/{nombreUnico}",
+            RutaFichaTecnicaPdf = urlFichaPublica,
             NombreArchivoPdf = Path.GetFileName(model.FichaTecnica!.FileName),
             Descripcion = string.IsNullOrWhiteSpace(model.Marca)
                 ? string.Empty
@@ -229,11 +235,6 @@ public class CatalogoController : Controller
         var guardado = false;
         try
         {
-            await using (var stream = new FileStream(rutaFisica, FileMode.CreateNew))
-            {
-                await model.FichaTecnica.CopyToAsync(stream, cancellationToken);
-            }
-
             _context.Productos.Add(producto);
             await _context.SaveChangesAsync(cancellationToken);
             guardado = true;
@@ -252,9 +253,9 @@ public class CatalogoController : Controller
         }
         finally
         {
-            if (!guardado && System.IO.File.Exists(rutaFisica))
+            if (!guardado)
             {
-                System.IO.File.Delete(rutaFisica);
+                _ = _storageService.EliminarArchivoAsync(urlFichaPublica, CancellationToken.None);
             }
         }
 
@@ -315,36 +316,42 @@ public class CatalogoController : Controller
         string? rutaAnterior = null;
         if (FichaTecnica != null && FichaTecnica.Length > 0)
         {
-            var webRoot = _webHostEnvironment.WebRootPath;
-            if (string.IsNullOrWhiteSpace(webRoot))
+            if (!await FichaTecnicaValidator.EsValidaAsync(FichaTecnica, cancellationToken))
             {
-                webRoot = Path.Combine(_webHostEnvironment.ContentRootPath, "wwwroot");
-            }
-            var carpetaFichas = Path.Combine(webRoot, "uploads", "fichas");
-            Directory.CreateDirectory(carpetaFichas);
-
-            var nombreUnico = $"{Guid.NewGuid():N}.pdf";
-            var rutaFisica = Path.Combine(carpetaFichas, nombreUnico);
-
-            await using (var stream = new FileStream(rutaFisica, FileMode.CreateNew))
-            {
-                await FichaTecnica.CopyToAsync(stream, cancellationToken);
+                TempData["ErrorMessage"] = FichaTecnicaValidator.MensajeError;
+                return RedirectToAction(nameof(Index));
             }
 
-            if (!string.IsNullOrWhiteSpace(producto.RutaFichaTecnicaPdf)
-                && producto.RutaFichaTecnicaPdf.Contains("uploads/fichas", StringComparison.OrdinalIgnoreCase))
+            try
             {
-                rutaAnterior = ResolvePdfPath(producto.RutaFichaTecnicaPdf);
-            }
+                var nuevaUrl = await _storageService.SubirArchivoAsync(FichaTecnica, "fichas", cancellationToken);
+                rutaAnterior = producto.RutaFichaTecnicaPdf;
 
-            producto.RutaFichaTecnicaPdf = $"/uploads/fichas/{nombreUnico}";
-            producto.NombreArchivoPdf = Path.GetFileName(FichaTecnica.FileName);
+                producto.RutaFichaTecnicaPdf = nuevaUrl;
+                producto.NombreArchivoPdf = Path.GetFileName(FichaTecnica.FileName);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"No se pudo actualizar la ficha técnica en la nube: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         await _context.SaveChangesAsync(cancellationToken);
-        if (rutaAnterior != null && System.IO.File.Exists(rutaAnterior))
+        if (!string.IsNullOrWhiteSpace(rutaAnterior))
         {
-            System.IO.File.Delete(rutaAnterior);
+            if (rutaAnterior.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            {
+                _ = _storageService.EliminarArchivoAsync(rutaAnterior, CancellationToken.None);
+            }
+            else
+            {
+                var archivoLocalAnterior = ResolvePdfPath(rutaAnterior);
+                if (System.IO.File.Exists(archivoLocalAnterior))
+                {
+                    System.IO.File.Delete(archivoLocalAnterior);
+                }
+            }
         }
         TempData["SuccessMessage"] = "Producto y tarifas por proveedor actualizados correctamente.";
         return RedirectToAction(nameof(Index));
@@ -362,6 +369,14 @@ public class CatalogoController : Controller
             return NotFound("El producto no cuenta con ficha técnica registrada.");
         }
 
+        // Si la ficha está almacenada en la nube (Supabase Storage), redirigir directamente
+        if (Uri.TryCreate(producto.RutaFichaTecnicaPdf, UriKind.Absolute, out var uri)
+            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+        {
+            return Redirect(producto.RutaFichaTecnicaPdf);
+        }
+
+        // Retrocompatibilidad con archivos locales históricos
         var filePath = ResolvePdfPath(producto.RutaFichaTecnicaPdf);
         if (!System.IO.File.Exists(filePath))
         {
