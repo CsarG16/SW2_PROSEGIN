@@ -28,6 +28,18 @@ public class PedidoDetalleViewModel
 
     public bool VentaAprobada { get; set; } = true;
     public bool PuedeGenerarOrdenesCompra { get; set; }
+    public bool PuedeGenerarFactura { get; set; }
+    public bool FacturaEmitida { get; set; }
+    public string? NumeroFactura { get; set; }
+    public string? EstadoEmisionFactura { get; set; }
+    public bool PuedeGenerarGuiaRemision { get; set; }
+    public bool GuiaRemisionEmitida { get; set; }
+    public string? NumeroGuiaRemision { get; set; }
+    public decimal Subtotal { get; set; }
+    public decimal Igv { get; set; }
+    public decimal Total { get; set; }
+    public string CondicionPago { get; set; } = string.Empty;
+    public string DireccionFiscal { get; set; } = string.Empty;
 
     public List<PedidoItemViewModel> Items { get; set; } = new();
 }

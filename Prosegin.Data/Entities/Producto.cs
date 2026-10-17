@@ -8,6 +8,7 @@ public class Producto
     public string Descripcion { get; set; } = string.Empty;
     public string Categoria { get; set; } = string.Empty;
     public string UnidadMedida { get; set; } = "UND";
+    public decimal PesoKg { get; set; }
     public decimal CostoReferencial { get; set; }
     public int StockDisponible { get; set; }
     public string? RutaFichaTecnicaPdf { get; set; }

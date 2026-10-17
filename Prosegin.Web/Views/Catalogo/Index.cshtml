@@ -86,7 +86,7 @@
                             <strong class="text-dark d-block fw-bold" style="font-size: 1.25rem;">S/ @product.Precio.ToString("N2", new CultureInfo("es-PE"))</strong>
                         </div>
                         <div class="catalog-add-controls justify-content-end">
-                            <button type="button" class="btn btn-dark px-3 py-2 fw-semibold text-white d-flex align-items-center gap-2 shadow-sm rounded-3" style="font-size: 0.85rem;" data-bs-toggle="modal" data-bs-target="#editProductModal" onclick="populateEditModal(this)" data-id="@product.Id" data-sku="@product.Sku" data-name="@product.Nombre" data-category="@product.Categoria" data-stock="@product.StockDisponible" data-cost="@product.Precio.ToString(CultureInfo.InvariantCulture)" data-tarifas="@JsonSerializer.Serialize(product.TarifasProveedor)">
+                            <button type="button" class="btn btn-dark px-3 py-2 fw-semibold text-white d-flex align-items-center gap-2 shadow-sm rounded-3" style="font-size: 0.85rem;" data-bs-toggle="modal" data-bs-target="#editProductModal" onclick="populateEditModal(this)" data-id="@product.Id" data-sku="@product.Sku" data-name="@product.Nombre" data-category="@product.Categoria" data-stock="@product.StockDisponible" data-cost="@product.Precio.ToString(CultureInfo.InvariantCulture)" data-weight="@product.PesoKg.ToString(CultureInfo.InvariantCulture)" data-tarifas="@JsonSerializer.Serialize(product.TarifasProveedor)">
                                 <i class="bi bi-pencil-square"></i><span>Editar</span>
                             </button>
                         </div>
@@ -138,6 +138,14 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Nombre del Producto</label>
                         <input type="text" class="form-control" id="editProductName" name="Nombre" placeholder="Descripción completa del producto EPP" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-secondary text-uppercase mb-1">Peso unitario (kg)</label>
+                        <div class="input-group">
+                            <input type="number" step="0.001" min="0.001" class="form-control" id="editProductWeight" name="PesoKg" required />
+                            <span class="input-group-text">kg</span>
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -324,6 +332,7 @@
             document.getElementById('editProductName').value = btn.dataset.name;
             document.getElementById('editProductCategory').value = btn.dataset.category;
             document.getElementById('editProductCost').value = btn.dataset.cost;
+            document.getElementById('editProductWeight').value = btn.dataset.weight;
 
             const container = document.getElementById('editProviderTariffs');
             container.replaceChildren();

@@ -245,8 +245,33 @@ namespace Prosegin.Data.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CadenaQr")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
                     b.Property<int>("ClienteId")
                         .HasColumnType("int");
+
+                    b.Property<string>("CodigoHash")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("EnlaceCdr")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("EnlacePdf")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("EnlaceXml")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("EstadoEmision")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
 
                     b.Property<string>("EstadoPago")
                         .IsRequired()
@@ -258,12 +283,24 @@ namespace Prosegin.Data.Migrations
                     b.Property<DateTime>("FechaVencimiento")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("MensajeError")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<int>("Numero")
+                        .HasColumnType("int");
+
                     b.Property<string>("NumeroFactura")
                         .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<int>("OrdenVentaId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Serie")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
 
                     b.Property<decimal>("Total")
                         .HasPrecision(18, 2)
@@ -273,9 +310,232 @@ namespace Prosegin.Data.Migrations
 
                     b.HasIndex("ClienteId");
 
-                    b.HasIndex("OrdenVentaId");
+                    b.HasIndex("OrdenVentaId")
+                        .IsUnique();
+
+                    b.HasIndex("Serie", "Numero")
+                        .IsUnique();
 
                     b.ToTable("Facturas", (string)null);
+                });
+
+            modelBuilder.Entity("Prosegin.Data.Entities.FacturaDetalle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Cantidad")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<decimal>("Descuento")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("FacturaId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Igv")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("PrecioUnitario")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Total")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("UnidadMedida")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<decimal>("ValorUnitario")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FacturaId");
+
+                    b.ToTable("FacturaDetalles", (string)null);
+                });
+
+            modelBuilder.Entity("Prosegin.Data.Entities.GuiaRemision", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CadenaQr")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("ClienteId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CodigoHash")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ConductorDocumento")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ConductorLicencia")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ConductorNombre")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("EnlaceCdr")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("EnlacePdf")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("EnlaceXml")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("EstadoEmision")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<DateTime>("FechaEmision")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("FechaInicioTraslado")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("MensajeError")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("Numero")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NumeroBultos")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NumeroGuia")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<int>("OrdenVentaId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PesoBrutoTotal")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<string>("PlacaVehiculo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("PuntoLlegadaDireccion")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("varchar(250)");
+
+                    b.Property<string>("PuntoLlegadaUbigeo")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PuntoPartidaDireccion")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("varchar(250)");
+
+                    b.Property<string>("PuntoPartidaUbigeo")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Serie")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClienteId");
+
+                    b.HasIndex("OrdenVentaId")
+                        .IsUnique();
+
+                    b.HasIndex("Serie", "Numero")
+                        .IsUnique();
+
+                    b.ToTable("GuiasRemision", (string)null);
+                });
+
+            modelBuilder.Entity("Prosegin.Data.Entities.GuiaRemisionDetalle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Cantidad")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<int>("GuiaRemisionId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PesoTotalKg")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<decimal>("PesoUnitarioKg")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<int>("ProductoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UnidadMedida")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GuiaRemisionId");
+
+                    b.HasIndex("ProductoId");
+
+                    b.ToTable("GuiaRemisionDetalles", (string)null);
                 });
 
             modelBuilder.Entity("Prosegin.Data.Entities.OrdenCompra", b =>
@@ -411,6 +671,10 @@ namespace Prosegin.Data.Migrations
                     b.Property<string>("NombreArchivoPdf")
                         .HasMaxLength(150)
                         .HasColumnType("varchar(150)");
+
+                    b.Property<decimal>("PesoKg")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
 
                     b.Property<string>("RutaFichaTecnicaPdf")
                         .HasMaxLength(300)
@@ -627,6 +891,55 @@ namespace Prosegin.Data.Migrations
                     b.Navigation("OrdenVenta");
                 });
 
+            modelBuilder.Entity("Prosegin.Data.Entities.FacturaDetalle", b =>
+                {
+                    b.HasOne("Prosegin.Data.Entities.Factura", "Factura")
+                        .WithMany("Detalles")
+                        .HasForeignKey("FacturaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Factura");
+                });
+
+            modelBuilder.Entity("Prosegin.Data.Entities.GuiaRemision", b =>
+                {
+                    b.HasOne("Prosegin.Data.Entities.Cliente", "Cliente")
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Prosegin.Data.Entities.OrdenVenta", "OrdenVenta")
+                        .WithMany("GuiasRemision")
+                        .HasForeignKey("OrdenVentaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cliente");
+
+                    b.Navigation("OrdenVenta");
+                });
+
+            modelBuilder.Entity("Prosegin.Data.Entities.GuiaRemisionDetalle", b =>
+                {
+                    b.HasOne("Prosegin.Data.Entities.GuiaRemision", "GuiaRemision")
+                        .WithMany("Detalles")
+                        .HasForeignKey("GuiaRemisionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Prosegin.Data.Entities.Producto", "Producto")
+                        .WithMany()
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GuiaRemision");
+
+                    b.Navigation("Producto");
+                });
+
             modelBuilder.Entity("Prosegin.Data.Entities.OrdenCompra", b =>
                 {
                     b.HasOne("Prosegin.Data.Entities.OrdenVenta", "OrdenVenta")
@@ -722,6 +1035,16 @@ namespace Prosegin.Data.Migrations
                     b.Navigation("OrdenVenta");
                 });
 
+            modelBuilder.Entity("Prosegin.Data.Entities.Factura", b =>
+                {
+                    b.Navigation("Detalles");
+                });
+
+            modelBuilder.Entity("Prosegin.Data.Entities.GuiaRemision", b =>
+                {
+                    b.Navigation("Detalles");
+                });
+
             modelBuilder.Entity("Prosegin.Data.Entities.OrdenCompra", b =>
                 {
                     b.Navigation("Detalles");
@@ -730,6 +1053,8 @@ namespace Prosegin.Data.Migrations
             modelBuilder.Entity("Prosegin.Data.Entities.OrdenVenta", b =>
                 {
                     b.Navigation("Facturas");
+
+                    b.Navigation("GuiasRemision");
 
                     b.Navigation("OrdenesCompra");
                 });
