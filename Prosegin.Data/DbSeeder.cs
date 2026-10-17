@@ -7,6 +7,41 @@ public static class DbSeeder
 {
     public static async Task SeedAsync(ProseginDbContext context)
     {
+        var correoInicial = Environment.GetEnvironmentVariable("PROSEGIN_ADMIN_EMAIL");
+        var contrasenaInicial = Environment.GetEnvironmentVariable("PROSEGIN_ADMIN_PASSWORD");
+        var tieneCredencialesIniciales = !string.IsNullOrWhiteSpace(correoInicial)
+            && !string.IsNullOrWhiteSpace(contrasenaInicial);
+        var administradorInicial = await context.Usuarios
+            .SingleOrDefaultAsync(u =>
+                (u.NombreUsuario == "admin" && u.Email == "admin@prosegin.local")
+                || (correoInicial != null && u.NombreUsuario == correoInicial));
+
+        if (administradorInicial is not null && tieneCredencialesIniciales)
+        {
+            administradorInicial.NombreUsuario = correoInicial!;
+            administradorInicial.Email = correoInicial!;
+            administradorInicial.PasswordHash = PasswordHashHelper.Hash(contrasenaInicial!);
+        }
+        else if (!await context.Usuarios.AnyAsync())
+        {
+            if (!tieneCredencialesIniciales)
+            {
+                throw new InvalidOperationException(
+                    "Configure PROSEGIN_ADMIN_EMAIL y PROSEGIN_ADMIN_PASSWORD para crear la cuenta inicial.");
+            }
+
+            context.Usuarios.Add(new Usuario
+            {
+                NombreUsuario = correoInicial!,
+                PasswordHash = PasswordHashHelper.Hash(contrasenaInicial!),
+                NombreCompleto = "Administrador del sistema",
+                Email = correoInicial!,
+                Rol = "Administrador",
+                Activo = true,
+                FechaCreacion = DateTime.UtcNow
+            });
+        }
+
         // 1. Semillas de Proveedores
         var proveedores = new List<Proveedor>
         {

@@ -14,33 +14,39 @@ public static class DependencyInjection
         var dbUser = Environment.GetEnvironmentVariable("DB_USER");
         var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD");
 
-        string connectionString;
-        if (!string.IsNullOrEmpty(dbHost) && !string.IsNullOrEmpty(dbName) && !string.IsNullOrEmpty(dbUser))
+        var connectionString = configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
+
+        if (!string.IsNullOrWhiteSpace(dbHost) && !string.IsNullOrWhiteSpace(dbName) && !string.IsNullOrWhiteSpace(dbUser))
         {
-            connectionString = $"Server={dbHost};Port={dbPort};Database={dbName};User={dbUser};Password={dbPassword ?? string.Empty};";
-        }
-        else
-        {
-            connectionString = configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
+            connectionString = $"Server={dbHost};Port={dbPort};Database={dbName};User={dbUser};Password={dbPassword};";
         }
 
-        if (!string.IsNullOrEmpty(connectionString))
+        if (string.IsNullOrWhiteSpace(connectionString))
         {
-            services.AddDbContext<ProseginDbContext>(options =>
+            connectionString = "Data Source=prosegin.db";
+        }
+
+        services.AddDbContext<ProseginDbContext>(options =>
+        {
+            if (connectionString.Contains("Data Source=", StringComparison.OrdinalIgnoreCase)
+                || connectionString.Contains("Filename=", StringComparison.OrdinalIgnoreCase))
             {
-                ServerVersion serverVersion;
-                try
-                {
-                    serverVersion = ServerVersion.AutoDetect(connectionString);
-                }
-                catch
-                {
-                    serverVersion = new MySqlServerVersion(new Version(8, 0, 36));
-                }
+                options.UseSqlite(connectionString);
+                return;
+            }
 
-                options.UseMySql(connectionString, serverVersion);
-            });
-        }
+            ServerVersion serverVersion;
+            try
+            {
+                serverVersion = ServerVersion.AutoDetect(connectionString);
+            }
+            catch
+            {
+                serverVersion = new MySqlServerVersion(new Version(8, 0, 36));
+            }
+
+            options.UseMySql(connectionString, serverVersion);
+        });
 
         return services;
     }

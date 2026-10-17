@@ -24,6 +24,7 @@ public class ProseginDbContext : DbContext
     public DbSet<FacturaDetalle> FacturaDetalles { get; set; }
     public DbSet<GuiaRemision> GuiasRemision { get; set; }
     public DbSet<GuiaRemisionDetalle> GuiaRemisionDetalles { get; set; }
+    public DbSet<Usuario> Usuarios { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -171,6 +172,18 @@ public class ProseginDbContext : DbContext
             entity.Property(e => e.PesoTotalKg).HasPrecision(18, 3);
             entity.HasOne(e => e.GuiaRemision).WithMany(g => g.Detalles).HasForeignKey(e => e.GuiaRemisionId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Producto).WithMany().HasForeignKey(e => e.ProductoId);
+        });
+
+        modelBuilder.Entity<Usuario>(entity =>
+        {
+            entity.ToTable("Usuarios");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.NombreUsuario).HasMaxLength(50).IsRequired();
+            entity.HasIndex(e => e.NombreUsuario).IsUnique();
+            entity.Property(e => e.PasswordHash).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.NombreCompleto).HasMaxLength(150).IsRequired();
+            entity.Property(e => e.Email).HasMaxLength(150);
+            entity.Property(e => e.Rol).HasMaxLength(50).HasDefaultValue("Administrador");
         });
         
         // Relación 1 a 1 de Cotizacion y OrdenVenta

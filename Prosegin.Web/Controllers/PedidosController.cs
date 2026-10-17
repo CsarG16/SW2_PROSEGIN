@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Prosegin.Web.Services;
 using Prosegin.Web.ViewModels.Pedidos;

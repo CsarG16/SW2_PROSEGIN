@@ -1,0 +1,440 @@
+@model Prosegin.Web.ViewModels.Account.LoginViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Iniciar sesión";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - PROSEGIN</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.min.css" />
+    <style>
+        :root {
+            --prosegin-yellow: #f7a61a;
+            --prosegin-yellow-deep: #ea8d00;
+            --prosegin-dark: #0f172a;
+            --prosegin-dark-soft: #1b2332;
+            --light-panel: #efefef;
+            --text-muted: #6b7280;
+            --shadow-soft: 0 25px 60px rgba(15, 23, 42, 0.18);
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            height: 100%;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #e9e9ea;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .login-shell {
+            width: 100%;
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1.02fr 1fr;
+            background: #dfe3ea;
+        }
+
+        .hero-panel {
+            position: relative;
+            background-image: linear-gradient(180deg, rgba(9, 18, 29, 0.64), rgba(9, 18, 29, 0.72)),
+                url('https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&w=1200&q=80');
+            background-size: cover;
+            background-position: center;
+            padding: 48px 52px 32px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            color: white;
+        }
+
+        .brand-row {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-top: 14px;
+            margin-bottom: 48px;
+        }
+
+        .brand-badge {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(180deg, var(--prosegin-yellow), var(--prosegin-yellow-deep));
+            box-shadow: 0 10px 25px rgba(247, 166, 26, 0.45);
+            color: #212121;
+            font-size: 1.8rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .brand-copy {
+            display: flex;
+            flex-direction: column;
+            line-height: 1;
+        }
+
+        .brand-copy .brand-title {
+            font-size: clamp(2rem, 2.2vw, 3rem);
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            margin: 0;
+        }
+
+        .brand-copy .brand-subtitle {
+            margin-top: 6px;
+            font-size: 0.7rem;
+            letter-spacing: 0.26rem;
+            color: rgba(255,255,255,0.84);
+            font-weight: 700;
+        }
+
+        .hero-content {
+            max-width: 520px;
+            margin-top: 28px;
+        }
+
+        .hero-title {
+            font-size: clamp(2.3rem, 3vw, 4rem);
+            line-height: 1.08;
+            font-weight: 800;
+            letter-spacing: -0.06em;
+            margin: 0;
+            max-width: 540px;
+        }
+
+        .hero-description {
+            margin-top: 22px;
+            max-width: 520px;
+            color: rgba(255,255,255,0.82);
+            font-size: 1.12rem;
+            line-height: 1.6;
+        }
+
+        .status-dot {
+            position: absolute;
+            left: 22px;
+            bottom: 22px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #28d17c;
+            box-shadow: 0 0 0 4px rgba(40, 209, 124, 0.22);
+        }
+
+        .right-panel {
+            background: #efefef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 32px;
+        }
+
+        .login-card {
+            width: min(100%, 540px);
+            border: none;
+            background: transparent;
+        }
+
+        .login-header {
+            margin-bottom: 28px;
+        }
+
+        .login-header h1 {
+            margin: 0;
+            font-size: clamp(2.2rem, 2vw, 3rem);
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            color: #111827;
+        }
+
+        .login-header p {
+            margin-top: 8px;
+            margin-bottom: 0;
+            color: #4b5563;
+            font-size: 1.05rem;
+        }
+
+        .login-form {
+            width: 100%;
+        }
+
+        .field-group {
+            margin-bottom: 18px;
+        }
+
+        .field-label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 0.75rem;
+            letter-spacing: 0.12rem;
+            color: #374151;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .input-wrap {
+            position: relative;
+        }
+
+        .input-wrap i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7b8796;
+            font-size: 1rem;
+        }
+
+        .login-input {
+            width: 100%;
+            height: 58px;
+            border-radius: 12px;
+            border: 1px solid #d4d9e0;
+            background: rgba(255,255,255,0.5);
+            padding: 0 46px 0 46px;
+            font-size: 1.04rem;
+            color: #111827;
+            outline: none;
+            transition: border-color .2s ease, box-shadow .2s ease;
+        }
+
+        .login-input:focus {
+            border-color: rgba(247, 166, 26, 0.85);
+            box-shadow: 0 0 0 0.25rem rgba(247, 166, 26, 0.14);
+            background: #fff;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            color: #6b7280;
+            font-size: 1.1rem;
+            padding: 4px 6px;
+            cursor: pointer;
+        }
+
+        .options-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 8px 0 22px;
+            gap: 16px;
+            font-size: 0.92rem;
+        }
+
+        .remember-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .remember-box input {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--prosegin-yellow);
+        }
+
+        .forgot-link {
+            color: #2b5dff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .submit-btn {
+            width: 100%;
+            height: 54px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(180deg, #f7a61a, #eb8d12);
+            color: #1f2937;
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: 0.08rem;
+            text-transform: uppercase;
+            box-shadow: 0 12px 22px rgba(247, 166, 26, 0.22);
+            transition: transform .15s ease, box-shadow .15s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 24px rgba(247, 166, 26, 0.28);
+        }
+
+        .support-text {
+            margin-top: 22px;
+            text-align: center;
+            color: #4b5563;
+            font-size: 0.95rem;
+        }
+
+        .support-text a {
+            color: #1e3a8a;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .app-footer {
+            position: absolute;
+            right: 36px;
+            bottom: 22px;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9rem;
+            letter-spacing: 0.04rem;
+        }
+
+        .validation-summary {
+            margin: 0 0 18px;
+            padding: 10px 12px;
+            background: rgba(220, 53, 69, 0.08);
+            border: 1px solid rgba(220, 53, 69, 0.15);
+            border-radius: 10px;
+            color: #b42318;
+            font-size: 0.9rem;
+        }
+
+        @@media (max-width: 980px) {
+            body {
+                overflow: auto;
+            }
+
+            .login-shell {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-panel {
+                min-height: 340px;
+                padding: 28px 24px 18px;
+            }
+
+            .brand-row {
+                margin-bottom: 20px;
+            }
+
+            .hero-title {
+                font-size: 2.2rem;
+            }
+
+            .app-footer {
+                position: static;
+                margin-top: 18px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-shell">
+        <section class="hero-panel" aria-label="Presentación de PROSEGIN">
+            <div class="brand-row">
+                <div class="brand-badge">P</div>
+                <div class="brand-copy">
+                    <h2 class="brand-title">PROSEGIN</h2>
+                    <span class="brand-subtitle">PREVENCIÓN INTEGRAL</span>
+                </div>
+            </div>
+
+            <div class="hero-content">
+                <h1 class="hero-title">Gestión Comercial y Logística de EPP B2B.</h1>
+                <p class="hero-description">
+                    Centralizamos y automatizamos el ciclo de cotizaciones, abastecimiento y facturación para garantizar operaciones industriales eficientes.
+                </p>
+            </div>
+
+            <div class="status-dot" aria-label="Sistema activo"></div>
+        </section>
+
+        <section class="right-panel">
+            <div class="login-card">
+                <div class="login-header">
+                    <h1>Acceso Corporativo</h1>
+                    <p>Ingrese sus credenciales para continuar.</p>
+                </div>
+
+                <form asp-action="Login" asp-controller="Account" method="post" class="login-form">
+                    @Html.AntiForgeryToken()
+
+                    <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+                    <div class="field-group">
+                        <label class="field-label" asp-for="NombreUsuario">Correo corporativo</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-person"></i>
+                            <input asp-for="NombreUsuario" class="login-input" placeholder="miguelga@gmail.com" autocomplete="username" />
+                        </div>
+                        <span asp-validation-for="NombreUsuario" class="text-danger d-block mt-2"></span>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" asp-for="Password">Contraseña</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-lock"></i>
+                            <input asp-for="Password" type="password" class="login-input" placeholder="••••••••••" autocomplete="current-password" />
+                            <button type="button" class="toggle-password" aria-label="Mostrar contraseña">
+                                <i class="bi bi-eye-slash"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Password" class="text-danger d-block mt-2"></span>
+                    </div>
+
+                    <div class="options-row">
+                        <label class="remember-box">
+                            <input asp-for="Recordarme" />
+                            <span>Recordar mi usuario</span>
+                        </label>
+                        <a href="#" class="forgot-link">¿Olvidó su contraseña?</a>
+                    </div>
+
+                    <button type="submit" class="submit-btn">Iniciar sesión</button>
+                </form>
+
+                <div class="support-text">
+                    ¿Problemas de acceso? <a href="#">Contacte a Soporte TI</a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggle = document.querySelector('.toggle-password');
+            const field = document.querySelector('#Password');
+            if (toggle && field) {
+                toggle.addEventListener('click', function () {
+                    const isPassword = field.type === 'password';
+                    field.type = isPassword ? 'text' : 'password';
+                    toggle.innerHTML = isPassword ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

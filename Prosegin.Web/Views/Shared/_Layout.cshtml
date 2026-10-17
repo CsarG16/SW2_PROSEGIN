@@ -123,19 +123,30 @@
 
         <!-- Footer del Sidebar: Usuario -->
         <div class="sidebar-footer">
-            <div class="user-profile-card">
-                <div class="user-avatar-sq">
-                    <span>CM</span>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="user-profile-card">
+                    <div class="user-avatar-sq">
+                        <span>@(User.Identity.Name?.Substring(0, 1).ToUpperInvariant() ?? "U")</span>
+                    </div>
+                    <div class="user-profile-text">
+                        <div class="user-name">@User.Identity.Name</div>
+                        <div class="user-role">@User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</div>
+                    </div>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn-logout" title="Cerrar Sesión">
+                            <i class="bi bi-box-arrow-right"></i>
+                        </button>
+                    </form>
                 </div>
-                <div class="user-profile-text">
-                    <div class="user-name">Carlos M.</div>
-                    <div class="user-role">Asesor Comercial</div>
+            }
+            else
+            {
+                <div class="user-profile-card">
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-primary btn-sm w-100">Iniciar sesión</a>
                 </div>
-                <button type="button" class="btn-logout" title="Cerrar Sesión">
-                    <i class="bi bi-box-arrow-right"></i>
-                </button>
-                <span class="sidebar-floating-tag">Carlos M. &bull; Asesor Comercial</span>
-            </div>
+            }
         </div>
     </aside>
 

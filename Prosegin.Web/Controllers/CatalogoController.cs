@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;

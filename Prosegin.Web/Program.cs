@@ -1,9 +1,12 @@
 // PROSEGIN Core - Inicialización de la aplicación Web
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Prosegin.Data;
 using Prosegin.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Configuration.AddEnvironmentVariables();
 
 // Buscar el archivo .env desde el proyecto hacia la raíz del repositorio/solución.
 var directory = new DirectoryInfo(builder.Environment.ContentRootPath);
@@ -20,24 +23,53 @@ while (directory != null)
     directory = directory.Parent;
 }
 
-if (envFilePath != null)
+if (envFilePath is not null)
 {
-    foreach (var line in File.ReadAllLines(envFilePath))
+    try
     {
-        var trimmed = line.Trim();
-        if (string.IsNullOrWhiteSpace(trimmed) || trimmed.StartsWith('#')) continue;
-        var separatorIndex = trimmed.IndexOf('=');
-        if (separatorIndex > 0)
+        foreach (var line in File.ReadAllLines(envFilePath))
         {
-            var key = trimmed[..separatorIndex].Trim();
-            var value = trimmed[(separatorIndex + 1)..].Trim();
-            Environment.SetEnvironmentVariable(key, value);
+            var trimmed = line.Trim();
+            if (string.IsNullOrWhiteSpace(trimmed) || trimmed.StartsWith('#')) continue;
+
+            var separatorIndex = trimmed.IndexOf('=');
+            if (separatorIndex > 0)
+            {
+                var key = trimmed[..separatorIndex].Trim();
+                var value = trimmed[(separatorIndex + 1)..].Trim();
+                if (!string.IsNullOrWhiteSpace(key) && !string.IsNullOrWhiteSpace(value))
+                {
+                    Environment.SetEnvironmentVariable(key, value);
+                }
+            }
         }
+    }
+    catch (Exception ex)
+    {
+        var logger = LoggerFactory.Create(logging => logging.AddConsole()).CreateLogger("Program");
+        logger.LogWarning(ex, "No se pudo cargar el archivo .env desde {EnvFilePath}", envFilePath);
     }
 }
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddHealthChecks();
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.Cookie.Name = "ProseginAuth";
+        options.Cookie.HttpOnly = true;
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+    });
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
 builder.Services.AddDataServices(builder.Configuration);
 
 // Servicio de integración SUNAT con IHttpClientFactory
@@ -110,21 +142,14 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHealthChecks("/health").AllowAnonymous();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
-
-// Aplicar cambios de esquema antes de consultar o sembrar datos.
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
-    await context.Database.MigrateAsync();
-}
-
-// Sembrado de datos de clientes si no existen
-await ClienteDataSeeder.SeedAsync(app.Services);
+    pattern: "{controller=Account}/{action=Login}/{id?}");
 
 // Ejecución de Seeder de datos iniciales de EPP y proveedores
 using (var scope = app.Services.CreateScope())
@@ -133,6 +158,8 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ProseginDbContext>();
+        context.Database.EnsureCreated();
+        await ClienteDataSeeder.SeedAsync(app.Services);
         await DbSeeder.SeedAsync(context);
     }
     catch (Exception ex)
