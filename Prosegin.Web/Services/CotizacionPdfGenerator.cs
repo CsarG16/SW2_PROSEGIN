@@ -352,9 +352,28 @@ public static class CotizacionPdfGenerator
                 // Ficha link styled
                 gfx.DrawString(values[i], f.Small, new XSolidBrush(Orange),
                     new XRect(cx, cy + 4, cw, 14), XStringFormats.TopLeft);
-                var url = fichaUrl(det.ProductoId);
-                if (!string.IsNullOrWhiteSpace(url))
-                    page.AddWebLink(new PdfRectangle(new XRect(cx, cy + 2, cw, 18)), url);
+
+                // Dibujar subrayado sutil para indicar visualmente que es un enlace interactivo
+                var textSize = gfx.MeasureString(values[i], f.Small);
+                gfx.DrawLine(new XPen(Orange, 0.75), cx, cy + 4 + textSize.Height - 1, cx + textSize.Width, cy + 4 + textSize.Height - 1);
+
+                var rawUrl = !string.IsNullOrWhiteSpace(det.Producto?.RutaFichaTecnicaPdf)
+                          && (det.Producto.RutaFichaTecnicaPdf.Trim().StartsWith("http://", StringComparison.OrdinalIgnoreCase) 
+                              || det.Producto.RutaFichaTecnicaPdf.Trim().StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                    ? det.Producto.RutaFichaTecnicaPdf.Trim()
+                    : fichaUrl(det.ProductoId)?.Trim();
+
+                if (!string.IsNullOrWhiteSpace(rawUrl))
+                {
+                    var targetUrl = Uri.TryCreate(rawUrl, UriKind.Absolute, out var uri)
+                        ? uri.AbsoluteUri
+                        : rawUrl;
+
+                    // PDFsharp requiere transformar las coordenadas de dibujo (Top-Left) a las coordenadas nativas de página PDF (Bottom-Left)
+                    var clickBounds = new XRect(cx - 2, cy + 1, cw + 4, 18);
+                    var linkRect = gfx.Transformer.WorldToDefaultPage(clickBounds);
+                    page.AddWebLink(new PdfRectangle(linkRect), targetUrl);
+                }
             }
             else
             {

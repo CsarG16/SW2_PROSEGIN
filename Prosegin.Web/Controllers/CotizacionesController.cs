@@ -1002,7 +1002,7 @@ public class CotizacionesController : Controller
         productoId =>
         {
             var detalle = cotizacion.Detalles?.FirstOrDefault(d => d.ProductoId == productoId);
-            var rutaFicha = detalle?.Producto?.RutaFichaTecnicaPdf;
+            var rutaFicha = detalle?.Producto?.RutaFichaTecnicaPdf?.Trim();
 
             // Si la ficha técnica es una URL pública (Supabase Storage), se usa directamente para que abra en cualquier dispositivo/WhatsApp
             if (!string.IsNullOrWhiteSpace(rutaFicha)
