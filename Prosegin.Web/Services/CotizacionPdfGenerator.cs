@@ -263,8 +263,8 @@ public static class CotizacionPdfGenerator
     private static void DrawInfoPair(XGraphics gfx, string label, string value, double x, double y, double maxW, FontBundle f)
     {
         DrawMiniLabel(gfx, label, x, y, f.Small);
-        // Truncate if too long
-        gfx.DrawString(TruncateText(value, maxW, f.Body), f.Bold8, new XSolidBrush(Navy),
+        // Truncate exact if too long
+        gfx.DrawString(TruncateExact(value, maxW, f.Bold8, gfx), f.Bold8, new XSolidBrush(Navy),
             new XRect(x, y + 10, maxW, 14), XStringFormats.TopLeft);
     }
 
@@ -273,8 +273,8 @@ public static class CotizacionPdfGenerator
 
     // ─────────────────────────── Table ───────────────────────────────────
 
-    // Column widths: #, SKU, Descripción, Cant., P.Unit., Subtotal, Ficha
-    private static readonly double[] ColW = { 22, 64, 158, 40, 74, 82, 62 };
+    // Column widths: # (22), SKU (74), Descripción (208), Cant. (36), P.Unit. (68), Subtotal (75), Ficha (32) = 515 pts
+    private static readonly double[] ColW = { 22, 74, 208, 36, 68, 75, 32 };
 
     private static double TableWidth => ColW.Sum();
 
@@ -288,8 +288,16 @@ public static class CotizacionPdfGenerator
         double x = Margin + 4;
         for (int i = 0; i < labels.Length; i++)
         {
+            var format = i switch
+            {
+                0 => XStringFormats.Center,
+                3 or 4 or 5 => XStringFormats.TopRight,
+                6 => XStringFormats.Center,
+                _ => XStringFormats.TopLeft
+            };
+
             gfx.DrawString(labels[i], font, XBrushes.White,
-                new XRect(x + 4, y + 7, ColW[i] - 8, 14), XStringFormats.TopLeft);
+                new XRect(x + 4, y + 7, ColW[i] - 8, 14), format);
             x += ColW[i];
         }
     }
@@ -309,17 +317,7 @@ public static class CotizacionPdfGenerator
 
         gfx.DrawLine(new XPen(Divider), Margin, y + ProductRowHeight, Margin + TableWidth, y + ProductRowHeight);
 
-        bool hasFicha = !string.IsNullOrWhiteSpace(det.Producto.RutaFichaTecnicaPdf);
-        var values = new[]
-        {
-            lineNum.ToString(CultureInfo.InvariantCulture),
-            det.Producto.Sku,
-            det.NombreProducto,
-            det.Cantidad.ToString("N0", PeruCulture),
-            FormatMoney(det.PrecioVentaCalculado),
-            FormatMoney(det.Subtotal),
-            hasFicha ? "Ver ficha ↗" : "—"
-        };
+        bool hasFicha = !string.IsNullOrWhiteSpace(det.Producto?.RutaFichaTecnicaPdf);
 
         double x = Margin + 4;
         for (int i = 0; i < ColW.Length; i++)
@@ -331,54 +329,78 @@ public static class CotizacionPdfGenerator
             if (i == 0)
             {
                 // Row number circle
-                gfx.DrawEllipse(new XSolidBrush(OrangeLight), cx, cy, 16, 16);
-                gfx.DrawString(values[i], f.Small, new XSolidBrush(Orange),
-                    new XRect(cx, cy + 2, 16, 14), XStringFormats.Center);
+                double circleSize = 16;
+                double circleX = cx + (cw - circleSize) / 2;
+                double circleY = y + (ProductRowHeight - circleSize) / 2;
+                gfx.DrawEllipse(new XSolidBrush(OrangeLight), circleX, circleY, circleSize, circleSize);
+                gfx.DrawString(lineNum.ToString(CultureInfo.InvariantCulture), f.Small, new XSolidBrush(Orange),
+                    new XRect(circleX, circleY + 2, circleSize, 14), XStringFormats.Center);
             }
             else if (i == 1)
             {
-                gfx.DrawString(values[i], f.Bold8, new XSolidBrush(Navy),
-                    new XRect(cx, cy, cw, 14), XStringFormats.TopLeft);
+                // Código SKU con ajuste inteligente para evitar sobreposición
+                var sku = det.Producto?.Sku ?? string.Empty;
+                DrawWrappedOrTruncatedSku(gfx, sku, cx, cy, cw, f.Bold8, new XSolidBrush(Navy));
             }
             else if (i == 2)
             {
-                gfx.DrawString(TruncateText(values[i], cw, f.Body), f.Body, new XSolidBrush(Navy),
-                    new XRect(cx, cy, cw, 14), XStringFormats.TopLeft);
-                gfx.DrawString($"U.M.: {det.Producto.UnidadMedida}", f.Small, new XSolidBrush(Muted),
-                    new XRect(cx, cy + 17, cw, 12), XStringFormats.TopLeft);
+                // Descripción multilínea con ajuste exacto y U.M.
+                var nombre = string.IsNullOrWhiteSpace(det.NombreProducto) ? (det.Producto?.Nombre ?? string.Empty) : det.NombreProducto;
+                var um = det.Producto?.UnidadMedida ?? "UND";
+                DrawProductNameAndMeta(gfx, nombre, um, cx, cy, cw, f);
             }
-            else if (i == ColW.Length - 1 && hasFicha)
+            else if (i == 3)
             {
-                // Ficha link styled
-                gfx.DrawString(values[i], f.Small, new XSolidBrush(Orange),
-                    new XRect(cx, cy + 4, cw, 14), XStringFormats.TopLeft);
-
-                // Dibujar subrayado sutil para indicar visualmente que es un enlace interactivo
-                var textSize = gfx.MeasureString(values[i], f.Small);
-                gfx.DrawLine(new XPen(Orange, 0.75), cx, cy + 4 + textSize.Height - 1, cx + textSize.Width, cy + 4 + textSize.Height - 1);
-
-                var rawUrl = !string.IsNullOrWhiteSpace(det.Producto?.RutaFichaTecnicaPdf)
-                          && (det.Producto.RutaFichaTecnicaPdf.Trim().StartsWith("http://", StringComparison.OrdinalIgnoreCase) 
-                              || det.Producto.RutaFichaTecnicaPdf.Trim().StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-                    ? det.Producto.RutaFichaTecnicaPdf.Trim()
-                    : fichaUrl(det.ProductoId)?.Trim();
-
-                if (!string.IsNullOrWhiteSpace(rawUrl))
+                // Cantidad alineada a la derecha
+                gfx.DrawString(det.Cantidad.ToString("N0", PeruCulture), f.Body, new XSolidBrush(Navy),
+                    new XRect(cx, cy + 4, cw, 14), XStringFormats.TopRight);
+            }
+            else if (i == 4)
+            {
+                // Precio unitario alineado a la derecha
+                gfx.DrawString(FormatMoney(det.PrecioVentaCalculado), f.Body, new XSolidBrush(Navy),
+                    new XRect(cx, cy + 4, cw, 14), XStringFormats.TopRight);
+            }
+            else if (i == 5)
+            {
+                // Subtotal alineado a la derecha
+                gfx.DrawString(FormatMoney(det.Subtotal), f.Bold8, new XSolidBrush(Navy),
+                    new XRect(cx, cy + 4, cw, 14), XStringFormats.TopRight);
+            }
+            else if (i == 6)
+            {
+                // Ícono interactivo de Ficha Técnica (estilo bi-file-earmark-pdf)
+                if (hasFicha)
                 {
-                    var targetUrl = Uri.TryCreate(rawUrl, UriKind.Absolute, out var uri)
-                        ? uri.AbsoluteUri
-                        : rawUrl;
+                    const double iconW = 15;
+                    const double iconH = 19;
+                    double iconX = cx + (cw - iconW) / 2;
+                    double iconY = y + (ProductRowHeight - iconH) / 2;
 
-                    // PDFsharp requiere transformar las coordenadas de dibujo (Top-Left) a las coordenadas nativas de página PDF (Bottom-Left)
-                    var clickBounds = new XRect(cx - 2, cy + 1, cw + 4, 18);
-                    var linkRect = gfx.Transformer.WorldToDefaultPage(clickBounds);
-                    page.AddWebLink(new PdfRectangle(linkRect), targetUrl);
+                    DrawPdfFileIcon(gfx, iconX, iconY);
+
+                    var rawUrl = !string.IsNullOrWhiteSpace(det.Producto?.RutaFichaTecnicaPdf)
+                              && (det.Producto.RutaFichaTecnicaPdf.Trim().StartsWith("http://", StringComparison.OrdinalIgnoreCase) 
+                                  || det.Producto.RutaFichaTecnicaPdf.Trim().StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                        ? det.Producto.RutaFichaTecnicaPdf.Trim()
+                        : fichaUrl(det.ProductoId)?.Trim();
+
+                    if (!string.IsNullOrWhiteSpace(rawUrl))
+                    {
+                        var targetUrl = Uri.TryCreate(rawUrl, UriKind.Absolute, out var uri)
+                            ? uri.AbsoluteUri
+                            : rawUrl;
+
+                        var clickBounds = new XRect(cx - 2, y + 4, cw + 4, ProductRowHeight - 8);
+                        var linkRect = gfx.Transformer.WorldToDefaultPage(clickBounds);
+                        page.AddWebLink(new PdfRectangle(linkRect), targetUrl);
+                    }
                 }
-            }
-            else
-            {
-                gfx.DrawString(values[i], f.Body, new XSolidBrush(Navy),
-                    new XRect(cx, cy + 4, cw, 14), XStringFormats.TopLeft);
+                else
+                {
+                    gfx.DrawString("—", f.Small, new XSolidBrush(Muted),
+                        new XRect(cx, y + 14, cw, 14), XStringFormats.Center);
+                }
             }
 
             x += ColW[i];
@@ -461,9 +483,170 @@ public static class CotizacionPdfGenerator
 
     // ─────────────────────────── Helpers ─────────────────────────────────
 
+    private static void DrawPdfFileIcon(XGraphics gfx, double x, double y)
+    {
+        const double w = 15;
+        const double h = 19;
+        const double fold = 4.5;
+
+        var path = new XGraphicsPath();
+        path.AddLine(x, y, x + w - fold, y);
+        path.AddLine(x + w - fold, y, x + w, y + fold);
+        path.AddLine(x + w, y + fold, x + w, y + h);
+        path.AddLine(x + w, y + h, x, y + h);
+        path.CloseFigure();
+
+        var bgBrush = new XSolidBrush(XColor.FromArgb(254, 242, 242));
+        var borderPen = new XPen(XColor.FromArgb(220, 38, 38), 1);
+        gfx.DrawPath(bgBrush, path);
+        gfx.DrawPath(borderPen, path);
+
+        var foldPath = new XGraphicsPath();
+        foldPath.AddLine(x + w - fold, y, x + w - fold, y + fold);
+        foldPath.AddLine(x + w - fold, y + fold, x + w, y + fold);
+        foldPath.CloseFigure();
+        gfx.DrawPath(new XSolidBrush(XColor.FromArgb(254, 202, 202)), foldPath);
+        gfx.DrawPath(new XPen(XColor.FromArgb(220, 38, 38), 0.75), foldPath);
+
+        var badgeFont = new XFont("Arial", 5, XFontStyleEx.Bold);
+        gfx.DrawString("PDF", badgeFont, new XSolidBrush(XColor.FromArgb(185, 28, 28)),
+            new XRect(x - 0.5, y + 6, w + 1, 10), XStringFormats.Center);
+    }
+
+    private static void DrawWrappedOrTruncatedSku(
+        XGraphics gfx, 
+        string sku, 
+        double x, 
+        double y, 
+        double maxW, 
+        XFont font, 
+        XBrush brush)
+    {
+        if (string.IsNullOrWhiteSpace(sku)) return;
+
+        sku = sku.Trim();
+        if (gfx.MeasureString(sku, font).Width <= maxW)
+        {
+            gfx.DrawString(sku, font, brush, new XRect(x, y + 4, maxW, 14), XStringFormats.TopLeft);
+            return;
+        }
+
+        var parts = sku.Split(new[] { '-', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length > 1)
+        {
+            string line1 = parts[0];
+            int idx = 1;
+            while (idx < parts.Length - 1 && gfx.MeasureString(line1 + "-" + parts[idx], font).Width <= maxW)
+            {
+                line1 += "-" + parts[idx];
+                idx++;
+            }
+
+            string line2 = string.Join("-", parts.Skip(idx));
+            if (gfx.MeasureString(line1, font).Width <= maxW)
+            {
+                if (gfx.MeasureString(line2, font).Width > maxW)
+                {
+                    line2 = TruncateExact(line2, maxW, font, gfx);
+                }
+
+                gfx.DrawString(line1, font, brush, new XRect(x, y + 1, maxW, 12), XStringFormats.TopLeft);
+                gfx.DrawString(line2, font, brush, new XRect(x, y + 13, maxW, 12), XStringFormats.TopLeft);
+                return;
+            }
+        }
+
+        string truncated = TruncateExact(sku, maxW, font, gfx);
+        gfx.DrawString(truncated, font, brush, new XRect(x, y + 4, maxW, 14), XStringFormats.TopLeft);
+    }
+
+    private static void DrawProductNameAndMeta(
+        XGraphics gfx, 
+        string name, 
+        string unidadMedida, 
+        double x, 
+        double y, 
+        double maxW, 
+        FontBundle f)
+    {
+        if (string.IsNullOrWhiteSpace(name)) name = "Producto";
+
+        var words = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        string line1 = "";
+        string line2 = "";
+        int wordIdx = 0;
+
+        while (wordIdx < words.Length)
+        {
+            string test = string.IsNullOrEmpty(line1) ? words[wordIdx] : line1 + " " + words[wordIdx];
+            if (gfx.MeasureString(test, f.Body).Width > maxW)
+                break;
+            line1 = test;
+            wordIdx++;
+        }
+
+        while (wordIdx < words.Length)
+        {
+            string test = string.IsNullOrEmpty(line2) ? words[wordIdx] : line2 + " " + words[wordIdx];
+            if (gfx.MeasureString(test, f.Body).Width > maxW)
+            {
+                line2 = TruncateExact(line2 + " " + words[wordIdx], maxW, f.Body, gfx);
+                wordIdx = words.Length;
+                break;
+            }
+            line2 = test;
+            wordIdx++;
+        }
+
+        if (string.IsNullOrEmpty(line2))
+        {
+            gfx.DrawString(line1, f.Body, new XSolidBrush(Navy),
+                new XRect(x, y + 2, maxW, 13), XStringFormats.TopLeft);
+            gfx.DrawString($"U.M.: {unidadMedida}", f.Small, new XSolidBrush(Muted),
+                new XRect(x, y + 17, maxW, 11), XStringFormats.TopLeft);
+        }
+        else
+        {
+            gfx.DrawString(line1, f.Body, new XSolidBrush(Navy),
+                new XRect(x, y, maxW, 12), XStringFormats.TopLeft);
+            gfx.DrawString(line2, f.Body, new XSolidBrush(Navy),
+                new XRect(x, y + 11, maxW, 12), XStringFormats.TopLeft);
+            gfx.DrawString($"U.M.: {unidadMedida}", f.Small, new XSolidBrush(Muted),
+                new XRect(x, y + 23, maxW, 11), XStringFormats.TopLeft);
+        }
+    }
+
+    private static string TruncateExact(string text, double maxW, XFont font, XGraphics gfx)
+    {
+        if (string.IsNullOrEmpty(text) || gfx.MeasureString(text, font).Width <= maxW)
+            return text;
+
+        const string ellipsis = "…";
+        double ellipsisW = gfx.MeasureString(ellipsis, font).Width;
+        if (ellipsisW >= maxW) return ellipsis;
+
+        int low = 1, high = text.Length;
+        int best = 1;
+        while (low <= high)
+        {
+            int mid = (low + high) / 2;
+            string candidate = text[..mid] + ellipsis;
+            if (gfx.MeasureString(candidate, font).Width <= maxW)
+            {
+                best = mid;
+                low = mid + 1;
+            }
+            else
+            {
+                high = mid - 1;
+            }
+        }
+
+        return text[..best] + ellipsis;
+    }
+
     private static string TruncateText(string text, double maxW, XFont font)
     {
-        // Rough estimate: avg char ~5.5 points wide at 8pt
         int maxChars = (int)(maxW / 5.5);
         if (text.Length <= maxChars) return text;
         return text[..(maxChars - 1)] + "…";
