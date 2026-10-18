@@ -37,8 +37,10 @@ namespace Prosegin.Web.Controllers
                 return View(model);
             }
 
-            var esRuc = ClienteBusquedaRules.EsEntradaSoloNumeros(model.Termino);
-            if (esRuc && !_sunatService.ValidarFormatoRuc(model.Termino, out var errorRuc))
+            var esEntradaNumerica = ClienteBusquedaRules.EsEntradaSoloNumeros(model.Termino);
+            var esRucCompleto = esEntradaNumerica && model.Termino.Length == 11;
+
+            if (esEntradaNumerica && model.Termino.Length >= 11 && !_sunatService.ValidarFormatoRuc(model.Termino, out var errorRuc))
             {
                 model.Mensaje = errorRuc;
                 return View(model);
@@ -48,9 +50,13 @@ namespace Prosegin.Web.Controllers
                 .AsNoTracking()
                 .Where(c => c.Activo);
 
-            if (esRuc)
+            if (esRucCompleto)
             {
                 clientesQuery = clientesQuery.Where(c => c.Ruc == model.Termino);
+            }
+            else if (esEntradaNumerica)
+            {
+                clientesQuery = clientesQuery.Where(c => c.Ruc.Contains(model.Termino));
             }
             else
             {
@@ -70,7 +76,7 @@ namespace Prosegin.Web.Controllers
                 // DADO QUE el cliente consultado no existe en los registros de la empresa, CUANDO selecciono "BUSCAR", ENTONCES se muestra el MSG: "No se encontraron clientes registrados con los datos ingresados".
                 model.Mensaje = ClienteBusquedaRules.MensajeSinResultados;
 
-                if (esRuc)
+                if (esRucCompleto)
                 {
                     try
                     {
@@ -82,7 +88,7 @@ namespace Prosegin.Web.Controllers
                     }
                 }
             }
-            else if (esRuc && model.Resultados.Count > 0)
+            else if (esRucCompleto && model.Resultados.Count > 0)
             {
                 try
                 {

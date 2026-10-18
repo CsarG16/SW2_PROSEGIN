@@ -310,6 +310,7 @@ public class PedidosService : IPedidosService
             {
                 Codigo = item.Codigo,
                 Descripcion = item.Descripcion,
+                UnidadDeMedida = MapearUnidadMedidaSunat(item.UnidadMedida),
                 Cantidad = item.Cantidad,
                 ValorUnitario = item.PrecioUnitario,
                 PrecioUnitario = Redondear(item.PrecioUnitario * 1.18m),
@@ -463,7 +464,7 @@ public class PedidosService : IPedidosService
             {
                 Codigo = item.Codigo,
                 Descripcion = item.Descripcion,
-                UnidadDeMedida = "NIU",
+                UnidadDeMedida = MapearUnidadMedidaSunat(item.UnidadMedida),
                 Cantidad = item.Cantidad
             }).ToList()
         }, cancellationToken);
@@ -644,6 +645,26 @@ public class PedidosService : IPedidosService
     {
         var numero = new string((condicionPago ?? string.Empty).Where(char.IsDigit).ToArray());
         return int.TryParse(numero, out var dias) && dias > 0 ? dias : 7;
+    }
+
+    public static string MapearUnidadMedidaSunat(string? unidadMedida)
+    {
+        if (string.IsNullOrWhiteSpace(unidadMedida))
+            return "NIU";
+
+        return unidadMedida.Trim().ToUpperInvariant() switch
+        {
+            "PAR" or "PARES" or "PR" => "PAR",
+            "CJA" or "CAJA" or "CAJAS" or "BX" => "BX",
+            "SET" or "JGO" or "JUEGO" or "JUEGOS" => "SET",
+            "KG" or "KGM" or "KILOGRAMO" or "KILOGRAMOS" => "KGM",
+            "M" or "MTR" or "METRO" or "METROS" => "MTR",
+            "LTR" or "LT" or "LITRO" or "LITROS" => "LTR",
+            "DZN" or "DOC" or "DOCENA" or "DOCENAS" => "DZN",
+            "GLI" or "GL" or "GALON" or "GALONES" => "GLI",
+            "UND" or "UNI" or "UNIDAD" or "UNIDADES" or "PZA" or "PIEZA" or "NIU" => "NIU",
+            _ => unidadMedida.Trim().Length <= 3 ? unidadMedida.Trim().ToUpperInvariant() : "NIU"
+        };
     }
 
     private static decimal Redondear(decimal importe) => Math.Round(importe, 2, MidpointRounding.AwayFromZero);

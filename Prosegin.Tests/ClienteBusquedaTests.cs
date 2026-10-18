@@ -96,6 +96,23 @@ public class ClienteBusquedaTests
         Assert.Equal(3, cliente.CantidadSedes);
     }
 
+    [Fact]
+    public void BuscarPorRucParcial_FiltraClientesCorrectamente()
+    {
+        var termino = "2060";
+        var esEntradaNumerica = termino.All(char.IsDigit);
+        var esRucCompleto = esEntradaNumerica && termino.Length == 11;
+
+        var resultados = _clientes
+            .Where(c => esRucCompleto
+                ? c.Ruc == termino
+                : (esEntradaNumerica ? c.Ruc.Contains(termino) : c.RazonSocial.Contains(termino, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+
+        Assert.Single(resultados);
+        Assert.Equal("20601234567", resultados[0].Ruc);
+    }
+
     private class ClienteTestDto
     {
         public int Id { get; set; }
