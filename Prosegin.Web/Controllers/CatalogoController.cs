@@ -312,7 +312,7 @@ public class CatalogoController : Controller
         producto.CostoReferencial = Precio;
         if (PesoKg.HasValue && PesoKg.Value > 0)
         {
-            producto.PesoKg = PesoKg.Value;
+            producto.PesoKg = decimal.Round(PesoKg.Value, 3);
         }
         foreach (var tarifa in tarifasProveedores)
         {

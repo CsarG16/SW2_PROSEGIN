@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Prosegin.Data;
 using Prosegin.Data.Entities;
 using Prosegin.Data.Validation;
+using Prosegin.Web.Helpers;
 using Prosegin.Web.Services;
 using Prosegin.Web.ViewModels.Cotizaciones;
 
@@ -60,6 +61,7 @@ public class CotizacionesController : Controller
                 Correlativo = c.Correlativo,
                 Cliente = c.Cliente.RazonSocial,
                 Ruc = c.Cliente.Ruc,
+                ClienteCorreo = c.Cliente.CorreoElectronico,
                 FechaEmision = c.FechaEmision,
                 FechaVencimiento = c.FechaVencimiento ?? c.FechaEmision.AddHours(48),
                 Total = c.Total,
@@ -90,6 +92,10 @@ public class CotizacionesController : Controller
             {
                 cotizacion.Estado = "Vencida";
             }
+
+            cotizacion.AvatarLogoUrl = ClientAvatarHelper.GetCorporateFaviconUrl(cotizacion.ClienteCorreo);
+            cotizacion.AvatarInitials = ClientAvatarHelper.GetInitials(cotizacion.Cliente);
+            cotizacion.AvatarColorSchemeClass = ClientAvatarHelper.GetColorSchemeClass(!string.IsNullOrWhiteSpace(cotizacion.Ruc) ? cotizacion.Ruc : cotizacion.Cliente);
         }
 
         var coincidenciasBusqueda = string.IsNullOrWhiteSpace(busqueda)

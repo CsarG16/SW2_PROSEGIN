@@ -57,4 +57,32 @@ public class ProductoBusquedaTests
 
         Assert.Empty(resultado);
     }
+
+    [Fact]
+    public void Producto_PorDefecto_TienePesoAproximadoMayorACero()
+    {
+        var producto = new Prosegin.Data.Entities.Producto();
+        Assert.True(producto.PesoKg > 0);
+        Assert.Equal(0.50m, producto.PesoKg);
+    }
+
+    [Fact]
+    public void ProductoCreateViewModel_ValidaPesoMayorACeroYHastaDosDecimales()
+    {
+        var model = new Prosegin.Web.ViewModels.Catalogo.ProductoCreateViewModel
+        {
+            Sku = "EPP-TEST",
+            Nombre = "Guante Test",
+            Categoria = "Protección de manos",
+            UnidadMedida = "PAR",
+            Marca = "3M",
+            CostoBaseAdquisicion = 25.50m,
+            PesoKg = 0.4567m // 4 decimales para exceder el máximo de 3 decimales permitido
+        };
+
+        var context = new System.ComponentModel.DataAnnotations.ValidationContext(model);
+        var validationResults = model.Validate(context).ToList();
+
+        Assert.Contains(validationResults, v => v.ErrorMessage!.Contains("decimales") && v.MemberNames.Contains(nameof(model.PesoKg)));
+    }
 }
