@@ -329,8 +329,10 @@
                 const status = document.getElementById("cotizacionPdfEstado");
                 status.textContent = "ENVIADA";
                 status.classList.remove("text-bg-success");
-                status.classList.add("text-bg-primary");
-                downloadSuccess.hidden = false;
+                if (downloadSuccess) downloadSuccess.hidden = true;
+                if (window.ProseginToast) {
+                    ProseginToast.success("Documento PDF descargado correctamente.");
+                }
                 bootstrap.Modal.getOrCreateInstance(pdfModal).hide();
             } catch (error) {
                 console.error("No se pudo descargar la cotización PDF.", error);

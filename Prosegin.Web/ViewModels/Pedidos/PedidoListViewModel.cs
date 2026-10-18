@@ -11,6 +11,7 @@ public class PedidoListViewModel
     public int TotalPorPreparar { get; set; }
     public int TotalEnPreparacion { get; set; }
     public int TotalListoDespacho { get; set; }
+    public int TotalEntregado { get; set; }
     public int TotalUrgentes { get; set; }
     public int Pagina { get; set; } = 1;
     public int TamanoPagina { get; set; } = 5;

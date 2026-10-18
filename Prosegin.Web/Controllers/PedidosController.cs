@@ -49,7 +49,7 @@ public class PedidosController : Controller
 
         var preview = await _pedidosService.PrevisualizarFacturaAsync(numeroPedido, cancellationToken);
         if (preview == null)
-            return Conflict("El pedido no está listo para despacho, el cliente no está activo y habido en SUNAT o ya tiene una factura.");
+            return Conflict("El pedido no está entregado, el cliente no está activo y habido en SUNAT o ya tiene una factura.");
 
         return Json(preview);
     }

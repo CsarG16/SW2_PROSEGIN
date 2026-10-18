@@ -56,8 +56,8 @@
         </div>
     }
 
-    <div id="pdfDownloadSuccess" class="alert alert-success d-flex align-items-center mb-4" role="status" hidden>
-        <i class="bi bi-check-circle-fill me-2"></i>Documento PDF descargado correctamente.
+    <div id="pdfDownloadSuccess" class="visually-hidden" role="status">
+        Documento PDF descargado correctamente.
     </div>
 
     <form asp-action="Create" method="post" id="formCotizacion" data-cliente-id="@Model.ClienteId" data-post-invalido="@(ViewData["CotizacionPostInvalido"] is true ? "true" : "false")" data-cotizacion-guardada="@(cotizacionGuardada ? "true" : "false")">
@@ -245,15 +245,7 @@
                 </div>
             </div>
 
-            <!-- Notificación de éxito centrada estilo píldora -->
-            @if (cotizacionGuardada)
-            {
-                <div class="text-center my-3">
-                    <div class="d-inline-flex align-items-center py-2 px-4 rounded-pill border shadow-sm" style="background-color: #E8F8F2; border-color: #A3E6CD; color: #0D8A58; font-weight: 500; font-size: 0.95rem;">
-                        <i class="bi bi-check-lg me-2 fs-5"></i> @TempData["SuccessMessage"]
-                    </div>
-                </div>
-            }
+            @* La confirmación de guardado se gestiona a través del Toast global (_Notifications.cshtml) *@
 
         </div>
 

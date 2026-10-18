@@ -173,7 +173,7 @@ public class PedidosIntegracionTests : IAsyncLifetime
             .Include(ov => ov.OrdenesCompra)
                 .ThenInclude(oc => oc.Detalles)
             .SingleAsync(ov => ov.Id == 1);
-        Assert.Equal("EnPreparacion", order.EstadoLogistico);
+        Assert.Equal("ListoParaDespacho", order.EstadoLogistico);
         Assert.Equal(1, order.Revision);
         Assert.Equal(2, order.OrdenesCompra.Count);
         Assert.Equal(25.00m, order.OrdenesCompra.Single(oc => oc.ProveedorId == 1).Total);
@@ -188,9 +188,9 @@ public class PedidosIntegracionTests : IAsyncLifetime
         var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
 
         var primeraEjecucion = await context.Database.ExecuteSqlInterpolatedAsync(
-            $"UPDATE OrdenesVenta SET EstadoLogistico = 'EnPreparacion', Revision = Revision + 1 WHERE Id = 1 AND EstadoLogistico = 'PorPreparar' AND 0 = (SELECT COUNT(*) FROM OrdenesCompra WHERE OrdenVentaId = 1)");
+            $"UPDATE OrdenesVenta SET EstadoLogistico = 'ListoParaDespacho', Revision = Revision + 1 WHERE Id = 1 AND EstadoLogistico = 'PorPreparar' AND 0 = (SELECT COUNT(*) FROM OrdenesCompra WHERE OrdenVentaId = 1)");
         var segundaEjecucion = await context.Database.ExecuteSqlInterpolatedAsync(
-            $"UPDATE OrdenesVenta SET EstadoLogistico = 'EnPreparacion', Revision = Revision + 1 WHERE Id = 1 AND EstadoLogistico = 'PorPreparar' AND 0 = (SELECT COUNT(*) FROM OrdenesCompra WHERE OrdenVentaId = 1)");
+            $"UPDATE OrdenesVenta SET EstadoLogistico = 'ListoParaDespacho', Revision = Revision + 1 WHERE Id = 1 AND EstadoLogistico = 'PorPreparar' AND 0 = (SELECT COUNT(*) FROM OrdenesCompra WHERE OrdenVentaId = 1)");
 
         Assert.Equal(1, primeraEjecucion);
         Assert.Equal(0, segundaEjecucion);

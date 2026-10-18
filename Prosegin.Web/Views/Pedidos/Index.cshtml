@@ -130,6 +130,9 @@
     .badge-listo-despacho {
         color: #15803d;
     }
+    .badge-entregado {
+        color: #1d4ed8;
+    }
     .badge-dot {
         width: 8px;
         height: 8px;
@@ -140,6 +143,7 @@
     .dot-por-preparar { background-color: #64748b; }
     .dot-en-preparacion { background-color: #ea580c; }
     .dot-listo-despacho { background-color: #16a34a; }
+    .dot-entregado { background-color: #2563eb; }
 
     /* Indicador Urgente sobrio: solo texto y punto indicador ámbar, sin cápsula de fondo */
     .badge-urgent-warning {
@@ -374,6 +378,12 @@
                     >
                 Listos para Despacho <span class="ms-1 opacity-75">(@Model.TotalListoDespacho)</span>
             </a>
+            <a asp-action="Index" asp-route-termino="@Model.Termino" asp-route-estado="ENTREGADO"
+                    class="tab-pill-btn @(Model.EstadoFiltro == "ENTREGADO" ? "active-tab" : "")"
+                    data-status="ENTREGADO"
+                    >
+                Entregados <span class="ms-1 opacity-75">(@Model.TotalEntregado)</span>
+            </a>
         </div>
     </div>
 
@@ -445,6 +455,20 @@
                                 {
                                     <span class="badge-status-pill badge-en-preparacion">
                                         <span class="badge-dot dot-en-preparacion"></span>
+                                        @pedido.EstadoOperativoTexto
+                                    </span>
+                                }
+                                else if (pedido.EstadoOperativo == "LISTO_DESPACHO")
+                                {
+                                    <span class="badge-status-pill badge-listo-despacho">
+                                        <span class="badge-dot dot-listo-despacho"></span>
+                                        @pedido.EstadoOperativoTexto
+                                    </span>
+                                }
+                                else if (pedido.EstadoOperativo == "ENTREGADO")
+                                {
+                                    <span class="badge-status-pill badge-entregado">
+                                        <span class="badge-dot dot-entregado"></span>
                                         @pedido.EstadoOperativoTexto
                                     </span>
                                 }
@@ -790,88 +814,6 @@
             showInvoiceToast('No se pudo abrir la factura', await response.text(), true);
             return;
         }
-
-    window.openGuidePreview = async function () {
-            if (!pedidoSeleccionado) return;
-            const url = new URL(guidePreviewUrl, window.location.origin);
-            url.searchParams.set('numeroPedido', pedidoSeleccionado.NumeroPedido);
-            const response = await fetch(url);
-            if (!response.ok) {
-                showInvoiceToast('No se pudo abrir la guía', await response.text(), true);
-                return;
-            }
-            guiaPreview = await response.json();
-            document.getElementById('guideNumberPreview').textContent =
-                `${guiaPreview.serie}-${String(guiaPreview.numero).padStart(6, '0')} · ${guiaPreview.numeroPedido}`;
-            document.getElementById('guideClient').textContent = guiaPreview.clienteRazonSocial;
-            document.getElementById('guideRuc').textContent = `RUC: ${guiaPreview.clienteRuc}`;
-            document.getElementById('guideOrigin').textContent = guiaPreview.puntoPartidaDireccion;
-            document.getElementById('guideDestination').textContent = guiaPreview.puntoLlegadaDireccion;
-            document.getElementById('guideWeight').textContent = `${Number(guiaPreview.pesoBrutoTotal).toFixed(3)} kg`;
-            const items = document.getElementById('guideItems');
-            items.replaceChildren();
-            guiaPreview.items.forEach(item => {
-                const row = document.createElement('tr');
-                [item.codigo, item.descripcion, item.cantidad, item.unidadMedida, Number(item.pesoTotalKg).toFixed(3)]
-                    .forEach((value, index) => {
-                        const cell = document.createElement('td');
-                        cell.textContent = value;
-                        if (index === 4) cell.className = 'text-end';
-                        row.appendChild(cell);
-                    });
-                items.appendChild(row);
-            });
-            document.getElementById('guideDriver').value = '';
-            document.getElementById('guidePlate').value = '';
-            document.getElementById('guideDriverDocument').value = '';
-            document.getElementById('guideLicense').value = '';
-            closeDetailModal();
-            document.getElementById('guideModal').classList.remove('d-none');
-    }
-
-    window.emitGuide = async function () {
-            const driver = document.getElementById('guideDriver').value.trim();
-            const plate = document.getElementById('guidePlate').value.trim();
-            if (!driver || !plate) {
-                showInvoiceToast('Datos incompletos', 'Ingrese el nombre del conductor y la placa del vehículo.', true);
-                return;
-            }
-            const button = document.getElementById('confirmGuideButton');
-            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-            button.disabled = true;
-            try {
-                const body = new URLSearchParams({
-                    numeroPedido: guiaPreview.numeroPedido,
-                    conductorNombre: driver,
-                    placaVehiculo: plate,
-                    conductorDocumento: document.getElementById('guideDriverDocument').value.trim(),
-                    conductorLicencia: document.getElementById('guideLicense').value.trim(),
-                    __RequestVerificationToken: token
-                });
-                const response = await fetch(emitGuideUrl, {
-                    method: 'POST',
-                    headers: { 'RequestVerificationToken': token, 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body
-                });
-                const result = await response.json();
-                if (!response.ok) {
-                    showInvoiceToast('No se pudo emitir la guía', result.mensaje || 'Intenta nuevamente.', true);
-                    return;
-                }
-                document.getElementById('guideModal').classList.add('d-none');
-                showInvoiceToast('Guía de remisión emitida con éxito',
-                    result.numeroGuia ? `Documento generado: ${result.numeroGuia}` : 'El documento fue validado correctamente.');
-                window.setTimeout(() => window.location.reload(), 2200);
-            } finally {
-                button.disabled = false;
-            }
-    }
-
-    window.closeGuidePreview = function (event) {
-            if (event && event.target.id !== 'guideModal') return;
-            document.getElementById('guideModal').classList.add('d-none');
-            if (pedidoSeleccionado) document.getElementById('detailModal').classList.remove('d-none');
-    }
 
         facturaPreview = await response.json();
         document.getElementById('invoiceNumberPreview').textContent =

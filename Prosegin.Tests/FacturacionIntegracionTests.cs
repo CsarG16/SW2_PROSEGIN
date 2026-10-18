@@ -5,6 +5,7 @@ using Prosegin.Data.Entities;
 using Prosegin.Web.Services;
 using Prosegin.Web.Services.Nubefact;
 using Prosegin.Web.Services.Nubefact.DTOs;
+using Prosegin.Web.ViewModels.Pedidos;
 using Xunit;
 
 namespace Prosegin.Tests;
@@ -33,7 +34,7 @@ public class FacturacionIntegracionTests
         };
         context.OrdenesVenta.Add(new OrdenVenta
         {
-            EstadoLogistico = "Despachado",
+            EstadoLogistico = "Entregado",
             Cotizacion = new Cotizacion
             {
                 Correlativo = "COT-FACT-001",
@@ -107,6 +108,91 @@ public class FacturacionIntegracionTests
         Assert.Equal(0, nubefact.FacturasEnviadas);
     }
 
+    [Fact]
+    public async Task FlujoListoDespacho_GuiaRemision_PasaAEntregado_YHabilitaFactura()
+    {
+        await using var context = CrearContext();
+        var cliente = new Cliente
+        {
+            Ruc = "20100070970",
+            RazonSocial = "Cliente Flujo S.A.C.",
+            DireccionFiscal = "Av. Fiscal 500",
+            Ubigeo = "150101",
+            EstadoSunat = "ACTIVO",
+            CondicionSunat = "HABIDO",
+            Activo = true
+        };
+        var producto = new Producto
+        {
+            Sku = "EPP-GUIA-01",
+            Nombre = "Botas de seguridad",
+            UnidadMedida = "PAR",
+            PesoKg = 1.5m,
+            Activo = true
+        };
+        var ordenVenta = new OrdenVenta
+        {
+            EstadoLogistico = "ListoParaDespacho",
+            Cotizacion = new Cotizacion
+            {
+                Correlativo = "COT-FLUJO-001",
+                Estado = "Aprobada",
+                NumeroOrdenCompraCliente = "OC-FLUJO-001",
+                CondicionPago = "15 días",
+                Cliente = cliente,
+                Subtotal = 200m,
+                Igv = 36m,
+                Total = 236m,
+                Detalles = new List<CotizacionDetalle>
+                {
+                    new()
+                    {
+                        Producto = producto,
+                        NombreProducto = producto.Nombre,
+                        Cantidad = 2,
+                        PrecioVentaCalculado = 100m,
+                        Subtotal = 200m
+                    }
+                }
+            }
+        };
+        context.OrdenesVenta.Add(ordenVenta);
+        await context.SaveChangesAsync();
+
+        var nubefact = new FakeNubefactService();
+        var service = new PedidosService(
+            context,
+            nubefact,
+            Options.Create(new NubefactSettings { SerieFactura = "FFF1", SerieGuia = "TTT1" }));
+
+        // 1. En ListoParaDespacho, no se puede emitir la factura todavía
+        var facturaRechazada = await service.EmitirFacturaAsync("COT-FLUJO-001");
+        Assert.False(facturaRechazada.Exito);
+        Assert.Contains("Solo se puede facturar un pedido entregado", facturaRechazada.Mensaje);
+
+        // 2. Se emite la guía de remisión
+        var guiaResult = await service.EmitirGuiaRemisionAsync(new EmitirGuiaRemisionRequest
+        {
+            NumeroPedido = "COT-FLUJO-001",
+            ConductorNombre = "Juan Perez",
+            PlacaVehiculo = "ABC-123"
+        });
+        Assert.True(guiaResult.Exito);
+        Assert.Equal(1, nubefact.GuiasEnviadas);
+
+        // 3. El estado de la orden cambió automáticamente a "Entregado"
+        var ordenActualizada = await context.OrdenesVenta.SingleAsync(ov => ov.Cotizacion.Correlativo == "COT-FLUJO-001");
+        Assert.Equal("Entregado", ordenActualizada.EstadoLogistico);
+
+        // 4. Ahora sí se puede previsualizar y emitir la factura con éxito
+        var preview = await service.PrevisualizarFacturaAsync("COT-FLUJO-001");
+        Assert.NotNull(preview);
+
+        var facturaResult = await service.EmitirFacturaAsync("COT-FLUJO-001");
+        Assert.True(facturaResult.Exito);
+        Assert.Equal(1, nubefact.FacturasEnviadas);
+    }
+
     private static OrdenVenta CrearOrden(string correlativo, bool activo, string condicion)
     {
         var cliente = new Cliente
@@ -121,7 +207,7 @@ public class FacturacionIntegracionTests
         var producto = new Producto { Sku = correlativo, Nombre = "Producto", UnidadMedida = "UND" };
         return new OrdenVenta
         {
-            EstadoLogistico = "ListoParaDespacho",
+            EstadoLogistico = "Entregado",
             Cotizacion = new Cotizacion
             {
                 Correlativo = correlativo,
@@ -153,6 +239,7 @@ public class FacturacionIntegracionTests
     private sealed class FakeNubefactService : INubefactService
     {
         public int FacturasEnviadas { get; private set; }
+        public int GuiasEnviadas { get; private set; }
 
         public Task<NubefactResponseDto> EnviarFacturaAsync(NubefactFacturaRequest request, CancellationToken ct = default)
         {
@@ -167,7 +254,17 @@ public class FacturacionIntegracionTests
             });
         }
 
-        public Task<NubefactResponseDto> EnviarGuiaRemisionAsync(NubefactGuiaRequest request, CancellationToken ct = default) =>
-            throw new NotSupportedException();
+        public Task<NubefactResponseDto> EnviarGuiaRemisionAsync(NubefactGuiaRequest request, CancellationToken ct = default)
+        {
+            GuiasEnviadas++;
+            return Task.FromResult(new NubefactResponseDto
+            {
+                EstadoProceso = NubefactService.EstadoAceptado,
+                Serie = request.Serie,
+                Numero = request.Numero,
+                CodigoHash = "hash-guia",
+                EnlacePdf = "https://example.test/guia.pdf"
+            });
+        }
     }
 }

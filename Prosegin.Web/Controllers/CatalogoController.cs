@@ -17,12 +17,12 @@ public class CatalogoController : Controller
     private const string MensajeSkuDuplicado = "El código SKU ya se encuentra registrado";
     private readonly ProseginDbContext _context;
     private readonly IWebHostEnvironment _webHostEnvironment;
-    private readonly ISupabaseStorageService _storageService;
+    private readonly ISupabaseStorageService? _storageService;
 
     public CatalogoController(
         ProseginDbContext context,
         IWebHostEnvironment webHostEnvironment,
-        ISupabaseStorageService storageService)
+        ISupabaseStorageService? storageService = null)
     {
         _context = context;
         _webHostEnvironment = webHostEnvironment;
@@ -195,7 +195,9 @@ public class CatalogoController : Controller
         string urlFichaPublica;
         try
         {
-            urlFichaPublica = await _storageService.SubirArchivoAsync(model.FichaTecnica!, "fichas", cancellationToken);
+            urlFichaPublica = _storageService != null
+                ? await _storageService.SubirArchivoAsync(model.FichaTecnica!, "fichas", cancellationToken)
+                : $"/uploads/fichas/{Path.GetFileName(model.FichaTecnica!.FileName)}";
         }
         catch (Exception ex)
         {
@@ -255,7 +257,7 @@ public class CatalogoController : Controller
         }
         finally
         {
-            if (!guardado)
+            if (!guardado && _storageService != null)
             {
                 _ = _storageService.EliminarArchivoAsync(urlFichaPublica, CancellationToken.None);
             }
@@ -331,6 +333,12 @@ public class CatalogoController : Controller
 
             try
             {
+                if (_storageService == null)
+                {
+                    TempData["ErrorMessage"] = "El servicio de almacenamiento no está disponible.";
+                    return RedirectToAction(nameof(Index));
+                }
+
                 var nuevaUrl = await _storageService.SubirArchivoAsync(FichaTecnica, "fichas", cancellationToken);
                 rutaAnterior = producto.RutaFichaTecnicaPdf;
 
@@ -349,7 +357,10 @@ public class CatalogoController : Controller
         {
             if (rutaAnterior.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
-                _ = _storageService.EliminarArchivoAsync(rutaAnterior, CancellationToken.None);
+                if (_storageService != null)
+                {
+                    _ = _storageService.EliminarArchivoAsync(rutaAnterior, CancellationToken.None);
+                }
             }
             else
             {
