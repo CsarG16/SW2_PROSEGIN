@@ -73,6 +73,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: 3M PERÚ S.A. / IMPORTACIONES MALVINAS",
                 Categoria = "Protección de cabeza",
                 UnidadMedida = "UND",
+                PesoKg = 0.380m,
                 CostoReferencial = 38.50m,
                 StockDisponible = 85,
                 RutaFichaTecnicaPdf = "/fichas/CAS-3M-H700.pdf",
@@ -87,6 +88,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: 3M PERÚ S.A.",
                 Categoria = "Protección ocular",
                 UnidadMedida = "UND",
+                PesoKg = 0.040m,
                 CostoReferencial = 12.80m,
                 StockDisponible = 150,
                 RutaFichaTecnicaPdf = "/fichas/LEN-3M-VIRTUA.pdf",
@@ -101,6 +103,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: 3M PERÚ S.A. / IMPORTACIONES MALVINAS",
                 Categoria = "Protección respiratoria",
                 UnidadMedida = "UND",
+                PesoKg = 0.140m,
                 CostoReferencial = 54.00m,
                 StockDisponible = 40,
                 RutaFichaTecnicaPdf = "/fichas/RES-3M-6200.pdf",
@@ -115,6 +118,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: IMPORTACIONES MALVINAS S.A.C.",
                 Categoria = "Protección auditiva",
                 UnidadMedida = "PAR",
+                PesoKg = 0.005m,
                 CostoReferencial = 1.20m,
                 StockDisponible = 600,
                 RutaFichaTecnicaPdf = "/fichas/TAP-3M-1100.pdf",
@@ -129,6 +133,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: DISTRIBUIDORA INDUSTRIAL DEL PERÚ S.A.",
                 Categoria = "Protección de manos",
                 UnidadMedida = "PAR",
+                PesoKg = 0.050m,
                 CostoReferencial = 15.50m,
                 StockDisponible = 120,
                 RutaFichaTecnicaPdf = "/fichas/GUA-SHOWA-370.pdf",
@@ -143,6 +148,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: BATA PERÚ S.A.",
                 Categoria = "Protección de pies",
                 UnidadMedida = "PAR",
+                PesoKg = 1.450m,
                 CostoReferencial = 145.00m,
                 StockDisponible = 35,
                 RutaFichaTecnicaPdf = "/fichas/BOT-BATA-TITAN.pdf",
@@ -157,6 +163,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: SEGURIDAD INDUSTRIAL TOTAL S.A.C.",
                 Categoria = "Trabajo en altura",
                 UnidadMedida = "UND",
+                PesoKg = 1.850m,
                 CostoReferencial = 185.00m,
                 StockDisponible = 20,
                 RutaFichaTecnicaPdf = "/fichas/ARN-HAWK-4A.pdf",
@@ -171,6 +178,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: IMPORTACIONES MALVINAS S.A.C.",
                 Categoria = "Protección corporal",
                 UnidadMedida = "UND",
+                PesoKg = 0.280m,
                 CostoReferencial = 28.00m,
                 StockDisponible = 90,
                 RutaFichaTecnicaPdf = "/fichas/CHA-PRO-REF.pdf",
@@ -185,6 +193,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: DISTRIBUIDORA INDUSTRIAL DEL PERÚ S.A.",
                 Categoria = "Protección de cabeza",
                 UnidadMedida = "UND",
+                PesoKg = 0.410m,
                 CostoReferencial = 42.00m,
                 StockDisponible = 70,
                 RutaFichaTecnicaPdf = "/fichas/CAS-MSA-VGUARD.pdf",
@@ -199,6 +208,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: 3M PERÚ S.A.",
                 Categoria = "Protección de cabeza",
                 UnidadMedida = "UND",
+                PesoKg = 0.035m,
                 CostoReferencial = 9.50m,
                 StockDisponible = 140,
                 RutaFichaTecnicaPdf = "/fichas/BAR-3M-4P.pdf",
@@ -213,6 +223,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: 3M PERÚ S.A.",
                 Categoria = "Protección ocular",
                 UnidadMedida = "UND",
+                PesoKg = 0.045m,
                 CostoReferencial = 32.00m,
                 StockDisponible = 95,
                 RutaFichaTecnicaPdf = "/fichas/LEN-3M-SOLUS.pdf",
@@ -227,6 +238,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: IMPORTACIONES MALVINAS S.A.C.",
                 Categoria = "Protección ocular",
                 UnidadMedida = "UND",
+                PesoKg = 0.320m,
                 CostoReferencial = 26.50m,
                 StockDisponible = 60,
                 RutaFichaTecnicaPdf = "/fichas/VIS-STEEL-POLY.pdf",
@@ -241,6 +253,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: 3M PERÚ S.A.",
                 Categoria = "Protección respiratoria",
                 UnidadMedida = "CJA",
+                PesoKg = 0.250m,
                 CostoReferencial = 68.00m,
                 StockDisponible = 110,
                 RutaFichaTecnicaPdf = "/fichas/MAS-3M-8210.pdf",
@@ -255,6 +268,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: 3M PERÚ S.A. / IMPORTACIONES MALVINAS",
                 Categoria = "Protección respiratoria",
                 UnidadMedida = "PAR",
+                PesoKg = 0.040m,
                 CostoReferencial = 28.50m,
                 StockDisponible = 180,
                 RutaFichaTecnicaPdf = "/fichas/FIL-3M-2097.pdf",
@@ -269,6 +283,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: 3M PERÚ S.A.",
                 Categoria = "Protección respiratoria",
                 UnidadMedida = "PAR",
+                PesoKg = 0.220m,
                 CostoReferencial = 49.00m,
                 StockDisponible = 75,
                 RutaFichaTecnicaPdf = "/fichas/CAR-3M-6003.pdf",
@@ -283,6 +298,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: 3M PERÚ S.A.",
                 Categoria = "Protección auditiva",
                 UnidadMedida = "UND",
+                PesoKg = 0.235m,
                 CostoReferencial = 98.00m,
                 StockDisponible = 40,
                 RutaFichaTecnicaPdf = "/fichas/ORE-3M-PELTOR-X4.pdf",
@@ -297,6 +313,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: 3M PERÚ S.A. / IMPORTACIONES MALVINAS",
                 Categoria = "Protección auditiva",
                 UnidadMedida = "PAR",
+                PesoKg = 0.210m,
                 CostoReferencial = 62.00m,
                 StockDisponible = 55,
                 RutaFichaTecnicaPdf = "/fichas/ORE-3M-CASCO-H9.pdf",
@@ -311,6 +328,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: DISTRIBUIDORA INDUSTRIAL DEL PERÚ S.A.",
                 Categoria = "Protección de manos",
                 UnidadMedida = "PAR",
+                PesoKg = 0.045m,
                 CostoReferencial = 18.00m,
                 StockDisponible = 200,
                 RutaFichaTecnicaPdf = "/fichas/GUA-ANSELL-HYFLEX.pdf",
@@ -325,6 +343,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: IMPORTACIONES MALVINAS S.A.C.",
                 Categoria = "Protección de manos",
                 UnidadMedida = "PAR",
+                PesoKg = 0.380m,
                 CostoReferencial = 22.50m,
                 StockDisponible = 85,
                 RutaFichaTecnicaPdf = "/fichas/GUA-CUERO-SOLDADOR.pdf",
@@ -339,6 +358,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: DISTRIBUIDORA INDUSTRIAL DEL PERÚ S.A.",
                 Categoria = "Protección de manos",
                 UnidadMedida = "PAR",
+                PesoKg = 0.075m,
                 CostoReferencial = 24.00m,
                 StockDisponible = 130,
                 RutaFichaTecnicaPdf = "/fichas/GUA-ANTICORTE-N5.pdf",
@@ -353,6 +373,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: BATA PERÚ S.A.",
                 Categoria = "Protección de pies",
                 UnidadMedida = "PAR",
+                PesoKg = 1.650m,
                 CostoReferencial = 320.00m,
                 StockDisponible = 25,
                 RutaFichaTecnicaPdf = "/fichas/BOT-CAT-HOLT.pdf",
@@ -367,6 +388,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: BATA PERÚ S.A.",
                 Categoria = "Protección de pies",
                 UnidadMedida = "PAR",
+                PesoKg = 1.800m,
                 CostoReferencial = 65.00m,
                 StockDisponible = 50,
                 RutaFichaTecnicaPdf = "/fichas/BOT-BATA-ACID.pdf",
@@ -381,6 +403,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: DISTRIBUIDORA INDUSTRIAL DEL PERÚ S.A.",
                 Categoria = "Protección corporal",
                 UnidadMedida = "UND",
+                PesoKg = 0.220m,
                 CostoReferencial = 21.00m,
                 StockDisponible = 160,
                 RutaFichaTecnicaPdf = "/fichas/TRA-KLEEN-A40.pdf",
@@ -395,6 +418,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: IMPORTACIONES MALVINAS S.A.C.",
                 Categoria = "Protección corporal",
                 UnidadMedida = "UND",
+                PesoKg = 0.850m,
                 CostoReferencial = 78.00m,
                 StockDisponible = 45,
                 RutaFichaTecnicaPdf = "/fichas/MAM-DRIL-REF.pdf",
@@ -409,6 +433,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: IMPORTACIONES MALVINAS S.A.C.",
                 Categoria = "Protección corporal",
                 UnidadMedida = "UND",
+                PesoKg = 0.950m,
                 CostoReferencial = 35.00m,
                 StockDisponible = 40,
                 RutaFichaTecnicaPdf = "/fichas/MAN-SOLD-CUERO.pdf",
@@ -423,6 +448,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: SEGURIDAD INDUSTRIAL TOTAL S.A.C.",
                 Categoria = "Trabajo en altura",
                 UnidadMedida = "UND",
+                PesoKg = 1.650m,
                 CostoReferencial = 135.00m,
                 StockDisponible = 30,
                 RutaFichaTecnicaPdf = "/fichas/LIN-HAWK-AMORT.pdf",
@@ -437,6 +463,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: SEGURIDAD INDUSTRIAL TOTAL S.A.C.",
                 Categoria = "Trabajo en altura",
                 UnidadMedida = "UND",
+                PesoKg = 4.800m,
                 CostoReferencial = 410.00m,
                 StockDisponible = 15,
                 RutaFichaTecnicaPdf = "/fichas/BLO-RET-HAWK-6M.pdf",
@@ -451,6 +478,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: SEGURIDAD INDUSTRIAL TOTAL S.A.C.",
                 Categoria = "Trabajo en altura",
                 UnidadMedida = "UND",
+                PesoKg = 0.280m,
                 CostoReferencial = 38.00m,
                 StockDisponible = 70,
                 RutaFichaTecnicaPdf = "/fichas/MOS-STEEL-50KN.pdf",
@@ -465,6 +493,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: DISTRIBUIDORA INDUSTRIAL DEL PERÚ S.A.",
                 Categoria = "Protección de manos",
                 UnidadMedida = "PAR",
+                PesoKg = 0.110m,
                 CostoReferencial = 14.20m,
                 StockDisponible = 110,
                 RutaFichaTecnicaPdf = "/fichas/GUA-QUIM-SOLVEX.pdf",
@@ -479,6 +508,7 @@ public static class DbSeeder
                 Descripcion = "Proveedor: 3M PERÚ S.A.",
                 Categoria = "Protección ocular",
                 UnidadMedida = "UND",
+                PesoKg = 0.090m,
                 CostoReferencial = 45.00m,
                 StockDisponible = 65,
                 RutaFichaTecnicaPdf = "/fichas/GON-3M-GOGGLE-GEAR.pdf",
@@ -490,7 +520,7 @@ public static class DbSeeder
 
         // Cargar todos los SKUs existentes de golpe para evitar N+1 queries (una sola consulta).
         var existingProducts = await context.Productos
-            .Select(p => new { p.Sku, p.RutaImagen, p.Id })
+            .Select(p => new { p.Sku, p.RutaImagen, p.Id, p.PesoKg })
             .ToDictionaryAsync(p => p.Sku, p => p);
 
         foreach (var prod in productos)
@@ -504,10 +534,21 @@ public static class DbSeeder
             {
                 context.Productos.Add(prod);
             }
-            else if (string.IsNullOrWhiteSpace(existing.RutaImagen))
+            else
             {
                 var tracked = await context.Productos.FindAsync(existing.Id);
-                if (tracked != null) tracked.RutaImagen = prod.RutaImagen;
+                if (tracked != null)
+                {
+                    if (string.IsNullOrWhiteSpace(tracked.RutaImagen))
+                    {
+                        tracked.RutaImagen = prod.RutaImagen;
+                    }
+
+                    if (tracked.PesoKg <= 0 && prod.PesoKg > 0)
+                    {
+                        tracked.PesoKg = prod.PesoKg;
+                    }
+                }
             }
         }
 
