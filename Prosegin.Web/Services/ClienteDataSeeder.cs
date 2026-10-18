@@ -13,7 +13,54 @@ public static class ClienteDataSeeder
             using var scope = serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
 
-            // 1. CONSTRUCTORA E INGENIERÍA MINERA DEL SUR S.A.C.
+            // 1. DELOSI S.A. (Franquicias de Restaurantes / Retail)
+            var c0 = await context.Clientes.Include(c => c.PuntosEntrega).FirstOrDefaultAsync(c => c.Ruc == "20100123330");
+            if (c0 == null)
+            {
+                c0 = new Cliente
+                {
+                    Ruc = "20100123330",
+                    RazonSocial = "DELOSI S.A.",
+                    DireccionFiscal = "AV. JAVIER PRADO OESTE NRO 1650, San Isidro - Lima",
+                    Departamento = "Lima",
+                    Provincia = "Lima",
+                    Distrito = "San Isidro",
+                    Ubigeo = "150131",
+                    EstadoSunat = "ACTIVO",
+                    CondicionSunat = "HABIDO",
+                    Telefono = "012119000",
+                    CorreoElectronico = "contacto@delosi.com",
+                    FechaCreacion = DateTime.UtcNow.AddMonths(-6),
+                    Activo = true,
+                    Referencia = "Al frente del parque"
+                };
+                context.Clientes.Add(c0);
+                await context.SaveChangesAsync();
+
+                context.PuntosEntrega.Add(
+                    new PuntoEntrega
+                    {
+                        ClienteId = c0.Id,
+                        TipoSede = "Sede Central / Oficina",
+                        NombreAlias = "Sede San Isidro",
+                        Direccion = "AV. JAVIER PRADO OESTE NRO 1650, San Isidro - Lima",
+                        Departamento = "Lima",
+                        Provincia = "Lima",
+                        Distrito = "San Isidro",
+                        Ubigeo = "150131",
+                        EsPredeterminada = true,
+                        Activo = true
+                    }
+                );
+                await context.SaveChangesAsync();
+            }
+            else if (c0.CorreoElectronico != "contacto@delosi.com")
+            {
+                c0.CorreoElectronico = "contacto@delosi.com";
+                await context.SaveChangesAsync();
+            }
+
+            // 2. CONSTRUCTORA E INGENIERÍA MINERA DEL SUR S.A.C.
             var c1 = await context.Clientes.Include(c => c.PuntosEntrega).FirstOrDefaultAsync(c => c.Ruc == "20601234567");
             if (c1 == null)
             {
@@ -79,8 +126,13 @@ public static class ClienteDataSeeder
                 );
                 await context.SaveChangesAsync();
             }
+            else if (c1.CorreoElectronico != "operaciones@consur.pe")
+            {
+                c1.CorreoElectronico = "operaciones@consur.pe";
+                await context.SaveChangesAsync();
+            }
 
-            // 2. CONSTRUCTORA DEL PACIFICO S.A.C.
+            // 3. CONSTRUCTORA DEL PACIFICO S.A.C.
             var c2 = await context.Clientes.Include(c => c.PuntosEntrega).FirstOrDefaultAsync(c => c.Ruc == "20548912340");
             if (c2 == null)
             {
@@ -133,8 +185,13 @@ public static class ClienteDataSeeder
                 );
                 await context.SaveChangesAsync();
             }
+            else if (c2.CorreoElectronico != "constpac.cyg@gmail.com")
+            {
+                c2.CorreoElectronico = "constpac.cyg@gmail.com";
+                await context.SaveChangesAsync();
+            }
 
-            // 3. CONSORCIO VIAL ANDINO S.R.L.
+            // 4. CONSORCIO VIAL ANDINO S.R.L.
             var c3 = await context.Clientes.Include(c => c.PuntosEntrega).FirstOrDefaultAsync(c => c.Ruc == "20492817263");
             if (c3 == null)
             {
@@ -172,6 +229,11 @@ public static class ClienteDataSeeder
                         Activo = true
                     }
                 );
+                await context.SaveChangesAsync();
+            }
+            else if (c3.CorreoElectronico != "lextopy20@gmail.com")
+            {
+                c3.CorreoElectronico = "lextopy20@gmail.com";
                 await context.SaveChangesAsync();
             }
         }
