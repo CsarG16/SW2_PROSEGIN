@@ -257,7 +257,7 @@ public class CatalogoController : Controller
         }
         finally
         {
-            if (!guardado)
+            if (!guardado && _storageService != null)
             {
                 _ = _storageService.EliminarArchivoAsync(urlFichaPublica, CancellationToken.None);
             }
@@ -333,6 +333,12 @@ public class CatalogoController : Controller
 
             try
             {
+                if (_storageService == null)
+                {
+                    TempData["ErrorMessage"] = "El servicio de almacenamiento no está disponible.";
+                    return RedirectToAction(nameof(Index));
+                }
+
                 var nuevaUrl = await _storageService.SubirArchivoAsync(FichaTecnica, "fichas", cancellationToken);
                 rutaAnterior = producto.RutaFichaTecnicaPdf;
 
@@ -351,7 +357,10 @@ public class CatalogoController : Controller
         {
             if (rutaAnterior.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
-                _ = _storageService.EliminarArchivoAsync(rutaAnterior, CancellationToken.None);
+                if (_storageService != null)
+                {
+                    _ = _storageService.EliminarArchivoAsync(rutaAnterior, CancellationToken.None);
+                }
             }
             else
             {
