@@ -64,6 +64,7 @@ public static class DbSeeder
         }
 
         // 2. Semillas de Productos EPP
+        const string SupabasePdfUrl = "https://vduewkhxxqpdhvfubyfn.supabase.co/storage/v1/object/public/prosegin-pdfs";
         var productos = new List<Producto>
         {
             new Producto
@@ -76,7 +77,7 @@ public static class DbSeeder
                 PesoKg = 0.400m,
                 CostoReferencial = 38.50m,
                 StockDisponible = 85,
-                RutaFichaTecnicaPdf = "/fichas/CAS-3M-H700.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/CAS-3M-H700.pdf",
                 NombreArchivoPdf = "CAS-3M-H700.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -91,7 +92,7 @@ public static class DbSeeder
                 PesoKg = 0.040m,
                 CostoReferencial = 12.80m,
                 StockDisponible = 150,
-                RutaFichaTecnicaPdf = "/fichas/LEN-3M-VIRTUA.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/LEN-3M-VIRTUA.pdf",
                 NombreArchivoPdf = "LEN-3M-VIRTUA.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -106,7 +107,7 @@ public static class DbSeeder
                 PesoKg = 0.150m,
                 CostoReferencial = 54.00m,
                 StockDisponible = 40,
-                RutaFichaTecnicaPdf = "/fichas/RES-3M-6200.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/RES-3M-6200.pdf",
                 NombreArchivoPdf = "RES-3M-6200.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -121,7 +122,7 @@ public static class DbSeeder
                 PesoKg = 0.010m,
                 CostoReferencial = 1.20m,
                 StockDisponible = 600,
-                RutaFichaTecnicaPdf = "/fichas/TAP-3M-1100.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/TAP-3M-1100.pdf",
                 NombreArchivoPdf = "TAP-3M-1100.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -136,7 +137,7 @@ public static class DbSeeder
                 PesoKg = 0.050m,
                 CostoReferencial = 15.50m,
                 StockDisponible = 120,
-                RutaFichaTecnicaPdf = "/fichas/GUA-SHOWA-370.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/GUA-SHOWA-370.pdf",
                 NombreArchivoPdf = "GUA-SHOWA-370.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -151,7 +152,7 @@ public static class DbSeeder
                 PesoKg = 1.400m,
                 CostoReferencial = 145.00m,
                 StockDisponible = 35,
-                RutaFichaTecnicaPdf = "/fichas/BOT-BATA-TITAN.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/BOT-BATA-TITAN.pdf",
                 NombreArchivoPdf = "BOT-BATA-TITAN.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -166,7 +167,7 @@ public static class DbSeeder
                 PesoKg = 1.800m,
                 CostoReferencial = 185.00m,
                 StockDisponible = 20,
-                RutaFichaTecnicaPdf = "/fichas/ARN-HAWK-4A.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/ARN-HAWK-4A.pdf",
                 NombreArchivoPdf = "ARN-HAWK-4A.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -181,7 +182,7 @@ public static class DbSeeder
                 PesoKg = 0.300m,
                 CostoReferencial = 28.00m,
                 StockDisponible = 90,
-                RutaFichaTecnicaPdf = "/fichas/CHA-PRO-REF.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/CHA-PRO-REF.pdf",
                 NombreArchivoPdf = "CHA-PRO-REF.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -196,7 +197,7 @@ public static class DbSeeder
                 PesoKg = 0.450m,
                 CostoReferencial = 42.00m,
                 StockDisponible = 70,
-                RutaFichaTecnicaPdf = "/fichas/CAS-MSA-VGUARD.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/CAS-MSA-VGUARD.pdf",
                 NombreArchivoPdf = "CAS-MSA-VGUARD.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -211,7 +212,7 @@ public static class DbSeeder
                 PesoKg = 0.030m,
                 CostoReferencial = 9.50m,
                 StockDisponible = 140,
-                RutaFichaTecnicaPdf = "/fichas/BAR-3M-4P.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/BAR-3M-4P.pdf",
                 NombreArchivoPdf = "BAR-3M-4P.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -226,7 +227,7 @@ public static class DbSeeder
                 PesoKg = 0.050m,
                 CostoReferencial = 32.00m,
                 StockDisponible = 95,
-                RutaFichaTecnicaPdf = "/fichas/LEN-3M-SOLUS.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/LEN-3M-SOLUS.pdf",
                 NombreArchivoPdf = "LEN-3M-SOLUS.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -241,7 +242,7 @@ public static class DbSeeder
                 PesoKg = 0.350m,
                 CostoReferencial = 26.50m,
                 StockDisponible = 60,
-                RutaFichaTecnicaPdf = "/fichas/VIS-STEEL-POLY.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/VIS-STEEL-POLY.pdf",
                 NombreArchivoPdf = "VIS-STEEL-POLY.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -256,7 +257,7 @@ public static class DbSeeder
                 PesoKg = 0.250m,
                 CostoReferencial = 68.00m,
                 StockDisponible = 110,
-                RutaFichaTecnicaPdf = "/fichas/MAS-3M-8210.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/MAS-3M-8210.pdf",
                 NombreArchivoPdf = "MAS-3M-8210.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -271,7 +272,7 @@ public static class DbSeeder
                 PesoKg = 0.050m,
                 CostoReferencial = 28.50m,
                 StockDisponible = 180,
-                RutaFichaTecnicaPdf = "/fichas/FIL-3M-2097.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/FIL-3M-2097.pdf",
                 NombreArchivoPdf = "FIL-3M-2097.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -286,7 +287,7 @@ public static class DbSeeder
                 PesoKg = 0.200m,
                 CostoReferencial = 49.00m,
                 StockDisponible = 75,
-                RutaFichaTecnicaPdf = "/fichas/CAR-3M-6003.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/CAR-3M-6003.pdf",
                 NombreArchivoPdf = "CAR-3M-6003.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -301,7 +302,7 @@ public static class DbSeeder
                 PesoKg = 0.250m,
                 CostoReferencial = 98.00m,
                 StockDisponible = 40,
-                RutaFichaTecnicaPdf = "/fichas/ORE-3M-PELTOR-X4.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/ORE-3M-PELTOR-X4.pdf",
                 NombreArchivoPdf = "ORE-3M-PELTOR-X4.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -316,7 +317,7 @@ public static class DbSeeder
                 PesoKg = 0.200m,
                 CostoReferencial = 62.00m,
                 StockDisponible = 55,
-                RutaFichaTecnicaPdf = "/fichas/ORE-3M-CASCO-H9.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/ORE-3M-CASCO-H9.pdf",
                 NombreArchivoPdf = "ORE-3M-CASCO-H9.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -331,7 +332,7 @@ public static class DbSeeder
                 PesoKg = 0.040m,
                 CostoReferencial = 18.00m,
                 StockDisponible = 200,
-                RutaFichaTecnicaPdf = "/fichas/GUA-ANSELL-HYFLEX.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/GUA-ANSELL-HYFLEX.pdf",
                 NombreArchivoPdf = "GUA-ANSELL-HYFLEX.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -346,7 +347,7 @@ public static class DbSeeder
                 PesoKg = 0.350m,
                 CostoReferencial = 22.50m,
                 StockDisponible = 85,
-                RutaFichaTecnicaPdf = "/fichas/GUA-CUERO-SOLDADOR.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/GUA-CUERO-SOLDADOR.pdf",
                 NombreArchivoPdf = "GUA-CUERO-SOLDADOR.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -361,7 +362,7 @@ public static class DbSeeder
                 PesoKg = 0.080m,
                 CostoReferencial = 24.00m,
                 StockDisponible = 130,
-                RutaFichaTecnicaPdf = "/fichas/GUA-ANTICORTE-N5.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/GUA-ANTICORTE-N5.pdf",
                 NombreArchivoPdf = "GUA-ANTICORTE-N5.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -376,7 +377,7 @@ public static class DbSeeder
                 PesoKg = 1.600m,
                 CostoReferencial = 320.00m,
                 StockDisponible = 25,
-                RutaFichaTecnicaPdf = "/fichas/BOT-CAT-HOLT.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/BOT-CAT-HOLT.pdf",
                 NombreArchivoPdf = "BOT-CAT-HOLT.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -391,7 +392,7 @@ public static class DbSeeder
                 PesoKg = 1.800m,
                 CostoReferencial = 65.00m,
                 StockDisponible = 50,
-                RutaFichaTecnicaPdf = "/fichas/BOT-BATA-ACID.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/BOT-BATA-ACID.pdf",
                 NombreArchivoPdf = "BOT-BATA-ACID.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -406,7 +407,7 @@ public static class DbSeeder
                 PesoKg = 0.200m,
                 CostoReferencial = 21.00m,
                 StockDisponible = 160,
-                RutaFichaTecnicaPdf = "/fichas/TRA-KLEEN-A40.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/TRA-KLEEN-A40.pdf",
                 NombreArchivoPdf = "TRA-KLEEN-A40.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -421,7 +422,7 @@ public static class DbSeeder
                 PesoKg = 0.850m,
                 CostoReferencial = 78.00m,
                 StockDisponible = 45,
-                RutaFichaTecnicaPdf = "/fichas/MAM-DRIL-REF.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/MAM-DRIL-REF.pdf",
                 NombreArchivoPdf = "MAM-DRIL-REF.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -436,7 +437,7 @@ public static class DbSeeder
                 PesoKg = 0.900m,
                 CostoReferencial = 35.00m,
                 StockDisponible = 40,
-                RutaFichaTecnicaPdf = "/fichas/MAN-SOLD-CUERO.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/MAN-SOLD-CUERO.pdf",
                 NombreArchivoPdf = "MAN-SOLD-CUERO.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -451,7 +452,7 @@ public static class DbSeeder
                 PesoKg = 1.500m,
                 CostoReferencial = 135.00m,
                 StockDisponible = 30,
-                RutaFichaTecnicaPdf = "/fichas/LIN-HAWK-AMORT.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/LIN-HAWK-AMORT.pdf",
                 NombreArchivoPdf = "LIN-HAWK-AMORT.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -466,7 +467,7 @@ public static class DbSeeder
                 PesoKg = 4.500m,
                 CostoReferencial = 410.00m,
                 StockDisponible = 15,
-                RutaFichaTecnicaPdf = "/fichas/BLO-RET-HAWK-6M.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/BLO-RET-HAWK-6M.pdf",
                 NombreArchivoPdf = "BLO-RET-HAWK-6M.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -481,7 +482,7 @@ public static class DbSeeder
                 PesoKg = 0.280m,
                 CostoReferencial = 38.00m,
                 StockDisponible = 70,
-                RutaFichaTecnicaPdf = "/fichas/MOS-STEEL-50KN.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/MOS-STEEL-50KN.pdf",
                 NombreArchivoPdf = "MOS-STEEL-50KN.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -496,7 +497,7 @@ public static class DbSeeder
                 PesoKg = 0.100m,
                 CostoReferencial = 14.20m,
                 StockDisponible = 110,
-                RutaFichaTecnicaPdf = "/fichas/GUA-QUIM-SOLVEX.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/GUA-QUIM-SOLVEX.pdf",
                 NombreArchivoPdf = "GUA-QUIM-SOLVEX.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -511,7 +512,7 @@ public static class DbSeeder
                 PesoKg = 0.100m,
                 CostoReferencial = 45.00m,
                 StockDisponible = 65,
-                RutaFichaTecnicaPdf = "/fichas/GON-3M-GOGGLE-GEAR.pdf",
+                RutaFichaTecnicaPdf = $"{SupabasePdfUrl}/GON-3M-GOGGLE-GEAR.pdf",
                 NombreArchivoPdf = "GON-3M-GOGGLE-GEAR.pdf",
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true
@@ -547,6 +548,11 @@ public static class DbSeeder
                     if (prod.PesoKg > 0 && tracked.PesoKg != prod.PesoKg)
                     {
                         tracked.PesoKg = prod.PesoKg;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(prod.RutaFichaTecnicaPdf) && tracked.RutaFichaTecnicaPdf != prod.RutaFichaTecnicaPdf)
+                    {
+                        tracked.RutaFichaTecnicaPdf = prod.RutaFichaTecnicaPdf;
                     }
                 }
             }
