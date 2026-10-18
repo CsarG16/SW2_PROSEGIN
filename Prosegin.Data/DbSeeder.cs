@@ -544,7 +544,7 @@ public static class DbSeeder
                         tracked.RutaImagen = prod.RutaImagen;
                     }
 
-                    if (tracked.PesoKg <= 0 && prod.PesoKg > 0)
+                    if (prod.PesoKg > 0 && tracked.PesoKg != prod.PesoKg)
                     {
                         tracked.PesoKg = prod.PesoKg;
                     }
