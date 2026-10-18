@@ -43,6 +43,7 @@ public class PedidosService : IPedidosService
         var totalPorPreparar = pedidos.Count(p => p.EstadoOperativo == PedidoLogisticaRules.EstadoPorPreparar);
         var totalEnPreparacion = pedidos.Count(p => p.EstadoOperativo == PedidoLogisticaRules.EstadoEnPreparacion);
         var totalListoDespacho = pedidos.Count(p => p.EstadoOperativo == PedidoLogisticaRules.EstadoListoDespacho);
+        var totalEntregado = pedidos.Count(p => p.EstadoOperativo == PedidoLogisticaRules.EstadoEntregado);
         var totalUrgentes = pedidos.Count(p => p.EsUrgenteMenor24h);
 
         var estadoNormalizado = string.IsNullOrWhiteSpace(estado)
@@ -86,6 +87,7 @@ public class PedidosService : IPedidosService
             TotalPorPreparar = totalPorPreparar,
             TotalEnPreparacion = totalEnPreparacion,
             TotalListoDespacho = totalListoDespacho,
+            TotalEntregado = totalEntregado,
             TotalUrgentes = totalUrgentes,
             MensajeSinResultados = PedidoLogisticaRules.MensajeSinResultados
         };
@@ -147,7 +149,7 @@ public class PedidosService : IPedidosService
                 VentaAprobada = true,
                 PuedeGenerarOrdenesCompra = estado == PedidoLogisticaRules.EstadoPorPreparar
                     && orden.OrdenesCompra.Count == 0,
-                PuedeGenerarFactura = estado == PedidoLogisticaRules.EstadoListoDespacho
+                PuedeGenerarFactura = estado == PedidoLogisticaRules.EstadoEntregado
                     && orden.Facturas.Count == 0
                     && EsClienteValidoParaFactura(cotizacion.Cliente),
                 PuedeGenerarGuiaRemision = estado == PedidoLogisticaRules.EstadoListoDespacho
@@ -190,7 +192,7 @@ public class PedidosService : IPedidosService
             "ENCONSOLIDACION" => PedidoLogisticaRules.EstadoEnPreparacion,
             "LISTOPARADESPACHO" => PedidoLogisticaRules.EstadoListoDespacho,
             "DESPACHADO" => PedidoLogisticaRules.EstadoListoDespacho,
-            "ENTREGADO" => PedidoLogisticaRules.EstadoListoDespacho,
+            "ENTREGADO" => PedidoLogisticaRules.EstadoEntregado,
             _ => PedidoLogisticaRules.EstadoPorPreparar
         };
     }
@@ -201,6 +203,7 @@ public class PedidosService : IPedidosService
         {
             PedidoLogisticaRules.EstadoPorPreparar => PedidoLogisticaRules.TextoPorPreparar,
             PedidoLogisticaRules.EstadoEnPreparacion => PedidoLogisticaRules.TextoEnPreparacion,
+            PedidoLogisticaRules.EstadoEntregado => PedidoLogisticaRules.TextoEntregado,
             _ => PedidoLogisticaRules.TextoListoDespacho
         };
     }
@@ -211,7 +214,7 @@ public class PedidosService : IPedidosService
     {
         var orden = await ObtenerOrdenParaFacturaAsync(numeroPedido, cancellationToken);
         if (orden == null || !EsClienteValidoParaFactura(orden.Cotizacion.Cliente)
-            || !EsEstadoListoParaDespacho(orden.EstadoLogistico)
+            || !EsEstadoEntregado(orden.EstadoLogistico)
             || orden.Facturas.Count > 0)
         {
             return null;
@@ -235,8 +238,8 @@ public class PedidosService : IPedidosService
 
         if (orden == null)
             return EmitirFacturaResult.Fallido("Pedido no encontrado.");
-        if (!EsEstadoListoParaDespacho(orden.EstadoLogistico))
-            return EmitirFacturaResult.Fallido("Solo se puede facturar un pedido listo para despacho.");
+        if (!EsEstadoEntregado(orden.EstadoLogistico))
+            return EmitirFacturaResult.Fallido("Solo se puede facturar un pedido entregado.");
         if (!EsClienteValidoParaFactura(orden.Cotizacion.Cliente))
             return EmitirFacturaResult.Fallido("El cliente debe estar activo y habido en SUNAT.");
         if (!RucValidator.ValidarFormato(orden.Cotizacion.Cliente.Ruc, out var errorRuc))
@@ -478,6 +481,12 @@ public class PedidosService : IPedidosService
             guia.Numero = response.Numero.Value;
             guia.NumeroGuia = $"{response.Serie}-{response.Numero.Value}";
         }
+
+        if (response.Exito)
+        {
+            orden.EstadoLogistico = "Entregado";
+        }
+
         await _context.SaveChangesAsync(cancellationToken);
 
         return response.Exito
@@ -623,8 +632,10 @@ public class PedidosService : IPedidosService
 
     private static bool EsEstadoListoParaDespacho(string? estado) =>
         string.Equals(estado?.Replace(" ", string.Empty), "ListoParaDespacho", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(estado, "Despachado", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(estado, "Entregado", StringComparison.OrdinalIgnoreCase);
+        || string.Equals(estado, "Despachado", StringComparison.OrdinalIgnoreCase);
+
+    private static bool EsEstadoEntregado(string? estado) =>
+        string.Equals(estado?.Replace(" ", string.Empty), "Entregado", StringComparison.OrdinalIgnoreCase);
 
     private static bool TieneGuiaRemisionActiva(IEnumerable<GuiaRemision> guias) =>
         guias.Any(g => g.EstadoEmision != NubefactService.EstadoRechazado);

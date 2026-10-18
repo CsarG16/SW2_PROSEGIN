@@ -8,10 +8,12 @@ public static class PedidoLogisticaRules
     public const string EstadoPorPreparar = "POR_PREPARAR";
     public const string EstadoEnPreparacion = "EN_PREPARACION";
     public const string EstadoListoDespacho = "LISTO_DESPACHO";
+    public const string EstadoEntregado = "ENTREGADO";
 
     public const string TextoPorPreparar = "Por Preparar";
     public const string TextoEnPreparacion = "En Preparación";
     public const string TextoListoDespacho = "Listo para Despacho";
+    public const string TextoEntregado = "Entregado";
 
     /// <summary>
     /// Valida que el pedido cuente con venta aprobada y su respectiva orden de compra asignada.
