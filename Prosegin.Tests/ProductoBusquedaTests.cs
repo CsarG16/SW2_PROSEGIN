@@ -77,7 +77,7 @@ public class ProductoBusquedaTests
             UnidadMedida = "PAR",
             Marca = "3M",
             CostoBaseAdquisicion = 25.50m,
-            PesoKg = 0.456m // 3 decimales
+            PesoKg = 0.4567m // 4 decimales para exceder el máximo de 3 decimales permitido
         };
 
         var context = new System.ComponentModel.DataAnnotations.ValidationContext(model);

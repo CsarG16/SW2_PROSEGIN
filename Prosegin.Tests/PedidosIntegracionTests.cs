@@ -11,6 +11,7 @@ using Prosegin.Data;
 using Prosegin.Data.Entities;
 using Prosegin.Web.Controllers;
 using Prosegin.Web.Services;
+using Prosegin.Web.Services.Supabase;
 using Xunit;
 
 namespace Prosegin.Tests;
@@ -41,6 +42,7 @@ public class PedidosIntegracionTests : IAsyncLifetime
         builder.Services.AddDbContext<ProseginDbContext>(options =>
             options.UseSqlite($"Data Source={_database};Pooling=False"));
         builder.Services.AddScoped<IPedidosService, PedidosService>();
+        builder.Services.AddSingleton<ISupabaseStorageService, CotizacionesTestHost.SupabaseStoragePrueba>();
         _app = builder.Build();
         _app.MapControllerRoute("default", "{controller=Pedidos}/{action=Index}/{id?}");
         await SeedPedidosAsync();

@@ -26,9 +26,6 @@ public class ProductoCreateViewModel : IValidatableObject
     [StringLength(20, ErrorMessage = "La unidad no puede superar los 20 caracteres.")]
     public string UnidadMedida { get; set; } = "UND";
 
-    [Display(Name = "Peso unitario (kg)")]
-    public decimal PesoKg { get; set; }
-
     [Required(ErrorMessage = "Seleccione una marca o fabricante.")]
     [Display(Name = "Marca / Fabricante")]
     [StringLength(100, ErrorMessage = "La marca no puede superar los 100 caracteres.")]
@@ -40,7 +37,7 @@ public class ProductoCreateViewModel : IValidatableObject
     public decimal CostoBaseAdquisicion { get; set; }
 
     [Required(ErrorMessage = "Ingrese el peso aproximado del producto.")]
-    [Range(typeof(decimal), "0.01", "9999.99", ErrorMessage = "El peso aproximado debe ser mayor a 0 kg (ej. 0.45).")]
+    [Range(typeof(decimal), "0.001", "9999.999", ErrorMessage = "El peso aproximado debe ser mayor a 0 kg (ej. 0.45).")]
     [Display(Name = "Peso aproximado (kg)")]
     public decimal PesoKg { get; set; } = 0.50m;
 
@@ -68,9 +65,9 @@ public class ProductoCreateViewModel : IValidatableObject
                 new[] { nameof(CostoBaseAdquisicion) });
         }
 
-        if (PesoKg != decimal.Round(PesoKg, 2))
+        if (PesoKg != decimal.Round(PesoKg, 3))
         {
-            yield return new ValidationResult("El peso aproximado admite hasta 2 decimales.",
+            yield return new ValidationResult("El peso aproximado admite hasta 3 decimales.",
                 new[] { nameof(PesoKg) });
         }
     }

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -15,6 +16,7 @@ using Prosegin.Data.Entities;
 using Prosegin.Data.Validation;
 using Prosegin.Web.Controllers;
 using Prosegin.Web.Services;
+using Prosegin.Web.Services.Supabase;
 using Xunit;
 
 namespace Prosegin.Tests;
@@ -46,6 +48,7 @@ public sealed class CotizacionesTestHost : IAsyncLifetime
         builder.Services.AddControllersWithViews().AddApplicationPart(typeof(CotizacionesController).Assembly);
         builder.Services.AddDbContext<ProseginDbContext>(options => options.UseSqlite($"Data Source={_database};Pooling=False"));
         builder.Services.AddSingleton<ISunatService>(Sunat);
+        builder.Services.AddSingleton<ISupabaseStorageService, SupabaseStoragePrueba>();
         _app = builder.Build();
         _app.UseStaticFiles();
         _app.MapControllerRoute("default", "{controller=Clientes}/{action=Index}/{id?}");
@@ -133,6 +136,21 @@ public sealed class CotizacionesTestHost : IAsyncLifetime
             Task.FromResult(new SunatConsultaResult(true, null, ruc, "Cliente verificado", Direccion,
                 null, null, null, null, Estado, "HABIDO", null, null, "Prueba", true, Estado == "ACTIVO"));
         public bool ValidarFormatoRuc(string ruc, out string? mensajeError) { mensajeError = null; return true; }
+    }
+
+    public sealed class SupabaseStoragePrueba : ISupabaseStorageService
+    {
+        public Task<string> SubirArchivoAsync(IFormFile archivo, string carpeta, CancellationToken cancellationToken = default) =>
+            Task.FromResult($"https://fake-supabase.co/storage/v1/object/public/{carpeta}/{archivo.FileName}");
+
+        public Task<string> SubirArchivoAsync(Stream stream, string nombreArchivo, string carpeta, string contentType = "application/pdf", CancellationToken cancellationToken = default) =>
+            Task.FromResult($"https://fake-supabase.co/storage/v1/object/public/{carpeta}/{nombreArchivo}");
+
+        public Task<bool> EliminarArchivoAsync(string urlOPath, CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
+
+        public string ObtenerUrlPublica(string carpeta, string nombreArchivo) =>
+            $"https://fake-supabase.co/storage/v1/object/public/{carpeta}/{nombreArchivo}";
     }
 }
 
