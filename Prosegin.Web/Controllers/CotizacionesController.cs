@@ -999,7 +999,21 @@ public class CotizacionesController : Controller
 
     private byte[] GenerarPdf(Cotizacion cotizacion) => CotizacionPdfGenerator.Generate(
         cotizacion,
-        productoId => Url.Action("VerFicha", "Catalogo", new { id = productoId }, Request.Scheme),
+        productoId =>
+        {
+            var detalle = cotizacion.Detalles?.FirstOrDefault(d => d.ProductoId == productoId);
+            var rutaFicha = detalle?.Producto?.RutaFichaTecnicaPdf;
+
+            // Si la ficha técnica es una URL pública (Supabase Storage), se usa directamente para que abra en cualquier dispositivo/WhatsApp
+            if (!string.IsNullOrWhiteSpace(rutaFicha)
+                && (rutaFicha.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || rutaFicha.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
+            {
+                return rutaFicha;
+            }
+
+            // Fallback para fichas almacenadas localmente
+            return Url.Action("VerFicha", "Catalogo", new { id = productoId }, Request.Scheme);
+        },
         logoPath: Path.Combine(_env.WebRootPath, "logo_horizontal.png"));
 
     private RedirectToActionResult RedirigirAListado(

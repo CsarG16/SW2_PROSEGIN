@@ -26,6 +26,9 @@ public class ProductoCreateViewModel : IValidatableObject
     [StringLength(20, ErrorMessage = "La unidad no puede superar los 20 caracteres.")]
     public string UnidadMedida { get; set; } = "UND";
 
+    [Display(Name = "Peso unitario (kg)")]
+    public decimal PesoKg { get; set; }
+
     [Required(ErrorMessage = "Seleccione una marca o fabricante.")]
     [Display(Name = "Marca / Fabricante")]
     [StringLength(100, ErrorMessage = "La marca no puede superar los 100 caracteres.")]

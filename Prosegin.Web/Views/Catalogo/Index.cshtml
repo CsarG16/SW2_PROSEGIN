@@ -87,7 +87,7 @@
                             <strong class="text-dark d-block fw-bold" style="font-size: 1.25rem;">S/ @product.Precio.ToString("N2", new CultureInfo("es-PE"))</strong>
                         </div>
                         <div class="catalog-add-controls justify-content-end">
-                            <button type="button" class="btn btn-dark px-3 py-2 fw-semibold text-white d-flex align-items-center gap-2 shadow-sm rounded-3" style="font-size: 0.85rem;" data-bs-toggle="modal" data-bs-target="#editProductModal" onclick="populateEditModal(this)" data-id="@product.Id" data-sku="@product.Sku" data-name="@product.Nombre" data-category="@product.Categoria" data-stock="@product.StockDisponible" data-cost="@product.Precio.ToString(CultureInfo.InvariantCulture)" data-peso="@product.PesoKg.ToString(CultureInfo.InvariantCulture)" data-tarifas="@JsonSerializer.Serialize(product.TarifasProveedor)">
+                            <button type="button" class="btn btn-dark px-3 py-2 fw-semibold text-white d-flex align-items-center gap-2 shadow-sm rounded-3" style="font-size: 0.85rem;" data-bs-toggle="modal" data-bs-target="#editProductModal" onclick="populateEditModal(this)" data-id="@product.Id" data-sku="@product.Sku" data-name="@product.Nombre" data-category="@product.Categoria" data-stock="@product.StockDisponible" data-cost="@product.Precio.ToString(CultureInfo.InvariantCulture)" data-peso="@product.PesoKg.ToString(CultureInfo.InvariantCulture)" data-weight="@product.PesoKg.ToString(CultureInfo.InvariantCulture)" data-tarifas="@JsonSerializer.Serialize(product.TarifasProveedor)">
                                 <i class="bi bi-pencil-square"></i><span>Editar</span>
                             </button>
                         </div>
@@ -153,10 +153,10 @@
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Peso Aprox. (Kg)</label>
                             <div class="input-group">
-                                <input type="number" step="0.01" min="0.01" max="9999.99" class="form-control border-end-0 fw-bold" id="editProductWeight" name="PesoKg" placeholder="0.50" required />
+                                <input type="number" step="0.001" min="0.001" max="9999.99" class="form-control border-end-0 fw-bold" id="editProductWeight" name="PesoKg" placeholder="0.50" required />
                                 <span class="input-group-text bg-light text-secondary fw-semibold border-start-0">kg</span>
                             </div>
-                            <small class="text-muted" style="font-size: 0.72rem;">Peso estimado unitario.</small>
+                            <small class="text-muted" style="font-size: 0.72rem;">Peso unitario (hasta 3 decimales).</small>
                         </div>
                     </div>
 
@@ -335,7 +335,7 @@
             document.getElementById('editProductName').value = btn.dataset.name;
             document.getElementById('editProductCategory').value = btn.dataset.category;
             document.getElementById('editProductCost').value = btn.dataset.cost;
-            document.getElementById('editProductWeight').value = btn.dataset.peso || '0.50';
+            document.getElementById('editProductWeight').value = btn.dataset.weight || btn.dataset.peso || '0.50';
 
             const container = document.getElementById('editProviderTariffs');
             container.replaceChildren();
