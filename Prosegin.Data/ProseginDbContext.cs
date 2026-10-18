@@ -50,6 +50,7 @@ public class ProseginDbContext : DbContext
             entity.Property(e => e.Categoria).HasMaxLength(100);
             entity.Property(e => e.UnidadMedida).HasMaxLength(20);
             entity.Property(e => e.CostoReferencial).HasPrecision(18, 2);
+            entity.Property(e => e.PesoKg).HasPrecision(18, 2).HasDefaultValue(0.50m);
             entity.Property(e => e.StockDisponible).HasDefaultValue(0);
             entity.Property(e => e.RutaFichaTecnicaPdf).HasMaxLength(300);
             entity.Property(e => e.NombreArchivoPdf).HasMaxLength(150);

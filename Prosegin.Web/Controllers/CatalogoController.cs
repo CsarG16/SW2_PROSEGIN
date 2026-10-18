@@ -55,6 +55,7 @@ public class CatalogoController : Controller
                 Nombre = p.Nombre,
                 Categoria = p.Categoria,
                 Precio = p.CostoReferencial,
+                PesoKg = p.PesoKg,
                 StockDisponible = p.StockDisponible,
                 RutaFichaTecnicaPdf = p.RutaFichaTecnicaPdf,
                 NombreArchivoPdf = p.NombreArchivoPdf,
@@ -205,6 +206,7 @@ public class CatalogoController : Controller
             Categoria = model.Categoria.Trim(),
             UnidadMedida = string.IsNullOrWhiteSpace(model.UnidadMedida) ? "UND" : model.UnidadMedida.Trim().ToUpperInvariant(),
             CostoReferencial = model.CostoBaseAdquisicion,
+            PesoKg = model.PesoKg,
             RutaFichaTecnicaPdf = $"/uploads/fichas/{nombreUnico}",
             NombreArchivoPdf = Path.GetFileName(model.FichaTecnica!.FileName),
             Descripcion = string.IsNullOrWhiteSpace(model.Marca)
@@ -269,6 +271,7 @@ public class CatalogoController : Controller
         string Nombre,
         string Categoria,
         decimal Precio,
+        decimal? PesoKg,
         IFormFile? FichaTecnica,
         List<TarifaProveedorEditarViewModel>? tarifasProveedores,
         int? proveedorPrincipalId,
@@ -304,6 +307,10 @@ public class CatalogoController : Controller
         producto.Nombre = Nombre?.Trim().ToUpperInvariant() ?? producto.Nombre;
         producto.Categoria = Categoria?.Trim() ?? string.Empty;
         producto.CostoReferencial = Precio;
+        if (PesoKg.HasValue && PesoKg.Value > 0)
+        {
+            producto.PesoKg = decimal.Round(PesoKg.Value, 2);
+        }
         foreach (var tarifa in tarifasProveedores)
         {
             var existente = tarifasActuales[tarifa.ProveedorId];

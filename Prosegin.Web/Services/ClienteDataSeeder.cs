@@ -29,7 +29,7 @@ public static class ClienteDataSeeder
                     EstadoSunat = "ACTIVO",
                     CondicionSunat = "HABIDO",
                     Telefono = "014218900",
-                    CorreoElectronico = "operaciones@minerasur.pe",
+                    CorreoElectronico = "operaciones@consur.pe",
                     FechaCreacion = DateTime.UtcNow.AddMonths(-6),
                     Activo = true
                 };
@@ -96,7 +96,7 @@ public static class ClienteDataSeeder
                     EstadoSunat = "ACTIVO",
                     CondicionSunat = "HABIDO",
                     Telefono = "013567890",
-                    CorreoElectronico = "contacto@pacificoconstructora.pe",
+                    CorreoElectronico = "constpac.cyg@gmail.com",
                     FechaCreacion = DateTime.UtcNow.AddMonths(-4),
                     Activo = true
                 };
@@ -150,7 +150,7 @@ public static class ClienteDataSeeder
                     EstadoSunat = "ACTIVO",
                     CondicionSunat = "HABIDO",
                     Telefono = "014283921",
-                    CorreoElectronico = "licitaciones@vialandino.pe",
+                    CorreoElectronico = "lextopy20@gmail.com",
                     FechaCreacion = DateTime.UtcNow.AddMonths(-2),
                     Activo = true
                 };

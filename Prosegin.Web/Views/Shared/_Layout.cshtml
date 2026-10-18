@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="~/css/sidebar.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/prosegin-toast.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Prosegin.Web.styles.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
     <script>
         (function () {
             try {

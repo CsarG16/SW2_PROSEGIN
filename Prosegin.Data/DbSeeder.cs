@@ -74,6 +74,7 @@ public static class DbSeeder
                 Categoria = "Protección de cabeza",
                 UnidadMedida = "UND",
                 CostoReferencial = 38.50m,
+                PesoKg = 0.38m,
                 StockDisponible = 85,
                 RutaFichaTecnicaPdf = "/fichas/CAS-3M-H700.pdf",
                 NombreArchivoPdf = "CAS-3M-H700.pdf",
@@ -88,6 +89,7 @@ public static class DbSeeder
                 Categoria = "Protección ocular",
                 UnidadMedida = "UND",
                 CostoReferencial = 12.80m,
+                PesoKg = 0.04m,
                 StockDisponible = 150,
                 RutaFichaTecnicaPdf = "/fichas/LEN-3M-VIRTUA.pdf",
                 NombreArchivoPdf = "LEN-3M-VIRTUA.pdf",
@@ -102,6 +104,7 @@ public static class DbSeeder
                 Categoria = "Protección respiratoria",
                 UnidadMedida = "UND",
                 CostoReferencial = 54.00m,
+                PesoKg = 0.14m,
                 StockDisponible = 40,
                 RutaFichaTecnicaPdf = "/fichas/RES-3M-6200.pdf",
                 NombreArchivoPdf = "RES-3M-6200.pdf",
@@ -116,6 +119,7 @@ public static class DbSeeder
                 Categoria = "Protección auditiva",
                 UnidadMedida = "PAR",
                 CostoReferencial = 1.20m,
+                PesoKg = 0.01m,
                 StockDisponible = 600,
                 RutaFichaTecnicaPdf = "/fichas/TAP-3M-1100.pdf",
                 NombreArchivoPdf = "TAP-3M-1100.pdf",
@@ -130,6 +134,7 @@ public static class DbSeeder
                 Categoria = "Protección de manos",
                 UnidadMedida = "PAR",
                 CostoReferencial = 15.50m,
+                PesoKg = 0.06m,
                 StockDisponible = 120,
                 RutaFichaTecnicaPdf = "/fichas/GUA-SHOWA-370.pdf",
                 NombreArchivoPdf = "GUA-SHOWA-370.pdf",
@@ -144,6 +149,7 @@ public static class DbSeeder
                 Categoria = "Protección de pies",
                 UnidadMedida = "PAR",
                 CostoReferencial = 145.00m,
+                PesoKg = 1.45m,
                 StockDisponible = 35,
                 RutaFichaTecnicaPdf = "/fichas/BOT-BATA-TITAN.pdf",
                 NombreArchivoPdf = "BOT-BATA-TITAN.pdf",
@@ -158,6 +164,7 @@ public static class DbSeeder
                 Categoria = "Trabajo en altura",
                 UnidadMedida = "UND",
                 CostoReferencial = 185.00m,
+                PesoKg = 1.95m,
                 StockDisponible = 20,
                 RutaFichaTecnicaPdf = "/fichas/ARN-HAWK-4A.pdf",
                 NombreArchivoPdf = "ARN-HAWK-4A.pdf",
@@ -172,6 +179,7 @@ public static class DbSeeder
                 Categoria = "Protección corporal",
                 UnidadMedida = "UND",
                 CostoReferencial = 28.00m,
+                PesoKg = 0.32m,
                 StockDisponible = 90,
                 RutaFichaTecnicaPdf = "/fichas/CHA-PRO-REF.pdf",
                 NombreArchivoPdf = "CHA-PRO-REF.pdf",
@@ -186,6 +194,7 @@ public static class DbSeeder
                 Categoria = "Protección de cabeza",
                 UnidadMedida = "UND",
                 CostoReferencial = 42.00m,
+                PesoKg = 0.41m,
                 StockDisponible = 70,
                 RutaFichaTecnicaPdf = "/fichas/CAS-MSA-VGUARD.pdf",
                 NombreArchivoPdf = "CAS-MSA-VGUARD.pdf",
@@ -200,6 +209,7 @@ public static class DbSeeder
                 Categoria = "Protección de cabeza",
                 UnidadMedida = "UND",
                 CostoReferencial = 9.50m,
+                PesoKg = 0.05m,
                 StockDisponible = 140,
                 RutaFichaTecnicaPdf = "/fichas/BAR-3M-4P.pdf",
                 NombreArchivoPdf = "BAR-3M-4P.pdf",
@@ -214,6 +224,7 @@ public static class DbSeeder
                 Categoria = "Protección ocular",
                 UnidadMedida = "UND",
                 CostoReferencial = 32.00m,
+                PesoKg = 0.05m,
                 StockDisponible = 95,
                 RutaFichaTecnicaPdf = "/fichas/LEN-3M-SOLUS.pdf",
                 NombreArchivoPdf = "LEN-3M-SOLUS.pdf",
@@ -228,6 +239,7 @@ public static class DbSeeder
                 Categoria = "Protección ocular",
                 UnidadMedida = "UND",
                 CostoReferencial = 26.50m,
+                PesoKg = 0.38m,
                 StockDisponible = 60,
                 RutaFichaTecnicaPdf = "/fichas/VIS-STEEL-POLY.pdf",
                 NombreArchivoPdf = "VIS-STEEL-POLY.pdf",
@@ -242,6 +254,7 @@ public static class DbSeeder
                 Categoria = "Protección respiratoria",
                 UnidadMedida = "CJA",
                 CostoReferencial = 68.00m,
+                PesoKg = 0.28m,
                 StockDisponible = 110,
                 RutaFichaTecnicaPdf = "/fichas/MAS-3M-8210.pdf",
                 NombreArchivoPdf = "MAS-3M-8210.pdf",
@@ -256,6 +269,7 @@ public static class DbSeeder
                 Categoria = "Protección respiratoria",
                 UnidadMedida = "PAR",
                 CostoReferencial = 28.50m,
+                PesoKg = 0.08m,
                 StockDisponible = 180,
                 RutaFichaTecnicaPdf = "/fichas/FIL-3M-2097.pdf",
                 NombreArchivoPdf = "FIL-3M-2097.pdf",
@@ -270,6 +284,7 @@ public static class DbSeeder
                 Categoria = "Protección respiratoria",
                 UnidadMedida = "PAR",
                 CostoReferencial = 49.00m,
+                PesoKg = 0.22m,
                 StockDisponible = 75,
                 RutaFichaTecnicaPdf = "/fichas/CAR-3M-6003.pdf",
                 NombreArchivoPdf = "CAR-3M-6003.pdf",
@@ -284,6 +299,7 @@ public static class DbSeeder
                 Categoria = "Protección auditiva",
                 UnidadMedida = "UND",
                 CostoReferencial = 98.00m,
+                PesoKg = 0.24m,
                 StockDisponible = 40,
                 RutaFichaTecnicaPdf = "/fichas/ORE-3M-PELTOR-X4.pdf",
                 NombreArchivoPdf = "ORE-3M-PELTOR-X4.pdf",
@@ -298,6 +314,7 @@ public static class DbSeeder
                 Categoria = "Protección auditiva",
                 UnidadMedida = "PAR",
                 CostoReferencial = 62.00m,
+                PesoKg = 0.22m,
                 StockDisponible = 55,
                 RutaFichaTecnicaPdf = "/fichas/ORE-3M-CASCO-H9.pdf",
                 NombreArchivoPdf = "ORE-3M-CASCO-H9.pdf",
@@ -312,6 +329,7 @@ public static class DbSeeder
                 Categoria = "Protección de manos",
                 UnidadMedida = "PAR",
                 CostoReferencial = 18.00m,
+                PesoKg = 0.05m,
                 StockDisponible = 200,
                 RutaFichaTecnicaPdf = "/fichas/GUA-ANSELL-HYFLEX.pdf",
                 NombreArchivoPdf = "GUA-ANSELL-HYFLEX.pdf",
@@ -326,6 +344,7 @@ public static class DbSeeder
                 Categoria = "Protección de manos",
                 UnidadMedida = "PAR",
                 CostoReferencial = 22.50m,
+                PesoKg = 0.36m,
                 StockDisponible = 85,
                 RutaFichaTecnicaPdf = "/fichas/GUA-CUERO-SOLDADOR.pdf",
                 NombreArchivoPdf = "GUA-CUERO-SOLDADOR.pdf",
@@ -340,6 +359,7 @@ public static class DbSeeder
                 Categoria = "Protección de manos",
                 UnidadMedida = "PAR",
                 CostoReferencial = 24.00m,
+                PesoKg = 0.09m,
                 StockDisponible = 130,
                 RutaFichaTecnicaPdf = "/fichas/GUA-ANTICORTE-N5.pdf",
                 NombreArchivoPdf = "GUA-ANTICORTE-N5.pdf",
@@ -354,6 +374,7 @@ public static class DbSeeder
                 Categoria = "Protección de pies",
                 UnidadMedida = "PAR",
                 CostoReferencial = 320.00m,
+                PesoKg = 1.65m,
                 StockDisponible = 25,
                 RutaFichaTecnicaPdf = "/fichas/BOT-CAT-HOLT.pdf",
                 NombreArchivoPdf = "BOT-CAT-HOLT.pdf",
@@ -368,6 +389,7 @@ public static class DbSeeder
                 Categoria = "Protección de pies",
                 UnidadMedida = "PAR",
                 CostoReferencial = 65.00m,
+                PesoKg = 1.85m,
                 StockDisponible = 50,
                 RutaFichaTecnicaPdf = "/fichas/BOT-BATA-ACID.pdf",
                 NombreArchivoPdf = "BOT-BATA-ACID.pdf",
@@ -382,6 +404,7 @@ public static class DbSeeder
                 Categoria = "Protección corporal",
                 UnidadMedida = "UND",
                 CostoReferencial = 21.00m,
+                PesoKg = 0.26m,
                 StockDisponible = 160,
                 RutaFichaTecnicaPdf = "/fichas/TRA-KLEEN-A40.pdf",
                 NombreArchivoPdf = "TRA-KLEEN-A40.pdf",
@@ -396,6 +419,7 @@ public static class DbSeeder
                 Categoria = "Protección corporal",
                 UnidadMedida = "UND",
                 CostoReferencial = 78.00m,
+                PesoKg = 0.75m,
                 StockDisponible = 45,
                 RutaFichaTecnicaPdf = "/fichas/MAM-DRIL-REF.pdf",
                 NombreArchivoPdf = "MAM-DRIL-REF.pdf",
@@ -410,6 +434,7 @@ public static class DbSeeder
                 Categoria = "Protección corporal",
                 UnidadMedida = "UND",
                 CostoReferencial = 35.00m,
+                PesoKg = 0.85m,
                 StockDisponible = 40,
                 RutaFichaTecnicaPdf = "/fichas/MAN-SOLD-CUERO.pdf",
                 NombreArchivoPdf = "MAN-SOLD-CUERO.pdf",
@@ -424,6 +449,7 @@ public static class DbSeeder
                 Categoria = "Trabajo en altura",
                 UnidadMedida = "UND",
                 CostoReferencial = 135.00m,
+                PesoKg = 1.70m,
                 StockDisponible = 30,
                 RutaFichaTecnicaPdf = "/fichas/LIN-HAWK-AMORT.pdf",
                 NombreArchivoPdf = "LIN-HAWK-AMORT.pdf",
@@ -438,6 +464,7 @@ public static class DbSeeder
                 Categoria = "Trabajo en altura",
                 UnidadMedida = "UND",
                 CostoReferencial = 410.00m,
+                PesoKg = 4.50m,
                 StockDisponible = 15,
                 RutaFichaTecnicaPdf = "/fichas/BLO-RET-HAWK-6M.pdf",
                 NombreArchivoPdf = "BLO-RET-HAWK-6M.pdf",
@@ -452,6 +479,7 @@ public static class DbSeeder
                 Categoria = "Trabajo en altura",
                 UnidadMedida = "UND",
                 CostoReferencial = 38.00m,
+                PesoKg = 0.28m,
                 StockDisponible = 70,
                 RutaFichaTecnicaPdf = "/fichas/MOS-STEEL-50KN.pdf",
                 NombreArchivoPdf = "MOS-STEEL-50KN.pdf",
@@ -466,6 +494,7 @@ public static class DbSeeder
                 Categoria = "Protección de manos",
                 UnidadMedida = "PAR",
                 CostoReferencial = 14.20m,
+                PesoKg = 0.11m,
                 StockDisponible = 110,
                 RutaFichaTecnicaPdf = "/fichas/GUA-QUIM-SOLVEX.pdf",
                 NombreArchivoPdf = "GUA-QUIM-SOLVEX.pdf",
@@ -480,6 +509,7 @@ public static class DbSeeder
                 Categoria = "Protección ocular",
                 UnidadMedida = "UND",
                 CostoReferencial = 45.00m,
+                PesoKg = 0.12m,
                 StockDisponible = 65,
                 RutaFichaTecnicaPdf = "/fichas/GON-3M-GOGGLE-GEAR.pdf",
                 NombreArchivoPdf = "GON-3M-GOGGLE-GEAR.pdf",
@@ -490,7 +520,7 @@ public static class DbSeeder
 
         // Cargar todos los SKUs existentes de golpe para evitar N+1 queries (una sola consulta).
         var existingProducts = await context.Productos
-            .Select(p => new { p.Sku, p.RutaImagen, p.Id })
+            .Select(p => new { p.Sku, p.RutaImagen, p.Id, p.PesoKg })
             .ToDictionaryAsync(p => p.Sku, p => p);
 
         foreach (var prod in productos)
@@ -504,14 +534,29 @@ public static class DbSeeder
             {
                 context.Productos.Add(prod);
             }
-            else if (string.IsNullOrWhiteSpace(existing.RutaImagen))
+            else
             {
                 var tracked = await context.Productos.FindAsync(existing.Id);
-                if (tracked != null) tracked.RutaImagen = prod.RutaImagen;
+                if (tracked != null)
+                {
+                    if (string.IsNullOrWhiteSpace(tracked.RutaImagen)) tracked.RutaImagen = prod.RutaImagen;
+                    if (tracked.PesoKg <= 0 || tracked.PesoKg == 0.50m) tracked.PesoKg = prod.PesoKg;
+                }
             }
         }
 
         await context.SaveChangesAsync();
+
+        // Asegurar que ningún producto existente quede con peso 0
+        var productosSinPeso = await context.Productos.Where(p => p.PesoKg <= 0).ToListAsync();
+        foreach (var p in productosSinPeso)
+        {
+            p.PesoKg = 0.50m;
+        }
+        if (productosSinPeso.Count > 0)
+        {
+            await context.SaveChangesAsync();
+        }
 
         var proveedoresRegistrados = await context.Proveedores.AsNoTracking().ToListAsync();
         var productosConProveedores = await context.Productos

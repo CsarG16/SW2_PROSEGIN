@@ -29,6 +29,10 @@ public class CotizacionBandejaItemViewModel
     public string? NumeroOrdenCompraCliente { get; set; }
     public string? NombreArchivoOrdenCompraCliente { get; set; }
     public bool PuedeReemplazarOrdenCompra { get; set; }
+    public string? ClienteCorreo { get; set; }
+    public string? AvatarLogoUrl { get; set; }
+    public string AvatarInitials { get; set; } = string.Empty;
+    public string AvatarColorSchemeClass { get; set; } = string.Empty;
     public List<CotizacionBandejaDetalleViewModel> Detalles { get; set; } = new();
 }
 
