@@ -27,7 +27,7 @@
             <p class="quote-header-subtitle">Bandeja de seguimiento y control de vigencia de cotizaciones emitidas.</p>
         </div>
         <div class="quote-brand-pill">
-            <i class="bi bi-square-fill"></i>
+            <i class="material-symbols-outlined" style="font-size: 0.9rem;">square</i>
             <strong>PROSEGIN</strong>
             <span>PREVENCIÓN INTEGRAL</span>
         </div>
@@ -36,7 +36,7 @@
     <section class="quote-inbox-toolbar">
         <form asp-controller="Cotizaciones" asp-action="Index" method="get" class="quote-inbox-search">
             <label class="visually-hidden" for="buscarCotizacion">Buscar por código o cliente</label>
-            <i class="bi bi-search"></i>
+            <i class="material-symbols-outlined">search</i>
             <input id="buscarCotizacion" type="search" name="busqueda" value="@Model.Busqueda"
                    placeholder="Buscar por código correlativo o client..." />
             <input type="hidden" name="estado" value="@Model.EstadoFiltro" />
@@ -81,7 +81,7 @@
             @if (Model.Cotizaciones.Count == 0)
             {
                 <div class="quote-inbox-empty-card">
-                    <i class="bi bi-inbox"></i>
+                    <i class="material-symbols-outlined">inbox</i>
                     <strong>No se encontraron cotizaciones.</strong>
                     <span>Prueba otro código, cliente o filtro de estado.</span>
                 </div>
@@ -143,7 +143,7 @@
                                     @if (cotizacion.Cliente.Contains("DELOSI", StringComparison.OrdinalIgnoreCase))
                                     {
                                         <span class="quote-client-tag">
-                                            <i class="bi bi-asterisk"></i> Retail / Franquicias
+                                            <i class="material-symbols-outlined" style="font-size: 0.85rem;">star</i> Retail / Franquicias
                                         </span>
                                     }
                                 </div>
@@ -151,7 +151,7 @@
 
                             <!-- 3. Emisión -->
                             <div class="quote-col-emission">
-                                <i class="bi bi-calendar3"></i>
+                                <i class="material-symbols-outlined" style="font-size: 1rem;">calendar_today</i>
                                 <span>@cotizacion.FechaEmision.ToLocalTime().ToString("dd/MM/yyyy HH:mm", peruCulture)</span>
                             </div>
 
@@ -161,19 +161,19 @@
                                 @if (isEnviada)
                                 {
                                     <span class="quote-badge-expiry-active">
-                                        <i class="bi bi-clock"></i> Vence en @Math.Max(0, (int)Math.Ceiling(vigenciaRestante.TotalHours)) h
+                                        <i class="material-symbols-outlined" style="font-size: 0.95rem;">schedule</i> Vence en @Math.Max(0, (int)Math.Ceiling(vigenciaRestante.TotalHours)) h
                                     </span>
                                 }
                                 else if (isVencida)
                                 {
                                     <span class="quote-badge-expiry-expired">
-                                        <i class="bi bi-exclamation-circle-fill"></i> Expiró hace @Math.Max(0, (int)Math.Ceiling(-vigenciaRestante.TotalHours)) h
+                                        <i class="material-symbols-outlined" style="font-size: 0.95rem;">error</i> Expiró hace @Math.Max(0, (int)Math.Ceiling(-vigenciaRestante.TotalHours)) h
                                     </span>
                                 }
                                 else
                                 {
                                     <span class="quote-badge-accepted">
-                                        <i class="bi bi-check2"></i> Cerrada por aceptación
+                                        <i class="material-symbols-outlined" style="font-size: 0.95rem;">check</i> Cerrada por aceptación
                                     </span>
                                 }
                             </div>
@@ -194,7 +194,7 @@
                                     @if (!string.IsNullOrWhiteSpace(cotizacion.NombreArchivoOrdenCompraCliente))
                                     {
                                         <div class="quote-oc-file-link">
-                                            <i class="bi bi-file-earmark-pdf-fill"></i>
+                                            <i class="material-symbols-outlined">picture_as_pdf</i>
                                             <a asp-action="VerOrdenCompra" asp-route-id="@cotizacion.Id" target="_blank"
                                                class="quote-oc-name" title="@cotizacion.NombreArchivoOrdenCompraCliente">@cotizacion.NombreArchivoOrdenCompraCliente</a>
                                         </div>
@@ -206,22 +206,22 @@
                             <div class="quote-col-actions">
                                 <div class="dropdown">
                                     <button type="button" class="quote-btn-menu" data-bs-toggle="dropdown"
-                                            aria-expanded="false" data-quote-row-menu
-                                            aria-label="Acciones para @cotizacion.Correlativo">
-                                        <i class="bi bi-three-dots-vertical"></i>
+                                             aria-expanded="false" data-quote-row-menu
+                                             aria-label="Acciones para @cotizacion.Correlativo">
+                                        <i class="material-symbols-outlined">more_vert</i>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                                         <li>
                                             <a asp-controller="Cotizaciones" asp-action="VerPdf" asp-route-id="@cotizacion.Id"
                                                target="_blank" rel="noopener noreferrer" class="dropdown-item">
-                                                <i class="bi bi-file-earmark-pdf me-2"></i>Ver PDF
+                                                <i class="material-symbols-outlined me-2" style="font-size: 1.1rem;">picture_as_pdf</i>Ver PDF
                                             </a>
                                         </li>
                                         @if (cotizacion.Estado == "Enviada")
                                         {
                                             <li>
                                                 <button type="button" class="dropdown-item" data-toggle-quote-panel="@cotizacion.Id">
-                                                    <i class="bi bi-arrow-left-right me-2"></i>Convertir a Venta
+                                                    <i class="material-symbols-outlined me-2" style="font-size: 1.1rem;">swap_horiz</i>Convertir a Venta
                                                 </button>
                                             </li>
                                         }
@@ -231,15 +231,15 @@
                                                 @if (cotizacion.FueActualizada)
                                                 {
                                                     <span class="dropdown-item-text text-muted">
-                                                        <i class="bi bi-check2 me-2"></i>Ya fue actualizada
+                                                        <i class="material-symbols-outlined me-2" style="font-size: 1.1rem;">check</i>Ya fue actualizada
                                                     </span>
                                                 }
                                                 else
                                                 {
                                                     <form asp-controller="Cotizaciones" asp-action="Actualizar" asp-route-id="@cotizacion.Id" method="post">
-                                                        @Html.AntiForgeryToken()
+                                                         @Html.AntiForgeryToken()
                                                         <button type="submit" class="dropdown-item">
-                                                            <i class="bi bi-arrow-repeat me-2"></i>Actualizar cotización
+                                                            <i class="material-symbols-outlined me-2" style="font-size: 1.1rem;">sync</i>Actualizar cotización
                                                         </button>
                                                     </form>
                                                 }
@@ -250,14 +250,14 @@
                                             <li>
                                                 <a asp-controller="Cotizaciones" asp-action="VerOrdenCompra" asp-route-id="@cotizacion.Id"
                                                    target="_blank" rel="noopener noreferrer" class="dropdown-item">
-                                                    <i class="bi bi-file-earmark-check me-2"></i>Ver OC
+                                                    <i class="material-symbols-outlined me-2" style="font-size: 1.1rem;">fact_check</i>Ver OC
                                                 </a>
                                             </li>
                                             @if (cotizacion.PuedeReemplazarOrdenCompra)
                                             {
                                                 <li>
                                                     <button type="button" class="dropdown-item" data-toggle-quote-panel="@cotizacion.Id">
-                                                        <i class="bi bi-arrow-repeat me-2"></i>Reemplazar Orden de Compra
+                                                        <i class="material-symbols-outlined me-2" style="font-size: 1.1rem;">sync</i>Reemplazar Orden de Compra
                                                     </button>
                                                 </li>
                                             }
@@ -273,7 +273,7 @@
                             <div class="quote-card-accordion-section">
                                 <div class="quote-accordion-toggle" data-accordion-toggle="@cotizacion.Id" role="button" tabindex="0">
                                     <div class="d-flex align-items-center gap-2">
-                                        <i class="bi bi-chevron-down accordion-chevron @(isAccordionOpen ? "" : "chevron-rotated")" id="chevron-@cotizacion.Id"></i>
+                                        <i class="material-symbols-outlined accordion-chevron @(isAccordionOpen ? "" : "chevron-rotated")" id="chevron-@cotizacion.Id">expand_more</i>
                                         <span class="accordion-title">Productos, cantidades y precios</span>
                                         <span class="accordion-badge-readonly">Solo lectura</span>
                                     </div>
@@ -326,7 +326,7 @@
                                     <!-- Cabecera del panel -->
                                     <div class="quote-upload-card-header">
                                         <div class="quote-upload-title-wrap">
-                                            <span class="quote-upload-title-icon"><i class="bi bi-file-earmark-text"></i></span>
+                                            <span class="quote-upload-title-icon"><i class="material-symbols-outlined">description</i></span>
                                             <span class="quote-upload-title-text">Adjuntar Orden de Compra (OC) del Cliente</span>
                                         </div>
                                         <span class="badge-step-billing">
@@ -343,7 +343,7 @@
                                             </label>
                                             <div class="quote-dropzone-box" data-file-trigger>
                                                 <div class="quote-dropzone-icon">
-                                                    <i class="bi bi-cloud-arrow-up"></i>
+                                                    <i class="material-symbols-outlined">cloud_upload</i>
                                                 </div>
                                                 <div class="quote-dropzone-main-text">
                                                     Arrastra el archivo PDF o <span class="quote-dropzone-link">selecciona desde tu equipo</span>
@@ -364,7 +364,7 @@
                                                     N° DE ORDEN DE COMPRA DE REFERENCIA <span class="text-danger">*</span>
                                                 </label>
                                                 <div class="quote-input-wrapper">
-                                                    <i class="bi bi-list quote-input-icon"></i>
+                                                    <i class="material-symbols-outlined quote-input-icon">format_list_bulleted</i>
                                                     <input type="text" id="numeroOrdenCompraCliente-@cotizacion.Id"
                                                            name="numeroOrdenCompraCliente" maxlength="100" required
                                                            placeholder="Ej. OC-2026-90412" class="quote-ref-input" />
@@ -374,7 +374,7 @@
                                                 <button type="button" class="quote-btn-cancel" data-cancel-quote-panel>Cancelar</button>
                                                 <button type="submit" class="quote-btn-confirm">
                                                     <span>Confirmar Conversión</span>
-                                                    <i class="bi bi-arrow-right"></i>
+                                                    <i class="material-symbols-outlined">arrow_forward</i>
                                                 </button>
                                             </div>
                                         </div>
@@ -398,7 +398,7 @@
                                     <!-- Cabecera del panel -->
                                     <div class="quote-upload-card-header">
                                         <div class="quote-upload-title-wrap">
-                                            <span class="quote-upload-title-icon"><i class="bi bi-arrow-repeat"></i></span>
+                                            <span class="quote-upload-title-icon"><i class="material-symbols-outlined">sync</i></span>
                                             <span class="quote-upload-title-text">Reemplazar Orden de Compra (OC) del Cliente</span>
                                         </div>
                                         <span class="badge-step-billing">
@@ -422,7 +422,7 @@
                                             </label>
                                             <div class="quote-dropzone-box" data-file-trigger>
                                                 <div class="quote-dropzone-icon">
-                                                    <i class="bi bi-cloud-arrow-up"></i>
+                                                    <i class="material-symbols-outlined">cloud_upload</i>
                                                 </div>
                                                 <div class="quote-dropzone-main-text">
                                                     Arrastra el nuevo PDF o <span class="quote-dropzone-link">selecciona desde tu equipo</span>
@@ -443,7 +443,7 @@
                                                     N° DE ORDEN DE COMPRA DE REFERENCIA
                                                 </label>
                                                 <div class="quote-input-wrapper">
-                                                    <i class="bi bi-list quote-input-icon"></i>
+                                                    <i class="material-symbols-outlined quote-input-icon">format_list_bulleted</i>
                                                     <input type="text" id="numeroOrdenCompraCliente-@cotizacion.Id"
                                                            name="numeroOrdenCompraCliente" maxlength="100"
                                                            value="@cotizacion.NumeroOrdenCompraCliente" class="quote-ref-input" />
@@ -453,7 +453,7 @@
                                                 <button type="button" class="quote-btn-cancel" data-cancel-quote-panel>Cancelar</button>
                                                 <button type="submit" class="quote-btn-confirm">
                                                     <span>Confirmar reemplazo</span>
-                                                    <i class="bi bi-arrow-right"></i>
+                                                    <i class="material-symbols-outlined">arrow_forward</i>
                                                 </button>
                                             </div>
                                         </div>

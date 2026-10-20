@@ -225,4 +225,83 @@ public class NubefactServiceTests
         Assert.Equal("kLmN7890Hash=", resultado.CodigoHash);
         Assert.Equal("https://api.nubefact.com/cpe/TTT1-10.pdf", resultado.EnlacePdf);
     }
+
+    [Fact]
+    public async Task EnviarGuiaRemision_CuandoGenerarGuiaRetornaSoloEnlaceWeb_AseguraExtensionPdf()
+    {
+        var rawResponseJson = JsonSerializer.Serialize(new
+        {
+            tipo_de_comprobante = 7,
+            serie = "TTT1",
+            numero = 11,
+            enlace = "https://www.nubefact.com/guia/uuid-12345",
+            aceptada_por_sunat = true,
+            codigo_hash = "HashTest=",
+            enlace_del_pdf = (string?)null
+        });
+
+        var mockHandler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(rawResponseJson)
+        });
+
+        var httpClient = new HttpClient(mockHandler);
+        var service = new NubefactService(httpClient, CrearOpciones(), NullLogger<NubefactService>.Instance);
+
+        var request = new NubefactGuiaRequest
+        {
+            Numero = 11,
+            ClienteNumeroDeDocumento = "20492817263",
+            ClienteDenominacion = "CONSORCIO VIAL ANDINO S.R.C.",
+            PesoBrutoTotal = 10m,
+            PuntoDePartidaDireccion = "Av. Argentina 3088",
+            PuntoDeLlegadaDireccion = "Av. Industrial 450",
+            Items = new List<NubefactGuiaItem>
+            {
+                new() { Codigo = "EPP-BOT-001", Descripcion = "Botas Bata Titan", Cantidad = 5 }
+            }
+        };
+
+        var resultado = await service.EnviarGuiaRemisionAsync(request);
+
+        Assert.True(resultado.Exito);
+        Assert.Equal("https://www.nubefact.com/guia/uuid-12345.pdf", resultado.EnlacePdf);
+        Assert.Equal("https://www.nubefact.com/guia/uuid-12345.xml", resultado.EnlaceXml);
+        Assert.Equal("https://www.nubefact.com/guia/uuid-12345.cdr", resultado.EnlaceCdr);
+    }
+
+    [Fact]
+    public async Task ConsultarGuiaRemision_Respuesta200Ok_RetornaDatosCompletos()
+    {
+        var rawResponseJson = JsonSerializer.Serialize(new
+        {
+            tipo_de_comprobante = 7,
+            serie = "TTT1",
+            numero = 3,
+            enlace = "https://www.nubefact.com/guia/f4027189-005f-4287-aca6-ca5f357b5e53",
+            aceptada_por_sunat = true,
+            sunat_description = "ACEPTADA",
+            cadena_para_codigo_qr = "https://url-test?hashqr=test",
+            enlace_del_pdf = "https://www.nubefact.com/guia/f4027189-005f-4287-aca6-ca5f357b5e53.pdf",
+            enlace_del_xml = "https://www.nubefact.com/guia/f4027189-005f-4287-aca6-ca5f357b5e53.xml",
+            enlace_del_cdr = "https://www.nubefact.com/guia/f4027189-005f-4287-aca6-ca5f357b5e53.cdr"
+        });
+
+        var mockHandler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(rawResponseJson)
+        });
+
+        var httpClient = new HttpClient(mockHandler);
+        var service = new NubefactService(httpClient, CrearOpciones(), NullLogger<NubefactService>.Instance);
+
+        var resultado = await service.ConsultarGuiaRemisionAsync("TTT1", 3);
+
+        Assert.True(resultado.Exito);
+        Assert.Equal(NubefactService.EstadoAceptado, resultado.EstadoProceso);
+        Assert.Equal("https://www.nubefact.com/guia/f4027189-005f-4287-aca6-ca5f357b5e53.pdf", resultado.EnlacePdf);
+        Assert.Equal("https://www.nubefact.com/guia/f4027189-005f-4287-aca6-ca5f357b5e53.xml", resultado.EnlaceXml);
+        Assert.Equal("https://www.nubefact.com/guia/f4027189-005f-4287-aca6-ca5f357b5e53.cdr", resultado.EnlaceCdr);
+    }
 }
+

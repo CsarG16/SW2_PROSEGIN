@@ -14,7 +14,7 @@
                 <p class="page-subtitle">Información fiscal SUNAT para comprobantes de pago (Facturas y Guías de Remisión)</p>
             </div>
             <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary">
-                <i class="bi bi-arrow-left"></i> Volver a Clientes
+                <i class="material-symbols-outlined">arrow_back</i> Volver a Clientes
             </a>
         </div>
     </div>
@@ -28,7 +28,7 @@
 
         <!-- Alerta Dinámica de Riesgo Tributario (No Habido / Baja) -->
         <div id="alertaRiesgoTributario" class="alert alert-danger d-none mb-4 p-3 border-danger rounded-3 shadow-sm d-flex align-items-start gap-3">
-            <i class="bi bi-shield-slash-fill fs-3 text-danger flex-shrink-0"></i>
+            <i class="material-symbols-outlined fs-3 text-danger flex-shrink-0">gpp_bad</i>
             <div>
                 <div class="fw-bold text-danger text-uppercase" id="alertaRiesgoTitulo">Riesgo Tributario Crítico</div>
                 <div class="small text-danger" id="alertaRiesgoMensaje"></div>
@@ -43,7 +43,7 @@
                 <div class="prosegin-card mb-4">
                     <div class="prosegin-card-header--section">
                         <span class="section-step-title">
-                            <i class="bi bi-building me-1"></i> Datos Principales
+                            <i class="material-symbols-outlined me-1" style="font-size: 1rem;">domain</i> Datos Principales
                         </span>
                     </div>
 
@@ -55,13 +55,13 @@
                             </label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0 text-muted fw-bold">
-                                    <i class="bi bi-hash"></i>
+                                    <i class="material-symbols-outlined" style="font-size: 1rem;">tag</i>
                                 </span>
                                 <input asp-for="Ruc" id="txtRuc" class="form-control form-control-prosegin font-monospace fw-bold fs-6 border-start-0" 
                                        placeholder="Ej: 20100047218" maxlength="11" autocomplete="off"
                                        inputmode="numeric" />
                                 <button type="button" class="btn-prosegin-primary d-flex align-items-center gap-2 px-3 fw-bold" id="btnConsultarSunat">
-                                    <i class="bi bi-search" id="iconConsultar"></i>
+                                    <i class="material-symbols-outlined" id="iconConsultar">search</i>
                                     <span id="textBtnConsultar">Consultar SUNAT</span>
                                 </button>
                             </div>
@@ -94,14 +94,14 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label-prosegin small text-uppercase fw-bold mb-1">
-                                    <i class="bi bi-shield-check text-muted me-1"></i> Estado Tributario en SUNAT
+                                    <i class="material-symbols-outlined text-muted me-1" style="font-size: 1rem;">verified_user</i> Estado Tributario en SUNAT
                                 </label>
                                 <div class="d-flex align-items-center justify-content-between p-2 rounded-2 bg-light border border-light-subtle" style="min-height: 42px;">
                                     <!-- Estado -->
                                     <div class="d-flex align-items-center gap-2">
                                         <span class="text-muted small text-uppercase fw-semibold" style="font-size: 0.72rem;">Estado:</span>
                                         <span id="badgeEstadoSunat" class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle fw-semibold px-2 py-1 d-inline-flex align-items-center gap-1">
-                                            <i class="bi bi-dash-circle" id="iconEstadoSunat"></i>
+                                            <i class="material-symbols-outlined" id="iconEstadoSunat" style="font-size: 1rem;">remove_circle_outline</i>
                                             <span id="textEstadoSunat">Pendiente</span>
                                         </span>
                                     </div>
@@ -112,7 +112,7 @@
                                     <div class="d-flex align-items-center gap-2">
                                         <span class="text-muted small text-uppercase fw-semibold" style="font-size: 0.72rem;">Condición:</span>
                                         <span id="badgeCondicionSunat" class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle fw-semibold px-2 py-1 d-inline-flex align-items-center gap-1">
-                                            <i class="bi bi-dash-circle" id="iconCondicionSunat"></i>
+                                            <i class="material-symbols-outlined" id="iconCondicionSunat" style="font-size: 1rem;">remove_circle_outline</i>
                                             <span id="textCondicionSunat">Pendiente</span>
                                         </span>
                                     </div>
@@ -126,7 +126,7 @@
                 <div class="prosegin-card mb-4">
                     <div class="prosegin-card-header--section">
                         <span class="section-step-title">
-                            <i class="bi bi-geo-alt me-1"></i> Domicilio Fiscal
+                            <i class="material-symbols-outlined me-1" style="font-size: 1rem;">location_on</i> Domicilio Fiscal
                         </span>
                     </div>
 
@@ -175,7 +175,7 @@
                 <div class="prosegin-card mb-4">
                     <div class="prosegin-card-header--section">
                         <span class="section-step-title">
-                            <i class="bi bi-receipt me-1"></i> Contacto y Emisión
+                            <i class="material-symbols-outlined me-1" style="font-size: 1rem;">receipt_long</i> Contacto y Emisión
                         </span>
                     </div>
 
@@ -211,7 +211,7 @@
                                 </label>
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text bg-light border-end-0 text-muted">
-                                        <i class="bi bi-envelope"></i>
+                                        <i class="material-symbols-outlined" style="font-size: 1rem;">mail</i>
                                     </span>
                                     <input asp-for="CorreoElectronico" id="txtCorreo" class="form-control form-control-prosegin border-start-0" 
                                            placeholder="Ej: facturacion@@distribuidoraperu.com" autocomplete="off" />
@@ -225,7 +225,7 @@
                                 </label>
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text bg-light border-end-0 text-muted">
-                                        <i class="bi bi-telephone"></i>
+                                        <i class="material-symbols-outlined" style="font-size: 1rem;">call</i>
                                     </span>
                                     <input asp-for="Telefono" id="txtTelefono" class="form-control form-control-prosegin border-start-0" 
                                            placeholder="Ej: 987 654 321" autocomplete="off" />
@@ -244,7 +244,7 @@
                 <div class="prosegin-card mb-4 sticky-top preview-card-sidebar" style="top: 85px;">
                     <div class="prosegin-card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
                         <span class="fw-bold text-dark small text-uppercase" style="letter-spacing: 0.05em;">
-                            <i class="bi bi-person-badge me-1"></i> Resumen del Cliente
+                            <i class="material-symbols-outlined me-1" style="font-size: 1rem;">badge</i> Resumen del Cliente
                         </span>
                     </div>
 
@@ -264,15 +264,15 @@
                         <!-- Ficha de Condición Dinámica -->
                         <div class="d-flex flex-column gap-2 py-2 small">
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-muted"><i class="bi bi-shield-check me-1"></i> Condición:</span>
+                                <span class="text-muted"><i class="material-symbols-outlined me-1" style="font-size: 1rem;">verified_user</i> Condición:</span>
                                 <span class="badge bg-light text-muted border" id="previewCondicion">Pendiente</span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-muted"><i class="bi bi-activity me-1"></i> Estado:</span>
+                                <span class="text-muted"><i class="material-symbols-outlined me-1" style="font-size: 1rem;">sync</i> Estado:</span>
                                 <span class="badge bg-light text-muted border" id="previewEstado">Pendiente</span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-muted"><i class="bi bi-receipt me-1"></i> Comprobante:</span>
+                                <span class="text-muted"><i class="material-symbols-outlined me-1" style="font-size: 1rem;">receipt_long</i> Comprobante:</span>
                                 <span class="badge bg-light text-muted border" id="previewEmision">---</span>
                             </div>
                         </div>
@@ -282,15 +282,15 @@
                         <!-- Checklist de Validaciones SUNAT -->
                         <div class="validation-checklist pt-1">
                             <div class="validation-check-item" id="chkDigitos">
-                                <i class="bi bi-circle text-muted" id="iconChkDigitos"></i>
+                                <i class="material-symbols-outlined text-muted" id="iconChkDigitos" style="font-size: 1rem;">radio_button_unchecked</i>
                                 <span id="lblChkDigitos">RUC de 11 dígitos</span>
                             </div>
                             <div class="validation-check-item" id="chkSunat">
-                                <i class="bi bi-circle text-muted" id="iconChkSunat"></i>
+                                <i class="material-symbols-outlined text-muted" id="iconChkSunat" style="font-size: 1rem;">radio_button_unchecked</i>
                                 <span id="lblChkSunat">Consulta en SUNAT</span>
                             </div>
                             <div class="validation-check-item" id="chkDireccion">
-                                <i class="bi bi-circle text-muted" id="iconChkDireccion"></i>
+                                <i class="material-symbols-outlined text-muted" id="iconChkDireccion" style="font-size: 1rem;">radio_button_unchecked</i>
                                 <span id="lblChkDireccion">Dirección registrada</span>
                             </div>
                         </div>
@@ -311,13 +311,13 @@
 
             <div class="d-flex flex-wrap align-items-center gap-2">
                 <a asp-controller="Clientes" asp-action="Create" class="btn-prosegin-secondary py-2 px-3" title="Cancelar y descartar el registro">
-                    <i class="bi bi-x-circle me-1"></i> Cancelar
+                    <i class="material-symbols-outlined me-1" style="font-size: 1rem;">cancel</i> Cancelar
                 </a>
                 <button type="submit" id="btnGuardarCliente" class="btn-prosegin-secondary-orange py-2 px-3 fw-bold" disabled onclick="document.getElementById('hiddenAccion').value='guardar';" title="Guarda el cliente en el sistema">
-                    <i class="bi bi-check2-circle me-1"></i> Guardar Cliente
+                    <i class="material-symbols-outlined me-1" style="font-size: 1rem;">check_circle</i> Guardar Cliente
                 </button>
                 <button type="submit" id="btnGuardarYDirecciones" class="btn-prosegin-primary py-2 px-4 fw-bold" disabled onclick="document.getElementById('hiddenAccion').value='direcciones';" title="Guarda el cliente y habilita automáticamente su dirección fiscal para ver y gestionar sus sedes">
-                    <i class="bi bi-geo-alt-fill me-1"></i> Guardar y ver direcciones de entrega
+                    <i class="material-symbols-outlined me-1" style="font-size: 1rem;">location_on</i> Guardar y ver direcciones de entrega
                 </button>
             </div>
         </div>
@@ -417,11 +417,15 @@
 
                 if (!estado || estado === 'Pendiente') {
                     badgeEstadoSunat.className = 'badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle fw-semibold px-2 py-1 d-inline-flex align-items-center gap-1';
-                    iconEstadoSunat.className = 'bi bi-dash-circle';
+                    iconEstadoSunat.className = 'material-symbols-outlined';
+                    iconEstadoSunat.style.fontSize = '1rem';
+                    iconEstadoSunat.textContent = 'remove_circle_outline';
                     textEstadoSunat.textContent = 'Pendiente';
 
                     badgeCondicionSunat.className = 'badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle fw-semibold px-2 py-1 d-inline-flex align-items-center gap-1';
-                    iconCondicionSunat.className = 'bi bi-dash-circle';
+                    iconCondicionSunat.className = 'material-symbols-outlined';
+                    iconCondicionSunat.style.fontSize = '1rem';
+                    iconCondicionSunat.textContent = 'remove_circle_outline';
                     textCondicionSunat.textContent = 'Pendiente';
 
                     previewEstado.textContent = 'Pendiente';
@@ -437,14 +441,18 @@
                 // Estado en SUNAT
                 if (esActivo) {
                     badgeEstadoSunat.className = 'badge rounded-pill bg-success-subtle text-success border border-success fw-semibold px-2 py-1 d-inline-flex align-items-center gap-1';
-                    iconEstadoSunat.className = 'bi bi-check-circle-fill';
+                    iconEstadoSunat.className = 'material-symbols-outlined';
+                    iconEstadoSunat.style.fontSize = '1rem';
+                    iconEstadoSunat.textContent = 'check_circle';
                     textEstadoSunat.textContent = estado.toUpperCase();
 
                     previewEstado.textContent = estado.toUpperCase();
                     previewEstado.className = 'badge bg-success-subtle text-success border border-success';
                 } else {
                     badgeEstadoSunat.className = 'badge rounded-pill bg-danger-subtle text-danger border border-danger fw-semibold px-2 py-1 d-inline-flex align-items-center gap-1';
-                    iconEstadoSunat.className = 'bi bi-exclamation-octagon-fill';
+                    iconEstadoSunat.className = 'material-symbols-outlined';
+                    iconEstadoSunat.style.fontSize = '1rem';
+                    iconEstadoSunat.textContent = 'error';
                     textEstadoSunat.textContent = estado.toUpperCase();
 
                     previewEstado.textContent = estado.toUpperCase();
@@ -454,14 +462,18 @@
                 // Condición en SUNAT
                 if (esHabido) {
                     badgeCondicionSunat.className = 'badge rounded-pill bg-success-subtle text-success border border-success fw-semibold px-2 py-1 d-inline-flex align-items-center gap-1';
-                    iconCondicionSunat.className = 'bi bi-shield-check';
+                    iconCondicionSunat.className = 'material-symbols-outlined';
+                    iconCondicionSunat.style.fontSize = '1rem';
+                    iconCondicionSunat.textContent = 'verified_user';
                     textCondicionSunat.textContent = condicion.toUpperCase();
 
                     previewCondicion.textContent = condicion.toUpperCase();
                     previewCondicion.className = 'badge bg-success-subtle text-success border border-success';
                 } else {
                     badgeCondicionSunat.className = 'badge rounded-pill bg-danger-subtle text-danger border border-danger fw-semibold px-2 py-1 d-inline-flex align-items-center gap-1';
-                    iconCondicionSunat.className = 'bi bi-shield-x';
+                    iconCondicionSunat.className = 'material-symbols-outlined';
+                    iconCondicionSunat.style.fontSize = '1rem';
+                    iconCondicionSunat.textContent = 'gpp_bad';
                     textCondicionSunat.textContent = condicion.toUpperCase();
 
                     previewCondicion.textContent = condicion.toUpperCase();
@@ -567,7 +579,7 @@
                         txtRuc.classList.remove('is-valid');
                         txtRuc.classList.add('is-invalid');
                         rucStatusText.className = 'text-danger fw-bold';
-                        rucStatusText.innerHTML = '<i class="bi bi-x-circle-fill"></i> Número de RUC inválido';
+                        rucStatusText.innerHTML = '<i class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">cancel</i> Número de RUC inválido';
                         setCheck(iconChkDigitos, lblChkDigitos, false, 'Número de RUC inválido');
                         setCheck(iconChkSunat, lblChkSunat, false, 'Consulta en SUNAT');
                         sunatConsultado = false;
@@ -576,7 +588,7 @@
                         txtRuc.classList.remove('is-invalid');
                         txtRuc.classList.add('is-valid');
                         rucStatusText.className = 'text-success fw-bold';
-                        rucStatusText.innerHTML = '<i class="bi bi-check-circle-fill"></i> RUC válido (Módulo 11) - Listo para consultar';
+                        rucStatusText.innerHTML = '<i class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">check_circle</i> RUC válido (Módulo 11) - Listo para consultar';
                         setCheck(iconChkDigitos, lblChkDigitos, true, 'RUC válido (Módulo 11)');
                     }
                 }
@@ -586,11 +598,15 @@
 
             function setCheck(iconEl, lblEl, isValid, text) {
                 if (isValid) {
-                    iconEl.className = 'bi bi-check-circle-fill text-success';
+                    iconEl.className = 'material-symbols-outlined text-success';
+                    iconEl.style.fontSize = '1rem';
+                    iconEl.textContent = 'check_circle';
                     lblEl.className = 'text-success fw-bold';
                     lblEl.textContent = text;
                 } else {
-                    iconEl.className = 'bi bi-circle text-muted';
+                    iconEl.className = 'material-symbols-outlined text-muted';
+                    iconEl.style.fontSize = '1rem';
+                    iconEl.textContent = 'radio_button_unchecked';
                     lblEl.className = 'text-muted';
                     lblEl.textContent = text;
                 }
@@ -607,7 +623,7 @@
                 if (!validarModulo11Sunat(rucNumero)) {
                     txtRuc.classList.add('is-invalid');
                     rucStatusText.className = 'text-danger fw-bold';
-                    rucStatusText.innerHTML = '<i class="bi bi-x-circle-fill"></i> Número de RUC inválido';
+                    rucStatusText.innerHTML = '<i class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">cancel</i> Número de RUC inválido';
                     txtRuc.focus();
                     return;
                 }
@@ -630,7 +646,7 @@
                         txtRuc.classList.add('is-invalid');
                         txtRuc.classList.remove('is-valid');
                         rucStatusText.className = 'text-danger fw-bold';
-                        rucStatusText.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> RUC ya registrado en el padrón de clientes';
+                        rucStatusText.innerHTML = '<i class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">warning</i> RUC ya registrado en el padrón de clientes';
                         setCheck(iconChkSunat, lblChkSunat, false, 'Ya registrado en padrón');
                         actualizarEstadoTributarioVisual('Pendiente', 'Pendiente');
                         sunatConsultado = false;
@@ -683,13 +699,13 @@
                         setCheck(iconChkDireccion, lblChkDireccion, true, 'Dirección y Ubigeo sincronizados');
 
                         rucStatusText.className = 'text-success fw-bold';
-                        rucStatusText.innerHTML = `<i class="bi bi-check-circle-fill"></i> RUC validado en SUNAT (${data.condicion})`;
+                        rucStatusText.innerHTML = `<i class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">check_circle</i> RUC validado en SUNAT (${data.condicion})`;
                         sunatConsultado = true;
                         rucConsultado = rucNumero;
                     } else {
                         alertaRiesgo.classList.add('d-none');
                         rucStatusText.className = 'text-danger fw-bold';
-                        rucStatusText.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i> ${data.message || 'No se encontró el RUC en SUNAT.'}`;
+                        rucStatusText.innerHTML = `<i class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">warning</i> ${data.message || 'No se encontró el RUC en SUNAT.'}`;
                         setCheck(iconChkSunat, lblChkSunat, false, 'No encontrado en SUNAT');
                         actualizarEstadoTributarioVisual('Pendiente', 'Pendiente');
                         sunatConsultado = false;
@@ -701,7 +717,7 @@
                     if (txtRuc.value.trim() !== rucNumero) return;
                     alertaRiesgo.classList.add('d-none');
                     rucStatusText.className = 'text-danger fw-bold';
-                    rucStatusText.innerHTML = '<i class="bi bi-x-circle-fill"></i> Error al conectar con el servicio de SUNAT.';
+                    rucStatusText.innerHTML = '<i class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">cancel</i> Error al conectar con el servicio de SUNAT.';
                     actualizarEstadoTributarioVisual('Pendiente', 'Pendiente');
                     sunatConsultado = false;
                     rucConsultado = rucNumero;
@@ -709,7 +725,8 @@
                     hiddenCondicionSunat.value = 'NO VERIFICADO';
                 } finally {
                     btnConsultar.disabled = false;
-                    iconConsultar.className = 'bi bi-search';
+                    iconConsultar.className = 'material-symbols-outlined';
+                    iconConsultar.textContent = 'search';
                     textBtnConsultar.textContent = 'Consultar SUNAT';
                     actualizarEstadoFormulario();
                 }
@@ -722,7 +739,7 @@
                     txtRuc.classList.add('is-invalid');
                     txtRuc.classList.remove('is-valid');
                     rucStatusText.className = 'text-danger fw-bold';
-                    rucStatusText.innerHTML = '<i class="bi bi-x-circle-fill"></i> Número de RUC inválido';
+                    rucStatusText.innerHTML = '<i class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">cancel</i> Número de RUC inválido';
                     txtRuc.focus();
                     return;
                 }
@@ -731,7 +748,7 @@
                     txtRuc.classList.add('is-invalid');
                     txtRuc.classList.remove('is-valid');
                     rucStatusText.className = 'text-danger fw-bold';
-                    rucStatusText.innerHTML = '<i class="bi bi-x-circle-fill"></i> Número de RUC inválido';
+                    rucStatusText.innerHTML = '<i class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">cancel</i> Número de RUC inválido';
                     txtRuc.focus();
                     return;
                 }
@@ -813,13 +830,13 @@
                     txtRuc.classList.add('is-invalid');
                     txtRuc.focus();
                     rucStatusText.className = 'text-danger fw-bold';
-                    rucStatusText.innerHTML = '<i class="bi bi-x-circle-fill"></i> Número de RUC inválido';
+                    rucStatusText.innerHTML = '<i class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">cancel</i> Número de RUC inválido';
                     esValido = false;
                 } else if (!validarModulo11Sunat(ruc)) {
                     txtRuc.classList.add('is-invalid');
                     txtRuc.focus();
                     rucStatusText.className = 'text-danger fw-bold';
-                    rucStatusText.innerHTML = '<i class="bi bi-x-circle-fill"></i> Número de RUC inválido';
+                    rucStatusText.innerHTML = '<i class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">cancel</i> Número de RUC inválido';
                     esValido = false;
                 }
 

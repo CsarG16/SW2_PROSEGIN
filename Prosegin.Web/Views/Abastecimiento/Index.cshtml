@@ -32,7 +32,7 @@
     @if (!string.IsNullOrWhiteSpace(Model.Error))
     {
         <div class="alert alert-warning d-flex align-items-start gap-2" role="alert">
-            <i class="bi bi-exclamation-triangle-fill"></i>
+            <i class="material-symbols-outlined">warning</i>
             <span>@Model.Error</span>
         </div>
     }
@@ -106,7 +106,7 @@
         <div class="prosegin-card p-3 p-md-4 mb-3">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 border-bottom pb-3 mb-3">
                 <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-box-seam text-warning"></i>
+                    <i class="material-symbols-outlined text-warning">inventory_2</i>
                     <h2 class="h6 fw-bold text-uppercase mb-0">Resumen de órdenes de compra por proveedor</h2>
                 </div>
                 <span class="badge text-bg-light border" id="cantidadOrdenes">0 órdenes agrupadas</span>
@@ -127,11 +127,11 @@
 
         <div class="d-flex flex-column flex-sm-row justify-content-between gap-2">
             <a href="@urlCancelar" class="btn-prosegin-secondary" id="cancelarAbastecimiento">
-                <i class="bi bi-x-circle me-1"></i> Cancelar Selección
+                <i class="material-symbols-outlined me-1">cancel</i> Cancelar Selección
             </a>
             <button type="submit" class="btn-prosegin-primary" id="generarOrdenes"
                     disabled="@(Model.Productos.Count == 0 || Model.Productos.Any(p => p.Proveedores.Count == 0) || !string.IsNullOrWhiteSpace(Model.Error))">
-                <i class="bi bi-box-seam me-1"></i> GENERAR ÓRDENES DE COMPRA TOTALES
+                <i class="material-symbols-outlined me-1">inventory_2</i> GENERAR ÓRDENES DE COMPRA TOTALES
             </button>
         </div>
     </form>

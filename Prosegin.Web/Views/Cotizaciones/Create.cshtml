@@ -18,7 +18,7 @@
                 <p class="page-subtitle">Validación fiscal SUNAT, cálculo de márgenes comerciales y cotización formal de EPP</p>
             </div>
             <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary" data-cancel-quote>
-                <i class="bi bi-arrow-left"></i> Volver a Clientes
+                <i class="material-symbols-outlined">arrow_back</i> Volver a Clientes
             </a>
         </div>
     </div>
@@ -31,26 +31,26 @@
     @if (Model.DatosSunatDesactualizados)
     {
         <div class="alert alert-warning border-warning shadow-sm">
-            <i class="bi bi-arrow-repeat me-2"></i>
+            <i class="material-symbols-outlined me-2">sync</i>
             <strong>ACTUALIZACIÓN OBLIGATORIA:</strong> la dirección fiscal difiere de SUNAT.
             <form asp-action="ActualizarDesdeSunat" method="post" class="d-inline ms-2">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="clienteId" value="@Model.ClienteId" />
-                <button type="submit" class="btn btn-sm btn-warning"><i class="bi bi-cloud-download me-1"></i>ACTUALIZAR DATOS</button>
+                <button type="submit" class="btn-prosegin-primary btn-sm"><i class="material-symbols-outlined me-1">cloud_download</i>ACTUALIZAR DATOS</button>
             </form>
         </div>
     }
     else if (noPuedeVender)
     {
         <div class="alert alert-danger border-danger shadow-sm">
-            <i class="bi bi-shield-slash-fill me-2"></i>
+            <i class="material-symbols-outlined me-2">gpp_bad</i>
             <strong>VENTA RESTRINGIDA:</strong> el cliente debe figurar ACTIVO y HABIDO en SUNAT.
         </div>
     }
     else if (Model.ClienteBloqueado)
     {
         <div class="alert alert-danger border-danger shadow-sm">
-            <i class="bi bi-lock-fill me-2"></i>
+            <i class="material-symbols-outlined me-2">lock</i>
             <strong>CLIENTE BLOQUEADO POR MORA:</strong> @Model.MotivoBloqueo
             <div class="small mt-1">Las cotizaciones a crédito están deshabilitadas.</div>
         </div>
@@ -75,7 +75,7 @@
                             <div class="mb-3 position-relative">
                                 <label class="form-label fw-bold text-secondary small mb-1" for="filtroProductos">Búsqueda de Catálogo</label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="material-symbols-outlined">search</i></span>
                                     <input id="filtroProductos" type="search" class="form-control border-start-0 ps-0" placeholder="Buscar por código, descripción o categoría (ej: Casco dieléctrico, bota, EPP-BOT-0104...)" autocomplete="off" />
                                 </div>
                                 <div class="list-group position-absolute w-100 shadow-sm mt-1" id="resultadosBusqueda" style="z-index: 1000; max-height: 250px; overflow-y: auto;" hidden></div>
@@ -101,7 +101,7 @@
                                         <label class="form-label fw-bold text-secondary small mb-1">Costo Base (S/.)</label>
                                         <input type="text" id="precioSeleccionado" class="form-control bg-light" readonly placeholder="S/ 0.00" />
                                     </div>
-                                    <button type="button" class="btn btn-dark px-3 fw-bold text-white" id="agregarProducto" disabled>+Agregar</button>
+                                    <button type="button" class="btn-prosegin-dark" id="agregarProducto" disabled><i class="material-symbols-outlined">add</i>+Agregar</button>
                                 </div>
                             </div>
                         </div>
@@ -113,7 +113,7 @@
                     <div class="card border-0 shadow-sm rounded-4 h-100">
                         <div class="card-body p-4 d-flex flex-column">
                             <h6 class="fw-bold text-secondary mb-4 d-flex align-items-center gap-2">
-                                <i class="bi bi-receipt"></i> RESUMEN
+                                <i class="material-symbols-outlined">receipt_long</i> RESUMEN
                             </h6>
                             <div class="d-flex justify-content-between mb-2 small text-secondary">
                                 <span>Subtotal</span>
@@ -139,7 +139,7 @@
             <div id="productosError" class="alert alert-danger" role="alert" hidden></div>
             <!-- Alerta de validación de precio en tiempo real -->
             <div id="alertaPrecioError" class="alert alert-danger alert-dismissible fade show d-none align-items-center mb-3 shadow-sm rounded-4 border-0 py-3 px-4" role="alert" style="background-color: #f8d7da; color: #842029;">
-                <i class="bi bi-exclamation-octagon-fill me-2 fs-5"></i>
+                <i class="material-symbols-outlined me-2 fs-5">warning</i>
                 <span id="alertaPrecioErrorTexto" class="fw-semibold">El precio cotizado no puede ser menor al costo base registrado</span>
                 <button type="button" class="btn-close ms-auto" aria-label="Close" onclick="this.parentElement.classList.add('d-none')"></button>
             </div>
@@ -224,22 +224,22 @@
                                     <td class="text-center pe-4">
                                         <input asp-for="ProductosDisponibles[i].Seleccionado" type="checkbox" class="d-none quote-selection-input" />
                                         <input asp-for="ProductosDisponibles[i].MargenPorcentaje" type="hidden" value="@producto.MargenPorcentaje" class="quote-margin-input" />
-                                        <button type="button" class="btn btn-sm btn-link text-muted p-0 quote-remove-btn" data-remove-product title="Eliminar"><i class="bi bi-trash"></i></button>
+                                        <button type="button" class="btn btn-sm btn-link text-muted p-0 quote-remove-btn" data-remove-product title="Eliminar"><i class="material-symbols-outlined">delete</i></button>
                                     </td>
                                 </tr>
                             }
                         </tbody>
                     </table>
                     <div id="productosVacios" class="text-center py-5 text-muted @(Model.ProductosDisponibles.Any(p => p.Seleccionado) ? "d-none" : "")">
-                        <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                        <i class="material-symbols-outlined fs-2 d-block mb-2">inbox</i>
                         Agrega productos para preparar la cotización.
                     </div>
                 </div>
                 <div class="card-footer bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
                     <span class="small text-dark fw-bold">
-                        <i class="bi bi-circle-fill me-2" style="font-size: 6px;"></i><span id="cantidadProductos">0</span> productos en propuesta
+                        <i class="material-symbols-outlined me-2" style="font-size: 8px;">circle</i><span id="cantidadProductos">0</span> productos en propuesta
                         <span class="text-muted fw-normal mx-2">|</span>
-                        <span class="text-muted fw-normal"><i class="bi bi-info-circle me-1"></i>Regla de negocio: El precio unitario cotizado no puede ser menor al costo base unitario.</span>
+                        <span class="text-muted fw-normal"><i class="material-symbols-outlined me-1" style="font-size: 16px; vertical-align: middle;">info</i>Regla de negocio: El precio unitario cotizado no puede ser menor al costo base unitario.</span>
                     </span>
                     <span class="small fw-bold text-secondary">Moneda: PEN (S/.)</span>
                 </div>
@@ -251,15 +251,15 @@
 
         <div class="quote-bottom-bar">
             <div class="quote-actions">
-                <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary"><i class="bi bi-arrow-left"></i>Atrás</a>
+                <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary"><i class="material-symbols-outlined">arrow_back</i>Atrás</a>
                 <button type="button" class="btn-prosegin-secondary" id="generarPdf"
                         data-bs-toggle="modal" data-bs-target="#cotizacionPdfModal"
                         disabled="@(!tieneCotizacionGuardada)"
                         title="@(tieneCotizacionGuardada ? "Ver y generar el PDF" : "Guarda la cotización antes de generar el PDF")">
-                    <i class="bi bi-file-earmark-pdf"></i> Generar PDF
+                    <i class="material-symbols-outlined">picture_as_pdf</i> Generar PDF
                 </button>
-                <button type="button" class="quote-clear-button" id="limpiarProductos"><i class="bi bi-dash-square"></i>Limpiar</button>
-                <button type="submit" class="btn-prosegin-primary" id="btnGrabarCotizacion" @(noPuedeVender || Model.DatosSunatDesactualizados || Model.ClienteBloqueado ? "disabled" : null)><i class="bi bi-save"></i>Grabar cotización</button>
+                <button type="button" class="btn-prosegin-secondary" id="limpiarProductos"><i class="material-symbols-outlined">clear_all</i>Limpiar</button>
+                <button type="submit" class="btn-prosegin-primary" id="btnGrabarCotizacion" @(noPuedeVender || Model.DatosSunatDesactualizados || Model.ClienteBloqueado ? "disabled" : null)><i class="material-symbols-outlined">save</i>Grabar cotización</button>
             </div>
         </div>
     </form>
@@ -341,7 +341,7 @@
                                                             <a asp-controller="Catalogo" asp-action="VerFicha" asp-route-id="@producto.ProductoId"
                                                                target="_blank" rel="noopener noreferrer" aria-label="Abrir ficha técnica de @producto.Nombre"
                                                                title="@(string.IsNullOrWhiteSpace(producto.NombreArchivoPdf) ? "Abrir ficha técnica" : producto.NombreArchivoPdf)">
-                                                                <i class="bi bi-file-earmark-pdf"></i>
+                                                                <i class="material-symbols-outlined">picture_as_pdf</i>
                                                             </a>
                                                         }
                                                         else
@@ -372,16 +372,16 @@
                                 </div>
                                 <div class="quote-pdf-summary">
                                     <h4>Resumen de contenido</h4>
-                                    <div><span><i class="bi bi-check-circle me-1"></i>Total ítems:</span><strong>@Model.ProductosCotizacionGuardada.Count productos homologados</strong></div>
-                                    <div><span><i class="bi bi-box-seam me-1"></i>Unidades:</span><strong>@Model.ProductosCotizacionGuardada.Sum(p => (long)p.Cantidad) unidades</strong></div>
-                                    <div><span><i class="bi bi-cash-stack me-1"></i>Monto a facturar:</span><strong>S/ @Model.Total.ToString("N2", new CultureInfo("es-PE"))</strong></div>
+                                    <div><span><i class="material-symbols-outlined me-1">check_circle</i>Total ítems:</span><strong>@Model.ProductosCotizacionGuardada.Count productos homologados</strong></div>
+                                    <div><span><i class="material-symbols-outlined me-1">inventory_2</i>Unidades:</span><strong>@Model.ProductosCotizacionGuardada.Sum(p => (long)p.Cantidad) unidades</strong></div>
+                                    <div><span><i class="material-symbols-outlined me-1">payments</i>Monto a facturar:</span><strong>S/ @Model.Total.ToString("N2", new CultureInfo("es-PE"))</strong></div>
                                 </div>
                                 <div id="pdfDownloadError" class="alert alert-danger small mt-3" role="alert" hidden></div>
-                                <button type="button" class="btn btn-dark w-100 mt-4" id="confirmarDescargaPdf">
-                                    <i class="bi bi-download me-1"></i>Confirmar y Descargar
+                                <button type="button" class="btn-prosegin-primary w-100 mt-4" id="confirmarDescargaPdf">
+                                    <i class="material-symbols-outlined me-1">download</i>Confirmar y Descargar
                                 </button>
                                 <p class="small text-secondary text-center mt-2 mb-0">Se descargará el PDF y la cotización quedará marcada como enviada.</p>
-                                <button type="button" class="btn btn-light border w-100 mt-2" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn-prosegin-secondary w-100 mt-2" data-bs-dismiss="modal">Cancelar</button>
                             </div>
                         </aside>
                     </div>

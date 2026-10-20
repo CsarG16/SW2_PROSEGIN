@@ -266,5 +266,19 @@ public class FacturacionIntegracionTests
                 EnlacePdf = "https://example.test/guia.pdf"
             });
         }
+
+        public Task<NubefactResponseDto> ConsultarGuiaRemisionAsync(string serie, int numero, CancellationToken ct = default)
+        {
+            return Task.FromResult(new NubefactResponseDto
+            {
+                EstadoProceso = NubefactService.EstadoAceptado,
+                Serie = serie,
+                Numero = numero,
+                CodigoHash = "hash-guia-consultada",
+                EnlacePdf = $"https://example.test/{serie}-{numero}.pdf",
+                EnlaceXml = $"https://example.test/{serie}-{numero}.xml",
+                EnlaceCdr = $"https://example.test/{serie}-{numero}.cdr"
+            });
+        }
     }
 }

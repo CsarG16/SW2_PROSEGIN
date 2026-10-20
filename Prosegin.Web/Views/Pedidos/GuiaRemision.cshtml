@@ -1,0 +1,456 @@
+@model Prosegin.Web.ViewModels.Pedidos.GuiaRemisionPreviewViewModel
+@using System.Globalization
+
+@{
+    ViewData["Title"] = $"Guía de Remisión: {Model.NumeroPedido}";
+    var urlVolver = Url.Action("Index", "Pedidos", new
+    {
+        termino = Model.NumeroPedido,
+        estado = "ALL",
+        abrirDetalle = Model.NumeroPedido
+    });
+    var guiaCodigo = $"{Model.Serie}-{Model.Numero.ToString("D6")}";
+}
+
+<div class="container-fluid py-4">
+    <!-- 1. Encabezado de Página -->
+    <div class="prosegin-card p-3 p-md-4 mb-3">
+        <!-- Logo y Navegación Superior -->
+        <div class="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom flex-wrap gap-3" style="border-color: var(--border-card, #e2e8f0) !important;">
+            <div class="d-flex align-items-center gap-3">
+                <img src="~/logo_horizontal.png" alt="PROSEGIN Prevención Integral" style="height: 42px; object-fit: contain;" />
+                <div class="border-start ps-3 d-none d-sm-block text-muted small" style="font-size: 0.75rem; line-height: 1.35; border-color: #cbd5e1 !important;">
+                    <div class="fw-bold text-dark">PROSEGIN PREVENCIÓN INTEGRAL S.A.C.</div>
+                    <div>Distribución y Gestión Técnica de Equipos de Protección Personal (EPP)</div>
+                </div>
+            </div>
+            <a href="@urlVolver" class="btn-prosegin-secondary">
+                <i class="material-symbols-outlined">arrow_back</i> Volver a Pedidos
+            </a>
+        </div>
+
+        <div class="prosegin-page-header--accent mb-0">
+            <div class="header-content">
+                <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                    <span class="badge-status badge-status-warning">
+                        <span class="status-dot"></span> LISTO PARA DESPACHO
+                    </span>
+                    <span class="badge" style="background: var(--accent-light, #fef3c7); color: var(--accent-text, #b45309); font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(245, 158, 11, 0.4);">
+                        PREVISUALIZACIÓN GRE
+                    </span>
+                </div>
+                <h1 class="page-title">Guía de Remisión Remitente (GRE)</h1>
+                <p class="page-subtitle">Sustento fiscal y legal para el traslado de Equipos de Protección Personal (EPP).</p>
+            </div>
+        </div>
+
+        <!-- Metadatos Clave -->
+        <div class="row g-3 mt-2 pt-3 border-top small" style="border-color: var(--border-card, #e2e8f0) !important;">
+            <div class="col-6 col-md-3">
+                <span class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.04em;">N° Pedido</span>
+                <span class="fw-bold fs-6 text-dark">@Model.NumeroPedido</span>
+            </div>
+            <div class="col-6 col-md-3">
+                <span class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.04em;">Orden de Compra</span>
+                <span class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.NumeroOrdenCompra) ? "—" : Model.NumeroOrdenCompra)</span>
+            </div>
+            <div class="col-6 col-md-3">
+                <span class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.04em;">Serie y Número Preliminar</span>
+                <span class="fw-bold font-monospace text-dark">@guiaCodigo</span>
+            </div>
+            <div class="col-6 col-md-3">
+                <span class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.04em;">Fecha Emisión</span>
+                <span class="fw-semibold">@Model.FechaEmision.ToString("dd/MM/yyyy")</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Información de Traslado y Destinatario -->
+    <div class="prosegin-card p-3 p-md-4 mb-3">
+        <h2 class="prosegin-card-title mb-3" style="font-size: 1rem; font-weight: 700; color: #0f172a;">
+            <i class="material-symbols-outlined me-1" style="color: var(--accent, #f59e0b); vertical-align: middle;">route</i>
+            Datos de Traslado y Destinatario
+        </h2>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="p-3 rounded-3 h-100" style="background: #f8fafc; border: 1px solid var(--border-card, #e2e8f0);">
+                    <span class="text-muted d-block text-uppercase fw-bold mb-1" style="font-size: 0.72rem; letter-spacing: 0.04em;">
+                        Destinatario (Cliente)
+                    </span>
+                    <div class="fw-bold text-dark fs-6">@Model.ClienteRazonSocial</div>
+                    <div class="text-muted small mt-1">
+                        <span class="fw-semibold">RUC:</span> @Model.ClienteRuc
+                    </div>
+                    <div class="mt-2 pt-2 border-top small text-muted" style="border-color: #e2e8f0 !important;">
+                        <span class="fw-semibold text-dark">Motivo de traslado:</span> 01 - Venta<br />
+                        <span class="fw-semibold text-dark">Modalidad de transporte:</span> 02 - Transporte Privado
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="p-3 rounded-3 h-100" style="background: #f8fafc; border: 1px solid var(--border-card, #e2e8f0);">
+                    <div class="mb-2">
+                        <span class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.04em;">
+                            Punto de Partida (Origen)
+                        </span>
+                        <div class="small fw-semibold text-dark">
+                            <i class="material-symbols-outlined me-1" style="color: var(--accent, #f59e0b); font-size: 16px; vertical-align: middle;">warehouse</i>
+                            @Model.PuntoPartidaDireccion
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(Model.PuntoPartidaUbigeo))
+                        {
+                            <span class="badge bg-light text-muted border mt-1" style="font-size: 0.72rem;">UBIGEO: @Model.PuntoPartidaUbigeo</span>
+                        }
+                    </div>
+
+                    <div class="pt-2 border-top" style="border-color: #e2e8f0 !important;">
+                        <span class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.04em;">
+                            Punto de Llegada (Destino)
+                        </span>
+                        <div class="small fw-semibold text-dark">
+                            <i class="material-symbols-outlined me-1" style="color: var(--accent, #f59e0b); font-size: 16px; vertical-align: middle;">location_on</i>
+                            @Model.PuntoLlegadaDireccion
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(Model.PuntoLlegadaUbigeo))
+                        {
+                            <span class="badge bg-light text-muted border mt-1" style="font-size: 0.72rem;">UBIGEO: @Model.PuntoLlegadaUbigeo</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mt-1">
+            <div class="col-sm-4">
+                <div class="p-3 rounded-3 text-center" style="background: #fffbeb; border: 1px solid rgba(245, 158, 11, 0.3);">
+                    <span class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.72rem;">Fecha Inicio Traslado</span>
+                    <span class="fw-bold fs-6 text-dark">@Model.FechaInicioTraslado.ToString("dd/MM/yyyy")</span>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="p-3 rounded-3 text-center" style="background: #fffbeb; border: 1px solid rgba(245, 158, 11, 0.3);">
+                    <span class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.72rem;">Peso Bruto Total (Calculado)</span>
+                    <span class="fw-bold fs-6 font-monospace" style="color: var(--accent-text, #b45309);">@Model.PesoBrutoTotal.ToString("F3", CultureInfo.InvariantCulture) kg</span>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="p-3 rounded-3 text-center" style="background: #fffbeb; border: 1px solid rgba(245, 158, 11, 0.3);">
+                    <span class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.72rem;">Número de Bultos</span>
+                    <span class="fw-bold fs-6 font-monospace text-dark">@Model.NumeroBultos</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Lista de Artículos a Trasladar (Sin Precios) -->
+    <div class="prosegin-card overflow-hidden mb-3">
+        <div class="prosegin-results-header">
+            <div class="d-flex align-items-center gap-2">
+                <span class="results-title">Artículos de Seguridad a Trasladar</span>
+                <span class="count-pill">@Model.Items.Count ítems</span>
+            </div>
+            <span class="results-note">Documento de traslado fiscal · Sin montos valorizados conforme a normativa</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="prosegin-table mb-0" id="tablaGuiaItems">
+                <thead>
+                    <tr>
+                        <th style="width: 140px;">CÓDIGO / SKU</th>
+                        <th>DESCRIPCIÓN DEL EQUIPO DE PROTECCIÓN</th>
+                        <th class="text-end" style="width: 130px;">CANTIDAD</th>
+                        <th style="width: 110px;">UNIDAD</th>
+                        <th class="text-end" style="width: 160px;">PESO TOTAL (KG)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items != null && Model.Items.Count > 0)
+                    {
+                        foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="font-monospace fw-semibold text-muted small">@item.Codigo</span>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-dark">@item.Descripcion</span>
+                                </td>
+                                <td class="text-end fw-bold font-monospace">
+                                    @item.Cantidad.ToString("G29", CultureInfo.InvariantCulture)
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-muted border">@item.UnidadMedida</span>
+                                </td>
+                                <td class="text-end font-monospace fw-semibold text-muted">
+                                    @item.PesoTotalKg.ToString("F3", CultureInfo.InvariantCulture) kg
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted">
+                                No se encontraron artículos registrados para este despacho.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr style="background: #f8fafc; font-weight: 700; border-top: 2px solid var(--border-card, #e2e8f0);">
+                        <td colspan="2" class="text-uppercase text-muted small">Total Carga Física</td>
+                        <td class="text-end font-monospace text-dark">
+                            @(Model.Items?.Sum(i => i.Cantidad).ToString("G29", CultureInfo.InvariantCulture) ?? "0")
+                        </td>
+                        <td>—</td>
+                        <td class="text-end font-monospace" style="color: var(--accent-text, #b45309);">
+                            @Model.PesoBrutoTotal.ToString("F3", CultureInfo.InvariantCulture) kg
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- 4. Formulario de Conductor y Vehículo -->
+    <div class="prosegin-card p-3 p-md-4 mb-3">
+        <h2 class="prosegin-card-title mb-2" style="font-size: 1rem; font-weight: 700; color: #0f172a;">
+            <i class="material-symbols-outlined me-1" style="color: var(--accent, #f59e0b); vertical-align: middle;">local_shipping</i>
+            Datos del Conductor y Unidad de Transporte
+        </h2>
+        <p class="text-muted small mb-3">
+            Es obligatorio registrar el nombre del conductor y la placa del vehículo para sustentar el control en ruta conforme a las directivas de SUNAT y MTC.
+        </p>
+
+        <form id="guiaForm" onsubmit="event.preventDefault(); emitirGuia();">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="numeroPedido" name="numeroPedido" value="@Model.NumeroPedido" />
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="conductorNombre" class="form-label-prosegin">
+                        CONDUCTOR ASIGNADO <span class="text-danger">*</span>
+                    </label>
+                    <div class="prosegin-input-group">
+                        <i class="material-symbols-outlined input-icon">badge</i>
+                        <input type="text"
+                               id="conductorNombre"
+                               name="conductorNombre"
+                               class="form-control form-control-prosegin"
+                               placeholder="Nombre y apellidos del conductor"
+                               maxlength="200"
+                               required
+                               autocomplete="name" />
+                    </div>
+                    <div class="invalid-feedback d-none" id="errorConductor">Por favor ingrese el nombre del conductor.</div>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="placaVehiculo" class="form-label-prosegin">
+                        PLACA DEL VEHÍCULO <span class="text-danger">*</span>
+                    </label>
+                    <div class="prosegin-input-group">
+                        <i class="material-symbols-outlined input-icon">directions_car</i>
+                        <input type="text"
+                               id="placaVehiculo"
+                               name="placaVehiculo"
+                               class="form-control form-control-prosegin text-uppercase font-monospace"
+                               placeholder="Ej. ABC-123 o ABC123"
+                               maxlength="20"
+                               required
+                               autocomplete="off" />
+                    </div>
+                    <div class="invalid-feedback d-none" id="errorPlaca">Por favor ingrese la placa del vehículo.</div>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="conductorDocumento" class="form-label-prosegin">
+                        DNI DEL CONDUCTOR <span class="text-muted fw-normal">(Opcional)</span>
+                    </label>
+                    <div class="prosegin-input-group">
+                        <i class="material-symbols-outlined input-icon">id_card</i>
+                        <input type="text"
+                               id="conductorDocumento"
+                               name="conductorDocumento"
+                               class="form-control form-control-prosegin"
+                               placeholder="Número de DNI (8 dígitos)"
+                               maxlength="20"
+                               autocomplete="off" />
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="conductorLicencia" class="form-label-prosegin">
+                        LICENCIA DE CONDUCIR <span class="text-muted fw-normal">(Opcional)</span>
+                    </label>
+                    <div class="prosegin-input-group">
+                        <i class="material-symbols-outlined input-icon">assignment_ind</i>
+                        <input type="text"
+                               id="conductorLicencia"
+                               name="conductorLicencia"
+                               class="form-control form-control-prosegin text-uppercase font-monospace"
+                               placeholder="Ej. Q12345678"
+                               maxlength="30"
+                               autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Barra de Acciones Inferior -->
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-stretch align-items-sm-center gap-2 pt-4 mt-4 border-top" style="border-color: var(--border-card, #e2e8f0) !important;">
+                <a href="@urlVolver" class="btn-prosegin-secondary btn-lg" id="btnVolverPedidos">
+                    <i class="material-symbols-outlined">arrow_back</i> Volver a Pedidos
+                </a>
+
+                <button type="submit" class="btn-prosegin-primary btn-lg" id="btnConfirmarGuia">
+                    <i class="material-symbols-outlined" id="btnIcon">bolt</i>
+                    <span id="btnText">EMITIR GUÍA DE REMISIÓN</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const emitirGuiaUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("EmitirGuiaRemision", "Pedidos")));
+        const urlRetorno = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(urlVolver));
+
+        async function emitirGuia() {
+            const driver = document.getElementById('conductorNombre').value.trim();
+            const plate = document.getElementById('placaVehiculo').value.trim();
+            const errorConductor = document.getElementById('errorConductor');
+            const errorPlaca = document.getElementById('errorPlaca');
+
+            let isValid = true;
+            if (!driver) {
+                errorConductor.classList.remove('d-none');
+                document.getElementById('conductorNombre').classList.add('is-invalid');
+                isValid = false;
+            } else {
+                errorConductor.classList.add('d-none');
+                document.getElementById('conductorNombre').classList.remove('is-invalid');
+            }
+
+            if (!plate) {
+                errorPlaca.classList.remove('d-none');
+                document.getElementById('placaVehiculo').classList.add('is-invalid');
+                isValid = false;
+            } else {
+                errorPlaca.classList.add('d-none');
+                document.getElementById('placaVehiculo').classList.remove('is-invalid');
+            }
+
+            if (!isValid) {
+                if (window.ProseginToast) {
+                    ProseginToast.warning('Por favor ingrese el conductor y la placa del camión.');
+                }
+                return;
+            }
+
+            const button = document.getElementById('btnConfirmarGuia');
+            const btnIcon = document.getElementById('btnIcon');
+            const btnText = document.getElementById('btnText');
+            const btnVolver = document.getElementById('btnVolverPedidos');
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            // Bloquear acciones durante el envío a SUNAT
+            button.disabled = true;
+            btnVolver.classList.add('disabled');
+            btnIcon.textContent = 'sync';
+            btnIcon.classList.add('spin-animation');
+            btnText.textContent = 'ENVIANDO A SUNAT...';
+
+            try {
+                const body = new URLSearchParams({
+                    numeroPedido: document.getElementById('numeroPedido').value,
+                    conductorNombre: driver,
+                    placaVehiculo: plate,
+                    conductorDocumento: document.getElementById('conductorDocumento').value.trim(),
+                    conductorLicencia: document.getElementById('conductorLicencia').value.trim(),
+                    __RequestVerificationToken: token
+                });
+
+                const response = await fetch(emitirGuiaUrl, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token,
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: body
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.exito) {
+                    const msg = result.mensaje || 'No se pudo emitir la guía de remisión. Intente nuevamente.';
+                    if (window.ProseginToast) {
+                        ProseginToast.error(msg, 'Error en Emisión');
+                    } else {
+                        alert(msg);
+                    }
+                    restaurarBoton();
+                    return;
+                }
+
+                // 1. Notificación visual estandarizada requerida por la HU
+                if (window.ProseginToast) {
+                    ProseginToast.success(
+                        result.numeroGuia ? `Documento fiscal: ${result.numeroGuia}` : 'El documento fue validado correctamente por SUNAT.',
+                        'Guía de remisión emitida con éxito'
+                    );
+                }
+
+                // 2. Descarga automática del PDF requerida por la HU
+                if (result.pdf) {
+                    try {
+                        const link = document.createElement('a');
+                        link.href = result.pdf;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        link.download = `${result.numeroGuia || 'GuiaRemision'}.pdf`;
+                        document.body.appendChild(link);
+                        link.click();
+                        link.remove();
+                    } catch (e) {
+                        console.warn('Descarga automática de PDF bloqueada por el navegador:', e);
+                    }
+                }
+
+                // 3. Redirección suave a la bandeja de pedidos
+                setTimeout(() => {
+                    window.location.href = urlRetorno;
+                }, 2000);
+
+            } catch (err) {
+                console.error(err);
+                if (window.ProseginToast) {
+                    ProseginToast.error('Ocurrió un error inesperado al conectar con el servicio.', 'Error de Conexión');
+                } else {
+                    alert('Error de conexión al emitir la guía.');
+                }
+                restaurarBoton();
+            }
+
+            function restaurarBoton() {
+                button.disabled = false;
+                btnVolver.classList.remove('disabled');
+                btnIcon.textContent = 'bolt';
+                btnIcon.classList.remove('spin-animation');
+                btnText.textContent = 'EMITIR GUÍA DE REMISIÓN';
+            }
+        }
+    </script>
+
+    <style>
+        .spin-animation {
+            animation: spin 1s linear infinite;
+        }
+        @@keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+}

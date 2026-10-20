@@ -9,7 +9,7 @@
     <div class="prosegin-card mb-4 p-3 p-md-4">
         <div class="mb-1 text-muted small" style="font-size: 0.82rem;">
             <a asp-controller="Catalogo" asp-action="Index" class="text-decoration-none text-muted">Catálogo de EPP</a>
-            <i class="bi bi-chevron-right mx-1" style="font-size: 0.72rem;"></i>
+            <i class="material-symbols-outlined mx-1" style="font-size: 0.85rem;">chevron_right</i>
             <span class="text-secondary fw-semibold">Registrar Nuevo Producto</span>
         </div>
         <h1 class="fw-bold text-dark mb-0" style="font-size: 1.25rem; letter-spacing: -0.01em;">
@@ -26,7 +26,7 @@
         <div class="prosegin-card mb-4 overflow-hidden">
             <div class="d-flex justify-content-between align-items-center py-3 px-4 border-bottom bg-white">
                 <span class="fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 0.92rem;">
-                    <i class="bi bi-shield text-muted"></i> Información General y Código Identificador
+                    <i class="material-symbols-outlined text-muted" style="font-size: 1.15rem;">shield</i> Información General y Código Identificador
                 </span>
                 <span class="text-muted small fst-italic" style="font-size: 0.8rem;">*obligatorios</span>
             </div>
@@ -46,11 +46,11 @@
                             <input asp-for="Sku" id="txtSku" class="form-control form-control-prosegin font-monospace text-uppercase pe-5"
                                    placeholder="EPP-CAS-0042" maxlength="50" autocomplete="off" />
                             <span id="skuCheckIcon" class="position-absolute end-0 top-50 translate-middle-y me-3 d-none">
-                                <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                                <i class="material-symbols-outlined text-success fs-5">check_circle</i>
                             </span>
                         </div>
                         <div class="mt-1 small text-muted" style="font-size: 0.78rem;" id="skuHelperText">
-                            <i class="bi bi-info-circle me-1"></i> Código único alfanumérico. Si ya existe, mostrará: <em class="text-secondary">"El código SKU ya se encuentra registrado"</em>
+                            <i class="material-symbols-outlined me-1" style="font-size: 0.95rem;">info</i> Código único alfanumérico. Si ya existe, mostrará: <em class="text-secondary">"El código SKU ya se encuentra registrado"</em>
                         </div>
                         <span asp-validation-for="Sku" class="text-danger small d-block"></span>
                     </div>
@@ -145,7 +145,7 @@
         <div class="prosegin-card mb-4" style="overflow: visible;">
             <div class="d-flex justify-content-between align-items-center py-3 px-4 border-bottom bg-white">
                 <span class="fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 0.92rem;">
-                    <i class="bi bi-wallet2 text-dark"></i> Costo Base y Proveedores Autorizados
+                    <i class="material-symbols-outlined text-dark" style="font-size: 1.15rem;">payments</i> Costo Base y Proveedores Autorizados
                 </span>
             </div>
 
@@ -187,12 +187,12 @@
                                     aria-expanded="false"
                                     aria-haspopup="true">
                                 <span class="d-flex align-items-center gap-2 text-truncate" id="dropdownProveedoresText">
-                                    <i class="bi bi-shop text-muted"></i>
+                                    <i class="material-symbols-outlined text-muted" style="font-size: 1.1rem;">storefront</i>
                                     <span class="text-muted" id="dropdownPlaceholder">Seleccionar proveedores autorizados...</span>
                                 </span>
                                 <span class="d-flex align-items-center gap-2 flex-shrink-0 ms-2">
                                     <span class="badge rounded-pill bg-light text-dark border font-monospace px-2 py-1 d-none" id="proveedoresBadgeCount">0</span>
-                                    <i class="bi bi-chevron-down text-muted" id="dropdownChevron" style="transition: transform 0.2s ease;"></i>
+                                    <i class="material-symbols-outlined text-muted" id="dropdownChevron" style="transition: transform 0.2s ease;">expand_more</i>
                                 </span>
                             </button>
 
@@ -204,7 +204,7 @@
                                 <!-- Buscador dentro del Dropdown -->
                                 <div class="p-2 border-bottom bg-light bg-opacity-50">
                                     <div class="input-group input-group-sm">
-                                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="material-symbols-outlined" style="font-size: 1rem;">search</i></span>
                                         <input type="search" id="txtProveedorBusqueda" class="form-control form-control-sm border-start-0 ps-0 shadow-none"
                                                placeholder="Buscar por razón social o RUC..." autocomplete="off" />
                                     </div>
@@ -229,14 +229,14 @@
                                         </div>
                                     }
                                     <div id="proveedoresSinResultados" class="small text-muted p-3 text-center d-none">
-                                        <i class="bi bi-search me-1"></i> No se encontraron proveedores que coincidan.
+                                        <i class="material-symbols-outlined me-1" style="font-size: 0.95rem;">search</i> No se encontraron proveedores que coincidan.
                                     </div>
                                 </div>
 
                                 <!-- Footer del Dropdown con botón Listo -->
                                 <div class="p-2 border-top bg-light bg-opacity-50 d-flex justify-content-between align-items-center">
                                     <span class="small text-muted" id="proveedoresFooterCount" style="font-size: 0.75rem;">0 seleccionados</span>
-                                    <button type="button" class="btn btn-sm btn-dark px-3 py-1 fw-bold text-white rounded-2" id="btnCerrarProveedores" style="font-size: 0.76rem;">
+                                    <button type="button" class="btn-prosegin-dark btn-sm" id="btnCerrarProveedores">
                                         Listo
                                     </button>
                                 </div>
@@ -313,7 +313,7 @@
         <div class="prosegin-card mb-4 overflow-hidden">
             <div class="d-flex justify-content-between align-items-center py-3 px-4 border-bottom bg-white">
                 <span class="fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 0.92rem;">
-                    <i class="bi bi-file-earmark-text text-muted"></i> Ficha técnica del fabricante
+                    <i class="material-symbols-outlined text-muted" style="font-size: 1.15rem;">description</i> Ficha técnica del fabricante
                 </span>
             </div>
 
@@ -327,7 +327,7 @@
                     <div class="d-flex flex-column align-items-center justify-content-center py-2">
                         <div class="p-2 rounded-3 bg-white border mb-2 shadow-sm d-flex align-items-center justify-content-center"
                              style="width: 44px; height: 44px;">
-                            <i class="bi bi-file-earmark-arrow-up fs-4 text-dark"></i>
+                            <i class="material-symbols-outlined fs-4 text-dark">upload_file</i>
                         </div>
                         <div class="text-dark small mb-1" style="font-size: 0.88rem;">
                             Arrastrar archivo PDF aquí o <span class="text-dark fw-bold text-decoration-underline">explorar equipo</span>
@@ -343,7 +343,7 @@
                     <div class="d-flex align-items-center gap-3">
                         <div class="p-2 rounded bg-danger-subtle text-danger d-flex align-items-center justify-content-center"
                              style="width: 44px; height: 44px; border-radius: 8px;">
-                            <i class="bi bi-file-earmark-pdf-fill fs-3"></i>
+                            <i class="material-symbols-outlined fs-3">picture_as_pdf</i>
                         </div>
                         <div>
                             <div class="small fw-bold text-muted mb-1">ARCHIVO CARGADO</div>
@@ -354,13 +354,13 @@
                             <div class="d-flex align-items-center gap-2 mt-1">
                                 <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle fw-semibold px-2 py-1"
                                       style="font-size: 0.72rem;">
-                                    <i class="bi bi-check-circle-fill me-1"></i> ARCHIVO VALIDADO
+                                    <i class="material-symbols-outlined me-1" style="font-size: 0.95rem;">check_circle</i> ARCHIVO VALIDADO
                                 </span>
                             </div>
                         </div>
                     </div>
                     <button type="button" class="btn btn-sm btn-outline-danger" id="btnQuitarFicha" title="Quitar archivo">
-                        <i class="bi bi-trash"></i>
+                        <i class="material-symbols-outlined">delete</i>
                     </button>
                 </div>
 
@@ -371,20 +371,18 @@
         <!-- 5. BARRA DE ACCIÓN INFERIOR (Diseño Figma) -->
         <div class="prosegin-card p-3 mb-5 bg-white border d-flex flex-wrap justify-content-between align-items-center gap-3">
             <div class="d-flex align-items-center gap-2" id="formStatusIndicator">
-                <i class="bi bi-check-circle text-muted fs-5" id="statusIcon"></i>
+                <i class="material-symbols-outlined text-muted fs-5" id="statusIcon">radio_button_unchecked</i>
                 <span id="statusLabel" class="small text-muted fw-medium">
                     Complete todos los campos obligatorios (*) para guardar
                 </span>
             </div>
 
             <div class="d-flex align-items-center gap-2">
-                <a asp-controller="Catalogo" asp-action="Index" id="btnCancelar" class="btn btn-outline-secondary py-2 px-4 fw-semibold"
-                   style="border-radius: 8px; font-size: 0.85rem;">
+                <a asp-controller="Catalogo" asp-action="Index" id="btnCancelar" class="btn-prosegin-secondary py-2 px-4">
                     CANCELAR
                 </a>
-                <button type="submit" id="btnGuardarProducto" class="btn d-inline-flex align-items-center gap-2 py-2 px-4 fw-bold text-white"
-                        style="background-color: #0c1524; border: 1px solid #0c1524; border-radius: 8px; font-size: 0.85rem;">
-                    <i class="bi bi-floppy"></i> GUARDAR PRODUCTO EPP
+                <button type="submit" id="btnGuardarProducto" class="btn-prosegin-primary py-2 px-4 fw-bold">
+                    <i class="material-symbols-outlined">save</i> GUARDAR PRODUCTO EPP
                 </button>
             </div>
         </div>

@@ -32,9 +32,11 @@ public class PedidoDetalleViewModel
     public bool FacturaEmitida { get; set; }
     public string? NumeroFactura { get; set; }
     public string? EstadoEmisionFactura { get; set; }
+    public string? EnlacePdfFactura { get; set; }
     public bool PuedeGenerarGuiaRemision { get; set; }
     public bool GuiaRemisionEmitida { get; set; }
     public string? NumeroGuiaRemision { get; set; }
+    public string? EnlacePdfGuia { get; set; }
     public decimal Subtotal { get; set; }
     public decimal Igv { get; set; }
     public decimal Total { get; set; }

@@ -206,80 +206,7 @@
   display: none;
 }
 
-/* Footer del Sidebar: Usuario Card Flotante */
-.sidebar-footer {
-  padding: 1rem;
-  border-top: 1px solid #f1f5f9;
-  background: #ffffff;
-  margin-top: auto;
-}
 
-.user-profile-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.65rem;
-  padding: 0.65rem 0.85rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-  position: relative;
-}
-
-.user-avatar-sq {
-  width: 36px;
-  height: 36px;
-  background-color: var(--dark, #000D31);
-  color: #ffffff;
-  font-weight: 800;
-  font-size: 0.82rem;
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  letter-spacing: 0.03em;
-  transition: transform 0.2s ease;
-}
-
-.user-profile-text {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;
-}
-
-.user-name {
-  font-size: 0.86rem;
-  font-weight: 700;
-  color: var(--text-dark, #000D31);
-  line-height: 1.2;
-}
-
-.user-role {
-  font-size: 0.72rem;
-  color: #94a3b8;
-  line-height: 1.2;
-}
-
-.btn-logout {
-  color: #94a3b8;
-  background: transparent;
-  border: none;
-  font-size: 1.15rem;
-  padding: 0.25rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-logout:hover {
-  color: #ef4444;
-}
 
 /* ============================================================
    CONTENEDOR PRINCIPAL Y TOPBAR
@@ -461,38 +388,12 @@
     margin: 0.35rem auto;
   }
 
-  /* Footer de usuario en modo colapsado */
-  .sidebar-collapsed .sidebar-footer {
-    padding: 0.75rem 0.4rem;
-  }
 
-  .sidebar-collapsed .user-profile-card {
-    padding: 0.3rem;
-    justify-content: center;
-    border: none;
-    background: transparent;
-    box-shadow: none;
-    position: relative;
-  }
-
-  .sidebar-collapsed .user-profile-text,
-  .sidebar-collapsed .btn-logout {
-    display: none;
-  }
-
-  .sidebar-collapsed .user-avatar-sq {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    font-size: 0.85rem;
-    cursor: pointer;
-  }
 
   /* ============================================================
      TAGS / TOOLTIPS FLOTANTES EN MODO COLAPSADO
      ============================================================ */
-  .sidebar-collapsed .sidebar-nav-link .sidebar-floating-tag,
-  .sidebar-collapsed .user-profile-card .sidebar-floating-tag {
+  .sidebar-collapsed .sidebar-nav-link .sidebar-floating-tag {
     display: inline-flex;
     align-items: center;
     position: absolute;
@@ -519,8 +420,7 @@
   }
 
   /* Flechita / Triángulo que apunta hacia el ícono del sidebar */
-  .sidebar-collapsed .sidebar-nav-link .sidebar-floating-tag::before,
-  .sidebar-collapsed .user-profile-card .sidebar-floating-tag::before {
+  .sidebar-collapsed .sidebar-nav-link .sidebar-floating-tag::before {
     content: '';
     position: absolute;
     top: 50%;
@@ -532,8 +432,7 @@
   }
 
   /* Al pasar el mouse: el tag aparece suavemente con slide */
-  .sidebar-collapsed .sidebar-nav-link:hover .sidebar-floating-tag,
-  .sidebar-collapsed .user-profile-card:hover .sidebar-floating-tag {
+  .sidebar-collapsed .sidebar-nav-link:hover .sidebar-floating-tag {
     opacity: 1;
     visibility: visible;
     transform: translateY(-50%) translateX(0);
@@ -558,9 +457,7 @@ html.sidebar-is-collapsed-init .prosegin-main-wrapper {
 
 html.sidebar-is-collapsed-init .sidebar-brand-logo,
 html.sidebar-is-collapsed-init .menu-section-title,
-html.sidebar-is-collapsed-init .sidebar-nav-text,
-html.sidebar-is-collapsed-init .user-profile-text,
-html.sidebar-is-collapsed-init .btn-logout {
+html.sidebar-is-collapsed-init .sidebar-nav-text {
   display: none !important;
 }
 

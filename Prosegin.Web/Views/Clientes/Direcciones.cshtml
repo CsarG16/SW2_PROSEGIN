@@ -16,17 +16,17 @@
                     <span class="badge-status badge-status-neutral">RUC: @Model.Cliente.Ruc</span>
                 </div>
                 <p class="page-subtitle mb-0">
-                    <i class="bi bi-geo-alt me-1 text-danger"></i> Dirección Fiscal: @Model.Cliente.DireccionFiscal@(string.IsNullOrWhiteSpace(Model.Cliente.Distrito) ? "" : $", {Model.Cliente.Distrito}")@(string.IsNullOrWhiteSpace(Model.Cliente.Departamento) ? "" : $", {Model.Cliente.Departamento}")
+                    <i class="material-symbols-outlined me-1 text-danger" style="font-size: 1rem;">location_on</i> Dirección Fiscal: @Model.Cliente.DireccionFiscal@(string.IsNullOrWhiteSpace(Model.Cliente.Distrito) ? "" : $", {Model.Cliente.Distrito}")@(string.IsNullOrWhiteSpace(Model.Cliente.Departamento) ? "" : $", {Model.Cliente.Departamento}")
                 </p>
             </div>
 
             <!-- Botones Acción: Volver al Directorio y Nueva Dirección -->
             <div class="d-flex flex-wrap align-items-center gap-2">
                 <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary">
-                    <i class="bi bi-arrow-left"></i> Volver a Clientes
+                    <i class="material-symbols-outlined">arrow_back</i> Volver a Clientes
                 </a>
                 <button type="button" class="btn-prosegin-primary" id="btnAbrirModalNuevaSede">
-                    <i class="bi bi-plus-lg"></i> Nueva Dirección de Entrega
+                    <i class="material-symbols-outlined">add</i> Nueva Dirección de Entrega
                 </button>
             </div>
         </div>
@@ -36,7 +36,7 @@
     <div class="prosegin-card p-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
         <div class="d-flex align-items-center gap-3">
             <div class="row-icon-avatar" style="background: var(--accent-light); color: var(--accent-text);">
-                <i class="bi bi-truck fs-5"></i>
+                <i class="material-symbols-outlined fs-5">local_shipping</i>
             </div>
             <div>
                 <div class="fw-bold text-dark small">Direcciones Validadas para Guías de Remisión Electrónicas (GRE)</div>
@@ -58,7 +58,7 @@
         </div>
         <div style="min-width: 280px; max-width: 360px;">
             <div class="prosegin-search-box">
-                <i class="bi bi-search"></i>
+                <i class="material-symbols-outlined">search</i>
                 <input type="text" id="txtBuscarDireccion" placeholder="Buscar por sede o distrito..." autocomplete="off">
             </div>
         </div>
@@ -69,11 +69,11 @@
         @if (Model.DireccionesActivas.Count == 0)
         {
             <div id="emptyStateDirecciones" class="prosegin-card p-5 text-center">
-                <i class="bi bi-geo-alt text-muted fs-1 mb-2 d-block"></i>
+                <i class="material-symbols-outlined text-muted fs-1 mb-2 d-block">location_on</i>
                 <h6 class="fw-bold text-dark">Aún no hay direcciones de despacho registradas</h6>
                 <p class="text-muted small mb-3">Registre la primera sede autorizada para despachos de EPP y Guías de Remisión.</p>
                 <button type="button" class="btn-prosegin-primary" onclick="document.getElementById('btnAbrirModalNuevaSede').click();">
-                    <i class="bi bi-plus-lg me-1"></i> Registrar Primera Dirección
+                    <i class="material-symbols-outlined me-1">add</i> Registrar Primera Dirección
                 </button>
             </div>
         }
@@ -106,17 +106,17 @@
                         <!-- Botones de Acción: Editar y Desactivar -->
                         <div class="d-flex align-items-center gap-3">
                             <button type="button" class="btn btn-link text-decoration-none text-dark small fw-semibold p-0 btn-editar-sede" data-id="@sede.Id">
-                                <i class="bi bi-pencil me-1"></i> Editar
+                                <i class="material-symbols-outlined me-1" style="font-size: 1rem;">edit</i> Editar
                             </button>
                             <button type="button" class="btn btn-link text-decoration-none text-danger small fw-semibold p-0 btn-desactivar-sede" data-id="@sede.Id">
-                                <i class="bi bi-slash-circle me-1"></i> Desactivar
+                                <i class="material-symbols-outlined me-1" style="font-size: 1rem;">block</i> Desactivar
                             </button>
                         </div>
                     </div>
 
                     <!-- Fila 1: Dirección y Ubigeo -->
                     <div class="text-secondary small mb-2">
-                        <i class="bi bi-geo-alt me-1 text-muted"></i>
+                        <i class="material-symbols-outlined me-1 text-muted" style="font-size: 1rem;">location_on</i>
                         <span>@sede.Direccion</span>
                         @if (!string.IsNullOrWhiteSpace(sede.Ubigeo))
                         {
@@ -129,7 +129,7 @@
                         @if (!string.IsNullOrWhiteSpace(sede.ContactoRecepcion) || !string.IsNullOrWhiteSpace(sede.TelefonoMovil))
                         {
                             <span>
-                                <i class="bi bi-person me-1"></i>
+                                <i class="material-symbols-outlined me-1" style="font-size: 1rem;">person</i>
                                 @(string.IsNullOrWhiteSpace(sede.ContactoRecepcion) ? "" : sede.ContactoRecepcion)
                                 @if (!string.IsNullOrWhiteSpace(sede.TelefonoMovil))
                                 {
@@ -141,14 +141,14 @@
                         @if (!string.IsNullOrWhiteSpace(sede.HorarioRecepcion))
                         {
                             <span>
-                                <i class="bi bi-clock me-1"></i> @sede.HorarioRecepcion
+                                <i class="material-symbols-outlined me-1" style="font-size: 1rem;">schedule</i> @sede.HorarioRecepcion
                             </span>
                         }
 
                         @if (!string.IsNullOrWhiteSpace(sede.RestriccionesAcceso))
                         {
                             <span>
-                                <i class="bi bi-exclamation-triangle me-1"></i> @sede.RestriccionesAcceso
+                                <i class="material-symbols-outlined me-1" style="font-size: 1rem;">warning</i> @sede.RestriccionesAcceso
                             </span>
                         }
                     </div>
@@ -172,7 +172,7 @@
             <div class="modal-header border-0 pb-0 pt-4 px-4 align-items-start">
                 <div>
                     <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="modalTituloLabel">
-                        <i class="bi bi-building"></i> <span id="modalHeaderTitulo">Registrar Sede de Entrega</span>
+                        <i class="material-symbols-outlined">domain</i> <span id="modalHeaderTitulo">Registrar Sede de Entrega</span>
                     </h5>
                     <p class="text-muted small mb-0 mt-1">Ingresa los datos del punto de entrega autorizada para despachos de EPP y equipos industriales.</p>
                 </div>
@@ -184,7 +184,7 @@
                 
                 <!-- Alerta de Validación de Campos Obligatorios -->
                 <div id="alertaCamposFaltantes" class="alert alert-danger d-none py-2 px-3 small rounded-3 mb-3 d-flex align-items-center gap-2">
-                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                    <i class="material-symbols-outlined flex-shrink-0">warning</i>
                     <span id="mensajeAlertaCampos">Debe completar todos los datos obligatorios marcados con asterisco (*).</span>
                 </div>
 
@@ -331,7 +331,7 @@
                             <div class="position-relative">
                                 <input type="text" id="modalUbigeo" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" class="form-control form-control-prosegin font-monospace fw-bold"
                                        placeholder="150119" value="150119" required />
-                                <i class="bi bi-check-circle text-muted position-absolute" style="right: 12px; top: 50%; transform: translateY(-50%);"></i>
+                                <i class="material-symbols-outlined text-muted position-absolute" style="right: 12px; top: 50%; transform: translateY(-50%); font-size: 1rem;">check_circle</i>
                             </div>
                         </div>
                     </div>
@@ -377,7 +377,7 @@
                                 Cancelar
                             </button>
                             <button type="button" class="btn-prosegin-primary" id="btnGuardarDireccion">
-                                <i class="bi bi-floppy"></i> Guardar Dirección
+                                <i class="material-symbols-outlined">save</i> Guardar Dirección
                             </button>
                         </div>
                     </div>
@@ -751,11 +751,11 @@
                         msgNoResultados = document.createElement('div');
                         msgNoResultados.id = 'msgNoResultados';
                         msgNoResultados.className = 'alert alert-light text-center py-4 rounded-4 border text-muted small';
-                        msgNoResultados.innerHTML = `<i class="bi bi-search mb-2 fs-4 d-block"></i> No se encontraron direcciones para "<strong>${query}</strong>".`;
+                        msgNoResultados.innerHTML = `<i class="material-symbols-outlined mb-2 fs-4 d-block">search</i> No se encontraron direcciones para "<strong>${query}</strong>".`;
                         contenedorDirecciones.appendChild(msgNoResultados);
                     } else {
                         msgNoResultados.style.display = '';
-                        msgNoResultados.innerHTML = `<i class="bi bi-search mb-2 fs-4 d-block"></i> No se encontraron direcciones para "<strong>${query}</strong>".`;
+                        msgNoResultados.innerHTML = `<i class="material-symbols-outlined mb-2 fs-4 d-block">search</i> No se encontraron direcciones para "<strong>${query}</strong>".`;
                     }
                 } else if (msgNoResultados) {
                     msgNoResultados.style.display = 'none';

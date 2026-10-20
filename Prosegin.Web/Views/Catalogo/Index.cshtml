@@ -21,7 +21,7 @@
             </div>
             <div class="d-flex align-items-center gap-2">
                 <a asp-controller="Catalogo" asp-action="RegistroProductos" class="btn-prosegin-primary">
-                    <i class="bi bi-plus-lg"></i> Registrar Nuevos Productos
+                    <i class="material-symbols-outlined">add</i> Registrar Nuevos Productos
                 </a>
             </div>
         </div>
@@ -29,7 +29,7 @@
 
     <div class="catalog-toolbar">
         <label class="catalog-search" for="catalogSearch">
-            <i class="bi bi-search"></i>
+            <i class="material-symbols-outlined">search</i>
             <input id="catalogSearch" type="search" placeholder="Buscar por código, descripción o categoría..." autocomplete="off" />
         </label>
         <div class="catalog-category-list" role="group" aria-label="Filtrar por categoría">
@@ -44,7 +44,7 @@
     @if (!hasResults)
     {
         <div class="prosegin-card py-5 text-center">
-            <i class="bi bi-box-seam display-5 text-muted"></i>
+            <i class="material-symbols-outlined display-5 text-muted">inventory_2</i>
             <h2 class="h5 mt-3">No hay productos disponibles</h2>
             <p class="text-muted mb-0">Los productos del catálogo aparecerán aquí cuando estén cargados en el sistema.</p>
         </div>
@@ -63,7 +63,7 @@
                         <div class="catalog-product-mark" title="Ver imagen de @product.Nombre" data-preview-img="@imageSrc" data-preview-name="@product.Nombre" data-preview-sku="@product.Sku" role="button" tabindex="0" aria-label="Ver imagen ampliada de @product.Nombre">
                             <img src="@imageSrc" alt="Foto referencial de @product.Nombre" class="catalog-product-thumb" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('d-none');" />
                             <div class="catalog-product-fallback d-none" aria-hidden="true">
-                                <i class="bi bi-shield-check"></i>
+                                <i class="material-symbols-outlined">verified_user</i>
                                 <span>EPP</span>
                             </div>
                         </div>
@@ -74,10 +74,10 @@
                             </div>
                             <h2 class="catalog-product-name">@product.Nombre</h2>
                             <div class="catalog-product-meta">
-                                <span><i class="bi bi-speedometer2 me-1"></i>Peso: @product.PesoKg.ToString("0.000", new CultureInfo("es-PE")) kg</span>
+                                <span><i class="material-symbols-outlined me-1" style="font-size: 1rem;">speed</i>Peso: @product.PesoKg.ToString("0.000", new CultureInfo("es-PE")) kg</span>
                                 @if (!string.IsNullOrWhiteSpace(product.RutaFichaTecnicaPdf))
                                 {
-                                    <a asp-controller="Catalogo" asp-action="VerFicha" asp-route-id="@product.Id" target="_blank" rel="noopener noreferrer" class="text-danger text-decoration-none"><i class="bi bi-file-earmark-pdf me-1"></i>Ficha técnica</a>
+                                    <a asp-controller="Catalogo" asp-action="VerFicha" asp-route-id="@product.Id" target="_blank" rel="noopener noreferrer" class="text-danger text-decoration-none"><i class="material-symbols-outlined me-1 text-danger" style="font-size: 1.05rem;">picture_as_pdf</i>Ficha técnica</a>
                                 }
                             </div>
                         </div>
@@ -86,14 +86,14 @@
                             <strong class="text-dark d-block fw-bold" style="font-size: 1.25rem;">S/ @product.Precio.ToString("N2", new CultureInfo("es-PE"))</strong>
                         </div>
                         <div class="catalog-add-controls justify-content-end">
-                            <button type="button" class="btn btn-dark px-3 py-2 fw-semibold text-white d-flex align-items-center gap-2 shadow-sm rounded-3" style="font-size: 0.85rem;" data-bs-toggle="modal" data-bs-target="#editProductModal" onclick="populateEditModal(this)" data-id="@product.Id" data-sku="@product.Sku" data-name="@product.Nombre" data-category="@product.Categoria" data-stock="@product.StockDisponible" data-cost="@product.Precio.ToString(CultureInfo.InvariantCulture)" data-peso="@product.PesoKg.ToString("0.000", CultureInfo.InvariantCulture)" data-weight="@product.PesoKg.ToString("0.000", CultureInfo.InvariantCulture)" data-tarifas="@JsonSerializer.Serialize(product.TarifasProveedor)">
-                                <i class="bi bi-pencil-square"></i><span>Editar</span>
+                            <button type="button" class="btn-prosegin-dark btn-sm" data-bs-toggle="modal" data-bs-target="#editProductModal" onclick="populateEditModal(this)" data-id="@product.Id" data-sku="@product.Sku" data-name="@product.Nombre" data-category="@product.Categoria" data-stock="@product.StockDisponible" data-cost="@product.Precio.ToString(CultureInfo.InvariantCulture)" data-peso="@product.PesoKg.ToString("0.000", CultureInfo.InvariantCulture)" data-weight="@product.PesoKg.ToString("0.000", CultureInfo.InvariantCulture)" data-tarifas="@JsonSerializer.Serialize(product.TarifasProveedor)">
+                                <i class="material-symbols-outlined" style="font-size: 1rem;">edit</i><span>Editar</span>
                             </button>
                         </div>
                     </article>
                 }
                 <div class="catalog-no-match d-none" id="catalogNoMatch">
-                    <i class="bi bi-search"></i><span>No hay productos que coincidan con la búsqueda.</span>
+                    <i class="material-symbols-outlined">search</i><span>No hay productos que coincidan con la búsqueda.</span>
                 </div>
             </section>
         </div>
@@ -107,7 +107,7 @@
             <div class="modal-header border-bottom py-3 px-4 bg-light bg-opacity-50">
                 <div class="d-flex align-items-center gap-2">
                     <div class="d-flex align-items-center justify-content-center rounded-3 text-white" style="width: 38px; height: 38px; background-color: var(--dark);">
-                        <i class="bi bi-pencil-square fs-6"></i>
+                        <i class="material-symbols-outlined fs-6">edit</i>
                     </div>
                     <div>
                         <h5 class="modal-title fw-bold text-dark mb-0 fs-6" id="editProductModalLabel">Editar Producto del Catálogo</h5>
@@ -125,7 +125,7 @@
                         <div class="col-md-5">
                             <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Código SKU</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-lock-fill"></i></span>
+                                <span class="input-group-text bg-light border-end-0 text-muted"><i class="material-symbols-outlined" style="font-size: 1rem;">lock</i></span>
                                 <input type="text" class="form-control bg-light font-monospace fw-bold border-start-0 ps-0" id="editProductSku" name="Sku" readonly />
                             </div>
                         </div>
@@ -177,7 +177,7 @@
                         <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Ficha Técnica PDF (Opcional)</label>
                         <div class="p-3 border rounded-3 bg-light bg-opacity-50">
                             <div class="d-flex align-items-center gap-2 mb-2">
-                                <i class="bi bi-file-earmark-pdf text-danger fs-4"></i>
+                                <i class="material-symbols-outlined text-danger fs-4">picture_as_pdf</i>
                                 <span class="small text-secondary">Reemplazar archivo PDF de homologación técnica</span>
                             </div>
                             <input type="file" class="form-control form-control-sm" id="editProductFile" name="FichaTecnica" accept=".pdf" />
@@ -186,9 +186,9 @@
                     </div>
 
                     <div class="d-flex justify-content-end gap-2 pt-2 border-top">
-                        <button type="button" class="btn btn-light border px-4 py-2 text-secondary fw-semibold rounded-3" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-dark px-4 py-2 fw-bold text-white d-flex align-items-center gap-2 shadow-sm rounded-3">
-                            <i class="bi bi-check-lg"></i> Guardar Cambios
+                        <button type="button" class="btn-prosegin-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn-prosegin-primary">
+                            <i class="material-symbols-outlined">check</i> Guardar Cambios
                         </button>
                     </div>
                 </form>
@@ -214,8 +214,8 @@
                 </div>
             </div>
             <div class="modal-footer border-top-0 pt-0 px-4 pb-3 justify-content-between">
-                <small class="text-muted"><i class="bi bi-shield-check text-success me-1"></i>Imagen de referencia homologada</small>
-                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cerrar</button>
+                <small class="text-muted"><i class="material-symbols-outlined text-success me-1" style="font-size: 1rem;">verified_user</i>Imagen de referencia homologada</small>
+                <button type="button" class="btn-prosegin-secondary btn-sm px-3" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>

@@ -18,4 +18,14 @@ public class NubefactSettings
     /// Según el estándar de SUNAT (Catálogo 51), la serie debe tener obligatoriamente 4 caracteres exactos.
     /// </summary>
     public string SerieGuia { get; set; } = "TTT1";
+
+    /// <summary>
+    /// Correlativo inicial para Facturas cuando no existen previas (en Producción 1; en Sandbox compartido se sobreescribe desde appsettings).
+    /// </summary>
+    public int CorrelativoInicialFactura { get; set; } = 1;
+
+    /// <summary>
+    /// Correlativo inicial para Guías cuando no existen previas (en Producción 1; en Sandbox compartido se sobreescribe desde appsettings).
+    /// </summary>
+    public int CorrelativoInicialGuia { get; set; } = 1;
 }

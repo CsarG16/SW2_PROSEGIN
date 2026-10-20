@@ -14,10 +14,10 @@
     'use strict';
 
     const ICONS = {
-        warning: 'bi-exclamation-triangle-fill',
-        error: 'bi-x-octagon-fill',
-        success: 'bi-check-circle-fill',
-        info: 'bi-info-circle-fill'
+        warning: 'warning',
+        error: 'error',
+        success: 'check_circle',
+        info: 'info'
     };
 
     const TITLES = {
@@ -68,7 +68,7 @@
             backdrop.innerHTML = `
                 <div class="prosegin-alert-modal">
                     <div class="prosegin-alert-icon-wrapper ${type}">
-                        <i class="bi ${iconClass}"></i>
+                        <i class="material-symbols-outlined">${iconClass}</i>
                     </div>
                     <h5 class="prosegin-alert-title">${escapeHtml(title)}</h5>
                     <div class="prosegin-alert-message">${config.message}</div>

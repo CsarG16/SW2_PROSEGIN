@@ -42,7 +42,7 @@ public class NubefactSandboxIntegrationTests
         var request = new NubefactFacturaRequest
         {
             Serie = "FFF1",
-            Numero = 35264,
+            Numero = 35265,
             ClienteTipoDeDocumento = "6", // RUC
             ClienteNumeroDeDocumento = "20123456786", // RUC con dígito verificador válido
             ClienteDenominacion = "PROSEGIN PRUEBAS INTEGRACION SAC",
@@ -92,3 +92,4 @@ public class NubefactSandboxIntegrationTests
         Assert.Contains(".pdf", resultado.EnlacePdf);
     }
 }
+

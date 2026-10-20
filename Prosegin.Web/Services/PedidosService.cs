@@ -156,9 +156,11 @@ public class PedidosService : IPedidosService
                     && !TieneGuiaRemisionActiva(orden.GuiasRemision),
                 GuiaRemisionEmitida = TieneGuiaRemisionActiva(orden.GuiasRemision),
                 NumeroGuiaRemision = orden.GuiasRemision.OrderByDescending(g => g.Id).Select(g => g.NumeroGuia).FirstOrDefault(),
+                EnlacePdfGuia = orden.GuiasRemision.OrderByDescending(g => g.Id).Select(g => g.EnlacePdf).FirstOrDefault(),
                 FacturaEmitida = orden.Facturas.Count > 0,
                 NumeroFactura = orden.Facturas.OrderByDescending(f => f.Id).Select(f => f.NumeroFactura).FirstOrDefault(),
                 EstadoEmisionFactura = orden.Facturas.OrderByDescending(f => f.Id).Select(f => f.EstadoEmision).FirstOrDefault(),
+                EnlacePdfFactura = orden.Facturas.OrderByDescending(f => f.Id).Select(f => f.EnlacePdf).FirstOrDefault(),
                 Subtotal = cotizacion.Subtotal,
                 Igv = cotizacion.Igv,
                 Total = cotizacion.Total,
@@ -213,16 +215,21 @@ public class PedidosService : IPedidosService
         CancellationToken cancellationToken = default)
     {
         var orden = await ObtenerOrdenParaFacturaAsync(numeroPedido, cancellationToken);
+        var facturaExistente = orden?.Facturas
+            .OrderByDescending(f => f.Id)
+            .FirstOrDefault();
         if (orden == null || !EsClienteValidoParaFactura(orden.Cotizacion.Cliente)
             || !EsEstadoEntregado(orden.EstadoLogistico)
-            || orden.Facturas.Count > 0)
+            || (facturaExistente != null && facturaExistente.EstadoEmision != NubefactService.EstadoRechazado))
         {
             return null;
         }
 
         var fechaEmision = DateTime.Now;
         var serie = ObtenerSerieFactura();
-        var numero = await ObtenerSiguienteNumeroAsync(serie, cancellationToken);
+        var numero = (facturaExistente != null && facturaExistente.EstadoEmision == NubefactService.EstadoAceptado)
+            ? facturaExistente.Numero
+            : await ObtenerSiguienteNumeroAsync(serie, cancellationToken);
         return CrearPrevisualizacion(orden, fechaEmision, serie, numero);
     }
 
@@ -233,7 +240,6 @@ public class PedidosService : IPedidosService
         if (_nubefactService == null)
             return EmitirFacturaResult.Fallido("La integración Nubefact no está configurada.");
 
-        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
         var orden = await ObtenerOrdenParaFacturaAsync(numeroPedido, cancellationToken);
 
         if (orden == null)
@@ -244,14 +250,20 @@ public class PedidosService : IPedidosService
             return EmitirFacturaResult.Fallido("El cliente debe estar activo y habido en SUNAT.");
         if (!RucValidator.ValidarFormato(orden.Cotizacion.Cliente.Ruc, out var errorRuc))
             return EmitirFacturaResult.Fallido($"No se puede emitir la factura: {errorRuc}. Actualiza el RUC del cliente antes de reintentar.");
-        if (orden.Facturas.Count > 0)
+
+        var facturaExistente = orden.Facturas
+            .OrderByDescending(f => f.Id)
+            .FirstOrDefault();
+        if (facturaExistente != null && facturaExistente.EstadoEmision != NubefactService.EstadoRechazado)
             return EmitirFacturaResult.Fallido("Este pedido ya tiene una factura registrada.");
 
         var fechaEmision = DateTime.Now;
         var serie = ObtenerSerieFactura();
-        var numero = await ObtenerSiguienteNumeroAsync(serie, cancellationToken);
+        var numero = (facturaExistente != null && facturaExistente.EstadoEmision == NubefactService.EstadoAceptado)
+            ? facturaExistente.Numero
+            : await ObtenerSiguienteNumeroAsync(serie, cancellationToken);
         var preview = CrearPrevisualizacion(orden, fechaEmision, serie, numero);
-        var factura = new Factura
+        var factura = facturaExistente ?? new Factura
         {
             OrdenVentaId = orden.Id,
             ClienteId = orden.Cotizacion.ClienteId,
@@ -278,48 +290,69 @@ public class PedidosService : IPedidosService
             }).ToList()
         };
 
-        _context.Facturas.Add(factura);
-        try
+        if (facturaExistente != null)
         {
-            await _context.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-        }
-        catch (DbUpdateException)
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            return EmitirFacturaResult.Fallido("Este pedido ya tiene una factura registrada.");
+            factura.Serie = preview.Serie;
+            factura.Numero = preview.Numero;
+            factura.NumeroFactura = $"{preview.Serie}-{preview.Numero}";
+            factura.FechaEmision = fechaEmision.ToUniversalTime();
+            factura.FechaVencimiento = preview.FechaVencimiento.ToUniversalTime();
+            factura.EstadoEmision = NubefactService.EstadoPendienteEnvio;
+            factura.MensajeError = null;
         }
 
-        var response = await _nubefactService.EnviarFacturaAsync(new NubefactFacturaRequest
+        if (facturaExistente == null)
         {
-            TipoDeComprobante = 1,
-            Serie = preview.Serie,
-            Numero = preview.Numero,
-            ClienteTipoDeDocumento = "6",
-            ClienteNumeroDeDocumento = preview.ClienteRuc,
-            ClienteDenominacion = preview.ClienteRazonSocial,
-            ClienteDireccion = preview.DireccionFiscal,
-            FechaDeEmision = preview.FechaEmision.ToString("dd-MM-yyyy"),
-            FechaDeVencimiento = preview.FechaVencimiento.ToString("dd-MM-yyyy"),
-            TotalGravada = preview.Subtotal,
-            TotalIgv = preview.Igv,
-            Total = preview.Total,
-            OrdenCompraServicio = preview.NumeroOrdenCompra,
-            CondicionesDePago = preview.CondicionPago,
-            Items = preview.Items.Select(item => new NubefactFacturaItem
+            _context.Facturas.Add(factura);
+        }
+        await _context.SaveChangesAsync(cancellationToken);
+
+        NubefactResponseDto response = null!;
+        for (int intento = 1; intento <= 5; intento++)
+        {
+            response = await _nubefactService.EnviarFacturaAsync(new NubefactFacturaRequest
             {
-                Codigo = item.Codigo,
-                Descripcion = item.Descripcion,
-                UnidadDeMedida = MapearUnidadMedidaSunat(item.UnidadMedida),
-                Cantidad = item.Cantidad,
-                ValorUnitario = item.PrecioUnitario,
-                PrecioUnitario = Redondear(item.PrecioUnitario * 1.18m),
-                Subtotal = item.Subtotal,
-                Igv = item.Igv,
-                Total = item.Total
-            }).ToList()
-        }, cancellationToken);
+                TipoDeComprobante = 1,
+                Serie = serie,
+                Numero = numero,
+                ClienteTipoDeDocumento = "6",
+                ClienteNumeroDeDocumento = preview.ClienteRuc,
+                ClienteDenominacion = preview.ClienteRazonSocial,
+                ClienteDireccion = preview.DireccionFiscal,
+                FechaDeEmision = preview.FechaEmision.ToString("dd-MM-yyyy"),
+                FechaDeVencimiento = preview.FechaVencimiento.ToString("dd-MM-yyyy"),
+                TotalGravada = preview.Subtotal,
+                TotalIgv = preview.Igv,
+                Total = preview.Total,
+                OrdenCompraServicio = preview.NumeroOrdenCompra,
+                CondicionesDePago = preview.CondicionPago,
+                Items = preview.Items.Select(item => new NubefactFacturaItem
+                {
+                    Codigo = item.Codigo,
+                    Descripcion = item.Descripcion,
+                    UnidadDeMedida = MapearUnidadMedidaSunat(item.UnidadMedida),
+                    Cantidad = item.Cantidad,
+                    ValorUnitario = item.PrecioUnitario,
+                    PrecioUnitario = Redondear(item.PrecioUnitario * 1.18m),
+                    Subtotal = item.Subtotal,
+                    Igv = item.Igv,
+                    Total = item.Total
+                }).ToList()
+            }, cancellationToken);
 
+            if (!response.Exito && (response.MensajeError?.Contains("ya existe", StringComparison.OrdinalIgnoreCase) ?? false))
+            {
+                numero++;
+                factura.Numero = numero;
+                factura.NumeroFactura = $"{serie}-{numero}";
+                continue;
+            }
+
+            break;
+        }
+
+        factura.Numero = numero;
+        factura.NumeroFactura = $"{serie}-{numero}";
         factura.EstadoEmision = response.EstadoProceso;
         factura.CodigoHash = response.CodigoHash;
         factura.CadenaQr = response.CadenaQr;
@@ -352,8 +385,10 @@ public class PedidosService : IPedidosService
             return null;
         }
 
-        var serie = guiaExistente?.Serie ?? ObtenerSerieGuia();
-        var numero = guiaExistente?.Numero ?? await ObtenerSiguienteNumeroGuiaAsync(serie, cancellationToken);
+        var serie = ObtenerSerieGuia();
+        var numero = (guiaExistente != null && guiaExistente.EstadoEmision == NubefactService.EstadoAceptado)
+            ? guiaExistente.Numero
+            : await ObtenerSiguienteNumeroGuiaAsync(serie, cancellationToken);
         return CrearPrevisualizacionGuia(orden, DateTime.Now, serie, numero);
     }
 
@@ -381,8 +416,10 @@ public class PedidosService : IPedidosService
         if (!TienePesosRegistrados(orden.Cotizacion.Detalles))
             return EmitirGuiaRemisionResult.Fallido("Registre el peso unitario de todos los productos antes de emitir la guía.");
 
-        var serie = guiaExistente?.Serie ?? ObtenerSerieGuia();
-        var numero = guiaExistente?.Numero ?? await ObtenerSiguienteNumeroGuiaAsync(serie, cancellationToken);
+        var serie = ObtenerSerieGuia();
+        var numero = (guiaExistente != null && guiaExistente.EstadoEmision == NubefactService.EstadoAceptado)
+            ? guiaExistente.Numero
+            : await ObtenerSiguienteNumeroGuiaAsync(serie, cancellationToken);
         var fecha = DateTime.Now;
         var preview = CrearPrevisualizacionGuia(orden, fecha, serie, numero);
         var guia = guiaExistente ?? new GuiaRemision
@@ -418,57 +455,72 @@ public class PedidosService : IPedidosService
 
         if (guiaExistente != null)
         {
+            guia.Serie = serie;
+            guia.Numero = numero;
+            guia.NumeroGuia = $"{serie}-{numero}";
+            guia.FechaEmision = fecha.ToUniversalTime();
+            guia.FechaInicioTraslado = fecha.ToUniversalTime();
             guia.ConductorNombre = request.ConductorNombre.Trim();
             guia.ConductorDocumento = request.ConductorDocumento?.Trim();
             guia.ConductorLicencia = request.ConductorLicencia?.Trim();
             guia.PlacaVehiculo = request.PlacaVehiculo.Trim().ToUpperInvariant();
             guia.MensajeError = null;
+            guia.EstadoEmision = NubefactService.EstadoPendienteEnvio;
         }
 
         if (guiaExistente == null)
         {
             _context.GuiasRemision.Add(guia);
-            try
+        }
+        await _context.SaveChangesAsync(cancellationToken);
+
+        NubefactResponseDto response = null!;
+        for (int intento = 1; intento <= 5; intento++)
+        {
+            response = await _nubefactService.EnviarGuiaRemisionAsync(new NubefactGuiaRequest
             {
-                await _context.SaveChangesAsync(cancellationToken);
-            }
-            catch (DbUpdateException)
+                Serie = serie,
+                Numero = numero,
+                MotivoDeTraslado = "01",
+                TipoDeTransporte = "02",
+                ClienteNumeroDeDocumento = preview.ClienteRuc,
+                ClienteDenominacion = preview.ClienteRazonSocial,
+                ClienteDireccion = preview.PuntoLlegadaDireccion,
+                FechaDeEmision = preview.FechaEmision.ToString("dd-MM-yyyy"),
+                FechaDeInicioDeTraslado = preview.FechaInicioTraslado.ToString("dd-MM-yyyy"),
+                PesoBrutoTotal = preview.PesoBrutoTotal,
+                NumeroDeBultos = preview.NumeroBultos,
+                PuntoDePartidaDireccion = preview.PuntoPartidaDireccion,
+                PuntoDePartidaUbigeo = preview.PuntoPartidaUbigeo ?? string.Empty,
+                PuntoDeLlegadaDireccion = preview.PuntoLlegadaDireccion,
+                PuntoDeLlegadaUbigeo = preview.PuntoLlegadaUbigeo ?? string.Empty,
+                ConductorDenominacion = guia.ConductorNombre,
+                ConductorDocumentoTipo = string.IsNullOrWhiteSpace(guia.ConductorDocumento) ? null : "1",
+                ConductorDocumentoNumero = guia.ConductorDocumento,
+                ConductorNumeroLicencia = guia.ConductorLicencia,
+                TransportistaPlacaNumero = guia.PlacaVehiculo,
+                Items = preview.Items.Select(item => new NubefactGuiaItem
+                {
+                    Codigo = item.Codigo,
+                    Descripcion = item.Descripcion,
+                    UnidadDeMedida = MapearUnidadMedidaSunat(item.UnidadMedida),
+                    Cantidad = item.Cantidad
+                }).ToList()
+            }, cancellationToken);
+
+            if (!response.Exito && (response.MensajeError?.Contains("ya existe", StringComparison.OrdinalIgnoreCase) ?? false))
             {
-                return EmitirGuiaRemisionResult.Fallido("Este pedido ya tiene una guía de remisión registrada.");
+                numero++;
+                guia.Numero = numero;
+                guia.NumeroGuia = $"{serie}-{numero}";
+                continue;
             }
+
+            break;
         }
 
-        var response = await _nubefactService.EnviarGuiaRemisionAsync(new NubefactGuiaRequest
-        {
-            Serie = serie,
-            Numero = numero,
-            MotivoDeTraslado = "01",
-            TipoDeTransporte = "02",
-            ClienteNumeroDeDocumento = preview.ClienteRuc,
-            ClienteDenominacion = preview.ClienteRazonSocial,
-            ClienteDireccion = preview.PuntoLlegadaDireccion,
-            FechaDeEmision = preview.FechaEmision.ToString("dd-MM-yyyy"),
-            FechaDeInicioDeTraslado = preview.FechaInicioTraslado.ToString("dd-MM-yyyy"),
-            PesoBrutoTotal = preview.PesoBrutoTotal,
-            NumeroDeBultos = preview.NumeroBultos,
-            PuntoDePartidaDireccion = preview.PuntoPartidaDireccion,
-            PuntoDePartidaUbigeo = preview.PuntoPartidaUbigeo ?? string.Empty,
-            PuntoDeLlegadaDireccion = preview.PuntoLlegadaDireccion,
-            PuntoDeLlegadaUbigeo = preview.PuntoLlegadaUbigeo ?? string.Empty,
-            ConductorDenominacion = guia.ConductorNombre,
-            ConductorDocumentoTipo = "1",
-            ConductorDocumentoNumero = guia.ConductorDocumento,
-            ConductorNumeroLicencia = guia.ConductorLicencia,
-            TransportistaPlacaNumero = guia.PlacaVehiculo,
-            Items = preview.Items.Select(item => new NubefactGuiaItem
-            {
-                Codigo = item.Codigo,
-                Descripcion = item.Descripcion,
-                UnidadDeMedida = MapearUnidadMedidaSunat(item.UnidadMedida),
-                Cantidad = item.Cantidad
-            }).ToList()
-        }, cancellationToken);
-
+        guia.Numero = numero;
+        guia.NumeroGuia = $"{serie}-{numero}";
         guia.EstadoEmision = response.EstadoProceso;
         guia.CodigoHash = response.CodigoHash;
         guia.CadenaQr = response.CadenaQr;
@@ -566,7 +618,8 @@ public class PedidosService : IPedidosService
             .Where(f => f.Serie == serie)
             .Select(f => (int?)f.Numero)
             .MaxAsync(cancellationToken);
-        return (ultimoNumero ?? 0) + 1;
+        var baseNumero = _nubefactSettings.CorrelativoInicialFactura > 0 ? _nubefactSettings.CorrelativoInicialFactura - 1 : 0;
+        return Math.Max(ultimoNumero ?? 0, baseNumero) + 1;
     }
 
     private async Task<int> ObtenerSiguienteNumeroGuiaAsync(string serie, CancellationToken cancellationToken)
@@ -575,7 +628,8 @@ public class PedidosService : IPedidosService
             .Where(g => g.Serie == serie)
             .Select(g => (int?)g.Numero)
             .MaxAsync(cancellationToken);
-        return (ultimoNumero ?? 0) + 1;
+        var baseNumero = _nubefactSettings.CorrelativoInicialGuia > 0 ? _nubefactSettings.CorrelativoInicialGuia - 1 : 0;
+        return Math.Max(ultimoNumero ?? 0, baseNumero) + 1;
     }
 
     private async Task<OrdenVenta?> ObtenerOrdenParaGuiaAsync(string numeroPedido, CancellationToken cancellationToken)

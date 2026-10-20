@@ -82,8 +82,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const completo = sku.value.trim() && skuVerificado && nombre.value.trim()
             && categoria.value && costoValido() && proveedoresActivos.length > 0
             && principalValido && tarifasValidas && fichaValidada;
-        document.getElementById('statusIcon').className = completo
-            ? 'bi bi-check-circle-fill text-success fs-5' : 'bi bi-check-circle text-muted fs-5';
+        const statusIconEl = document.getElementById('statusIcon');
+        if (statusIconEl) {
+            statusIconEl.className = 'material-symbols-outlined fs-5 ' + (completo ? 'text-success' : 'text-muted');
+            statusIconEl.textContent = completo ? 'check_circle' : 'radio_button_unchecked';
+        }
         const label = document.getElementById('statusLabel');
         label.className = completo ? 'small text-success fw-bold' : 'small text-muted fw-medium';
         label.textContent = completo ? 'Todos los campos obligatorios (*) completados correctamente'
@@ -138,7 +141,9 @@ document.addEventListener('DOMContentLoaded', () => {
             chip.style.fontWeight = '500';
 
             const icon = document.createElement('i');
-            icon.className = 'bi bi-building text-secondary';
+            icon.className = 'material-symbols-outlined text-secondary';
+            icon.style.fontSize = '1rem';
+            icon.textContent = 'domain';
             chip.append(icon);
 
             const texto = document.createElement('span');

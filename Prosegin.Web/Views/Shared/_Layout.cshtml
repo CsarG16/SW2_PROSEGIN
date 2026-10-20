@@ -12,14 +12,14 @@
     <link rel="icon" type="image/x-icon" href="~/favicon.ico" asp-append-version="true" />
     <link rel="apple-touch-icon" href="~/favicon.png" asp-append-version="true" />
     
-    <!-- Google Fonts: Plus Jakarta Sans -->
+    <!-- Google Fonts: Plus Jakarta Sans & Material Symbols -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     
-    <!-- Bootstrap 5 & Icons (local) -->
+    <!-- Bootstrap 5 -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.min.css" />
     
     <!-- Custom Site Styles (Design System) -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -64,14 +64,14 @@
                 <!-- Módulo 1: Catálogo y Precios -->
                 <li class="sidebar-nav-item">
                     <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Catalogo" && (ViewContext.RouteData.Values["action"]?.ToString() == "Index" || string.IsNullOrEmpty(ViewContext.RouteData.Values["action"]?.ToString())) ? "active" : "")" asp-controller="Catalogo" asp-action="Index">
-                        <i class="bi bi-grid"></i>
+                        <i class="material-symbols-outlined">grid_view</i>
                         <span class="sidebar-nav-text">Catálogo de EPP</span>
                         <span class="sidebar-floating-tag">Catálogo de EPP</span>
                     </a>
                 </li>
                 <li class="sidebar-nav-item">
                     <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Catalogo" && ViewContext.RouteData.Values["action"]?.ToString() == "RegistroProductos" ? "active" : "")" asp-controller="Catalogo" asp-action="RegistroProductos">
-                        <i class="bi bi-plus-circle"></i>
+                        <i class="material-symbols-outlined">add_circle</i>
                         <span class="sidebar-nav-text">Registrar EPP</span>
                         <span class="sidebar-floating-tag">Registrar EPP</span>
                     </a>
@@ -83,14 +83,14 @@
                 <!-- Módulo 2: Gestión de Clientes -->
                 <li class="sidebar-nav-item">
                     <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Clientes" && (ViewContext.RouteData.Values["action"]?.ToString() == "Index" || ViewContext.RouteData.Values["action"]?.ToString() == "Direcciones") ? "active" : "")" asp-controller="Clientes" asp-action="Index">
-                        <i class="bi bi-people"></i>
+                        <i class="material-symbols-outlined">group</i>
                         <span class="sidebar-nav-text">Clientes</span>
                         <span class="sidebar-floating-tag">Clientes</span>
                     </a>
                 </li>
                 <li class="sidebar-nav-item">
                     <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Clientes" && ViewContext.RouteData.Values["action"]?.ToString() == "Create" ? "active" : "")" asp-controller="Clientes" asp-action="Create">
-                        <i class="bi bi-person-plus"></i>
+                        <i class="material-symbols-outlined">person_add</i>
                         <span class="sidebar-nav-text">Registrar Cliente</span>
                         <span class="sidebar-floating-tag">Registrar Cliente</span>
                     </a>
@@ -102,7 +102,7 @@
                 <!-- Módulo 3: Cotizaciones -->
                 <li class="sidebar-nav-item">
                     <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Cotizaciones" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")" asp-controller="Cotizaciones" asp-action="Index">
-                        <i class="bi bi-file-earmark-text"></i>
+                        <i class="material-symbols-outlined">description</i>
                         <span class="sidebar-nav-text">Cotizaciones</span>
                         <span class="sidebar-floating-tag">Cotizaciones</span>
                     </a>
@@ -114,29 +114,12 @@
                 <!-- Módulo 4: Pedidos y Logística -->
                 <li class="sidebar-nav-item">
                     <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Pedidos" ? "active" : "")" asp-controller="Pedidos" asp-action="Index">
-                        <i class="bi bi-truck"></i>
+                        <i class="material-symbols-outlined">local_shipping</i>
                         <span class="sidebar-nav-text">Gestión de Pedidos</span>
                         <span class="sidebar-floating-tag">Gestión de Pedidos</span>
                     </a>
                 </li>
             </ul>
-        </div>
-
-        <!-- Footer del Sidebar: Usuario -->
-        <div class="sidebar-footer">
-            <div class="user-profile-card">
-                <div class="user-avatar-sq">
-                    <span>CM</span>
-                </div>
-                <div class="user-profile-text">
-                    <div class="user-name">Carlos M.</div>
-                    <div class="user-role">Asesor Comercial</div>
-                </div>
-                <button type="button" class="btn-logout" title="Cerrar Sesión">
-                    <i class="bi bi-box-arrow-right"></i>
-                </button>
-                <span class="sidebar-floating-tag">Carlos M. &bull; Asesor Comercial</span>
-            </div>
         </div>
     </aside>
 
@@ -146,11 +129,11 @@
         <header class="prosegin-topbar">
             <div class="d-flex align-items-center gap-3">
                 <button type="button" class="topbar-toggle-btn" id="btnSidebarToggle" aria-label="Alternar menú lateral" title="Alternar menú lateral">
-                    <i class="bi bi-layout-sidebar-inset"></i>
+                    <i class="material-symbols-outlined">menu_open</i>
                 </button>
                 <div class="topbar-breadcrumbs">
                     <a asp-controller="Home" asp-action="Index" class="crumb-root">Operaciones EPP</a>
-                    <i class="bi bi-chevron-right crumb-sep"></i>
+                    <i class="material-symbols-outlined crumb-sep">chevron_right</i>
                     <span class="crumb-current">@ViewData["Title"]</span>
                 </div>
             </div>

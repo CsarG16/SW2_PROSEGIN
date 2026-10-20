@@ -6,8 +6,6 @@
     var pedidosJson = JsonSerializer.Serialize(Model.Pedidos);
 }
 
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
 <style>
     .font-prosegin {
@@ -169,30 +167,6 @@
         flex-shrink: 0;
     }
 
-    /* Botón de acción Ver Detalle con Dorado Corporativo */
-    .btn-table-detail {
-        background-color: var(--accent, #f59e0b);
-        color: var(--accent-on, #0f172a);
-        font-size: 0.8rem;
-        font-weight: 700;
-        padding: 6px 14px;
-        border-radius: 8px;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        border: 1px solid var(--accent, #f59e0b);
-        transition: all 0.2s ease;
-        text-decoration: none;
-        cursor: pointer;
-        box-shadow: 0 1px 3px var(--accent-shadow, rgba(245, 158, 11, 0.25));
-    }
-    .btn-table-detail:hover {
-        background-color: var(--accent-hover, #d97706);
-        border-color: var(--accent-hover, #d97706);
-        color: #ffffff;
-        transform: translateY(-1px);
-        box-shadow: 0 3px 8px var(--accent-shadow, rgba(245, 158, 11, 0.35));
-    }
 
     /* Overlay y caja del Modal de Detalle ampliado */
     .detail-modal-overlay {
@@ -285,7 +259,7 @@
         <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
             <div class="d-flex align-items-center gap-3">
                 <div class="d-none d-sm-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: var(--accent-light, #fef3c7); border-radius: 12px; border: 1px solid rgba(245, 158, 11, 0.3);">
-                    <i class="bi bi-truck fs-4" style="color: var(--accent-text, #b45309);"></i>
+                    <i class="material-symbols-outlined fs-4" style="color: var(--accent-text, #b45309);">local_shipping</i>
                 </div>
                 <div class="d-flex flex-column">
                     <div class="d-flex align-items-center gap-1 text-uppercase text-muted" style="font-size: 0.72rem; letter-spacing: 0.06em; font-weight: 600;">
@@ -339,11 +313,11 @@
             </div>
 
             <div class="d-flex align-items-center gap-2">
-                <button type="submit" class="btn-prosegin-primary" id="btnSearchSubmit" style="height: 44px; padding: 0 1.4rem;">
+                <button type="submit" class="btn-prosegin-primary" id="btnSearchSubmit">
                     <span class="material-symbols-outlined" style="font-size: 18px;">search</span>
                     <span>Buscar</span>
                 </button>
-                <a asp-action="Index" id="btnClearFilters" class="btn-prosegin-secondary" style="height: 44px; padding: 0 1.2rem;">
+                <a asp-action="Index" id="btnClearFilters" class="btn-prosegin-secondary">
                     <span class="material-symbols-outlined" style="font-size: 18px;">restart_alt</span>
                     <span>Limpiar</span>
                 </a>
@@ -482,7 +456,7 @@
                             </td>
                             <td class="text-end">
                                 <button type="button"
-                                        class="btn-table-detail"
+                                        class="btn-prosegin-primary btn-sm"
                                         onclick="openDetailModal('@pedido.NumeroPedido')">
                                     <span>Ver Detalle</span>
                                     <span class="material-symbols-outlined" style="font-size: 15px;">visibility</span>
@@ -578,7 +552,7 @@
             <div class="mt-3 pt-3 border-top" style="border-color: #e2e8f0 !important;">
                 <span class="text-muted d-block" style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Punto de Entrega (Sede):</span>
                 <span id="modalAddress" style="font-size: 0.9rem; font-weight: 500; color: #1e293b;">
-                    <i class="bi bi-geo-alt-fill me-1" style="color: var(--accent, #f59e0b);"></i> Av. Industrial 450, Almacén 4 - Lurín, Lima
+                    <i class="material-symbols-outlined me-1" style="color: var(--accent, #f59e0b); font-size: 16px; vertical-align: middle;">location_on</i> Av. Industrial 450, Almacén 4 - Lurín, Lima
                 </span>
             </div>
         </div>
@@ -605,14 +579,14 @@
             </button>
             <div class="d-flex flex-column flex-sm-row gap-2">
                 <a href="#" class="btn-prosegin-primary d-none" id="modalGeneratePurchase">
-                    <i class="bi bi-box-seam me-1"></i> GENERAR ORDEN DE COMPRA A PROVEEDORES
+                    <i class="material-symbols-outlined me-1">inventory_2</i> GENERAR ORDEN DE COMPRA A PROVEEDORES
                 </a>
-                <button type="button" class="btn-prosegin-primary d-none" id="modalGenerateInvoice" onclick="openInvoicePreview()">
-                    <i class="bi bi-lightning-charge-fill me-1"></i> Factura Electrónica
-                </button>
-                <button type="button" class="btn-prosegin-primary d-none" id="modalGenerateGuide" onclick="openGuidePreview()">
-                    <i class="bi bi-truck me-1"></i> Guía de Remisión
-                </button>
+                <a href="#" class="btn-prosegin-primary d-none" id="modalGenerateInvoice">
+                    <i class="material-symbols-outlined me-1">bolt</i> Factura Electrónica
+                </a>
+                <a href="#" class="btn-prosegin-primary d-none" id="modalGenerateGuide">
+                    <i class="material-symbols-outlined me-1">local_shipping</i> Guía de Remisión
+                </a>
             </div>
         </div>
     </div>
@@ -620,118 +594,13 @@
 
 @Html.AntiForgeryToken()
 
-<div id="invoiceToast" class="prosegin-toast" role="status" aria-live="polite">
-    <span id="invoiceToastIcon" class="material-symbols-outlined prosegin-toast-icon">check_circle</span>
-    <div>
-        <span id="invoiceToastTitle" class="prosegin-toast-title"></span>
-        <span id="invoiceToastMessage" class="prosegin-toast-message"></span>
-    </div>
-    <button type="button" class="prosegin-toast-close" onclick="hideInvoiceToast()" aria-label="Cerrar notificación">
-        <span class="material-symbols-outlined" style="font-size: 18px;">close</span>
-    </button>
-</div>
-
-<div id="invoiceModal" class="detail-modal-overlay d-none" onclick="closeInvoicePreview(event)">
-    <div class="detail-modal-box p-4" onclick="event.stopPropagation()" style="max-width: 900px;">
-        <div class="d-flex align-items-start justify-content-between pb-3 mb-3 border-bottom">
-            <div>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge-dot dot-listo-despacho"></span>
-                    <span style="font-size: .9rem; font-weight: 800; text-transform: uppercase; color: #0f172a;">Previsualización de factura electrónica</span>
-                </div>
-                <span id="invoiceNumberPreview" class="text-muted" style="font-size: .8rem;"></span>
-            </div>
-            <button type="button" class="btn btn-sm btn-light border-0 rounded-circle p-1 text-muted" onclick="closeInvoicePreview()" aria-label="Cerrar previsualización">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-        </div>
-        <div class="p-3 rounded-3 mb-3" style="background: #f8fafc; border: 1px solid var(--border-card, #e2e8f0);">
-            <div class="row g-3">
-                <div class="col-md-6"><small class="text-muted d-block">CLIENTE / ADQUIRENTE</small><strong id="invoiceClient"></strong><span id="invoiceRuc" class="d-block text-muted"></span></div>
-                <div class="col-md-6"><small class="text-muted d-block">DIRECCIÓN FISCAL</small><span id="invoiceAddress"></span></div>
-                <div class="col-md-6"><small class="text-muted d-block">FECHA DE EMISIÓN</small><span id="invoiceDate"></span></div>
-                <div class="col-md-6"><small class="text-muted d-block">CONDICIÓN DE PAGO</small><span id="invoicePayment"></span></div>
-            </div>
-        </div>
-        <div class="table-responsive mb-3">
-            <table class="table table-sm align-middle mb-0">
-                <thead><tr><th>CANT.</th><th>REF. / SKU</th><th>DESCRIPCIÓN</th><th class="text-end">VALOR UNIT.</th><th class="text-end">TOTAL</th></tr></thead>
-                <tbody id="invoiceItems"></tbody>
-            </table>
-        </div>
-        <div class="d-flex justify-content-end">
-            <div style="min-width: 260px;">
-                <div class="d-flex justify-content-between"><span>Subtotal ventas:</span><strong id="invoiceSubtotal"></strong></div>
-                <div class="d-flex justify-content-between"><span>IGV (18%):</span><strong id="invoiceIgv"></strong></div>
-                <div class="d-flex justify-content-between border-top pt-2 mt-2 fs-5"><span>Importe total:</span><strong id="invoiceTotal"></strong></div>
-            </div>
-        </div>
-        <div class="d-flex flex-column flex-sm-row justify-content-between gap-2 pt-3 mt-3 border-top">
-            <button type="button" class="btn-prosegin-secondary" onclick="closeInvoicePreview()">Cancelar / Volver</button>
-            <button type="button" class="btn-prosegin-primary" id="confirmInvoiceButton" onclick="emitInvoice()">
-                <i class="bi bi-lightning-charge-fill me-1"></i> GENERAR FACTURA ELECTRÓNICA
-            </button>
-        </div>
-    </div>
-</div>
-
-<div id="guideModal" class="detail-modal-overlay d-none" onclick="closeGuidePreview(event)">
-    <div class="detail-modal-box p-4" onclick="event.stopPropagation()" style="max-width: 900px;">
-        <div class="d-flex align-items-start justify-content-between pb-3 mb-3 border-bottom">
-            <div>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge-dot dot-listo-despacho"></span>
-                    <span class="fw-bold text-uppercase" style="font-size:.9rem;">Previsualización de guía de remisión remitente</span>
-                </div>
-                <span id="guideNumberPreview" class="text-muted" style="font-size:.8rem;"></span>
-            </div>
-            <button type="button" class="btn btn-sm btn-light border-0 rounded-circle p-1 text-muted" onclick="closeGuidePreview()" aria-label="Cerrar previsualización">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-        </div>
-        <div class="p-3 rounded-3 mb-3" style="background:#f8fafc;border:1px solid var(--border-card,#e2e8f0);">
-            <div class="row g-3">
-                <div class="col-md-6"><small class="text-muted d-block">DESTINATARIO</small><strong id="guideClient"></strong><span id="guideRuc" class="d-block text-muted"></span></div>
-                <div class="col-md-6"><small class="text-muted d-block">PUNTO DE PARTIDA</small><span id="guideOrigin"></span></div>
-                <div class="col-md-6"><small class="text-muted d-block">PUNTO DE LLEGADA</small><span id="guideDestination"></span></div>
-                <div class="col-md-6"><small class="text-muted d-block">PESO BRUTO TOTAL</small><strong id="guideWeight"></strong></div>
-            </div>
-        </div>
-        <div class="table-responsive mb-3">
-            <table class="table table-sm align-middle mb-0">
-                <thead><tr><th>REF. / SKU</th><th>DESCRIPCIÓN</th><th>CANTIDAD</th><th>UNIDAD</th><th class="text-end">PESO (KG)</th></tr></thead>
-                <tbody id="guideItems"></tbody>
-            </table>
-        </div>
-        <div class="p-3 rounded-3 mb-3" style="background:#fffbeb;border:1px solid rgba(245,158,11,.35);">
-            <div class="fw-bold text-uppercase mb-2" style="font-size:.78rem;">Transportista & unidad de transporte</div>
-            <div class="row g-3">
-                <div class="col-md-6"><label for="guideDriver" class="form-label small fw-bold">CONDUCTOR *</label><input id="guideDriver" class="form-control" maxlength="200" required></div>
-                <div class="col-md-6"><label for="guidePlate" class="form-label small fw-bold">PLACA DEL VEHÍCULO *</label><input id="guidePlate" class="form-control text-uppercase" maxlength="20" required></div>
-                <div class="col-md-6"><label for="guideDriverDocument" class="form-label small fw-bold">DNI DEL CONDUCTOR</label><input id="guideDriverDocument" class="form-control" maxlength="20"></div>
-                <div class="col-md-6"><label for="guideLicense" class="form-label small fw-bold">LICENCIA</label><input id="guideLicense" class="form-control" maxlength="30"></div>
-            </div>
-        </div>
-        <div class="d-flex flex-column flex-sm-row justify-content-between gap-2 pt-3 mt-3 border-top">
-            <button type="button" class="btn-prosegin-secondary" onclick="closeGuidePreview()">Cancelar / Volver</button>
-            <button type="button" class="btn-prosegin-primary" id="confirmGuideButton" onclick="emitGuide()">
-                <i class="bi bi-lightning-charge-fill me-1"></i> EMITIR GUÍA DE REMISIÓN
-            </button>
-        </div>
-    </div>
-</div>
-
 <script>
     // Almacén de pedidos serializados para apertura instantánea del modal
     const pedidosDataset = @Html.Raw(pedidosJson);
     const abastecimientoUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("Index", "Abastecimiento")));
-    const invoicePreviewUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("PrevisualizarFactura", "Pedidos")));
-    const emitInvoiceUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("EmitirFactura", "Pedidos")));
-    const guidePreviewUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("PrevisualizarGuiaRemision", "Pedidos")));
-    const emitGuideUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("EmitirGuiaRemision", "Pedidos")));
+    const guiaRemisionUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("GuiaRemision", "Pedidos")));
+    const facturaUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("Factura", "Pedidos")));
     let pedidoSeleccionado;
-    let facturaPreview;
-    let guiaPreview;
     function openDetailModal(orderId) {
         const pedido = pedidosDataset.find(p => p.NumeroPedido.toLowerCase() === orderId.toLowerCase());
         if (!pedido) {
@@ -748,7 +617,10 @@
         const address = document.getElementById('modalAddress');
         address.replaceChildren();
         const addressIcon = document.createElement('i');
-        addressIcon.className = 'bi bi-geo-alt-fill me-1';
+        addressIcon.className = 'material-symbols-outlined me-1';
+        addressIcon.textContent = 'location_on';
+        addressIcon.style.fontSize = '16px';
+        addressIcon.style.verticalAlign = 'middle';
         addressIcon.style.color = 'var(--accent, #f59e0b)';
         address.append(addressIcon, document.createTextNode(pedido.DireccionEntrega || 'Sin dirección registrada'));
 
@@ -790,8 +662,21 @@
             abastecimiento.href = url.pathname + url.search;
         }
         pedidoSeleccionado = pedido;
-        document.getElementById('modalGenerateInvoice').classList.toggle('d-none', !pedido.PuedeGenerarFactura);
-        document.getElementById('modalGenerateGuide').classList.toggle('d-none', !pedido.PuedeGenerarGuiaRemision);
+        const facturaBtn = document.getElementById('modalGenerateInvoice');
+        facturaBtn.classList.toggle('d-none', !pedido.PuedeGenerarFactura);
+        if (pedido.PuedeGenerarFactura) {
+            const url = new URL(facturaUrl, window.location.origin);
+            url.searchParams.set('numeroPedido', pedido.NumeroPedido);
+            facturaBtn.href = url.pathname + url.search;
+        }
+        const guiaBtn = document.getElementById('modalGenerateGuide');
+        guiaBtn.classList.toggle('d-none', !pedido.PuedeGenerarGuiaRemision);
+        if (pedido.PuedeGenerarGuiaRemision) {
+            const url = new URL(guiaRemisionUrl, window.location.origin);
+            url.searchParams.set('numeroPedido', pedido.NumeroPedido);
+            guiaBtn.href = url.pathname + url.search;
+        }
+
         document.getElementById('detailModal').classList.remove('d-none');
     }
 
@@ -805,183 +690,8 @@
         }
     }
 
-    async function openInvoicePreview() {
-        if (!pedidoSeleccionado) return;
-        const url = new URL(invoicePreviewUrl, window.location.origin);
-        url.searchParams.set('numeroPedido', pedidoSeleccionado.NumeroPedido);
-        const response = await fetch(url);
-        if (!response.ok) {
-            showInvoiceToast('No se pudo abrir la factura', await response.text(), true);
-            return;
-        }
-
-        facturaPreview = await response.json();
-        document.getElementById('invoiceNumberPreview').textContent =
-            `${facturaPreview.serie}-${String(facturaPreview.numero).padStart(6, '0')} · ${facturaPreview.numeroPedido}`;
-        document.getElementById('invoiceClient').textContent = facturaPreview.clienteRazonSocial;
-        document.getElementById('invoiceRuc').textContent = `RUC: ${facturaPreview.clienteRuc}`;
-        document.getElementById('invoiceAddress').textContent = facturaPreview.direccionFiscal;
-        document.getElementById('invoiceDate').textContent = new Date(facturaPreview.fechaEmision).toLocaleDateString('es-PE');
-        document.getElementById('invoicePayment').textContent = facturaPreview.condicionPago;
-        const items = document.getElementById('invoiceItems');
-        items.replaceChildren();
-        facturaPreview.items.forEach(item => {
-            const row = document.createElement('tr');
-            [item.cantidad, item.codigo, item.descripcion, formatMoney(item.precioUnitario), formatMoney(item.total)]
-                .forEach((value, index) => {
-                    const cell = document.createElement('td');
-                    cell.textContent = value;
-                    if (index > 2) cell.className = 'text-end';
-                    row.appendChild(cell);
-                });
-            items.appendChild(row);
-        });
-        document.getElementById('invoiceSubtotal').textContent = formatMoney(facturaPreview.subtotal);
-        document.getElementById('invoiceIgv').textContent = formatMoney(facturaPreview.igv);
-        document.getElementById('invoiceTotal').textContent = formatMoney(facturaPreview.total);
-        closeDetailModal();
-        document.getElementById('invoiceModal').classList.remove('d-none');
-    }
-
-    window.openGuidePreview = async function () {
-        if (!pedidoSeleccionado) return;
-        const url = new URL(guidePreviewUrl, window.location.origin);
-        url.searchParams.set('numeroPedido', pedidoSeleccionado.NumeroPedido);
-        const response = await fetch(url);
-        if (!response.ok) {
-            showInvoiceToast('No se pudo abrir la guía', await response.text(), true);
-            return;
-        }
-
-        guiaPreview = await response.json();
-        document.getElementById('guideNumberPreview').textContent =
-            `${guiaPreview.serie}-${String(guiaPreview.numero).padStart(6, '0')} · ${guiaPreview.numeroPedido}`;
-        document.getElementById('guideClient').textContent = guiaPreview.clienteRazonSocial;
-        document.getElementById('guideRuc').textContent = `RUC: ${guiaPreview.clienteRuc}`;
-        document.getElementById('guideOrigin').textContent = guiaPreview.puntoPartidaDireccion;
-        document.getElementById('guideDestination').textContent = guiaPreview.puntoLlegadaDireccion;
-        document.getElementById('guideWeight').textContent = `${Number(guiaPreview.pesoBrutoTotal).toFixed(3)} kg`;
-        const items = document.getElementById('guideItems');
-        items.replaceChildren();
-        guiaPreview.items.forEach(item => {
-            const row = document.createElement('tr');
-            [item.codigo, item.descripcion, item.cantidad, item.unidadMedida, Number(item.pesoTotalKg).toFixed(3)]
-                .forEach((value, index) => {
-                    const cell = document.createElement('td');
-                    cell.textContent = value;
-                    if (index === 4) cell.className = 'text-end';
-                    row.appendChild(cell);
-                });
-            items.appendChild(row);
-        });
-        document.getElementById('guideDriver').value = '';
-        document.getElementById('guidePlate').value = '';
-        document.getElementById('guideDriverDocument').value = '';
-        document.getElementById('guideLicense').value = '';
-        closeDetailModal();
-        document.getElementById('guideModal').classList.remove('d-none');
-    };
-
-    window.emitGuide = async function () {
-        const driver = document.getElementById('guideDriver').value.trim();
-        const plate = document.getElementById('guidePlate').value.trim();
-        if (!driver || !plate) {
-            showInvoiceToast('Datos incompletos', 'Ingrese el nombre del conductor y la placa del vehículo.', true);
-            return;
-        }
-        const button = document.getElementById('confirmGuideButton');
-        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-        button.disabled = true;
-        try {
-            const body = new URLSearchParams({
-                numeroPedido: guiaPreview.numeroPedido,
-                conductorNombre: driver,
-                placaVehiculo: plate,
-                conductorDocumento: document.getElementById('guideDriverDocument').value.trim(),
-                conductorLicencia: document.getElementById('guideLicense').value.trim(),
-                __RequestVerificationToken: token
-            });
-            const response = await fetch(emitGuideUrl, {
-                method: 'POST',
-                headers: { 'RequestVerificationToken': token, 'Content-Type': 'application/x-www-form-urlencoded' },
-                body
-            });
-            const result = await response.json();
-            if (!response.ok) {
-                showInvoiceToast('No se pudo emitir la guía', result.mensaje || 'Intenta nuevamente.', true);
-                return;
-            }
-            document.getElementById('guideModal').classList.add('d-none');
-            showInvoiceToast('Guía de remisión emitida con éxito',
-                result.numeroGuia ? `Documento generado: ${result.numeroGuia}` : 'El documento fue validado correctamente.');
-            window.setTimeout(() => window.location.reload(), 2200);
-        } finally {
-            button.disabled = false;
-        }
-    };
-
-    window.closeGuidePreview = function (event) {
-        if (event && event.target.id !== 'guideModal') return;
-        document.getElementById('guideModal').classList.add('d-none');
-        if (pedidoSeleccionado) document.getElementById('detailModal').classList.remove('d-none');
-    };
-
-    async function emitInvoice() {
-        const button = document.getElementById('confirmInvoiceButton');
-        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-        button.disabled = true;
-        try {
-            const body = new URLSearchParams({
-                numeroPedido: facturaPreview.numeroPedido,
-                __RequestVerificationToken: token
-            });
-            const response = await fetch(emitInvoiceUrl, {
-                method: 'POST',
-                headers: { 'RequestVerificationToken': token, 'Content-Type': 'application/x-www-form-urlencoded' },
-                body
-            });
-            const result = await response.json();
-            if (!response.ok) {
-                showInvoiceToast('No se pudo emitir la factura', result.mensaje || 'Intenta nuevamente.', true);
-                return;
-            }
-            document.getElementById('invoiceModal').classList.add('d-none');
-            showInvoiceToast(
-                'Factura emitida con éxito',
-                result.numeroFactura ? `Comprobante generado: ${result.numeroFactura}` : 'El comprobante fue validado correctamente.'
-            );
-            window.setTimeout(() => window.location.reload(), 2200);
-        } finally {
-            button.disabled = false;
-        }
-    }
-
-    function closeInvoicePreview(event) {
-        if (event && event.target.id !== 'invoiceModal') return;
-        document.getElementById('invoiceModal').classList.add('d-none');
-        if (pedidoSeleccionado) document.getElementById('detailModal').classList.remove('d-none');
-    }
-
     function formatMoney(value) {
         return Number(value).toLocaleString('es-PE', { style: 'currency', currency: 'PEN' });
-    }
-
-    let invoiceToastTimeout;
-
-    function showInvoiceToast(title, message, isError = false) {
-        const toast = document.getElementById('invoiceToast');
-        const icon = document.getElementById('invoiceToastIcon');
-        toast.classList.toggle('is-error', isError);
-        icon.textContent = isError ? 'error' : 'check_circle';
-        document.getElementById('invoiceToastTitle').textContent = title;
-        document.getElementById('invoiceToastMessage').textContent = message;
-        toast.classList.add('is-visible');
-        window.clearTimeout(invoiceToastTimeout);
-        invoiceToastTimeout = window.setTimeout(hideInvoiceToast, isError ? 6000 : 4500);
-    }
-
-    function hideInvoiceToast() {
-        document.getElementById('invoiceToast').classList.remove('is-visible');
     }
 
     const pedidoParaAbrir = @Html.Raw(JsonSerializer.Serialize(Context.Request.Query["abrirDetalle"].ToString()));

@@ -89,6 +89,30 @@ body {
 }
 
 /* ============================================================
+   GOOGLE MATERIAL SYMBOLS OUTLINED
+   ============================================================ */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined' !important;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* ============================================================
    COMPONENTES ESTÁNDAR REUTILIZABLES (PARA LOS 8 DESARROLLADORES)
    ============================================================ */
 
@@ -130,28 +154,102 @@ body {
   padding: 1.5rem;
 }
 
-/* 2. Botones Estándar */
-/* Botón Principal (Dorado Corporativo PROSEGIN — usa --accent) */
-.btn-prosegin-primary {
-  background-color: var(--accent);
-  border: 1px solid var(--accent);
-  color: var(--accent-on);
-  font-weight: 700;
-  font-size: 0.82rem;
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
+/* 2. SISTEMA DE BOTONES ESTANDARIZADO PROSEGIN
+   Estilo consistente en todo el sistema: radio 8px, altura uniforme (40px base),
+   colores corporativos (Dorado #F7A702, Azul Marino #000D31, Blanco #FFFFFF) */
+
+/* Regla Base Común para todos los Botones Prosegin */
+.btn-prosegin-primary,
+.btn-prosegin-secondary,
+.btn-prosegin-secondary-orange,
+.btn-prosegin-dark,
+.btn-prosegin-danger,
+.btn-prosegin-action,
+.btn-prosegin-action-secondary,
+.quote-clear-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px var(--accent-shadow);
-  text-decoration: none;
-  letter-spacing: 0.02em;
+  font-family: var(--font-sans);
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.35;
+  padding: 0.58rem 1.25rem;
+  min-height: 40px;
+  border-radius: 8px;
   cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  vertical-align: middle;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
 }
 
-.btn-prosegin-primary:hover:not(:disabled) {
+.btn-prosegin-primary i,
+.btn-prosegin-secondary i,
+.btn-prosegin-secondary-orange i,
+.btn-prosegin-dark i,
+.btn-prosegin-danger i,
+.btn-prosegin-action i,
+.btn-prosegin-action-secondary i,
+.quote-clear-button i {
+  font-size: 1.15rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* Modificadores de Tamaño Estándar */
+.btn-prosegin-sm,
+.btn-prosegin-primary.btn-sm,
+.btn-prosegin-secondary.btn-sm,
+.btn-prosegin-secondary-orange.btn-sm,
+.btn-prosegin-dark.btn-sm,
+.btn-prosegin-danger.btn-sm,
+.btn-prosegin-action,
+.btn-prosegin-action-secondary {
+  min-height: 32px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.78rem;
+  border-radius: 6px;
+  gap: 0.35rem;
+}
+
+.btn-prosegin-sm i,
+.btn-prosegin-primary.btn-sm i,
+.btn-prosegin-secondary.btn-sm i,
+.btn-prosegin-secondary-orange.btn-sm i,
+.btn-prosegin-dark.btn-sm i,
+.btn-prosegin-danger.btn-sm i,
+.btn-prosegin-action i,
+.btn-prosegin-action-secondary i {
+  font-size: 1rem;
+}
+
+.btn-prosegin-lg,
+.btn-prosegin-primary.btn-lg,
+.btn-prosegin-secondary.btn-lg,
+.btn-prosegin-dark.btn-lg {
+  min-height: 46px;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.92rem;
+  border-radius: 10px;
+  gap: 0.6rem;
+}
+
+/* Botón Principal (Dorado Corporativo PROSEGIN — usa --accent) */
+.btn-prosegin-primary,
+.btn-prosegin-action {
+  background-color: var(--accent);
+  border: 1px solid var(--accent);
+  color: var(--accent-on);
+  font-weight: 700;
+  box-shadow: 0 1px 3px var(--accent-shadow);
+  letter-spacing: 0.02em;
+}
+
+.btn-prosegin-primary:hover:not(:disabled),
+.btn-prosegin-action:hover:not(:disabled) {
   background-color: var(--accent-hover);
   border-color: var(--accent-hover);
   color: #ffffff;
@@ -160,7 +258,9 @@ body {
 }
 
 .btn-prosegin-primary:disabled,
-.btn-prosegin-primary[disabled] {
+.btn-prosegin-primary[disabled],
+.btn-prosegin-action:disabled,
+.btn-prosegin-action[disabled] {
   background-color: #ffffff !important;
   border: 1px solid #cbd5e1 !important;
   color: #94a3b8 !important;
@@ -170,30 +270,56 @@ body {
   transform: none !important;
 }
 
-/* Botón Guardar Alternativo (Naranja Contorno / Secundario Cálido para Guardar Cliente) */
+/* Botón Secundario (Blanco Neutral con Borde) */
+.btn-prosegin-secondary,
+.btn-prosegin-action-secondary,
+.quote-clear-button {
+  background-color: #ffffff;
+  border: 1px solid var(--border-card);
+  color: var(--text-dark);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.btn-prosegin-secondary:hover:not(:disabled),
+.btn-prosegin-action-secondary:hover:not(:disabled),
+.quote-clear-button:hover:not(:disabled) {
+  background-color: var(--bg-card-subtle);
+  border-color: #cbd5e1;
+  color: var(--text-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.btn-prosegin-secondary:disabled,
+.btn-prosegin-secondary[disabled],
+.btn-prosegin-action-secondary:disabled,
+.btn-prosegin-action-secondary[disabled],
+.quote-clear-button:disabled,
+.quote-clear-button[disabled] {
+  background-color: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #94a3b8 !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  opacity: 0.75 !important;
+  transform: none !important;
+}
+
+/* Botón Guardar Alternativo (Dorado Suave / Secundario Cálido PROSEGIN) */
 .btn-prosegin-secondary-orange {
-  background-color: #fef3c7;
-  border: 1.5px solid var(--prosegin-orange);
-  color: #92400e;
+  background-color: var(--accent-light);
+  border: 1.5px solid var(--accent);
+  color: var(--accent-text);
   font-weight: 700;
-  font-size: 0.9rem;
-  padding: 0.65rem 1.25rem;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  cursor: pointer;
 }
 
 .btn-prosegin-secondary-orange:hover:not(:disabled) {
-  background-color: var(--prosegin-orange);
-  border-color: var(--prosegin-orange);
-  color: var(--dark);
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-on);
   transform: translateY(-1px);
-  box-shadow: 0 2px 5px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 2px 6px var(--accent-shadow);
 }
 
 .btn-prosegin-secondary-orange:disabled,
@@ -207,29 +333,6 @@ body {
   transform: none !important;
 }
 
-/* Botón Secundario (Blanco con Borde) */
-.btn-prosegin-secondary {
-  background-color: #ffffff;
-  border: 1px solid var(--border-card);
-  color: var(--text-dark);
-  font-weight: 600;
-  font-size: 0.9rem;
-  padding: 0.65rem 1.25rem;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease;
-  text-decoration: none;
-}
-
-.btn-prosegin-secondary:hover {
-  background-color: var(--bg-card-subtle);
-  border-color: #cbd5e1;
-  color: var(--text-dark);
-}
-
 /* Botón Oscuro / Acción Especial (Azul Medianoche del Logo — usa --dark) */
 .btn-prosegin-dark,
 .btn-dark {
@@ -237,25 +340,12 @@ body {
   border-color: var(--dark) !important;
   color: var(--dark-text) !important;
   font-weight: 600;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  cursor: pointer;
   box-shadow: 0 1px 3px rgba(0, 13, 49, 0.2);
 }
 
-.btn-prosegin-dark {
-  font-size: 0.82rem;
-  padding: 0.6rem 1.2rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  letter-spacing: 0.02em;
-  text-decoration: none;
-}
-
-.btn-prosegin-dark:hover,
+.btn-prosegin-dark:hover:not(:disabled),
 .btn-prosegin-dark:focus,
-.btn-dark:hover,
+.btn-dark:hover:not(:disabled),
 .btn-dark:focus,
 .btn-dark:active {
   background-color: var(--dark-hover) !important;
@@ -263,6 +353,34 @@ body {
   color: var(--dark-text) !important;
   transform: translateY(-1px);
   box-shadow: 0 3px 8px rgba(0, 13, 49, 0.25);
+}
+
+.btn-prosegin-dark:disabled,
+.btn-prosegin-dark[disabled],
+.btn-dark:disabled,
+.btn-dark[disabled] {
+  background-color: #f1f5f9 !important;
+  border-color: var(--border-card) !important;
+  color: var(--text-subtle) !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+  opacity: 0.75 !important;
+}
+
+/* Botón Peligro / Destructivo */
+.btn-prosegin-danger {
+  background-color: #ffffff;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.btn-prosegin-danger:hover:not(:disabled) {
+  background-color: #fee2e2;
+  border-color: #f87171;
+  color: #b91c1c;
+  transform: translateY(-1px);
 }
 
 .btn-outline-dark {
@@ -423,76 +541,7 @@ body {
   border-bottom: 0;
 }
 
-/* Botón de Acción en Fila de Tabla (Dorado para Cotizar) */
-.btn-prosegin-action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  padding: 8px 16px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  border-radius: 8px;
-  text-decoration: none;
-  cursor: pointer;
-  white-space: nowrap !important;
-  flex-shrink: 0;
-  transition: all 0.15s ease;
-  background-color: var(--accent);
-  border: 1px solid var(--accent);
-  color: var(--accent-on);
-  box-shadow: 0 1px 2px var(--accent-shadow);
-  line-height: 1.25;
-}
-
-.btn-prosegin-action:hover {
-  background-color: var(--accent-hover);
-  border-color: var(--accent-hover);
-  color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 3px 6px var(--accent-shadow);
-}
-
-.btn-prosegin-action:disabled,
-.btn-prosegin-action[disabled] {
-  background-color: #f1f5f9;
-  border: 1px solid var(--border-card);
-  color: var(--text-subtle);
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-/* Botón Suave para Acciones Secundarias en Tabla (Sedes, Detalles) */
-.btn-prosegin-action-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  padding: 8px 14px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  border-radius: 8px;
-  text-decoration: none;
-  cursor: pointer;
-  white-space: nowrap !important;
-  flex-shrink: 0;
-  transition: all 0.15s ease;
-  background-color: #ffffff;
-  border: 1px solid var(--border-card);
-  color: var(--text-dark);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-  line-height: 1.25;
-}
-
-.btn-prosegin-action-secondary:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
-  color: var(--text-dark);
-  transform: translateY(-1px);
-}
-
-/* Badge con Conteo de Sedes */
+/* Badge con Conteo de Sedes en Fila de Tabla */
 .btn-sedes-count {
   display: inline-flex;
   align-items: center;
@@ -508,7 +557,8 @@ body {
   transition: all 0.15s ease;
 }
 
-.btn-prosegin-action-secondary:hover .btn-sedes-count {
+.btn-prosegin-action-secondary:hover .btn-sedes-count,
+.btn-prosegin-secondary:hover .btn-sedes-count {
   background-color: #e2e8f0;
   color: #0f172a;
 }
@@ -1782,17 +1832,17 @@ body {
 }
 
 .prosegin-alert-btn-confirm {
-  background: var(--prosegin-orange, #f59e0b);
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+  background: var(--accent, #F7A702);
+  color: var(--accent-on, #000D31);
+  box-shadow: 0 4px 12px var(--accent-shadow);
 }
 
 .prosegin-alert-btn-confirm:hover,
 .prosegin-alert-btn-confirm:focus {
-  background: var(--prosegin-orange-hover, #d97706);
+  background: var(--accent-hover, #D98A00);
   color: #ffffff;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.45);
+  box-shadow: 0 6px 16px var(--accent-shadow);
 }
 
 .prosegin-alert-btn-confirm.btn-error {
@@ -2264,28 +2314,6 @@ body {
   gap: 0.6rem;
 }
 
-.quote-actions .btn-prosegin-primary,
-.quote-actions .btn-prosegin-secondary,
-.quote-clear-button {
-  min-height: 39px;
-  border-radius: 3px;
-  font-size: 0.78rem;
-}
-
-.quote-clear-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0 1rem;
-  border: 1px solid #d2d7dc;
-  background: #f0f1f2;
-  color: #424d57;
-  font-weight: 700;
-}
-
-.quote-clear-button:hover {
-  background: #e1e4e7;
-}
 
 @media (max-width: 1360px) {
   .quote-workspace {

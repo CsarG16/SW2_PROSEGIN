@@ -126,32 +126,7 @@
   box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
 }
 
-.quote-inbox-search button {
-  height: 40px;
-  padding: 0 1.25rem;
-  border: 1px solid var(--accent, #f59e0b);
-  border-radius: 8px;
-  background-color: var(--accent, #f59e0b);
-  color: var(--accent-on, #0f172a);
-  font-size: 0.82rem;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px var(--accent-shadow, rgba(245, 158, 11, 0.25));
-  cursor: pointer;
-  letter-spacing: 0.02em;
-}
 
-.quote-inbox-search button:hover {
-  background-color: var(--accent-hover, #d97706);
-  border-color: var(--accent-hover, #d97706);
-  color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px var(--accent-shadow, rgba(245, 158, 11, 0.35));
-}
 
 .quote-inbox-filters {
   display: flex;
@@ -559,9 +534,10 @@
   max-width: 140px;
 }
 
+.quote-oc-file-link i.material-symbols-outlined,
 .quote-oc-file-link i.bi-file-earmark-pdf-fill {
   color: #ef4444;
-  font-size: 0.8rem;
+  font-size: 0.95rem;
   flex-shrink: 0;
 }
 
@@ -962,48 +938,55 @@
 }
 
 .quote-btn-cancel {
-  height: 42px;
-  padding: 0 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0.58rem 1.25rem;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  color: #475569;
+  border: 1px solid var(--border-card, #e2e8f0);
+  border-radius: 8px;
+  color: var(--text-dark, #000D31);
   font-size: 0.84rem;
-  font-weight: 700;
-  transition: all 0.15s ease;
+  font-weight: 600;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .quote-btn-cancel:hover {
-  background: #f8fafc;
+  background: var(--bg-card-subtle, #f8fafc);
   border-color: #cbd5e1;
-  color: #0f172a;
+  color: var(--text-dark, #000D31);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .quote-btn-confirm {
-  height: 42px;
-  padding: 0 1.4rem;
-  background-color: var(--accent, #f59e0b);
-  border: 1px solid var(--accent, #f59e0b);
-  border-radius: 10px;
-  color: var(--accent-on, #0f172a);
-  font-size: 0.84rem;
-  font-weight: 700;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px var(--accent-shadow, rgba(245, 158, 11, 0.25));
+  min-height: 40px;
+  padding: 0.58rem 1.35rem;
+  background-color: var(--accent, #F7A702);
+  border: 1px solid var(--accent, #F7A702);
+  border-radius: 8px;
+  color: var(--accent-on, #000D31);
+  font-size: 0.84rem;
+  font-weight: 700;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px var(--accent-shadow, rgba(247, 167, 2, 0.28));
   cursor: pointer;
   letter-spacing: 0.02em;
 }
 
 .quote-btn-confirm:hover {
-  background-color: var(--accent-hover, #d97706);
-  border-color: var(--accent-hover, #d97706);
+  background-color: var(--accent-hover, #D98A00);
+  border-color: var(--accent-hover, #D98A00);
   color: #ffffff;
   transform: translateY(-1px);
-  box-shadow: 0 3px 8px var(--accent-shadow, rgba(245, 158, 11, 0.35));
+  box-shadow: 0 3px 8px var(--accent-shadow, rgba(247, 167, 2, 0.35));
 }
 
 @media (max-width: 768px) {

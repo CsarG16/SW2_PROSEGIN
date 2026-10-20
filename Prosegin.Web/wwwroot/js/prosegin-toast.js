@@ -17,22 +17,22 @@
     const DEFAULT_CONFIGS = {
         success: {
             title: 'Operación Exitosa',
-            icon: 'bi-check-circle-fill',
+            icon: 'check_circle',
             duration: 3800
         },
         error: {
             title: 'Atención',
-            icon: 'bi-x-circle-fill',
+            icon: 'cancel',
             duration: 6000
         },
         warning: {
             title: 'Advertencia',
-            icon: 'bi-exclamation-triangle-fill',
+            icon: 'warning',
             duration: 5500
         },
         info: {
             title: 'Información',
-            icon: 'bi-info-circle-fill',
+            icon: 'info',
             duration: 4000
         }
     };
@@ -79,14 +79,14 @@
 
         toast.innerHTML = `
             <div class="prosegin-toast-icon">
-                <i class="bi ${defaultConfig.icon}"></i>
+                <i class="material-symbols-outlined">${defaultConfig.icon}</i>
             </div>
             <div class="prosegin-toast-content">
                 ${title ? `<div class="prosegin-toast-title">${escapeHtml(title)}</div>` : ''}
                 <div class="prosegin-toast-message">${escapeHtml(message)}</div>
             </div>
             <button type="button" class="prosegin-toast-close" aria-label="Cerrar">
-                <i class="bi bi-x-lg"></i>
+                <i class="material-symbols-outlined" style="font-size: 1.1rem;">close</i>
             </button>
             <div class="prosegin-toast-progress">
                 <div class="prosegin-toast-progress-bar"></div>

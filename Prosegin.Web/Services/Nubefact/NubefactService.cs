@@ -87,7 +87,68 @@ public class NubefactService : INubefactService
 
         SanitizarGuiaRequest(request);
 
-        return await EnviarComprobanteGenericoAsync(request, "Guía de Remisión", ct);
+        var responseDto = await EnviarComprobanteGenericoAsync(request, "Guía de Remisión", ct);
+
+        // Si la emisión fue aceptada por Nubefact, consultamos inmediatamente a SUNAT/Nubefact
+        // para recuperar los enlaces oficiales del documento (PDF, XML, CDR)
+        if (responseDto.Exito)
+        {
+            var serie = responseDto.Serie ?? request.Serie;
+            var numero = responseDto.Numero ?? request.Numero;
+
+            try
+            {
+                var consulta = await ConsultarGuiaRemisionAsync(serie, numero, ct);
+                if (consulta.Exito)
+                {
+                    if (!string.IsNullOrWhiteSpace(consulta.EnlacePdf))
+                        responseDto.EnlacePdf = consulta.EnlacePdf;
+                    if (!string.IsNullOrWhiteSpace(consulta.EnlaceXml))
+                        responseDto.EnlaceXml = consulta.EnlaceXml;
+                    if (!string.IsNullOrWhiteSpace(consulta.EnlaceCdr))
+                        responseDto.EnlaceCdr = consulta.EnlaceCdr;
+                    if (!string.IsNullOrWhiteSpace(consulta.CodigoHash))
+                        responseDto.CodigoHash = consulta.CodigoHash;
+                    if (!string.IsNullOrWhiteSpace(consulta.CadenaQr))
+                        responseDto.CadenaQr = consulta.CadenaQr;
+                    if (!string.IsNullOrWhiteSpace(consulta.SunatDescription))
+                        responseDto.SunatDescription = consulta.SunatDescription;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo consultar los enlaces oficiales de la guía {Serie}-{Numero}: {Message}", serie, numero, ex.Message);
+            }
+
+            // Garantizar siempre que el enlace del PDF termine en .pdf para descarga directa
+            if (!string.IsNullOrWhiteSpace(responseDto.EnlacePdf) && !responseDto.EnlacePdf.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+            {
+                responseDto.EnlacePdf = $"{responseDto.EnlacePdf}.pdf";
+            }
+        }
+
+        return responseDto;
+    }
+
+    public async Task<NubefactResponseDto> ConsultarGuiaRemisionAsync(
+        string serie,
+        int numero,
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(serie))
+            throw new ArgumentException("La serie es obligatoria.", nameof(serie));
+        if (numero <= 0)
+            throw new ArgumentException("El número debe ser mayor a 0.", nameof(numero));
+
+        var request = new NubefactConsultaGuiaRequest
+        {
+            Operacion = "consultar_guia",
+            TipoDeComprobante = 7,
+            Serie = serie.Trim(),
+            Numero = numero
+        };
+
+        return await EnviarComprobanteGenericoAsync(request, "Consulta Guía de Remisión", ct);
     }
 
     private async Task<NubefactResponseDto> EnviarComprobanteGenericoAsync(
@@ -112,14 +173,38 @@ public class NubefactService : INubefactService
                 _logger.LogInformation("Comprobante {TipoOperacion} aceptado con éxito en Nubefact. Hash: {Hash}",
                     tipoOperacion, raw?.CodigoHash);
 
+                var enlacePdf = raw?.EnlaceDelPdf;
+                if (string.IsNullOrWhiteSpace(enlacePdf) && !string.IsNullOrWhiteSpace(raw?.Enlace))
+                {
+                    enlacePdf = raw.Enlace.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
+                        ? raw.Enlace
+                        : $"{raw.Enlace}.pdf";
+                }
+
+                var enlaceXml = raw?.EnlaceDelXml;
+                if (string.IsNullOrWhiteSpace(enlaceXml) && !string.IsNullOrWhiteSpace(raw?.Enlace))
+                {
+                    enlaceXml = raw.Enlace.EndsWith(".xml", StringComparison.OrdinalIgnoreCase)
+                        ? raw.Enlace
+                        : $"{raw.Enlace}.xml";
+                }
+
+                var enlaceCdr = raw?.EnlaceDelCdr;
+                if (string.IsNullOrWhiteSpace(enlaceCdr) && !string.IsNullOrWhiteSpace(raw?.Enlace))
+                {
+                    enlaceCdr = raw.Enlace.EndsWith(".cdr", StringComparison.OrdinalIgnoreCase)
+                        ? raw.Enlace
+                        : $"{raw.Enlace}.cdr";
+                }
+
                 return new NubefactResponseDto
                 {
                     EstadoProceso = EstadoAceptado,
                     CodigoHash = raw?.CodigoHash,
                     CadenaQr = raw?.CadenaParaCodigoQr,
-                    EnlacePdf = raw?.EnlaceDelPdf ?? raw?.Enlace,
-                    EnlaceXml = raw?.EnlaceDelXml,
-                    EnlaceCdr = raw?.EnlaceDelCdr,
+                    EnlacePdf = enlacePdf,
+                    EnlaceXml = enlaceXml,
+                    EnlaceCdr = enlaceCdr,
                     AceptadaPorSunat = raw?.AceptadaPorSunat,
                     SunatDescription = raw?.SunatDescription,
                     TipoDeComprobante = raw?.TipoDeComprobante,

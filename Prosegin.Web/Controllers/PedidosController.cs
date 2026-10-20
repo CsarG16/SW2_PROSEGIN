@@ -42,6 +42,25 @@ public class PedidosController : Controller
     }
 
     [HttpGet]
+    public async Task<IActionResult> Factura(string numeroPedido, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(numeroPedido))
+        {
+            return RedirectToAction(nameof(Index));
+        }
+
+        var preview = await _pedidosService.PrevisualizarFacturaAsync(numeroPedido, cancellationToken);
+        if (preview == null)
+        {
+            TempData["ToastError"] = "El pedido no está entregado, el cliente no está activo y habido en SUNAT o ya tiene una factura emitida.";
+            return RedirectToAction(nameof(Index), new { termino = numeroPedido });
+        }
+
+        ViewData["Title"] = $"Factura Electrónica: {preview.NumeroPedido}";
+        return View(preview);
+    }
+
+    [HttpGet]
     public async Task<IActionResult> PrevisualizarFactura(string numeroPedido, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(numeroPedido))
@@ -81,6 +100,25 @@ public class PedidosController : Controller
             pendiente = resultado.QuedoPendiente,
             mensaje = resultado.Mensaje
         });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GuiaRemision(string numeroPedido, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(numeroPedido))
+        {
+            return RedirectToAction(nameof(Index));
+        }
+
+        var preview = await _pedidosService.PrevisualizarGuiaRemisionAsync(numeroPedido, cancellationToken);
+        if (preview == null)
+        {
+            TempData["ToastError"] = "El pedido no está listo para despacho, ya tiene una guía emitida o hay productos sin peso registrado.";
+            return RedirectToAction(nameof(Index), new { termino = numeroPedido });
+        }
+
+        ViewData["Title"] = $"Guía de Remisión: {preview.NumeroPedido}";
+        return View(preview);
     }
 
     [HttpGet]
