@@ -102,97 +102,126 @@
 
 <!-- Modal Editar Producto (Estilo Prosegin Core) -->
 <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 880px;">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
-            <div class="modal-header border-bottom py-3 px-4 bg-light bg-opacity-50">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="d-flex align-items-center justify-content-center rounded-3 text-white" style="width: 38px; height: 38px; background-color: var(--dark);">
-                        <i class="material-symbols-outlined fs-6">edit</i>
+            <form id="editProductForm" method="post" asp-action="EditarProducto" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="editProductId" name="Id" />
+
+                <!-- Modal Header -->
+                <div class="modal-header border-bottom py-3 px-4 bg-light bg-opacity-75">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="d-flex align-items-center justify-content-center rounded-3 text-white shadow-sm" style="width: 42px; height: 42px; background-color: var(--dark);">
+                            <i class="material-symbols-outlined fs-5">edit_note</i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold text-dark mb-0 fs-6" id="editProductModalLabel">Editar Producto del Catálogo</h5>
+                            <small class="text-muted" style="font-size: 0.78rem;">Actualiza las especificaciones maestras, costo base y tarifas de proveedores autorizados</small>
+                        </div>
                     </div>
-                    <div>
-                        <h5 class="modal-title fw-bold text-dark mb-0 fs-6" id="editProductModalLabel">Editar Producto del Catálogo</h5>
-                        <small class="text-muted" style="font-size: 0.75rem;">Actualiza las especificaciones maestras y el costo base de referencia</small>
-                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body p-4">
-                <form id="editProductForm" method="post" asp-action="EditarProducto" enctype="multipart/form-data">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" id="editProductId" name="Id" />
 
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-5">
-                            <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Código SKU</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0 text-muted"><i class="material-symbols-outlined" style="font-size: 1rem;">lock</i></span>
-                                <input type="text" class="form-control bg-light font-monospace fw-bold border-start-0 ps-0" id="editProductSku" name="Sku" readonly />
+                <!-- Modal Body -->
+                <div class="modal-body p-4 bg-white">
+                    <!-- Sección 1: Datos Generales y Costos -->
+                    <div class="p-3 rounded-3 mb-3" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="badge bg-white text-dark border px-2 py-1 small fw-semibold">
+                                <i class="material-symbols-outlined align-middle me-1" style="font-size: 1rem; color: var(--accent);">inventory_2</i>
+                                Información General y Parámetros
+                            </span>
+                        </div>
+
+                        <!-- Fila 1: SKU, Categoría, Costo Base, Peso -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Código SKU</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="material-symbols-outlined" style="font-size: 1rem;">lock</i></span>
+                                    <input type="text" class="form-control bg-white font-monospace fw-bold border-start-0 ps-0" id="editProductSku" name="Sku" readonly />
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Categoría</label>
+                                <input type="text" class="form-control form-control-sm" id="editProductCategory" name="Categoria" placeholder="Ej: Protección craneal" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Costo Base Mayorista</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light text-secondary fw-bold border-end-0">S/</span>
+                                    <input type="number" step="0.01" min="0.01" class="form-control border-start-0 ps-1 fw-bold text-dark" id="editProductCost" name="Precio" placeholder="0.00" required />
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Peso Aprox.</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" step="0.001" min="0.001" max="9999.99" class="form-control border-end-0 fw-bold text-dark" id="editProductWeight" name="PesoKg" placeholder="0.500" required />
+                                    <span class="input-group-text bg-light text-secondary fw-semibold border-start-0">kg</span>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-7">
-                            <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Categoría</label>
-                            <input type="text" class="form-control" id="editProductCategory" name="Categoria" placeholder="Ej: Protección craneal" />
+
+                        <!-- Fila 2: Nombre Completo y Ficha Técnica -->
+                        <div class="row g-3">
+                            <div class="col-md-7">
+                                <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Nombre / Descripción del Producto</label>
+                                <input type="text" class="form-control form-control-sm" id="editProductName" name="Nombre" placeholder="Descripción completa del producto EPP" required />
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Ficha Técnica PDF (Opcional)</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-white border-end-0 text-danger"><i class="material-symbols-outlined" style="font-size: 1.1rem;">picture_as_pdf</i></span>
+                                    <input type="file" class="form-control form-control-sm border-start-0" id="editProductFile" name="FichaTecnica" accept=".pdf" />
+                                </div>
+                                <span class="text-muted d-block mt-1" style="font-size: 0.72rem;">Dejar vacío si no deseas reemplazar el PDF actual.</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Nombre del Producto</label>
-                        <input type="text" class="form-control" id="editProductName" name="Nombre" placeholder="Descripción completa del producto EPP" required />
-                    </div>
-
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Costo Base (S/.)</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light text-secondary fw-semibold border-end-0">S/</span>
-                                <input type="number" step="0.01" min="0.01" class="form-control border-start-0 ps-1 fw-bold" id="editProductCost" name="Precio" placeholder="0.00" required />
+                    <!-- Sección 2: Tarifas de Proveedores Homologados -->
+                    <div class="border rounded-3 p-3 bg-white">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-light text-dark border px-2 py-1 small fw-semibold">
+                                    <i class="material-symbols-outlined align-middle me-1" style="font-size: 1rem; color: var(--accent);">storefront</i>
+                                    Tarifas de Proveedores Homologados
+                                </span>
                             </div>
-                            <small class="text-muted" style="font-size: 0.72rem;">Costo de referencia mayorista.</small>
+                            <span class="text-muted small" style="font-size: 0.75rem;">
+                                <i class="material-symbols-outlined text-warning align-middle me-1" style="font-size: 0.95rem;">info</i>
+                                Seleccione el radio button del proveedor principal para compras JIT
+                            </span>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Peso Aprox. (Kg)</label>
-                            <div class="input-group">
-                                <input type="number" step="0.001" min="0.001" max="9999.99" class="form-control border-end-0 fw-bold" id="editProductWeight" name="PesoKg" placeholder="0.50" required />
-                                <span class="input-group-text bg-light text-secondary fw-semibold border-start-0">kg</span>
-                            </div>
-                            <small class="text-muted" style="font-size: 0.72rem;">Peso unitario (hasta 3 decimales).</small>
-                        </div>
-                    </div>
 
-                    <div class="mb-4">
-                        <label class="form-label fw-bold small text-secondary text-uppercase mb-1">Tarifas de proveedores autorizados</label>
-                        <div class="table-responsive border rounded-3">
-                            <table class="table table-sm align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr><th>Proveedor</th><th>Tarifa de compra (S/.)</th><th>Plazo (h)</th><th>Principal</th></tr>
+                        <div class="table-responsive border rounded-2">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                                    <tr class="text-secondary small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.03em;">
+                                        <th style="min-width: 250px;" class="ps-3 py-2">Proveedor</th>
+                                        <th style="width: 180px;" class="py-2">Tarifa Compra (S/.)</th>
+                                        <th style="width: 160px;" class="py-2">Plazo Entrega</th>
+                                        <th style="width: 110px;" class="text-center py-2">Principal</th>
+                                    </tr>
                                 </thead>
                                 <tbody id="editProviderTariffs">
-                                    <tr><td colspan="4" class="small text-muted p-3">Selecciona un producto para cargar sus proveedores autorizados.</td></tr>
+                                    <tr>
+                                        <td colspan="4" class="small text-muted p-4 text-center">Selecciona un producto para cargar sus proveedores autorizados.</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
+                </div>
 
-                    <div class="mb-4">
-                        <label class="form-label fw-bold small text-secondary text-uppercase mb-1" style="font-size: 0.75rem;">Ficha Técnica PDF (Opcional)</label>
-                        <div class="p-3 border rounded-3 bg-light bg-opacity-50">
-                            <div class="d-flex align-items-center gap-2 mb-2">
-                                <i class="material-symbols-outlined text-danger fs-4">picture_as_pdf</i>
-                                <span class="small text-secondary">Reemplazar archivo PDF de homologación técnica</span>
-                            </div>
-                            <input type="file" class="form-control form-control-sm" id="editProductFile" name="FichaTecnica" accept=".pdf" />
-                            <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">Deja este campo vacío si no deseas modificar la ficha técnica actual.</small>
-                        </div>
-                    </div>
-
-                    <div class="d-flex justify-content-end gap-2 pt-2 border-top">
-                        <button type="button" class="btn-prosegin-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn-prosegin-primary">
-                            <i class="material-symbols-outlined">check</i> Guardar Cambios
-                        </button>
-                    </div>
-                </form>
-            </div>
+                <!-- Modal Footer -->
+                <div class="modal-footer border-top py-3 px-4 bg-light bg-opacity-50 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn-prosegin-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn-prosegin-primary">
+                        <i class="material-symbols-outlined">check</i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -339,12 +368,43 @@
             const container = document.getElementById('editProviderTariffs');
             container.replaceChildren();
             const tarifas = JSON.parse(btn.dataset.tarifas || '[]');
+            if (tarifas.length === 0) {
+                const emptyRow = document.createElement('tr');
+                const emptyCell = document.createElement('td');
+                emptyCell.colSpan = 4;
+                emptyCell.className = 'text-center text-muted small py-4';
+                emptyCell.textContent = 'Este producto no cuenta con proveedores autorizados registrados.';
+                emptyRow.append(emptyCell);
+                container.append(emptyRow);
+                return;
+            }
+
             tarifas.forEach((tarifa, index) => {
                 const row = document.createElement('tr');
-                const supplier = document.createElement('td');
-                supplier.textContent = tarifa.Proveedor;
 
+                // Proveedor con nombre y mini icono
+                const supplier = document.createElement('td');
+                supplier.className = 'ps-3 py-2';
+                const supplierWrapper = document.createElement('div');
+                supplierWrapper.className = 'd-flex align-items-center gap-2';
+                const suppIcon = document.createElement('i');
+                suppIcon.className = 'material-symbols-outlined text-muted';
+                suppIcon.style.fontSize = '1.1rem';
+                suppIcon.textContent = 'business';
+                const suppName = document.createElement('span');
+                suppName.className = 'fw-semibold text-dark';
+                suppName.textContent = tarifa.Proveedor;
+                supplierWrapper.append(suppIcon, suppName);
+                supplier.append(supplierWrapper);
+
+                // Tarifa de compra con input group S/.
                 const priceCell = document.createElement('td');
+                priceCell.className = 'py-2';
+                const priceGroup = document.createElement('div');
+                priceGroup.className = 'input-group input-group-sm';
+                const pricePrefix = document.createElement('span');
+                pricePrefix.className = 'input-group-text bg-light text-muted border-end-0 fw-semibold';
+                pricePrefix.textContent = 'S/';
                 const price = document.createElement('input');
                 price.type = 'number';
                 price.min = '0.01';
@@ -352,10 +412,15 @@
                 price.required = true;
                 price.name = `tarifasProveedores[${index}].CostoCompra`;
                 price.value = Number(tarifa.CostoCompra).toFixed(2);
-                price.className = 'form-control form-control-sm';
-                priceCell.append(price);
+                price.className = 'form-control form-control-sm border-start-0 ps-1 fw-bold';
+                priceGroup.append(pricePrefix, price);
+                priceCell.append(priceGroup);
 
+                // Plazo de entrega con input group hrs
                 const leadCell = document.createElement('td');
+                leadCell.className = 'py-2';
+                const leadGroup = document.createElement('div');
+                leadGroup.className = 'input-group input-group-sm';
                 const lead = document.createElement('input');
                 lead.type = 'number';
                 lead.min = '1';
@@ -363,11 +428,16 @@
                 lead.required = true;
                 lead.name = `tarifasProveedores[${index}].PlazoEntregaHoras`;
                 lead.value = tarifa.PlazoEntregaHoras;
-                lead.className = 'form-control form-control-sm';
-                leadCell.append(lead);
+                lead.className = 'form-control form-control-sm border-end-0 fw-semibold';
+                const leadSuffix = document.createElement('span');
+                leadSuffix.className = 'input-group-text bg-light text-muted border-start-0 small';
+                leadSuffix.textContent = 'hrs';
+                leadGroup.append(lead, leadSuffix);
+                leadCell.append(leadGroup);
 
+                // Radio button proveedor principal
                 const principalCell = document.createElement('td');
-                principalCell.className = 'text-center';
+                principalCell.className = 'text-center py-2';
                 const principal = document.createElement('input');
                 principal.type = 'radio';
                 principal.name = 'proveedorPrincipalId';
@@ -375,6 +445,7 @@
                 principal.checked = tarifa.EsPrincipal;
                 principal.required = true;
                 principal.className = 'form-check-input';
+                principal.style.cursor = 'pointer';
                 principal.setAttribute('aria-label', `Marcar ${tarifa.Proveedor} como principal`);
                 principalCell.append(principal);
 
