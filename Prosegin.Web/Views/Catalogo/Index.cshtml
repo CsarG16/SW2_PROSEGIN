@@ -86,7 +86,7 @@
                             <strong class="text-dark d-block fw-bold" style="font-size: 1.25rem;">S/ @product.Precio.ToString("N2", new CultureInfo("es-PE"))</strong>
                         </div>
                         <div class="catalog-add-controls justify-content-end">
-                            <button type="button" class="btn-prosegin-dark btn-sm" data-bs-toggle="modal" data-bs-target="#editProductModal" onclick="populateEditModal(this)" data-id="@product.Id" data-sku="@product.Sku" data-name="@product.Nombre" data-category="@product.Categoria" data-stock="@product.StockDisponible" data-cost="@product.Precio.ToString(CultureInfo.InvariantCulture)" data-peso="@product.PesoKg.ToString("0.000", CultureInfo.InvariantCulture)" data-weight="@product.PesoKg.ToString("0.000", CultureInfo.InvariantCulture)" data-tarifas="@JsonSerializer.Serialize(product.TarifasProveedor)">
+                            <button type="button" class="btn-prosegin-dark btn-sm" data-bs-toggle="modal" data-bs-target="#editProductModal" onclick="populateEditModal(this)" data-id="@product.Id" data-sku="@product.Sku" data-name="@product.Nombre" data-category="@product.Categoria" data-stock="@product.StockDisponible" data-cost="@product.Precio.ToString(CultureInfo.InvariantCulture)" data-peso="@product.PesoKg.ToString("0.000", CultureInfo.InvariantCulture)" data-weight="@product.PesoKg.ToString("0.000", CultureInfo.InvariantCulture)" data-ficha-url="@product.RutaFichaTecnicaPdf" data-ficha-name="@product.NombreArchivoPdf" data-tarifas="@JsonSerializer.Serialize(product.TarifasProveedor)">
                                 <i class="material-symbols-outlined" style="font-size: 1rem;">edit</i><span>Editar</span>
                             </button>
                         </div>
@@ -176,6 +176,21 @@
                                 </div>
                                 <span class="text-muted d-block mt-1" style="font-size: 0.72rem;">Dejar vacío si no deseas reemplazar el PDF actual.</span>
                             </div>
+                        </div>
+                        <div id="editFichaViewer" class="ficha-viewer d-none mt-3">
+                            <div class="ficha-viewer-toolbar">
+                                    <span class="ficha-viewer-name" id="editFichaName">Ficha técnica</span>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="editPaginaAnterior">‹</button>
+                                        <span class="ficha-viewer-page" id="editPaginaTexto">Página 1</span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="editPaginaSiguiente">›</button>
+                                        <span class="ficha-viewer-separator"></span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="editZoomMenos">−</button>
+                                        <span class="ficha-viewer-page" id="editZoomTexto">100%</span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="editZoomMas">+</button>
+                                    </div>
+                            </div>
+                            <iframe id="editFichaFrame" title="Vista previa de la ficha técnica" class="ficha-viewer-frame"></iframe>
                         </div>
                     </div>
 
@@ -357,6 +372,58 @@
             applyFilters();
         })();
 
+        function configurarVisorFicha(contenedor, frame, nombre, url, nombreArchivo) {
+            if (!contenedor || !frame) return;
+            contenedor.classList.toggle('d-none', !url);
+            if (!url) {
+                frame.removeAttribute('src');
+                return;
+            }
+            nombre.textContent = nombreArchivo || 'Ficha técnica guardada';
+            frame.src = `${url}#page=1&zoom=100`;
+        }
+
+        function controlarVisorFicha(frame, paginaTexto, zoomTexto) {
+            let pagina = 1;
+            let zoom = 100;
+            const actualizar = () => {
+                frame.src = `${frame.src.split('#')[0]}#page=${pagina}&zoom=${zoom}`;
+                paginaTexto.textContent = `Página ${pagina}`;
+                zoomTexto.textContent = `${zoom}%`;
+            };
+            return {
+                paginaAnterior: () => { pagina = Math.max(1, pagina - 1); actualizar(); },
+                paginaSiguiente: () => { pagina++; actualizar(); },
+                zoomMenos: () => { zoom = Math.max(50, zoom - 10); actualizar(); },
+                zoomMas: () => { zoom = Math.min(200, zoom + 10); actualizar(); }
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const editFile = document.getElementById('editProductFile');
+            const editViewer = document.getElementById('editFichaViewer');
+            const editFrame = document.getElementById('editFichaFrame');
+            const editName = document.getElementById('editFichaName');
+            let editObjectUrl = null;
+            if (editFile) {
+                editFile.addEventListener('change', () => {
+                    const file = editFile.files && editFile.files[0];
+                    if (!file) return;
+                    if (editObjectUrl) URL.revokeObjectURL(editObjectUrl);
+                    editObjectUrl = URL.createObjectURL(file);
+                    configurarVisorFicha(editViewer, editFrame, editName, editObjectUrl, file.name);
+                });
+            }
+            const visor = controlarVisorFicha(
+                editFrame,
+                document.getElementById('editPaginaTexto'),
+                document.getElementById('editZoomTexto'));
+            document.getElementById('editPaginaAnterior').addEventListener('click', visor.paginaAnterior);
+            document.getElementById('editPaginaSiguiente').addEventListener('click', visor.paginaSiguiente);
+            document.getElementById('editZoomMenos').addEventListener('click', visor.zoomMenos);
+            document.getElementById('editZoomMas').addEventListener('click', visor.zoomMas);
+        });
+
         function populateEditModal(btn) {
             document.getElementById('editProductId').value = btn.dataset.id;
             document.getElementById('editProductSku').value = btn.dataset.sku;
@@ -364,6 +431,12 @@
             document.getElementById('editProductCategory').value = btn.dataset.category;
             document.getElementById('editProductCost').value = btn.dataset.cost;
             document.getElementById('editProductWeight').value = Number(btn.dataset.weight || btn.dataset.peso || 0).toFixed(3);
+            configurarVisorFicha(
+                document.getElementById('editFichaViewer'),
+                document.getElementById('editFichaFrame'),
+                document.getElementById('editFichaName'),
+                btn.dataset.fichaUrl,
+                btn.dataset.fichaName);
 
             const container = document.getElementById('editProviderTariffs');
             container.replaceChildren();

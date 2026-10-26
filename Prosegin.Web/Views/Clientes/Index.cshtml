@@ -202,6 +202,11 @@
                                 <!-- Acciones -->
                                 <td class="text-end pe-4" style="white-space: nowrap;">
                                     <div class="d-inline-flex align-items-center justify-content-end gap-2 flex-nowrap">
+                                        <a asp-controller="Clientes" asp-action="Edit" asp-route-id="@cliente.Id"
+                                           class="btn-prosegin-secondary btn-sm" title="Editar cliente y contactos">
+                                            <i class="material-symbols-outlined" style="font-size: 1rem;">edit</i> Editar
+                                        </a>
+
                                         <!-- Botón Sedes -->
                                         <a asp-controller="Clientes" asp-action="Direcciones" asp-route-clienteId="@cliente.Id"
                                            class="btn-prosegin-secondary btn-sm"

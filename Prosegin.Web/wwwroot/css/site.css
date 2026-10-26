@@ -541,6 +541,151 @@ body {
   border-bottom: 0;
 }
 
+/* Formulario compacto de contactos del cliente */
+.cliente-contactos-card {
+  width: 66.666667%;
+  border: 1px solid #e4e9f0;
+  border-radius: 0.65rem;
+  overflow: hidden;
+}
+
+.cliente-contactos-header {
+  min-height: 48px;
+  padding: 0.7rem 1rem;
+  background: #fff;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.cliente-contactos-header .section-step-title {
+  font-size: 0.76rem;
+  letter-spacing: 0.045em;
+}
+
+.cliente-contactos-header .section-step-title i {
+  color: #64748b;
+}
+
+.cliente-contactos-header .btn-prosegin-secondary {
+  min-height: 30px;
+  padding: 0.32rem 0.7rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+}
+
+.cliente-contactos-header .btn-prosegin-secondary i {
+  font-size: 0.9rem;
+}
+
+.cliente-contactos-card .prosegin-card-body {
+  padding: 0.85rem 1rem 0.75rem;
+}
+
+.cliente-contactos-table {
+  width: 100%;
+  table-layout: fixed;
+  border: 1px solid #e7ebf0;
+  border-radius: 0.45rem;
+  overflow: hidden;
+}
+
+.cliente-contactos-table th {
+  height: 40px;
+  padding: 0.45rem 0.6rem;
+  background: #f8fafc;
+  color: #64748b;
+  border-bottom: 1px solid #e7ebf0;
+  font-size: 0.61rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.cliente-contactos-table td {
+  height: 46px;
+  padding: 0.35rem 0.55rem;
+  border-bottom: 1px solid #edf0f4;
+  vertical-align: middle;
+}
+
+.cliente-contactos-table th:nth-child(1),
+.cliente-contactos-table td:nth-child(1) { width: 21%; }
+.cliente-contactos-table th:nth-child(2),
+.cliente-contactos-table td:nth-child(2) { width: 19%; }
+.cliente-contactos-table th:nth-child(3),
+.cliente-contactos-table td:nth-child(3) { width: 20%; }
+.cliente-contactos-table th:nth-child(4),
+.cliente-contactos-table td:nth-child(4) { width: 23%; }
+.cliente-contactos-table th:nth-child(5),
+.cliente-contactos-table td:nth-child(5) { width: 11%; }
+.cliente-contactos-table th:nth-child(6),
+.cliente-contactos-table td:nth-child(6) { width: 6%; }
+
+.cliente-contactos-table .contacto-input {
+  height: 30px;
+  min-width: 0;
+  padding: 0.25rem 0.5rem;
+  border-color: #d7dee8;
+  border-radius: 0.35rem;
+  color: #334155;
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+}
+
+.cliente-contactos-table .contacto-input:focus {
+  border-color: #f6a800;
+  box-shadow: 0 0 0 0.12rem rgba(246, 168, 0, 0.14);
+}
+
+.cliente-contactos-table .contacto-principal {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  border: 1px solid #aeb8c5;
+}
+
+.cliente-contactos-table .contacto-principal:checked {
+  background-color: #172554;
+  border-color: #172554;
+}
+
+.cliente-contactos-table .eliminar-contacto {
+  color: #94a3b8 !important;
+  font-size: 1rem;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.cliente-contactos-table .eliminar-contacto:hover {
+  color: #dc3545 !important;
+}
+
+.cliente-contactos-card > .prosegin-card-body > p {
+  margin-top: 0.55rem;
+  font-size: 0.66rem;
+}
+
+@media (max-width: 991.98px) {
+  .cliente-contactos-card {
+    width: 100%;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .cliente-contactos-card {
+    overflow: visible;
+  }
+
+  .cliente-contactos-card .table-responsive {
+    overflow-x: auto;
+  }
+
+  .cliente-contactos-table {
+    min-width: 700px;
+  }
+}
+
 /* Badge con Conteo de Sedes en Fila de Tabla */
 .btn-sedes-count {
   display: inline-flex;
@@ -3109,4 +3254,65 @@ body {
   .quote-inbox-footer {
     align-items: flex-start;
   }
+}
+/* Visor integrado de fichas técnicas PDF */
+.ficha-viewer {
+    margin-top: 1rem;
+    overflow: hidden;
+    border: 1px solid #dbe3ec;
+    border-radius: 0.75rem;
+    background: #f8fafc;
+}
+
+.ficha-viewer-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.65rem 0.75rem;
+    color: #334155;
+    background: #0f172a;
+}
+
+.ficha-viewer-name {
+    min-width: 0;
+    overflow: hidden;
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ficha-viewer-page {
+    min-width: 3.8rem;
+    color: #fff;
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+.ficha-viewer-separator {
+    width: 1px;
+    height: 1.4rem;
+    margin: 0 0.25rem;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.ficha-viewer-frame {
+    display: block;
+    width: 100%;
+    height: 540px;
+    border: 0;
+    background: #64748b;
+}
+
+@media (max-width: 768px) {
+    .ficha-viewer-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .ficha-viewer-frame {
+        height: 440px;
+    }
 }

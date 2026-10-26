@@ -326,6 +326,11 @@ public class PedidosService : IPedidosService
                 Total = preview.Total,
                 OrdenCompraServicio = preview.NumeroOrdenCompra,
                 CondicionesDePago = preview.CondicionPago,
+                ClienteEmail = orden.Cotizacion.Cliente.Contactos
+                    .OrderByDescending(contacto => contacto.EsPrincipal)
+                    .ThenBy(contacto => contacto.Id)
+                    .Select(contacto => contacto.Correo)
+                    .FirstOrDefault() ?? orden.Cotizacion.Cliente.CorreoElectronico,
                 Items = preview.Items.Select(item => new NubefactFacturaItem
                 {
                     Codigo = item.Codigo,
@@ -554,6 +559,7 @@ public class PedidosService : IPedidosService
         return await _context.OrdenesVenta
             .Include(ov => ov.Cotizacion)
                 .ThenInclude(c => c.Cliente)
+                    .ThenInclude(cliente => cliente.Contactos)
             .Include(ov => ov.Cotizacion)
                 .ThenInclude(c => c.Detalles)
                     .ThenInclude(d => d.Producto)

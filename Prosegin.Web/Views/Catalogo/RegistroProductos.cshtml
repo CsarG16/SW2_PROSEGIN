@@ -364,6 +364,25 @@
                     </button>
                 </div>
 
+                <div id="visorFichaTecnica" class="ficha-viewer d-none">
+                    <div class="ficha-viewer-toolbar">
+                        <span class="ficha-viewer-name" id="visorFichaNombre">Ficha técnica</span>
+                        <div class="d-flex align-items-center gap-1">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="visorPaginaAnterior">‹</button>
+                            <span class="ficha-viewer-page" id="visorPaginaTexto">Página 1</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="visorPaginaSiguiente">›</button>
+                            <span class="ficha-viewer-separator"></span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="visorZoomMenos">−</button>
+                            <span class="ficha-viewer-page" id="visorZoomTexto">100%</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="visorZoomMas">+</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary ms-2" id="btnCambiarFicha">
+                                <i class="material-symbols-outlined">sync</i> Cambiar archivo
+                            </button>
+                        </div>
+                    </div>
+                    <iframe id="visorFichaFrame" title="Vista previa de la ficha técnica" class="ficha-viewer-frame"></iframe>
+                </div>
+
                 <span asp-validation-for="FichaTecnica" id="fichaError" class="text-danger small d-block mt-2" role="alert"></span>
             </div>
         </div>

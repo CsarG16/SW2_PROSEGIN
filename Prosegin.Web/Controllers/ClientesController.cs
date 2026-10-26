@@ -222,6 +222,8 @@ namespace Prosegin.Web.Controllers
         {
             ViewBag.ClienteId = clienteId;
             ViewBag.Paso = paso;
+            ViewBag.FormAction = "Create";
+            ViewBag.FormTitle = "Registrar cliente";
             return View(new ClienteCreateViewModel
             {
                 Ruc = ruc?.Trim() ?? string.Empty,
@@ -237,6 +239,7 @@ namespace Prosegin.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ClienteCreateViewModel model, string? accion = null, CancellationToken cancellationToken = default)
         {
+            ValidarContactos(model);
             // 1. Validación estricta Módulo 11 oficial de SUNAT
             if (!_sunatService.ValidarFormatoRuc(model.Ruc, out var errorRuc))
             {
@@ -284,6 +287,15 @@ namespace Prosegin.Web.Controllers
                     Activo = true
                 };
 
+                cliente.Contactos = model.Contactos.Select(contacto => new ContactoCliente
+                {
+                    Nombre = contacto.Nombre.Trim(),
+                    Cargo = contacto.Cargo.Trim(),
+                    Telefono = contacto.Telefono.Trim(),
+                    Correo = contacto.Correo.Trim(),
+                    EsPrincipal = contacto.EsPrincipal
+                }).ToList();
+
                 _context.Clientes.Add(cliente);
                 await _context.SaveChangesAsync();
 
@@ -319,11 +331,11 @@ namespace Prosegin.Web.Controllers
                     && accion.Contains("direcciones", StringComparison.OrdinalIgnoreCase);
                 if (continuarConDirecciones)
                 {
-                    TempData["ModalSuccess"] = "Cliente registrado con éxito";
+                    TempData["ModalSuccess"] = "Cliente guardado exitosamente";
                 }
                 else
                 {
-                    TempData["SuccessMessage"] = "Cliente registrado con éxito";
+                    TempData["SuccessMessage"] = "Cliente guardado exitosamente";
                 }
 
                 if (cliente.CondicionSunat != "HABIDO" || cliente.EstadoSunat != "ACTIVO")
@@ -351,6 +363,101 @@ namespace Prosegin.Web.Controllers
             }
 
             return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
+        {
+            var cliente = await _context.Clientes
+                .Include(c => c.Contactos)
+                .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+            if (cliente == null)
+                return NotFound();
+
+            ViewBag.FormAction = "Edit";
+            ViewBag.FormTitle = "Editar cliente";
+            return View("Create", MapearClienteViewModel(cliente));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(ClienteCreateViewModel model, string? accion = null, CancellationToken cancellationToken = default)
+        {
+            ValidarContactos(model);
+            if (ModelState.IsValid)
+            {
+                var cliente = await _context.Clientes
+                    .Include(c => c.Contactos)
+                    .FirstOrDefaultAsync(c => c.Id == model.ClienteId, cancellationToken);
+                if (cliente == null)
+                    return NotFound();
+
+                cliente.RazonSocial = model.RazonSocial.Trim().ToUpperInvariant();
+                cliente.DireccionFiscal = model.DireccionFiscal.Trim();
+                cliente.Referencia = string.IsNullOrWhiteSpace(model.Referencia) ? null : model.Referencia.Trim();
+                cliente.Departamento = string.IsNullOrWhiteSpace(model.Departamento) ? null : model.Departamento.Trim();
+                cliente.Provincia = string.IsNullOrWhiteSpace(model.Provincia) ? null : model.Provincia.Trim();
+                cliente.Distrito = string.IsNullOrWhiteSpace(model.Distrito) ? null : model.Distrito.Trim();
+                cliente.Ubigeo = string.IsNullOrWhiteSpace(model.Ubigeo) ? null : model.Ubigeo.Trim();
+                cliente.Telefono = model.Telefono?.Trim() ?? string.Empty;
+                cliente.CorreoElectronico = model.CorreoElectronico?.Trim() ?? string.Empty;
+
+                _context.ContactosCliente.RemoveRange(cliente.Contactos);
+                cliente.Contactos = model.Contactos.Select(contacto => new ContactoCliente
+                {
+                    ClienteId = cliente.Id,
+                    Nombre = contacto.Nombre.Trim(),
+                    Cargo = contacto.Cargo.Trim(),
+                    Telefono = contacto.Telefono.Trim(),
+                    Correo = contacto.Correo.Trim(),
+                    EsPrincipal = contacto.EsPrincipal
+                }).ToList();
+                await _context.SaveChangesAsync(cancellationToken);
+                TempData["SuccessMessage"] = "Cliente guardado exitosamente";
+                return RedirectToAction(nameof(Index));
+            }
+
+            ViewBag.FormAction = "Edit";
+            ViewBag.FormTitle = "Editar cliente";
+            return View("Create", model);
+        }
+
+        private static ClienteCreateViewModel MapearClienteViewModel(Cliente cliente) =>
+            new()
+            {
+                ClienteId = cliente.Id,
+                Ruc = cliente.Ruc,
+                RazonSocial = cliente.RazonSocial,
+                DireccionFiscal = cliente.DireccionFiscal,
+                Referencia = cliente.Referencia,
+                Telefono = cliente.Telefono,
+                CorreoElectronico = cliente.CorreoElectronico,
+                Departamento = cliente.Departamento,
+                Provincia = cliente.Provincia,
+                Distrito = cliente.Distrito,
+                Ubigeo = cliente.Ubigeo,
+                EstadoSunat = cliente.EstadoSunat,
+                CondicionSunat = cliente.CondicionSunat,
+                Contactos = cliente.Contactos.OrderByDescending(c => c.EsPrincipal).ThenBy(c => c.Id)
+                    .Select(c => new ContactoClienteViewModel
+                    {
+                        Nombre = c.Nombre,
+                        Cargo = c.Cargo,
+                        Telefono = c.Telefono,
+                        Correo = c.Correo,
+                        EsPrincipal = c.EsPrincipal
+                    }).ToList()
+            };
+
+        private void ValidarContactos(ClienteCreateViewModel model)
+        {
+            model.Contactos ??= new List<ContactoClienteViewModel>();
+            if (model.Contactos.Count > 3)
+                ModelState.AddModelError("Contactos", "Cada cliente puede tener como máximo 3 contactos.");
+
+            var principales = model.Contactos.Count(c => c.EsPrincipal);
+            if (principales > 1)
+                ModelState.AddModelError("Contactos", "Solo puede existir un contacto principal.");
         }
 
         // GET: Clientes/ConsultarSunat?ruc=20100047218
