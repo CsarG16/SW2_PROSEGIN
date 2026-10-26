@@ -1,0 +1,281 @@
+@model Prosegin.Web.ViewModels.Proveedores.ProveedorBusquedaViewModel
+
+@{
+    ViewData["Title"] = "Proveedores";
+}
+
+<div class="container-fluid px-0">
+    <div class="supplier-directory-header mb-3">
+        <div>
+            <div class="supplier-breadcrumb">Gestión de Proveedores <i class="material-symbols-outlined">chevron_right</i></div>
+            <h1 class="page-title mb-0">Directorio de Proveedores de EPP</h1>
+        </div>
+        <a asp-action="Create" class="btn-prosegin-primary">
+            <i class="material-symbols-outlined">add</i> Nuevo Proveedor
+        </a>
+    </div>
+
+    <div class="prosegin-card supplier-search-card p-3 mb-3">
+        <form asp-action="Index" method="get" class="supplier-search-form">
+            <div class="supplier-search-input">
+                <i class="material-symbols-outlined">search</i>
+                <input asp-for="Termino" placeholder="Buscar por RUC o Razón Social (ej. 20546982311, 3M Perú)" aria-label="Buscar por RUC, razón social o nombre comercial" />
+            </div>
+            <input type="hidden" name="pagina" value="1" />
+            <label class="supplier-page-size">
+                <span>Filas por página:</span>
+                <select name="tamanoPagina" class="form-select form-select-sm" onchange="this.form.submit()" aria-label="Filas por página">
+                    @foreach (var size in new[] { 10, 20, 50 })
+                    {
+                        <option value="@size" selected="@(Model.TamanoPagina == size)">@size</option>
+                    }
+                </select>
+            </label>
+            <button type="submit" class="btn btn-link supplier-search-submit" aria-label="Buscar">
+                <i class="material-symbols-outlined">search</i>
+            </button>
+            <span class="supplier-result-count"><span></span>@Model.TotalResultados proveedores encontrados</span>
+        </form>
+    </div>
+
+    <div class="prosegin-card overflow-hidden supplier-table-card">
+        @if (Model.Resultados.Count > 0)
+        {
+            <div class="table-responsive">
+                <table class="prosegin-table supplier-table mb-0">
+                    <thead>
+                        <tr>
+                            <th class="supplier-expand-column" aria-label="Detalle"></th>
+                            <th>RUC</th>
+                            <th>Razón social / nombre comercial</th>
+                            <th>Teléfono comercial</th>
+                            <th>Correo comercial</th>
+                            <th>Estado</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var proveedor in Model.Resultados)
+                        {
+                            var detalleId = $"detalle-proveedor-{proveedor.Id}";
+                            <tr class="supplier-data-row">
+                                <td class="supplier-expand-column">
+                                    <button type="button" class="supplier-expand-button" data-bs-toggle="collapse"
+                                            data-bs-target="#@detalleId" aria-expanded="false" aria-controls="@detalleId"
+                                            title="Desplegar detalle" aria-label="Desplegar detalle de @proveedor.RazonSocial">
+                                        <i class="material-symbols-outlined">expand_more</i>
+                                    </button>
+                                </td>
+                                <td class="font-monospace supplier-ruc">@proveedor.Ruc</td>
+                                <td>
+                                    <span class="supplier-company-name">@proveedor.RazonSocial</span>
+                                    @if (!string.IsNullOrWhiteSpace(proveedor.NombreComercial))
+                                    {
+                                        <span class="supplier-company-trade">@proveedor.NombreComercial</span>
+                                    }
+                                </td>
+                                <td class="text-nowrap">
+                                    @if (!string.IsNullOrWhiteSpace(proveedor.Telefono))
+                                    {
+                                        <i class="material-symbols-outlined supplier-inline-icon">call</i>
+                                        @proveedor.Telefono
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td>@(string.IsNullOrWhiteSpace(proveedor.CorreoComercial) ? "—" : proveedor.CorreoComercial)</td>
+                                <td>
+                                    <span class="supplier-status @(proveedor.Activo ? "is-active" : "is-inactive")">
+                                        <span></span>@(proveedor.Activo ? "Activo" : "Inactivo")
+                                    </span>
+                                </td>
+                                <td class="text-end text-nowrap supplier-actions">
+                                    <a asp-action="Edit" asp-route-id="@proveedor.Id" class="supplier-action-button"
+                                       title="Editar" aria-label="Editar @proveedor.RazonSocial">
+                                        <i class="material-symbols-outlined">edit</i>
+                                    </a>
+                                    @if (proveedor.Activo)
+                                    {
+                                        <form asp-action="Inactivate" asp-route-id="@proveedor.Id" method="post" class="d-inline"
+                                              onsubmit="return confirm('¿Inactivar a @proveedor.RazonSocial? Ya no podrá elegirse en nuevas órdenes de compra.');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="supplier-action-button" title="Inactivar"
+                                                    aria-label="Inactivar @proveedor.RazonSocial">
+                                                <i class="material-symbols-outlined">do_not_disturb_on</i>
+                                            </button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                            <tr class="collapse supplier-detail-row" id="@detalleId">
+                                <td colspan="7">
+                                    <div class="supplier-detail-title">
+                                        <i class="material-symbols-outlined">fact_check</i>
+                                        Expediente Operativo &amp; Datos Fiscales
+                                        <span>RUC @proveedor.Ruc</span>
+                                    </div>
+                                    <div class="row g-3">
+                                        <div class="col-lg-4">
+                                            <section class="supplier-detail-card">
+                                                <h2><i class="material-symbols-outlined">location_on</i> Dirección fiscal registrada (SUNAT)</h2>
+                                                <p>@(!string.IsNullOrWhiteSpace(proveedor.DireccionFiscal) ? proveedor.DireccionFiscal : "Sin dirección registrada")</p>
+                                                <span class="supplier-condition">Condición: @proveedor.CondicionSunat</span>
+                                                <div class="supplier-detail-extra"><strong>Especialidad:</strong> @(string.IsNullOrWhiteSpace(proveedor.Especialidad) ? "Sin especificar" : proveedor.Especialidad)</div>
+                                                <div class="supplier-detail-extra"><strong>Condición de pago:</strong> @(string.IsNullOrWhiteSpace(proveedor.CondicionPago) ? "Sin especificar" : proveedor.CondicionPago)</div>
+                                            </section>
+                                        </div>
+                                        <div class="col-lg-4">
+                                            <section class="supplier-detail-card">
+                                                <h2><i class="material-symbols-outlined">badge</i> Contactos comerciales asignados <span>@proveedor.Contactos.Count Registrados</span></h2>
+                                                @if (proveedor.Contactos.Count == 0)
+                                                {
+                                                    <p class="text-muted">Sin contactos adicionales registrados.</p>
+                                                }
+                                                else
+                                                {
+                                                    @foreach (var contacto in proveedor.Contactos)
+                                                    {
+                                                        <div class="supplier-detail-item">
+                                                            <strong>@contacto.Nombre</strong>
+                                                            @if (!string.IsNullOrWhiteSpace(contacto.Cargo)) { <small>@contacto.Cargo</small> }
+                                                            <div><i class="material-symbols-outlined">mail</i>@contacto.Correo <i class="material-symbols-outlined">call</i>@contacto.Telefono</div>
+                                                        </div>
+                                                    }
+                                                }
+                                            </section>
+                                        </div>
+                                        <div class="col-lg-4">
+                                            <section class="supplier-detail-card">
+                                                <h2><i class="material-symbols-outlined">account_balance</i> Cuentas bancarias &amp; CCI autorizados</h2>
+                                                @if (proveedor.CuentasBancarias.Count == 0)
+                                                {
+                                                    <p class="text-muted">Sin cuentas registradas.</p>
+                                                }
+                                                else
+                                                {
+                                                    @foreach (var cuenta in proveedor.CuentasBancarias)
+                                                    {
+                                                        <div class="supplier-detail-item">
+                                                            <strong>@cuenta.Banco (@cuenta.Moneda)</strong>
+                                                            @if (cuenta.EsPrincipal) { <small>Principal</small> }
+                                                            <div>CTA Cte: <span>@(string.IsNullOrWhiteSpace(cuenta.NumeroCuenta) ? "—" : cuenta.NumeroCuenta)</span></div>
+                                                            <div>Código CCI: <span>@(string.IsNullOrWhiteSpace(cuenta.Cci) ? "—" : cuenta.Cci)</span></div>
+                                                        </div>
+                                                    }
+                                                }
+                                            </section>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <footer class="supplier-table-footer">
+                <span>Mostrando @Model.Desde - @Model.Hasta de @Model.TotalResultados registros</span>
+                <div class="d-flex align-items-center gap-2">
+                    @if (Model.Pagina > 1)
+                    {
+                        <a asp-action="Index" asp-route-termino="@Model.Termino" asp-route-tamanoPagina="@Model.TamanoPagina" asp-route-pagina="@(Model.Pagina - 1)" aria-label="Página anterior">
+                            <i class="material-symbols-outlined">chevron_left</i>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="is-disabled"><i class="material-symbols-outlined">chevron_left</i></span>
+                    }
+                    <span class="supplier-current-page">@Model.Pagina</span>
+                    @if (Model.Pagina < Model.TotalPaginas)
+                    {
+                        <a asp-action="Index" asp-route-termino="@Model.Termino" asp-route-tamanoPagina="@Model.TamanoPagina" asp-route-pagina="@(Model.Pagina + 1)" aria-label="Página siguiente">
+                            <i class="material-symbols-outlined">chevron_right</i>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="is-disabled"><i class="material-symbols-outlined">chevron_right</i></span>
+                    }
+                </div>
+            </footer>
+        }
+        else
+        {
+            <div class="text-center p-5">
+                <i class="material-symbols-outlined text-muted fs-1">search_off</i>
+                <h2 class="h5 mt-2">No se encontraron proveedores</h2>
+                <p class="text-muted mb-0">Prueba otra búsqueda o registra un proveedor nuevo.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .supplier-directory-header { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+        .supplier-directory-header .page-title { color:var(--text-dark); font-size:1.2rem; font-weight:700; }
+        .supplier-breadcrumb { display:flex; align-items:center; color:var(--text-muted); font-size:.72rem; margin-bottom:.15rem; }
+        .supplier-breadcrumb .material-symbols-outlined { font-size:1rem; }
+        .supplier-search-card { border-radius:5px; box-shadow:none; }
+        .supplier-search-form { display:flex; align-items:center; gap:.8rem; }
+        .supplier-search-input { flex:1; display:flex; align-items:center; gap:.5rem; color:var(--text-subtle); }
+        .supplier-search-input input { width:100%; min-height:42px; border:0; outline:0; background:transparent; color:var(--text-body); font-size:.8rem; }
+        .supplier-search-input input::placeholder { color:var(--text-subtle); }
+        .supplier-search-submit { color:var(--text-muted); padding:.35rem; }
+        .supplier-result-count { display:flex; align-items:center; gap:.45rem; white-space:nowrap; color:var(--text-body); font-size:.76rem; }
+        .supplier-result-count span { width:7px; height:7px; border-radius:50%; background:#94a3b8; }
+        .supplier-page-size { display:none; align-items:center; gap:.4rem; margin:0; color:var(--text-muted); font-size:.72rem; white-space:nowrap; }
+        .supplier-page-size select { width:auto; }
+        .supplier-table-card { border-radius:5px; box-shadow:none; }
+        .supplier-table { min-width:900px; }
+        .supplier-table thead th { color:var(--text-muted); font-size:.62rem; letter-spacing:.035em; font-weight:700; text-transform:uppercase; padding:.85rem .65rem; white-space:nowrap; }
+        .supplier-table tbody td { padding:.85rem .65rem; vertical-align:middle; font-size:.78rem; }
+        .supplier-expand-column { width:38px; text-align:center; }
+        .supplier-expand-button { border:0; border-radius:6px; width:28px; height:28px; background:transparent; color:var(--text-subtle); }
+        .supplier-expand-button[aria-expanded="true"] { background:var(--accent-light); color:var(--accent-text); }
+        .supplier-expand-button[aria-expanded="true"] .material-symbols-outlined { transform:rotate(180deg); }
+        .supplier-expand-button .material-symbols-outlined { font-size:1.1rem; transition:transform .15s; }
+        .supplier-ruc { font-size:.7rem !important; }
+        .supplier-company-name,.supplier-company-trade { display:block; }
+        .supplier-company-name { color:var(--text-dark); font-weight:700; }
+        .supplier-company-trade { color:var(--text-subtle); font-size:.67rem; }
+        .supplier-inline-icon { color:var(--text-subtle); font-size:.9rem; margin-right:.2rem; }
+        .supplier-status { display:inline-flex; align-items:center; gap:.35rem; border-radius:999px; padding:.25rem .55rem; font-size:.66rem; font-weight:700; }
+        .supplier-status > span { width:6px; height:6px; border-radius:50%; }
+        .supplier-status.is-active { color:#15803d; background:#ecfdf5; }
+        .supplier-status.is-active > span { background:#10b981; }
+        .supplier-status.is-inactive { color:#64748b; background:#eef2f6; }
+        .supplier-status.is-inactive > span { background:#94a3b8; }
+        .supplier-actions { white-space:nowrap; }
+        .supplier-action-button { display:inline-flex; align-items:center; justify-content:center; border:0; background:transparent; color:var(--text-muted); padding:.25rem; }
+        .supplier-action-button:hover { color:var(--text-dark); }
+        .supplier-action-button .material-symbols-outlined { font-size:1rem; }
+        .supplier-detail-row > td { padding:.8rem 1rem 1rem !important; background:#f8fafc; }
+        .supplier-detail-title { display:flex; align-items:center; gap:.4rem; padding-bottom:.7rem; margin-bottom:.8rem; border-bottom:1px solid var(--border-card); color:var(--text-dark); font-size:.76rem; font-weight:600; }
+        .supplier-detail-title > .material-symbols-outlined { font-size:1rem; }
+        .supplier-detail-title > span { border-radius:4px; padding:.15rem .35rem; background:#e2e8f0; color:var(--text-muted); font-size:.6rem; }
+        .supplier-detail-card { min-height:100%; border-radius:7px; background:#fff; padding:.8rem; }
+        .supplier-detail-card h2 { display:flex; align-items:center; gap:.3rem; margin:0 0 .55rem; color:var(--text-subtle); font-size:.61rem; font-weight:700; letter-spacing:.025em; text-transform:uppercase; }
+        .supplier-detail-card h2 .material-symbols-outlined { font-size:.85rem; }
+        .supplier-detail-card h2 span { margin-left:auto; font-size:.56rem; }
+        .supplier-detail-card p { margin:0 0 .45rem; color:var(--text-body); font-size:.7rem; }
+        .supplier-condition { display:inline-block; border-radius:4px; padding:.15rem .35rem; background:#f1f5f9; color:var(--text-muted); font-size:.6rem; }
+        .supplier-detail-extra { margin-top:.4rem; color:var(--text-muted); font-size:.64rem; }
+        .supplier-detail-item { position:relative; margin-top:.4rem; border-radius:5px; padding:.5rem; background:#f8fafc; color:var(--text-body); font-size:.64rem; }
+        .supplier-detail-item strong { display:block; padding-right:4.5rem; color:var(--text-dark); font-size:.67rem; }
+        .supplier-detail-item small { position:absolute; top:.5rem; right:.5rem; color:var(--text-muted); font-size:.55rem; }
+        .supplier-detail-item div { display:flex; align-items:center; gap:.25rem; margin-top:.25rem; overflow-wrap:anywhere; }
+        .supplier-detail-item div .material-symbols-outlined { font-size:.75rem; color:var(--text-subtle); }
+        .supplier-detail-item div span { margin-left:auto; font-family:monospace; }
+        .supplier-table-footer { display:flex; align-items:center; justify-content:space-between; gap:1rem; border-top:1px solid var(--border-light); padding:.7rem 1rem; color:var(--text-muted); font-size:.66rem; }
+        .supplier-table-footer a,.supplier-table-footer > div > span { display:inline-flex; width:28px; height:28px; align-items:center; justify-content:center; border-radius:5px; }
+        .supplier-table-footer a { color:var(--text-muted); text-decoration:none; }
+        .supplier-table-footer a:hover { background:#f1f5f9; }
+        .supplier-table-footer .is-disabled { color:#cbd5e1; }
+        .supplier-table-footer .supplier-current-page { background:var(--dark); color:#fff; font-weight:700; }
+        @@media (min-width: 768px) { .supplier-page-size { display:flex; } }
+        @@media (max-width: 575px) { .supplier-directory-header { align-items:flex-start; flex-direction:column; } .supplier-search-form { flex-wrap:wrap; } .supplier-result-count { margin-left:auto; } }
+    </style>
+}

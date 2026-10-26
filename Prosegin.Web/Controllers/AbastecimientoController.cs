@@ -82,7 +82,7 @@ public class AbastecimientoController : Controller
         {
             var seleccion = selecciones.Single(s => s.ProductoId == detalle.ProductoId);
             var tarifa = detalle.Producto.ProveedoresAutorizados
-                .SingleOrDefault(p => p.ProveedorId == seleccion.ProveedorId);
+                .SingleOrDefault(p => p.ProveedorId == seleccion.ProveedorId && p.Proveedor.Activo);
             if (tarifa == null || tarifa.CostoCompra <= 0)
             {
                 TempData["ModalError"] = $"El proveedor seleccionado ya no está autorizado o no tiene tarifa para {detalle.Producto.Nombre}.";
@@ -199,7 +199,7 @@ public class AbastecimientoController : Controller
                 Cantidad = detalle.Cantidad,
                 UnidadMedida = detalle.Producto.UnidadMedida,
                 Proveedores = detalle.Producto.ProveedoresAutorizados
-                    .Where(pp => pp.CostoCompra > 0)
+                    .Where(pp => pp.Proveedor.Activo && pp.CostoCompra > 0)
                     .OrderBy(pp => pp.Proveedor.RazonSocial)
                     .Select(pp => new AbastecimientoProveedorOpcionViewModel
                     {

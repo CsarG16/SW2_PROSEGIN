@@ -99,6 +99,16 @@
                 <!-- Separador sutil de módulo -->
                 <li class="sidebar-nav-divider"></li>
 
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Proveedores" ? "active" : "")" asp-controller="Proveedores" asp-action="Index">
+                        <i class="material-symbols-outlined">local_shipping</i>
+                        <span class="sidebar-nav-text">Proveedores</span>
+                        <span class="sidebar-floating-tag">Proveedores</span>
+                    </a>
+                </li>
+
+                <li class="sidebar-nav-divider"></li>
+
                 <!-- Módulo 3: Cotizaciones -->
                 <li class="sidebar-nav-item">
                     <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Cotizaciones" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")" asp-controller="Cotizaciones" asp-action="Index">

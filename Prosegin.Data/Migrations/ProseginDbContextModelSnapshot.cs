@@ -127,6 +127,47 @@ namespace Prosegin.Data.Migrations
                     b.ToTable("ContactosCliente");
                 });
 
+            modelBuilder.Entity("Prosegin.Data.Entities.ContactoProveedor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Cargo")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Correo")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<bool>("EsPrincipal")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<int>("ProveedorId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Telefono")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProveedorId");
+
+                    b.ToTable("ContactosProveedor", (string)null);
+                });
+
             modelBuilder.Entity("Prosegin.Data.Entities.Cotizacion", b =>
                 {
                     b.Property<int>("Id")
@@ -235,6 +276,51 @@ namespace Prosegin.Data.Migrations
                     b.HasIndex("ProductoId");
 
                     b.ToTable("CotizacionDetalles", (string)null);
+                });
+
+            modelBuilder.Entity("Prosegin.Data.Entities.CuentaBancariaProveedor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Banco")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Cci")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<bool>("EsPrincipal")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Moneda")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("varchar(3)")
+                        .HasDefaultValue("PEN");
+
+                    b.Property<string>("NumeroCuenta")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<int>("ProveedorId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProveedorId");
+
+                    b.ToTable("CuentasBancariasProveedor", (string)null);
                 });
 
             modelBuilder.Entity("Prosegin.Data.Entities.Factura", b =>
@@ -673,8 +759,10 @@ namespace Prosegin.Data.Migrations
                         .HasColumnType("varchar(150)");
 
                     b.Property<decimal>("PesoKg")
-                        .HasPrecision(18, 3)
-                        .HasColumnType("decimal(18,3)");
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0.50m);
 
                     b.Property<string>("RutaFichaTecnicaPdf")
                         .HasMaxLength(300)
@@ -745,9 +833,66 @@ namespace Prosegin.Data.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("Activo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("CondicionPago")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasDefaultValue("");
+
+                    b.Property<string>("CondicionSunat")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasDefaultValue("NO VERIFICADO");
+
                     b.Property<string>("Contacto")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<string>("CorreoComercial")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasDefaultValue("");
+
+                    b.Property<string>("DireccionFiscal")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(250)
+                        .HasColumnType("varchar(250)")
+                        .HasDefaultValue("");
+
+                    b.Property<string>("Especialidad")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)")
+                        .HasDefaultValue("");
+
+                    b.Property<string>("EstadoSunat")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasDefaultValue("NO VERIFICADO");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("NombreComercial")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)")
+                        .HasDefaultValue("");
 
                     b.Property<string>("RazonSocial")
                         .IsRequired()
@@ -755,7 +900,8 @@ namespace Prosegin.Data.Migrations
 
                     b.Property<string>("Ruc")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(11)
+                        .HasColumnType("varchar(11)");
 
                     b.Property<string>("Telefono")
                         .IsRequired()
@@ -767,7 +913,10 @@ namespace Prosegin.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Proveedores");
+                    b.HasIndex("Ruc")
+                        .IsUnique();
+
+                    b.ToTable("Proveedores", (string)null);
                 });
 
             modelBuilder.Entity("Prosegin.Data.Entities.PuntoEntrega", b =>
@@ -842,6 +991,17 @@ namespace Prosegin.Data.Migrations
                     b.Navigation("Cliente");
                 });
 
+            modelBuilder.Entity("Prosegin.Data.Entities.ContactoProveedor", b =>
+                {
+                    b.HasOne("Prosegin.Data.Entities.Proveedor", "Proveedor")
+                        .WithMany("Contactos")
+                        .HasForeignKey("ProveedorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Proveedor");
+                });
+
             modelBuilder.Entity("Prosegin.Data.Entities.Cotizacion", b =>
                 {
                     b.HasOne("Prosegin.Data.Entities.Cliente", "Cliente")
@@ -870,6 +1030,17 @@ namespace Prosegin.Data.Migrations
                     b.Navigation("Cotizacion");
 
                     b.Navigation("Producto");
+                });
+
+            modelBuilder.Entity("Prosegin.Data.Entities.CuentaBancariaProveedor", b =>
+                {
+                    b.HasOne("Prosegin.Data.Entities.Proveedor", "Proveedor")
+                        .WithMany("CuentasBancarias")
+                        .HasForeignKey("ProveedorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Proveedor");
                 });
 
             modelBuilder.Entity("Prosegin.Data.Entities.Factura", b =>
@@ -1070,6 +1241,10 @@ namespace Prosegin.Data.Migrations
 
             modelBuilder.Entity("Prosegin.Data.Entities.Proveedor", b =>
                 {
+                    b.Navigation("Contactos");
+
+                    b.Navigation("CuentasBancarias");
+
                     b.Navigation("OrdenesCompra");
 
                     b.Navigation("ProductosAutorizados");

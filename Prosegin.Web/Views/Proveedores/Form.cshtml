@@ -1,0 +1,402 @@
+@model Prosegin.Web.ViewModels.Proveedores.ProveedorCreateViewModel
+
+@{
+    var edicion = Model.Id.HasValue;
+    ViewData["Title"] = edicion ? "Editar proveedor" : "Registrar proveedor de EPP";
+}
+
+<div class="container-fluid px-0 proveedor-form-page">
+    <div class="mb-3">
+        <h1 class="page-title mb-1">@(edicion ? "Editar Proveedor de EPP" : "Registrar Proveedor de EPP")</h1>
+        <p class="page-subtitle mb-0">Alta oficial de proveedores homologados para compras, órdenes de compra y pagos bancarios.</p>
+    </div>
+
+    <form asp-action="@(edicion ? "Edit" : "Create")" asp-route-id="@Model.Id" method="post" id="formProveedor">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-3"></div>
+
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <section class="prosegin-card proveedor-section mb-3">
+                    <header class="proveedor-section-header">
+                        <span class="proveedor-step">1</span>
+                        <span>DATOS DE LA EMPRESA</span>
+                        <span class="proveedor-required-note">* Campos obligatorios</span>
+                    </header>
+                    <div class="proveedor-section-body">
+                        <div class="row g-2 mb-2 align-items-end">
+                            <div class="col-md-6">
+                                <label asp-for="Ruc" class="form-label-prosegin proveedor-label">Número de RUC * <span class="text-muted">(11 dígitos, inicia con 10 o 20)</span></label>
+                                <div class="input-group">
+                                    @if (edicion)
+                                    {
+                                        <input asp-for="Ruc" readonly class="form-control form-control-prosegin font-monospace" />
+                                    }
+                                    else
+                                    {
+                                        <input asp-for="Ruc" id="rucProveedor" class="form-control form-control-prosegin font-monospace"
+                                               maxlength="11" inputmode="numeric" autocomplete="off" placeholder="Ej. 20546982311" />
+                                        <button type="button" id="consultarSunat" class="btn btn-dark proveedor-sunat-button">
+                                            <i class="material-symbols-outlined">search</i><span>Consultar<br />SUNAT</span>
+                                        </button>
+                                    }
+                                </div>
+                                <span asp-validation-for="Ruc" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="NombreComercial" class="form-label-prosegin proveedor-label">Nombre Comercial / Abreviatura</label>
+                                <input asp-for="NombreComercial" class="form-control form-control-prosegin" placeholder="Ej. 3M PERÚ S.A." />
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label asp-for="RazonSocial" class="form-label-prosegin proveedor-label">Razón Social / Denominación Oficial *</label>
+                            <input asp-for="RazonSocial" id="razonSocialProveedor" class="form-control form-control-prosegin" readonly="@(!edicion)" />
+                            <span asp-validation-for="RazonSocial" class="text-danger small"></span>
+                        </div>
+                        <div class="mb-2">
+                            <label asp-for="DireccionFiscal" class="form-label-prosegin proveedor-label">Dirección Fiscal Registrada *</label>
+                            <input asp-for="DireccionFiscal" id="direccionFiscalProveedor" class="form-control form-control-prosegin" readonly="@(!edicion)" />
+                            <span asp-validation-for="DireccionFiscal" class="text-danger small"></span>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label asp-for="Especialidad" class="form-label-prosegin proveedor-label">Especialidad / Líneas de EPP Suministradas *</label>
+                                <select asp-for="Especialidad" class="form-select form-control-prosegin">
+                                    <option value="">Selecciona una especialidad</option>
+                                    <option>Protección Respiratoria, Auditiva y Cabeza</option>
+                                    <option>Protección Visual y Facial</option>
+                                    <option>Protección de Manos</option>
+                                    <option>Protección de Pies</option>
+                                    <option>Protección Corporal</option>
+                                    <option>Seguridad Industrial General</option>
+                                    <option>Otros Equipos de Protección Personal</option>
+                                </select>
+                                <span asp-validation-for="Especialidad" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="CondicionPago" class="form-label-prosegin proveedor-label">Condición de Crédito / Pago Habitual *</label>
+                                <select asp-for="CondicionPago" class="form-select form-control-prosegin">
+                                    <option value="">Selecciona una condición</option>
+                                    <option>Contado</option>
+                                    <option>Crédito a 7 días</option>
+                                    <option>Crédito a 15 días</option>
+                                    <option>Crédito a 30 días</option>
+                                    <option>Crédito a 45 días</option>
+                                    <option>Crédito a 60 días</option>
+                                </select>
+                                <span asp-validation-for="CondicionPago" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="prosegin-card proveedor-section mb-3">
+                    <header class="proveedor-section-header">
+                        <span class="proveedor-step">2</span>
+                        <span>PERSONA DE CONTACTO COMERCIAL / VENTAS</span>
+                        <span class="proveedor-required-note">Receptor oficial de Órdenes de Compra</span>
+                    </header>
+                    <div class="proveedor-section-body">
+                        <div id="contactos" data-collection>
+                            @for (var i = 0; i < Model.Contactos.Count; i++)
+                            {
+                                <div class="row g-2 proveedor-contact-row" data-row>
+                                    <div class="col-md-6">
+                                        <label asp-for="Contactos[i].Nombre" class="form-label-prosegin proveedor-label">Nombres y Apellidos Completos *</label>
+                                        <input asp-for="Contactos[i].Nombre" class="form-control form-control-prosegin" placeholder="Nombre del contacto" />
+                                        <span asp-validation-for="Contactos[i].Nombre" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label asp-for="Contactos[i].Cargo" class="form-label-prosegin proveedor-label">Cargo o Rol en la Empresa *</label>
+                                        <input asp-for="Contactos[i].Cargo" class="form-control form-control-prosegin" placeholder="Ej. Key Account Manager Industrial & Safety" />
+                                        <span asp-validation-for="Contactos[i].Cargo" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label asp-for="Contactos[i].Correo" class="form-label-prosegin proveedor-label">Correo Electrónico Oficial * <span class="text-muted">(Para envío de O/C)</span></label>
+                                        <input asp-for="Contactos[i].Correo" class="form-control form-control-prosegin" placeholder="contacto@empresa.com" />
+                                        <span asp-validation-for="Contactos[i].Correo" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label asp-for="Contactos[i].Telefono" class="form-label-prosegin proveedor-label">Teléfono Celular * <span class="text-muted">(9 dígitos)</span></label>
+                                        <input asp-for="Contactos[i].Telefono" class="form-control form-control-prosegin" placeholder="987654321" inputmode="numeric" />
+                                        <span asp-validation-for="Contactos[i].Telefono" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-1 d-flex align-items-end justify-content-center pb-2">
+                                        <input asp-for="Contactos[i].EsPrincipal" class="form-check-input contacto-principal" checked="@(i == 0 || Model.Contactos[i].EsPrincipal)" title="Contacto principal" />
+                                        @if (Model.Contactos.Count > 1)
+                                        {
+                                            <button type="button" class="btn btn-link text-danger p-1" data-remove-row aria-label="Quitar contacto">
+                                                <i class="material-symbols-outlined">delete</i>
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-link btn-sm p-0" data-add-row="contactos">
+                                <i class="material-symbols-outlined align-middle">add</i> Agregar otro contacto
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="prosegin-card proveedor-section mb-3">
+                    <header class="proveedor-section-header">
+                        <span class="proveedor-step">3</span>
+                        <span>INFORMACIÓN DE PAGO (CUENTAS BANCARIAS)</span>
+                    </header>
+                    <div class="proveedor-section-body">
+                        <div class="alert alert-warning proveedor-bank-note py-2 mb-2">
+                            <i class="material-symbols-outlined">info</i>
+                            <span>Registre la cuenta oficial de la empresa para la transferencia de fondos por órdenes de compra autorizadas. Se debe incluir al menos una cuenta con su CCI correspondiente.</span>
+                        </div>
+                        <div id="cuentas" data-collection>
+                            @for (var i = 0; i < Model.CuentasBancarias.Count; i++)
+                            {
+                                var esPrincipal = i == 0 || Model.CuentasBancarias[i].EsPrincipal;
+                                <div class="proveedor-bank-card mb-2" data-row>
+                                    <div class="proveedor-bank-card-header">
+                                        <span><i class="material-symbols-outlined">account_balance</i> Cuenta Bancaria @(esPrincipal ? "Principal" : "Secundaria") (Moneda @(Model.CuentasBancarias[i].Moneda == "USD" ? "Extranjera - USD" : "Nacional - PEN"))</span>
+                                        @if (esPrincipal)
+                                        {
+                                            <span class="badge text-bg-success-subtle text-success">Principal</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">Opcional para importaciones</span>
+                                        }
+                                    </div>
+                                    <div class="row g-2 align-items-end">
+                                        <div class="col-md-4">
+                                            <label asp-for="CuentasBancarias[i].Banco" class="form-label-prosegin proveedor-label">Entidad Bancaria *</label>
+                                            <select asp-for="CuentasBancarias[i].Banco" class="form-select form-control-prosegin">
+                                                <option value="">Selecciona un banco</option>
+                                                <option value="Banco de Crédito del Perú (BCP)">Banco de Crédito del Perú (BCP)</option>
+                                                <option value="BBVA">BBVA</option>
+                                                <option value="Interbank">Interbank</option>
+                                                <option value="Scotiabank">Scotiabank</option>
+                                                <option value="Banco de la Nación">Banco de la Nación</option>
+                                                <option value="Otro">Otro</option>
+                                            </select>
+                                            <span asp-validation-for="CuentasBancarias[i].Banco" class="text-danger small"></span>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label asp-for="CuentasBancarias[i].Moneda" class="form-label-prosegin proveedor-label">Moneda *</label>
+                                            <select asp-for="CuentasBancarias[i].Moneda" class="form-select form-control-prosegin cuenta-moneda">
+                                                <option value="PEN">PEN</option>
+                                                <option value="USD">USD</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label asp-for="CuentasBancarias[i].NumeroCuenta" class="form-label-prosegin proveedor-label">Número de Cuenta *</label>
+                                            <input asp-for="CuentasBancarias[i].NumeroCuenta" class="form-control form-control-prosegin" placeholder="191-2345678-0-45" />
+                                            <span asp-validation-for="CuentasBancarias[i].NumeroCuenta" class="text-danger small"></span>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label asp-for="CuentasBancarias[i].Cci" class="form-label-prosegin proveedor-label">Código Interbancario (CCI - 20 dígitos) *</label>
+                                            <input asp-for="CuentasBancarias[i].Cci" class="form-control form-control-prosegin font-monospace" maxlength="20" inputmode="numeric" placeholder="00219100234567804552" />
+                                            <span asp-validation-for="CuentasBancarias[i].Cci" class="text-danger small"></span>
+                                        </div>
+                                        <input asp-for="CuentasBancarias[i].EsPrincipal" class="cuenta-principal" type="hidden" value="@esPrincipal.ToString().ToLowerInvariant()" />
+                                        @if (!esPrincipal)
+                                        {
+                                            <div class="col-12 text-end">
+                                                <button type="button" class="btn btn-link btn-sm text-danger p-0" data-remove-row>
+                                                    <i class="material-symbols-outlined align-middle">delete</i> Quitar cuenta
+                                                </button>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <button type="button" class="btn btn-link btn-sm p-0 mt-1" data-add-row="cuentas">
+                            <i class="material-symbols-outlined align-middle">add</i> Añadir otra cuenta bancaria
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="col-lg-4">
+                <section class="prosegin-card proveedor-status-card mb-3" aria-live="polite">
+                    <header class="proveedor-status-header">
+                        <span>ESTADO TRIBUTARIO</span>
+                        <span>SUNAT R.U.C.</span>
+                    </header>
+                    <div class="proveedor-status-body">
+                        <span class="text-muted small">RUC Verificado</span>
+                        <strong class="font-monospace" id="estadoRuc">@Model.Ruc</strong>
+                        <strong id="estadoRazonSocial" class="proveedor-status-business">@(string.IsNullOrWhiteSpace(Model.RazonSocial) ? "Consulta un RUC para validar" : string.IsNullOrWhiteSpace(Model.NombreComercial) ? Model.RazonSocial : Model.NombreComercial)</strong>
+                        <div class="proveedor-status-line"><span>Estado del Contribuyente:</span><strong id="estadoSunat">@(edicion ? Model.EstadoSunat : "Pendiente")</strong></div>
+                        <div class="proveedor-status-line"><span>Condición de Domicilio:</span><strong id="condicionSunat">@(edicion ? Model.CondicionSunat : "Pendiente")</strong></div>
+                        <div class="proveedor-status-line"><span>Comprobantes Autorizados:</span><strong>Factura Electrónica</strong></div>
+                        <div class="proveedor-status-line"><span>Tipo de Contribuyente:</span><strong id="tipoContribuyente">@(Model.Ruc.StartsWith("20", StringComparison.Ordinal) ? "Sociedad Anónima" : "Persona Natural")</strong></div>
+                        <div id="sunatEstado" class="small text-muted mt-2" aria-live="polite">@(edicion ? "Datos tributarios registrados." : "Ingresa el RUC y consulta SUNAT.")</div>
+                    </div>
+                </section>
+
+                <div class="alert alert-success proveedor-confirmation">
+                    <i class="material-symbols-outlined">check_circle</i>
+                    <div>
+                        <strong>Mensaje de Confirmación</strong>
+                        <p class="small mb-0">Al guardar, se confirmará el registro y volverás al directorio general con el nuevo proveedor en la lista.</p>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <div class="proveedor-form-actions">
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-warning fw-bold">
+                <i class="material-symbols-outlined align-middle">save</i> @(edicion ? "Guardar Cambios" : "Guardar Proveedor")
+            </button>
+        </div>
+    </form>
+</div>
+
+<template id="contactoTemplate">
+    <div class="row g-2 proveedor-contact-row" data-row>
+        <div class="col-md-6"><label class="form-label-prosegin proveedor-label">Nombres y Apellidos Completos *</label><input name="Contactos[__index__].Nombre" class="form-control form-control-prosegin" /><span class="text-danger small" data-valmsg-for="Contactos[__index__].Nombre"></span></div>
+        <div class="col-md-6"><label class="form-label-prosegin proveedor-label">Cargo o Rol en la Empresa *</label><input name="Contactos[__index__].Cargo" class="form-control form-control-prosegin" /><span class="text-danger small" data-valmsg-for="Contactos[__index__].Cargo"></span></div>
+        <div class="col-md-6"><label class="form-label-prosegin proveedor-label">Correo Electrónico Oficial *</label><input name="Contactos[__index__].Correo" class="form-control form-control-prosegin" type="email" /><span class="text-danger small" data-valmsg-for="Contactos[__index__].Correo"></span></div>
+        <div class="col-md-5"><label class="form-label-prosegin proveedor-label">Teléfono Celular *</label><input name="Contactos[__index__].Telefono" class="form-control form-control-prosegin" inputmode="numeric" /><span class="text-danger small" data-valmsg-for="Contactos[__index__].Telefono"></span></div>
+        <div class="col-md-1 d-flex align-items-end justify-content-center pb-2"><input type="checkbox" name="Contactos[__index__].EsPrincipal" value="true" class="form-check-input contacto-principal" /><input type="hidden" name="Contactos[__index__].EsPrincipal" value="false" /><button type="button" class="btn btn-link text-danger p-1" data-remove-row aria-label="Quitar contacto"><i class="material-symbols-outlined">delete</i></button></div>
+    </div>
+</template>
+
+<template id="cuentaTemplate">
+    <div class="proveedor-bank-card mb-2" data-row>
+        <div class="proveedor-bank-card-header"><span><i class="material-symbols-outlined">account_balance</i> Cuenta Bancaria Secundaria</span><span class="text-muted small">Opcional para importaciones</span></div>
+        <div class="row g-2 align-items-end">
+            <div class="col-md-4"><label class="form-label-prosegin proveedor-label">Entidad Bancaria *</label><select name="CuentasBancarias[__index__].Banco" class="form-select form-control-prosegin"><option value="">Selecciona un banco</option><option value="Banco de Crédito del Perú (BCP)">Banco de Crédito del Perú (BCP)</option><option>BBVA</option><option>Interbank</option><option>Scotiabank</option><option>Banco de la Nación</option><option>Otro</option></select></div>
+            <div class="col-md-2"><label class="form-label-prosegin proveedor-label">Moneda *</label><select name="CuentasBancarias[__index__].Moneda" class="form-select form-control-prosegin cuenta-moneda"><option value="PEN">PEN</option><option value="USD">USD</option></select></div>
+            <div class="col-md-3"><label class="form-label-prosegin proveedor-label">Número de Cuenta *</label><input name="CuentasBancarias[__index__].NumeroCuenta" class="form-control form-control-prosegin" placeholder="191-2345678-0-45" /></div>
+            <div class="col-md-3"><label class="form-label-prosegin proveedor-label">Código Interbancario (CCI - 20 dígitos) *</label><input name="CuentasBancarias[__index__].Cci" class="form-control form-control-prosegin font-monospace" maxlength="20" inputmode="numeric" /></div>
+            <input name="CuentasBancarias[__index__].EsPrincipal" type="hidden" value="false" />
+            <div class="col-12 text-end"><button type="button" class="btn btn-link btn-sm text-danger p-0" data-remove-row><i class="material-symbols-outlined align-middle">delete</i> Quitar cuenta</button></div>
+        </div>
+    </div>
+</template>
+
+<style>
+    .proveedor-form-page { max-width: 1500px; margin: 0 auto; }
+    .proveedor-form-page .page-title { font-size: 1.2rem; font-weight: 800; }
+    .proveedor-form-page .page-subtitle { color: #7890a8; font-size: .78rem; }
+    .proveedor-section { border: 1px solid #e3eaf2; border-radius: .55rem; }
+    .proveedor-section-header { min-height: 42px; display: flex; align-items: center; gap: .55rem; padding: .55rem .8rem; border-bottom: 1px solid #edf1f6; color: #17283e; font-size: .72rem; font-weight: 800; }
+    .proveedor-step { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #17283e; color: #fff; font-size: .7rem; }
+    .proveedor-required-note { margin-left: auto; color: #8798aa; font-size: .62rem; font-weight: 500; }
+    .proveedor-section-body { padding: .75rem; }
+    .proveedor-label { display: block; margin-bottom: .25rem; color: #394b61; font-size: .65rem; font-weight: 650; }
+    .proveedor-label .text-muted { font-size: .59rem; font-weight: 400; }
+    .proveedor-section .form-control, .proveedor-section .form-select, .proveedor-section .input-group-text { min-height: 34px; font-size: .72rem; }
+    .proveedor-sunat-button { min-width: 72px; display: flex; gap: .3rem; align-items: center; justify-content: center; padding: .25rem .4rem; font-size: .62rem; line-height: 1.1; }
+    .proveedor-sunat-button .material-symbols-outlined { font-size: 1.1rem; }
+    .proveedor-contact-row { padding-bottom: .5rem; margin-bottom: .5rem; }
+    .proveedor-contact-row + .proveedor-contact-row { border-top: 1px solid #edf1f6; padding-top: .65rem; }
+    .proveedor-bank-note { display: flex; gap: .5rem; align-items: center; font-size: .67rem; color: #647a91; }
+    .proveedor-bank-note .material-symbols-outlined { color: #dc8d18; font-size: 1rem; }
+    .proveedor-bank-card { padding: .6rem; border: 1px solid #e2eaf2; border-radius: .4rem; }
+    .proveedor-bank-card-header { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: .5rem; color: #35485e; font-size: .65rem; font-weight: 700; }
+    .proveedor-bank-card-header .material-symbols-outlined { font-size: .85rem; vertical-align: middle; }
+    .proveedor-status-card { border: 1px solid #e1e9f1; border-radius: .55rem; }
+    .proveedor-status-header { display: flex; justify-content: space-between; gap: .5rem; padding: .75rem; border-bottom: 1px solid #edf1f6; color: #8396aa; font-size: .63rem; font-weight: 800; }
+    .proveedor-status-body { display: flex; flex-direction: column; gap: .3rem; padding: .75rem; font-size: .69rem; }
+    .proveedor-status-body > strong { color: #17283e; }
+    .proveedor-status-business { font-size: .75rem; }
+    .proveedor-status-line { display: flex; justify-content: space-between; gap: .5rem; align-items: center; padding-top: .28rem; color: #71849a; font-size: .63rem; }
+    .proveedor-status-line strong { color: #273d54; text-align: right; }
+    .proveedor-confirmation { display: flex; gap: .55rem; padding: .75rem; font-size: .72rem; }
+    .proveedor-confirmation > .material-symbols-outlined { color: #17a975; }
+    .proveedor-form-actions { display: flex; justify-content: flex-end; gap: .6rem; padding: .8rem 0; border-top: 1px solid #e5ebf1; }
+    .proveedor-form-actions .btn { font-size: .75rem; }
+    @@media (min-width: 992px) { .proveedor-status-card { position: sticky; top: 1rem; } }
+</style>
+
+<script>
+(() => {
+    const form = document.getElementById('formProveedor');
+    const renumber = collection => {
+        [...collection.querySelectorAll('[data-row]')].forEach((row, index) => {
+            row.querySelectorAll('[name], [id], [for], [data-valmsg-for]').forEach(element => {
+                for (const attribute of ['name', 'id', 'for', 'data-valmsg-for']) {
+                    const value = element.getAttribute(attribute);
+                    if (value) element.setAttribute(attribute, value.replace(/\[\d+\]/, `[${index}]`));
+                }
+            });
+        });
+    };
+
+    const updateAccountCards = () => {
+        document.querySelectorAll('#cuentas [data-row]').forEach((row, index) => {
+            const currency = row.querySelector('.cuenta-moneda').value;
+            const principal = index === 0;
+            const heading = row.querySelector('.proveedor-bank-card-header span:first-child');
+            heading.innerHTML = `<i class="material-symbols-outlined">account_balance</i> Cuenta Bancaria ${principal ? 'Principal' : 'Secundaria'} (Moneda ${currency === 'USD' ? 'Extranjera - USD' : 'Nacional - PEN'})`;
+            const marker = row.querySelector('.cuenta-principal');
+            if (marker) marker.value = principal ? 'true' : 'false';
+        });
+    };
+
+    form.addEventListener('click', event => {
+        const addButton = event.target.closest('[data-add-row]');
+        if (addButton) {
+            const isContact = addButton.dataset.addRow === 'contactos';
+            const collection = document.getElementById(addButton.dataset.addRow);
+            const template = document.getElementById(isContact ? 'contactoTemplate' : 'cuentaTemplate');
+            const index = collection.querySelectorAll('[data-row]').length;
+            collection.insertAdjacentHTML('beforeend', template.innerHTML.replaceAll('__index__', index));
+            if (!isContact) updateAccountCards();
+            return;
+        }
+
+        const removeButton = event.target.closest('[data-remove-row]');
+        if (removeButton) {
+            removeButton.closest('[data-row]').remove();
+            document.querySelectorAll('[data-collection]').forEach(renumber);
+            updateAccountCards();
+        }
+    });
+
+    form.addEventListener('change', event => {
+        if (event.target.matches('.contacto-principal') && event.target.checked) {
+            form.querySelectorAll('.contacto-principal').forEach(input => {
+                if (input !== event.target) input.checked = false;
+            });
+        }
+        if (event.target.matches('.cuenta-moneda')) updateAccountCards();
+    });
+
+    document.querySelectorAll('[data-collection]').forEach(renumber);
+    updateAccountCards();
+
+    const lookup = document.getElementById('consultarSunat');
+    if (!lookup) return;
+    lookup.addEventListener('click', async () => {
+        const ruc = document.getElementById('rucProveedor').value.trim();
+        const status = document.getElementById('sunatEstado');
+        status.textContent = 'Consultando SUNAT...';
+        status.className = 'small text-muted mt-2';
+        try {
+            const response = await fetch(`@Url.Action("ConsultarSunat")?ruc=${encodeURIComponent(ruc)}`);
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || 'No se pudo consultar SUNAT.');
+            document.getElementById('razonSocialProveedor').value = result.razonSocial || '';
+            document.getElementById('direccionFiscalProveedor').value = result.direccionFiscal || '';
+            document.getElementById('estadoRuc').textContent = result.ruc || ruc;
+            document.getElementById('estadoRazonSocial').textContent = result.razonSocial || '';
+            document.getElementById('estadoSunat').textContent = result.estado || 'NO VERIFICADO';
+            document.getElementById('condicionSunat').textContent = result.condicion || 'NO VERIFICADO';
+            document.getElementById('tipoContribuyente').textContent = ruc.startsWith('20') ? 'Persona Jurídica' : 'Persona Natural con Negocio';
+            const valido = result.esActivo && result.esHabido;
+            status.textContent = valido ? 'RUC verificado y habilitado para el registro.' : 'SUNAT reporta un estado o condición que no permite registrar al proveedor.';
+            status.className = `small mt-2 ${valido ? 'text-success' : 'text-danger'}`;
+        } catch (error) {
+            status.textContent = error.message;
+            status.className = 'small text-danger mt-2';
+        }
+    });
+})();
+</script>

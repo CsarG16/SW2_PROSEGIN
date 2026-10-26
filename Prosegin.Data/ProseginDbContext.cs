@@ -17,6 +17,8 @@ public class ProseginDbContext : DbContext
     public DbSet<CotizacionDetalle> CotizacionDetalles { get; set; }
     public DbSet<OrdenVenta> OrdenesVenta { get; set; }
     public DbSet<Proveedor> Proveedores { get; set; }
+    public DbSet<ContactoProveedor> ContactosProveedor { get; set; }
+    public DbSet<CuentaBancariaProveedor> CuentasBancariasProveedor { get; set; }
     public DbSet<ProductoProveedor> ProductoProveedores { get; set; }
     public DbSet<OrdenCompra> OrdenesCompra { get; set; }
     public DbSet<OrdenCompraDetalle> OrdenCompraDetalles { get; set; }
@@ -85,6 +87,50 @@ public class ProseginDbContext : DbContext
         {
             entity.ToTable("OrdenesCompra");
             entity.Property(e => e.Total).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<Proveedor>(entity =>
+        {
+            entity.ToTable("Proveedores");
+            entity.HasIndex(e => e.Ruc).IsUnique();
+            entity.Property(e => e.Ruc).HasMaxLength(11).IsRequired();
+            entity.Property(e => e.DireccionFiscal).HasMaxLength(250).HasDefaultValue(string.Empty);
+            entity.Property(e => e.CorreoComercial).HasMaxLength(100).HasDefaultValue(string.Empty);
+            entity.Property(e => e.NombreComercial).HasMaxLength(150).HasDefaultValue(string.Empty);
+            entity.Property(e => e.Especialidad).HasMaxLength(200).HasDefaultValue(string.Empty);
+            entity.Property(e => e.CondicionPago).HasMaxLength(100).HasDefaultValue(string.Empty);
+            entity.Property(e => e.EstadoSunat).HasMaxLength(30).HasDefaultValue("NO VERIFICADO");
+            entity.Property(e => e.CondicionSunat).HasMaxLength(30).HasDefaultValue("NO VERIFICADO");
+            entity.Property(e => e.Activo).HasDefaultValue(true);
+        });
+
+        modelBuilder.Entity<ContactoProveedor>(entity =>
+        {
+            entity.ToTable("ContactosProveedor");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Nombre).HasMaxLength(150).IsRequired();
+            entity.Property(e => e.Cargo).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Telefono).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Correo).HasMaxLength(150).IsRequired();
+            entity.HasOne(e => e.Proveedor)
+                .WithMany(e => e.Contactos)
+                .HasForeignKey(e => e.ProveedorId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CuentaBancariaProveedor>(entity =>
+        {
+            entity.ToTable("CuentasBancariasProveedor");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Banco).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Moneda).HasMaxLength(3).HasDefaultValue("PEN").IsRequired();
+            entity.Property(e => e.NumeroCuenta).HasMaxLength(30).IsRequired();
+            entity.Property(e => e.Cci).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.EsPrincipal).HasDefaultValue(false);
+            entity.HasOne(e => e.Proveedor)
+                .WithMany(e => e.CuentasBancarias)
+                .HasForeignKey(e => e.ProveedorId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<ProductoProveedor>(entity =>
