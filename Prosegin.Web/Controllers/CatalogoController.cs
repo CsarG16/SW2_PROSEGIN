@@ -263,7 +263,7 @@ public class CatalogoController : Controller
             }
         }
 
-        TempData["SuccessMessage"] = "Producto registrado con éxito";
+        TempData["SuccessMessage"] = "Producto y ficha técnica registrados correctamente";
         return RedirectToAction(nameof(Index));
     }
 
@@ -371,7 +371,7 @@ public class CatalogoController : Controller
                 }
             }
         }
-        TempData["SuccessMessage"] = "Producto y tarifas por proveedor actualizados correctamente.";
+        TempData["SuccessMessage"] = "Producto y ficha técnica registrados correctamente";
         return RedirectToAction(nameof(Index));
     }
 

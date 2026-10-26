@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
 
 namespace Prosegin.Web.ViewModels.Clientes
 {
@@ -53,5 +54,31 @@ namespace Prosegin.Web.ViewModels.Clientes
 
         [Display(Name = "Condición SUNAT")]
         public string CondicionSunat { get; set; } = "NO VERIFICADO";
+
+        public int? ClienteId { get; set; }
+
+        public List<ContactoClienteViewModel> Contactos { get; set; } = new();
+    }
+
+    public class ContactoClienteViewModel
+    {
+        [Required(ErrorMessage = "Los nombres y apellidos son obligatorios.")]
+        [StringLength(150)]
+        public string Nombre { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "El cargo es obligatorio.")]
+        [StringLength(100)]
+        public string Cargo { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "El teléfono celular es obligatorio.")]
+        [RegularExpression(@"^9[0-9]{8}$", ErrorMessage = "El teléfono debe tener 9 dígitos y comenzar con 9.")]
+        public string Telefono { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "El correo electrónico es obligatorio.")]
+        [EmailAddress(ErrorMessage = "El correo no tiene un formato válido.")]
+        [StringLength(150)]
+        public string Correo { get; set; } = string.Empty;
+
+        public bool EsPrincipal { get; set; }
     }
 }

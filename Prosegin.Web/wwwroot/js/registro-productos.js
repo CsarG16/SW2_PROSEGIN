@@ -30,6 +30,32 @@ document.addEventListener('DOMContentLoaded', () => {
     let skuPendiente = false;
     let fichaVersion = 0;
     let fichaValidada = false;
+    let fichaObjectUrl = null;
+    let fichaPagina = 1;
+    let fichaZoom = 100;
+
+    const visor = document.getElementById('visorFichaTecnica');
+    const visorFrame = document.getElementById('visorFichaFrame');
+    const visorPaginaTexto = document.getElementById('visorPaginaTexto');
+    const visorZoomTexto = document.getElementById('visorZoomTexto');
+
+    function actualizarVisor() {
+        if (!visorFrame || !fichaObjectUrl) return;
+        visorFrame.src = `${fichaObjectUrl}#page=${fichaPagina}&zoom=${fichaZoom}`;
+        visorPaginaTexto.textContent = `Página ${fichaPagina}`;
+        visorZoomTexto.textContent = `${fichaZoom}%`;
+    }
+
+    function mostrarVisor(file) {
+        if (!visor || !visorFrame) return;
+        if (fichaObjectUrl) URL.revokeObjectURL(fichaObjectUrl);
+        fichaObjectUrl = URL.createObjectURL(file);
+        fichaPagina = 1;
+        fichaZoom = 100;
+        document.getElementById('visorFichaNombre').textContent = file.name;
+        visor.classList.remove('d-none');
+        actualizarVisor();
+    }
 
     function costoValido() {
         return costo.value !== '' && Number(costo.value) > 0 && costo.validity.valid;
@@ -306,8 +332,14 @@ document.addEventListener('DOMContentLoaded', () => {
         fichaVersion++;
         fichaValidada = false;
         archivo.value = '';
+        if (fichaObjectUrl) {
+            URL.revokeObjectURL(fichaObjectUrl);
+            fichaObjectUrl = null;
+        }
         cargado.classList.add('d-none');
         zona.classList.remove('d-none');
+        visor.classList.add('d-none');
+        visorFrame.removeAttribute('src');
         document.getElementById('lblFichaNombre').textContent = '';
         document.getElementById('lblFichaTamano').textContent = '';
         fichaError.textContent = '';
@@ -343,6 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('lblFichaTamano').textContent = `(${(file.size / 1024 / 1024).toFixed(2)} MB)`;
         cargado.classList.remove('d-none');
         zona.classList.add('d-none');
+        mostrarVisor(file);
         actualizarEstado();
     }
 
@@ -365,6 +398,23 @@ document.addEventListener('DOMContentLoaded', () => {
         else resetearFicha();
     });
     document.getElementById('btnQuitarFicha').addEventListener('click', resetearFicha);
+    document.getElementById('btnCambiarFicha').addEventListener('click', () => archivo.click());
+    document.getElementById('visorPaginaAnterior').addEventListener('click', () => {
+        fichaPagina = Math.max(1, fichaPagina - 1);
+        actualizarVisor();
+    });
+    document.getElementById('visorPaginaSiguiente').addEventListener('click', () => {
+        fichaPagina++;
+        actualizarVisor();
+    });
+    document.getElementById('visorZoomMenos').addEventListener('click', () => {
+        fichaZoom = Math.max(50, fichaZoom - 10);
+        actualizarVisor();
+    });
+    document.getElementById('visorZoomMas').addEventListener('click', () => {
+        fichaZoom = Math.min(200, fichaZoom + 10);
+        actualizarVisor();
+    });
     [nombre, categoria, costo].forEach(control => {
         control.addEventListener('input', actualizarEstado);
         control.addEventListener('change', actualizarEstado);

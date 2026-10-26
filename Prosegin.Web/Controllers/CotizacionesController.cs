@@ -61,7 +61,11 @@ public class CotizacionesController : Controller
                 Correlativo = c.Correlativo,
                 Cliente = c.Cliente.RazonSocial,
                 Ruc = c.Cliente.Ruc,
-                ClienteCorreo = c.Cliente.CorreoElectronico,
+                ClienteCorreo = c.Cliente.Contactos
+                    .OrderByDescending(contacto => contacto.EsPrincipal)
+                    .ThenBy(contacto => contacto.Id)
+                    .Select(contacto => contacto.Correo)
+                    .FirstOrDefault() ?? c.Cliente.CorreoElectronico,
                 FechaEmision = c.FechaEmision,
                 FechaVencimiento = c.FechaVencimiento ?? c.FechaEmision.AddHours(48),
                 Total = c.Total,
