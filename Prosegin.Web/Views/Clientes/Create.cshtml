@@ -347,7 +347,7 @@
             function validarFormatoCorreo(email) {
                 if (!email) return false;
                 const atChar = String.fromCharCode(64);
-                const regex = new RegExp('^[^\\s' + atChar + ']+' + atChar + '[^\\s' + atChar + ']+\\.[^\\s' + atChar + ']+$');
+                const regex = new RegExp('^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*' + atChar + '[A-Za-z0-9]+(?:[.-][A-Za-z0-9]+)*\\.[A-Za-z]{2,}$');
                 return regex.test(email);
             }
 
@@ -539,7 +539,7 @@
                         telefono.focus();
                         return false;
                     }
-                    if (!correo.validity.valid) {
+                    if (!validarFormatoCorreo(correo.value.trim())) {
                         correo.classList.add('is-invalid');
                         window.ProseginToast?.error('Ingrese un correo electrónico válido');
                         correo.focus();
@@ -1125,8 +1125,10 @@
                 });
 
                 if (filas.length > 0 && !tienePrincipal) {
-                    const primerCheck = filas[0].querySelector('input[name$=".EsPrincipal"]');
-                    if (primerCheck) primerCheck.checked = true;
+                    contactosValidos = false;
+                    if (!primerElementoInvalido) {
+                        primerElementoInvalido = filas[0].querySelector('input[name$=".EsPrincipal"]');
+                    }
                 }
 
                 if (!esValido || !contactosValidos) {
@@ -1137,9 +1139,12 @@
                         primerElementoInvalido.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
                     if (!contactosValidos) {
-                        ProseginAlert.warning('Por favor revise los contactos. El celular debe tener 9 dígitos numéricos (iniciando con 9) y el correo debe ser válido.', 'Datos de contacto inválidos');
+                        const mensajeContacto = filas.length > 0 && !tienePrincipal
+                            ? 'Seleccione un contacto principal'
+                            : 'Ingrese un correo electrónico válido o revise el teléfono del contacto';
+                        window.ProseginToast?.error(mensajeContacto);
                     } else {
-                        ProseginAlert.warning('Por favor complete los campos obligatorios marcados con asterisco (*).', 'Formulario incompleto');
+                        window.ProseginToast?.error('Complete los campos obligatorios');
                     }
                     return false;
                 }

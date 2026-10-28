@@ -28,7 +28,7 @@ namespace Prosegin.Web.ViewModels.Clientes
         [Display(Name = "Teléfono de Contacto Fiscal")]
         public string? Telefono { get; set; }
 
-        [EmailAddress(ErrorMessage = "El correo no tiene un formato válido.")]
+        [RegularExpression(@"^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*@[A-Za-z0-9]+(?:[.-][A-Za-z0-9]+)*\.[A-Za-z]{2,}$", ErrorMessage = "Ingrese un correo electrónico válido")]
         [StringLength(100, ErrorMessage = "El correo no puede exceder los 100 caracteres.")]
         [Display(Name = "Correo Electrónico")]
         public string? CorreoElectronico { get; set; }
@@ -75,7 +75,7 @@ namespace Prosegin.Web.ViewModels.Clientes
         public string Telefono { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "El correo electrónico es obligatorio.")]
-        [EmailAddress(ErrorMessage = "El correo no tiene un formato válido.")]
+        [RegularExpression(@"^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*@[A-Za-z0-9]+(?:[.-][A-Za-z0-9]+)*\.[A-Za-z]{2,}$", ErrorMessage = "Ingrese un correo electrónico válido")]
         [StringLength(150)]
         public string Correo { get; set; } = string.Empty;
 

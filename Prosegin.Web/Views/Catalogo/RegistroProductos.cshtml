@@ -380,7 +380,9 @@
                             </button>
                         </div>
                     </div>
-                    <iframe id="visorFichaFrame" title="Vista previa de la ficha técnica" class="ficha-viewer-frame"></iframe>
+                    <div class="ficha-viewer-page-wrap">
+                        <canvas id="visorFichaCanvas" aria-label="Contenido de la ficha técnica"></canvas>
+                    </div>
                 </div>
 
                 <span asp-validation-for="FichaTecnica" id="fichaError" class="text-danger small d-block mt-2" role="alert"></span>

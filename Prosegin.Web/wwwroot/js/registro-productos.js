@@ -35,21 +35,21 @@ document.addEventListener('DOMContentLoaded', () => {
     let fichaPagina = 1;
     let fichaTotalPaginas = 1;
     let fichaZoom = 100;
+    let fichaViewer = null;
 
     const visor = document.getElementById('visorFichaTecnica');
-    const visorFrame = document.getElementById('visorFichaFrame');
+    const visorCanvas = document.getElementById('visorFichaCanvas');
     const visorPaginaTexto = document.getElementById('visorPaginaTexto');
     const visorZoomTexto = document.getElementById('visorZoomTexto');
 
     function actualizarVisor() {
-        if (!visorFrame || !fichaObjectUrl) return;
-        visorFrame.src = `${fichaObjectUrl}#page=${fichaPagina}&zoom=${fichaZoom}`;
+        if (!visorCanvas) return;
         visorPaginaTexto.textContent = `Página ${fichaPagina} de ${fichaTotalPaginas}`;
         visorZoomTexto.textContent = `${fichaZoom}%`;
     }
 
     async function mostrarVisor(file) {
-        if (!visor || !visorFrame) return;
+        if (!visor || !visorCanvas) return;
         if (fichaObjectUrl) URL.revokeObjectURL(fichaObjectUrl);
         fichaObjectUrl = URL.createObjectURL(file);
         fichaPagina = 1;
@@ -57,7 +57,16 @@ document.addEventListener('DOMContentLoaded', () => {
         fichaZoom = 100;
         document.getElementById('visorFichaNombre').textContent = file.name;
         visor.classList.remove('d-none');
-        actualizarVisor();
+        fichaViewer = await window.ProseginPdfViewer.mount({
+            canvas: visorCanvas,
+            source: fichaObjectUrl,
+            onChange: (pagina, total, zoom) => {
+                fichaPagina = pagina;
+                fichaTotalPaginas = total;
+                fichaZoom = zoom;
+                actualizarVisor();
+            }
+        });
     }
 
     async function contarPaginasPdf(file) {
@@ -353,7 +362,8 @@ document.addEventListener('DOMContentLoaded', () => {
         cargado.classList.add('d-none');
         zona.classList.remove('d-none');
         visor.classList.add('d-none');
-        visorFrame.removeAttribute('src');
+        fichaViewer?.destroy();
+        fichaViewer = null;
         document.getElementById('lblFichaNombre').textContent = '';
         document.getElementById('lblFichaTamano').textContent = '';
         fichaError.textContent = '';
@@ -426,24 +436,20 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnQuitarFicha').addEventListener('click', resetearFicha);
     document.getElementById('btnCambiarFicha').addEventListener('click', () => archivo.click());
     document.getElementById('visorPaginaAnterior').addEventListener('click', () => {
-        fichaPagina = Math.max(1, fichaPagina - 1);
-        actualizarVisor();
+        fichaViewer?.previous().then(changed => {
+            if (!changed) window.ProseginToast?.info('Ya se encuentra en la primera página del documento');
+        });
     });
     document.getElementById('visorPaginaSiguiente').addEventListener('click', () => {
-        if (fichaPagina >= fichaTotalPaginas) {
-            window.ProseginToast?.info('Ya se encuentra en la última página del documento');
-            return;
-        }
-        fichaPagina++;
-        actualizarVisor();
+        fichaViewer?.next().then(changed => {
+            if (!changed) window.ProseginToast?.info('Ya se encuentra en la última página del documento');
+        });
     });
     document.getElementById('visorZoomMenos').addEventListener('click', () => {
-        fichaZoom = Math.max(50, fichaZoom - 25);
-        actualizarVisor();
+        fichaViewer?.zoomOut();
     });
     document.getElementById('visorZoomMas').addEventListener('click', () => {
-        fichaZoom = Math.min(200, fichaZoom + 25);
-        actualizarVisor();
+        fichaViewer?.zoomIn();
     });
     [nombre, categoria, costo].forEach(control => {
         control.addEventListener('input', actualizarEstado);
