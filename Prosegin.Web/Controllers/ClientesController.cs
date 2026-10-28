@@ -365,6 +365,8 @@ namespace Prosegin.Web.Controllers
             }
 
             TempData["ToastError"] = ObtenerMensajeValidacionContacto();
+            ViewBag.FormAction = "Create";
+            ViewBag.FormTitle = "Registrar cliente";
             return View(model);
         }
 
