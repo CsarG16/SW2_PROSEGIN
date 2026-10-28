@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using Prosegin.Data;
 using Prosegin.Data.Entities;
 using Prosegin.Data.Validation;
@@ -255,6 +256,7 @@ namespace Prosegin.Web.Controllers
                 if (rucExiste)
                 {
                     ModelState.AddModelError("Ruc", "El RUC ingresado ya se encuentra registrado en el padrón de clientes.");
+                    TempData["ToastError"] = "El RUC ingresado ya se encuentra registrado en el padrón de clientes.";
                     return View(model);
                 }
 
@@ -362,6 +364,7 @@ namespace Prosegin.Web.Controllers
                 return RedirectToAction(nameof(Create));
             }
 
+            TempData["ToastError"] = ObtenerMensajeValidacionContacto();
             return View(model);
         }
 
@@ -419,6 +422,7 @@ namespace Prosegin.Web.Controllers
 
             ViewBag.FormAction = "Edit";
             ViewBag.FormTitle = "Editar cliente";
+            TempData["ToastError"] = ObtenerMensajeValidacionContacto();
             return View("Create", model);
         }
 
@@ -453,11 +457,59 @@ namespace Prosegin.Web.Controllers
         {
             model.Contactos ??= new List<ContactoClienteViewModel>();
             if (model.Contactos.Count > 3)
-                ModelState.AddModelError("Contactos", "Cada cliente puede tener como máximo 3 contactos.");
+                ModelState.AddModelError("Contactos", "Solo se permite un máximo de 3 contactos por cliente");
 
             var principales = model.Contactos.Count(c => c.EsPrincipal);
             if (principales > 1)
                 ModelState.AddModelError("Contactos", "Solo puede existir un contacto principal.");
+            else if (model.Contactos.Count > 0 && principales == 0)
+                ModelState.AddModelError("Contactos", "Seleccione un contacto principal");
+
+            for (var i = 0; i < model.Contactos.Count; i++)
+            {
+                var contacto = model.Contactos[i];
+                if (string.IsNullOrWhiteSpace(contacto.Nombre)
+                    || string.IsNullOrWhiteSpace(contacto.Cargo)
+                    || string.IsNullOrWhiteSpace(contacto.Telefono)
+                    || string.IsNullOrWhiteSpace(contacto.Correo))
+                {
+                    ModelState.AddModelError($"Contactos[{i}]", "Complete los campos obligatorios del contacto");
+                }
+
+                if (!string.IsNullOrWhiteSpace(contacto.Telefono)
+                    && contacto.Telefono.Any(char.IsLetter))
+                {
+                    ModelState.AddModelError($"Contactos[{i}].Telefono", "El teléfono debe contener solo números");
+                }
+                else if (!string.IsNullOrWhiteSpace(contacto.Telefono)
+                    && !System.Text.RegularExpressions.Regex.IsMatch(contacto.Telefono, @"^9[0-9]{8}$"))
+                {
+                    ModelState.AddModelError($"Contactos[{i}].Telefono", "El teléfono debe ser un celular de 9 dígitos");
+                }
+
+                if (!string.IsNullOrWhiteSpace(contacto.Correo)
+                    && !new EmailAddressAttribute().IsValid(contacto.Correo))
+                {
+                    ModelState.AddModelError($"Contactos[{i}].Correo", "Ingrese un correo electrónico válido");
+                }
+            }
+        }
+
+        private string ObtenerMensajeValidacionContacto()
+        {
+            var errores = ModelState
+                .SelectMany(par => par.Value?.Errors.Select(error => error.ErrorMessage)
+                    ?? Enumerable.Empty<string>())
+                .Where(mensaje => !string.IsNullOrWhiteSpace(mensaje))
+                .ToList();
+
+            return errores.FirstOrDefault(mensaje => mensaje.Contains("Solo se permite", StringComparison.OrdinalIgnoreCase))
+                   ?? errores.FirstOrDefault(mensaje => mensaje.Contains("Seleccione un contacto principal", StringComparison.OrdinalIgnoreCase))
+                   ?? errores.FirstOrDefault(mensaje => mensaje.Contains("Complete los campos obligatorios del contacto", StringComparison.OrdinalIgnoreCase))
+                   ?? errores.FirstOrDefault(mensaje => mensaje.Contains("debe contener solo números", StringComparison.OrdinalIgnoreCase))
+                   ?? errores.FirstOrDefault(mensaje => mensaje.Contains("debe ser un celular", StringComparison.OrdinalIgnoreCase))
+                   ?? errores.FirstOrDefault(mensaje => mensaje.Contains("correo electrónico válido", StringComparison.OrdinalIgnoreCase))
+                   ?? "Revisa los campos obligatorios antes de guardar.";
         }
 
         // GET: Clientes/ConsultarSunat?ruc=20100047218

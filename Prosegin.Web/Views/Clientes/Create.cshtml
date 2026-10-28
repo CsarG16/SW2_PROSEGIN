@@ -350,12 +350,16 @@
 
             function actualizarBotonContacto() {
                 const total = tablaContactos.querySelectorAll('tbody tr').length;
-                btnAnadirContacto.disabled = total >= 3;
                 btnAnadirContacto.title = total >= 3 ? 'Máximo de 3 contactos alcanzado' : 'Añadir contacto';
             }
 
             function conectarFilaContacto(fila) {
                 fila.querySelector('.eliminar-contacto').addEventListener('click', () => {
+                    const principal = fila.querySelector('.contacto-principal');
+                    if (principal.checked) {
+                        window.ProseginToast?.error('Asigne otro contacto principal antes de eliminar este contacto');
+                        return;
+                    }
                     fila.remove();
                     renumerarContactos();
                     actualizarBotonContacto();
@@ -372,7 +376,10 @@
             tablaContactos.querySelectorAll('tbody tr').forEach(conectarFilaContacto);
             btnAnadirContacto.addEventListener('click', () => {
                 const indice = tablaContactos.querySelectorAll('tbody tr').length;
-                if (indice >= 3) return;
+                if (indice >= 3) {
+                    window.ProseginToast?.error('Solo se permite un máximo de 3 contactos por cliente');
+                    return;
+                }
                 const fila = document.createElement('tr');
                 fila.className = 'contacto-row';
                 fila.innerHTML = `
@@ -388,6 +395,50 @@
                 fila.querySelector('input').focus();
             });
             actualizarBotonContacto();
+
+            function validarContactosAntesDeEnviar() {
+                const filas = [...tablaContactos.querySelectorAll('tbody tr')];
+                const principal = filas.some(fila => fila.querySelector('.contacto-principal')?.checked);
+
+                for (const fila of filas) {
+                    const nombre = fila.querySelector('[name$=".Nombre"]');
+                    const cargo = fila.querySelector('[name$=".Cargo"]');
+                    const telefono = fila.querySelector('[name$=".Telefono"]');
+                    const correo = fila.querySelector('[name$=".Correo"]');
+                    const campos = [nombre, cargo, telefono, correo];
+
+                    campos.forEach(campo => campo.classList.toggle('is-invalid', !campo.value.trim()));
+                    if (campos.some(campo => !campo.value.trim())) {
+                        window.ProseginToast?.error('Complete los campos obligatorios del contacto');
+                        campos.find(campo => !campo.value.trim())?.focus();
+                        return false;
+                    }
+                    if (/[A-Za-z]/.test(telefono.value)) {
+                        telefono.classList.add('is-invalid');
+                        window.ProseginToast?.error('El teléfono debe contener solo números');
+                        telefono.focus();
+                        return false;
+                    }
+                    if (!/^9\d{8}$/.test(telefono.value)) {
+                        telefono.classList.add('is-invalid');
+                        window.ProseginToast?.error('El teléfono debe ser un celular de 9 dígitos');
+                        telefono.focus();
+                        return false;
+                    }
+                    if (!correo.validity.valid) {
+                        correo.classList.add('is-invalid');
+                        window.ProseginToast?.error('Ingrese un correo electrónico válido');
+                        correo.focus();
+                        return false;
+                    }
+                }
+
+                if (filas.length > 0 && !principal) {
+                    window.ProseginToast?.error('Seleccione un contacto principal');
+                    return false;
+                }
+                return true;
+            }
 
             if (btnGuardarCliente) {
                 btnGuardarCliente.addEventListener('click', function () {
@@ -863,6 +914,12 @@
             // Envío del Formulario con Validación
             form.addEventListener('submit', function (e) {
                 let esValido = true;
+
+                if (!validarContactosAntesDeEnviar()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
 
                 const ruc = txtRuc.value.trim();
                 if (rucConsultado !== ruc) {
