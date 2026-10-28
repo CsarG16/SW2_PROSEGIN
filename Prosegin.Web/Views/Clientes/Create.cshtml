@@ -25,10 +25,20 @@
     <form action="@Url.Action(accionFormulario, "Clientes")" method="post" id="formDatosTributarios" data-edicion="@esEdicion.ToString().ToLowerInvariant()" novalidate>
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="ClienteId" />
-        <input type="hidden" asp-for="EstadoSunat" id="hiddenEstadoSunat" value="NO VERIFICADO" />
-        <input type="hidden" asp-for="CondicionSunat" id="hiddenCondicionSunat" value="NO VERIFICADO" />
+        <input type="hidden" asp-for="EstadoSunat" id="hiddenEstadoSunat" />
+        <input type="hidden" asp-for="CondicionSunat" id="hiddenCondicionSunat" />
 
-        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger p-3 mb-4 rounded-3 border-danger shadow-sm d-flex align-items-start gap-3">
+                <i class="material-symbols-outlined fs-4 text-danger flex-shrink-0">error</i>
+                <div class="flex-grow-1">
+                    <div class="fw-bold text-danger text-uppercase mb-1" style="letter-spacing: 0.04em;">Errores detectados al intentar guardar</div>
+                    <div class="small text-danger mb-2">Por favor revise los campos señalados a continuación:</div>
+                    <div asp-validation-summary="All" class="text-danger small mb-0 fw-semibold"></div>
+                </div>
+            </div>
+        }
 
         <!-- Alerta Dinámica de Riesgo Tributario (No Habido / Baja) -->
         <div id="alertaRiesgoTributario" class="alert alert-danger d-none mb-4 p-3 border-danger rounded-3 shadow-sm d-flex align-items-start gap-3">
@@ -269,16 +279,30 @@
                         <tbody>
                             @for (var i = 0; i < Model.Contactos.Count; i++)
                             {
+                                var errNombre = ViewData.ModelState[$"Contactos[{i}].Nombre"]?.Errors.FirstOrDefault()?.ErrorMessage;
+                                var errCargo = ViewData.ModelState[$"Contactos[{i}].Cargo"]?.Errors.FirstOrDefault()?.ErrorMessage;
+                                var errTel = ViewData.ModelState[$"Contactos[{i}].Telefono"]?.Errors.FirstOrDefault()?.ErrorMessage;
+                                var errCorreo = ViewData.ModelState[$"Contactos[{i}].Correo"]?.Errors.FirstOrDefault()?.ErrorMessage;
+                                var prefix = $"Contactos[{i}]";
                                 <tr class="contacto-row">
                                     <td>
-                                        <input name="Contactos[@i].Nombre" value="@Model.Contactos[i].Nombre" class="form-control form-control-sm contacto-input" maxlength="150" required />
-                                        <span class="text-danger small field-validation-valid" data-valmsg-for="Contactos[@i].Nombre"></span>
+                                        <input name="@(prefix).Nombre" value="@Model.Contactos[i].Nombre" class="form-control form-control-sm contacto-input @(!string.IsNullOrEmpty(errNombre) ? "is-invalid" : "")" maxlength="150" required placeholder="Ej: Juan Pérez" />
+                                        <span class="text-danger small d-block error-contacto-msg" data-for="@(prefix).Nombre">@errNombre</span>
                                     </td>
-                                    <td><input name="Contactos[@i].Cargo" value="@Model.Contactos[i].Cargo" class="form-control form-control-sm contacto-input" maxlength="100" required /></td>
-                                    <td><input name="Contactos[@i].Telefono" value="@Model.Contactos[i].Telefono" class="form-control form-control-sm contacto-input" maxlength="9" pattern="9[0-9]{8}" inputmode="numeric" required /></td>
-                                    <td><input name="Contactos[@i].Correo" value="@Model.Contactos[i].Correo" class="form-control form-control-sm contacto-input" maxlength="150" type="email" required /></td>
+                                    <td>
+                                        <input name="@(prefix).Cargo" value="@Model.Contactos[i].Cargo" class="form-control form-control-sm contacto-input @(!string.IsNullOrEmpty(errCargo) ? "is-invalid" : "")" maxlength="100" required placeholder="Ej: Jefe de Compras" />
+                                        <span class="text-danger small d-block error-contacto-msg" data-for="@(prefix).Cargo">@errCargo</span>
+                                    </td>
+                                    <td>
+                                        <input name="@(prefix).Telefono" value="@Model.Contactos[i].Telefono" class="form-control form-control-sm contacto-input @(!string.IsNullOrEmpty(errTel) ? "is-invalid" : "")" maxlength="9" pattern="9[0-9]{8}" inputmode="numeric" required placeholder="987654321" />
+                                        <span class="text-danger small d-block error-contacto-msg" data-for="@(prefix).Telefono">@errTel</span>
+                                    </td>
+                                    <td>
+                                        <input name="@(prefix).Correo" value="@Model.Contactos[i].Correo" class="form-control form-control-sm contacto-input @(!string.IsNullOrEmpty(errCorreo) ? "is-invalid" : "")" maxlength="150" type="email" required placeholder="correo@empresa.com" />
+                                        <span class="text-danger small d-block error-contacto-msg" data-for="@(prefix).Correo">@errCorreo</span>
+                                    </td>
                                     <td class="text-center">
-                                        <input name="Contactos[@i].EsPrincipal" value="true" type="checkbox" class="form-check-input contacto-principal" @(Model.Contactos[i].EsPrincipal ? "checked" : null) />
+                                        <input name="@(prefix).EsPrincipal" value="true" type="checkbox" class="form-check-input contacto-principal" @(Model.Contactos[i].EsPrincipal ? "checked" : null) />
                                     </td>
                                     <td class="text-end"><button type="button" class="btn btn-link text-secondary p-0 eliminar-contacto" title="Eliminar contacto">✕</button></td>
                                 </tr>
@@ -320,6 +344,13 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            function validarFormatoCorreo(email) {
+                if (!email) return false;
+                const atChar = String.fromCharCode(64);
+                const regex = new RegExp('^[^\\s' + atChar + ']+' + atChar + '[^\\s' + atChar + ']+\\.[^\\s' + atChar + ']+$');
+                return regex.test(email);
+            }
+
             const form = document.getElementById('formDatosTributarios');
             const esEdicion = form.dataset.edicion === 'true';
             const txtRuc = document.getElementById('txtRuc');
@@ -345,6 +376,11 @@
                     fila.querySelectorAll('input[name]').forEach(input => {
                         input.name = input.name.replace(/Contactos\[\d+\]/, `Contactos[${indice}]`);
                     });
+                    fila.querySelectorAll('.error-contacto-msg').forEach(span => {
+                        if (span.dataset.for) {
+                            span.dataset.for = span.dataset.for.replace(/Contactos\[\d+\]/, `Contactos[${indice}]`);
+                        }
+                    });
                 });
             }
 
@@ -367,6 +403,70 @@
                         });
                     }
                 });
+
+                // Validación en tiempo real y sanitización de teléfono celular (solo 9 dígitos que comiencen con 9)
+                const telInput = fila.querySelector('input[name$=".Telefono"]');
+                if (telInput) {
+                    telInput.addEventListener('input', function () {
+                        this.value = this.value.replace(/[^0-9]/g, '');
+                        const errSpan = fila.querySelector(`.error-contacto-msg[data-for="${this.name}"]`);
+                        if (this.value.length === 9 && this.value.startsWith('9')) {
+                            this.classList.remove('is-invalid');
+                            this.classList.add('is-valid');
+                            if (errSpan) errSpan.textContent = '';
+                        } else if (this.value.length > 0) {
+                            this.classList.add('is-invalid');
+                            this.classList.remove('is-valid');
+                            if (errSpan) errSpan.textContent = 'Debe tener 9 dígitos y empezar con 9.';
+                        } else {
+                            this.classList.remove('is-valid', 'is-invalid');
+                            if (errSpan) errSpan.textContent = '';
+                        }
+                    });
+                }
+
+                // Validación en tiempo real de correo electrónico
+                const correoInput = fila.querySelector('input[name$=".Correo"]');
+                if (correoInput) {
+                    correoInput.addEventListener('input', function () {
+                        const emailVal = this.value.trim();
+                        const errSpan = fila.querySelector(`.error-contacto-msg[data-for="${this.name}"]`);
+                        if (emailVal.length > 0 && !validarFormatoCorreo(emailVal)) {
+                            this.classList.add('is-invalid');
+                            this.classList.remove('is-valid');
+                            if (errSpan) errSpan.textContent = 'Correo no válido.';
+                        } else if (emailVal.length > 0) {
+                            this.classList.remove('is-invalid');
+                            this.classList.add('is-valid');
+                            if (errSpan) errSpan.textContent = '';
+                        } else {
+                            this.classList.remove('is-valid', 'is-invalid');
+                            if (errSpan) errSpan.textContent = '';
+                        }
+                    });
+                }
+
+                // Limpiar errores en Nombre y Cargo
+                const nombreInput = fila.querySelector('input[name$=".Nombre"]');
+                if (nombreInput) {
+                    nombreInput.addEventListener('input', function () {
+                        if (this.value.trim().length > 0) {
+                            this.classList.remove('is-invalid');
+                            const errSpan = fila.querySelector(`.error-contacto-msg[data-for="${this.name}"]`);
+                            if (errSpan) errSpan.textContent = '';
+                        }
+                    });
+                }
+                const cargoInput = fila.querySelector('input[name$=".Cargo"]');
+                if (cargoInput) {
+                    cargoInput.addEventListener('input', function () {
+                        if (this.value.trim().length > 0) {
+                            this.classList.remove('is-invalid');
+                            const errSpan = fila.querySelector(`.error-contacto-msg[data-for="${this.name}"]`);
+                            if (errSpan) errSpan.textContent = '';
+                        }
+                    });
+                }
             }
 
             tablaContactos.querySelectorAll('tbody tr').forEach(conectarFilaContacto);
@@ -376,11 +476,25 @@
                 const fila = document.createElement('tr');
                 fila.className = 'contacto-row';
                 fila.innerHTML = `
-                    <td><input name="Contactos[${indice}].Nombre" class="form-control form-control-sm contacto-input" maxlength="150" required /></td>
-                    <td><input name="Contactos[${indice}].Cargo" class="form-control form-control-sm contacto-input" maxlength="100" required /></td>
-                    <td><input name="Contactos[${indice}].Telefono" class="form-control form-control-sm contacto-input" maxlength="9" pattern="9[0-9]{8}" inputmode="numeric" required /></td>
-                    <td><input name="Contactos[${indice}].Correo" class="form-control form-control-sm contacto-input" maxlength="150" type="email" required /></td>
-                    <td class="text-center"><input name="Contactos[${indice}].EsPrincipal" value="true" type="checkbox" class="form-check-input contacto-principal" /></td>
+                    <td>
+                        <input name="Contactos[${indice}].Nombre" class="form-control form-control-sm contacto-input" maxlength="150" required placeholder="Ej: Juan Pérez" />
+                        <span class="text-danger small d-block error-contacto-msg" data-for="Contactos[${indice}].Nombre"></span>
+                    </td>
+                    <td>
+                        <input name="Contactos[${indice}].Cargo" class="form-control form-control-sm contacto-input" maxlength="100" required placeholder="Ej: Jefe de Compras" />
+                        <span class="text-danger small d-block error-contacto-msg" data-for="Contactos[${indice}].Cargo"></span>
+                    </td>
+                    <td>
+                        <input name="Contactos[${indice}].Telefono" class="form-control form-control-sm contacto-input" maxlength="9" pattern="9[0-9]{8}" inputmode="numeric" required placeholder="987654321" />
+                        <span class="text-danger small d-block error-contacto-msg" data-for="Contactos[${indice}].Telefono"></span>
+                    </td>
+                    <td>
+                        <input name="Contactos[${indice}].Correo" class="form-control form-control-sm contacto-input" maxlength="150" type="email" required placeholder="correo@empresa.com" />
+                        <span class="text-danger small d-block error-contacto-msg" data-for="Contactos[${indice}].Correo"></span>
+                    </td>
+                    <td class="text-center">
+                        <input name="Contactos[${indice}].EsPrincipal" value="true" type="checkbox" class="form-check-input contacto-principal" ${indice === 0 ? 'checked' : ''} />
+                    </td>
                     <td class="text-end"><button type="button" class="btn btn-link text-secondary p-0 eliminar-contacto" title="Eliminar contacto">✕</button></td>`;
                 tablaContactos.querySelector('tbody').appendChild(fila);
                 conectarFilaContacto(fila);
@@ -443,18 +557,20 @@
             // Función reactiva centralizada para estado y condición SUNAT
             function actualizarEstadoTributarioVisual(estado, condicion, consultando = false) {
                 if (consultando) {
-                    badgeEstadoSunat.className = 'badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle fw-semibold px-2 py-1 d-inline-flex align-items-center gap-1';
+                    badgeEstadoSunat.className = 'badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle fw-semibold px-2 py-1 d-inline-flex align-items-center justify-content-center';
                     iconEstadoSunat.className = 'spinner-border spinner-border-sm';
-                    textEstadoSunat.textContent = 'Consultando...';
+                    iconEstadoSunat.textContent = '';
+                    textEstadoSunat.textContent = '';
 
-                    badgeCondicionSunat.className = 'badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle fw-semibold px-2 py-1 d-inline-flex align-items-center gap-1';
+                    badgeCondicionSunat.className = 'badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle fw-semibold px-2 py-1 d-inline-flex align-items-center justify-content-center';
                     iconCondicionSunat.className = 'spinner-border spinner-border-sm';
-                    textCondicionSunat.textContent = 'Consultando...';
+                    iconCondicionSunat.textContent = '';
+                    textCondicionSunat.textContent = '';
 
-                    previewEstado.textContent = 'Consultando...';
-                    previewEstado.className = 'badge bg-primary-subtle text-primary border border-primary';
-                    previewCondicion.textContent = 'Consultando...';
-                    previewCondicion.className = 'badge bg-primary-subtle text-primary border border-primary';
+                    previewEstado.innerHTML = '<span class="spinner-border spinner-border-sm" style="width: 0.8rem; height: 0.8rem;"></span>';
+                    previewEstado.className = 'badge bg-primary-subtle text-primary border border-primary d-inline-flex align-items-center justify-content-center';
+                    previewCondicion.innerHTML = '<span class="spinner-border spinner-border-sm" style="width: 0.8rem; height: 0.8rem;"></span>';
+                    previewCondicion.className = 'badge bg-primary-subtle text-primary border border-primary d-inline-flex align-items-center justify-content-center';
                     return;
                 }
 
@@ -673,7 +789,8 @@
 
                 btnConsultar.disabled = true;
                 iconConsultar.className = 'spinner-border spinner-border-sm';
-                textBtnConsultar.textContent = 'Consultando...';
+                iconConsultar.textContent = '';
+                textBtnConsultar.textContent = '';
                 rucStatusText.className = 'text-primary fw-bold';
                 rucStatusText.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Consultando con SUNAT...';
                 actualizarEstadoTributarioVisual(null, null, true);
@@ -863,45 +980,110 @@
             // Envío del Formulario con Validación
             form.addEventListener('submit', function (e) {
                 let esValido = true;
+                let primerElementoInvalido = null;
 
                 const ruc = txtRuc.value.trim();
                 if (rucConsultado !== ruc) {
                     rucStatusText.className = 'text-danger fw-bold';
                     rucStatusText.textContent = 'Consulte este RUC antes de guardar.';
-                    btnConsultar.focus();
+                    primerElementoInvalido = primerElementoInvalido || btnConsultar;
                     esValido = false;
                 }
                 if (ruc.length !== 11) {
                     txtRuc.classList.add('is-invalid');
-                    txtRuc.focus();
                     rucStatusText.className = 'text-danger fw-bold';
                     rucStatusText.innerHTML = '<i class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">cancel</i> Número de RUC inválido';
+                    primerElementoInvalido = primerElementoInvalido || txtRuc;
                     esValido = false;
                 } else if (!validarModulo11Sunat(ruc)) {
                     txtRuc.classList.add('is-invalid');
-                    txtRuc.focus();
                     rucStatusText.className = 'text-danger fw-bold';
                     rucStatusText.innerHTML = '<i class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">cancel</i> Número de RUC inválido';
+                    primerElementoInvalido = primerElementoInvalido || txtRuc;
                     esValido = false;
                 }
 
                 const razon = txtRazonSocial.value.trim();
                 if (!razon) {
                     txtRazonSocial.classList.add('is-invalid');
-                    if (esValido) txtRazonSocial.focus();
+                    primerElementoInvalido = primerElementoInvalido || txtRazonSocial;
                     esValido = false;
                 }
 
                 const direccion = txtDireccion.value.trim();
                 if (!direccion) {
                     txtDireccion.classList.add('is-invalid');
-                    if (esValido) txtDireccion.focus();
+                    primerElementoInvalido = primerElementoInvalido || txtDireccion;
                     esValido = false;
                 }
 
-                if (!esValido) {
+                // Validación de Contactos
+                let contactosValidos = true;
+                const filas = tablaContactos.querySelectorAll('tbody tr');
+                let tienePrincipal = false;
+
+                filas.forEach(fila => {
+                    const nombreInput = fila.querySelector('input[name$=".Nombre"]');
+                    const cargoInput = fila.querySelector('input[name$=".Cargo"]');
+                    const telInput = fila.querySelector('input[name$=".Telefono"]');
+                    const correoInput = fila.querySelector('input[name$=".Correo"]');
+                    const principalCheck = fila.querySelector('input[name$=".EsPrincipal"]');
+
+                    if (principalCheck && principalCheck.checked) tienePrincipal = true;
+
+                    if (nombreInput && !nombreInput.value.trim()) {
+                        nombreInput.classList.add('is-invalid');
+                        const errSpan = fila.querySelector(`.error-contacto-msg[data-for="${nombreInput.name}"]`);
+                        if (errSpan) errSpan.textContent = 'El nombre es obligatorio.';
+                        contactosValidos = false;
+                        primerElementoInvalido = primerElementoInvalido || nombreInput;
+                    }
+                    if (cargoInput && !cargoInput.value.trim()) {
+                        cargoInput.classList.add('is-invalid');
+                        const errSpan = fila.querySelector(`.error-contacto-msg[data-for="${cargoInput.name}"]`);
+                        if (errSpan) errSpan.textContent = 'El cargo es obligatorio.';
+                        contactosValidos = false;
+                        primerElementoInvalido = primerElementoInvalido || cargoInput;
+                    }
+                    if (telInput) {
+                        const telVal = telInput.value.trim();
+                        if (!/^9\d{8}$/.test(telVal)) {
+                            telInput.classList.add('is-invalid');
+                            const errSpan = fila.querySelector(`.error-contacto-msg[data-for="${telInput.name}"]`);
+                            if (errSpan) errSpan.textContent = 'Debe tener 9 dígitos y comenzar con 9.';
+                            contactosValidos = false;
+                            primerElementoInvalido = primerElementoInvalido || telInput;
+                        }
+                    }
+                    if (correoInput) {
+                        const emailVal = correoInput.value.trim();
+                        if (!validarFormatoCorreo(emailVal)) {
+                            correoInput.classList.add('is-invalid');
+                            const errSpan = fila.querySelector(`.error-contacto-msg[data-for="${correoInput.name}"]`);
+                            if (errSpan) errSpan.textContent = 'Correo no válido.';
+                            contactosValidos = false;
+                            primerElementoInvalido = primerElementoInvalido || correoInput;
+                        }
+                    }
+                });
+
+                if (filas.length > 0 && !tienePrincipal) {
+                    const primerCheck = filas[0].querySelector('input[name$=".EsPrincipal"]');
+                    if (primerCheck) primerCheck.checked = true;
+                }
+
+                if (!esValido || !contactosValidos) {
                     e.preventDefault();
                     e.stopPropagation();
+                    if (primerElementoInvalido) {
+                        primerElementoInvalido.focus();
+                        primerElementoInvalido.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    if (!contactosValidos) {
+                        ProseginAlert.warning('Por favor revise los contactos. El celular debe tener 9 dígitos numéricos (iniciando con 9) y el correo debe ser válido.', 'Datos de contacto inválidos');
+                    } else {
+                        ProseginAlert.warning('Por favor complete los campos obligatorios marcados con asterisco (*).', 'Formulario incompleto');
+                    }
                     return false;
                 }
 
@@ -921,13 +1103,25 @@
                 }
             });
 
-            // Inicialización de estado tributario si ya viene precargado
+            // Inicialización de estado tributario si ya viene precargado (edición o recarga tras validación)
             const rucInicial = txtRuc.value.trim();
             if (rucInicial.length === 11 && validarModulo11Sunat(rucInicial)) {
+                previewRuc.textContent = rucInicial;
+                previewRuc.classList.add('filled');
+
                 if (txtRazonSocial.value.trim().length > 0) {
-                    actualizarEstadoTributarioVisual(hiddenEstadoSunat.value || 'NO VERIFICADO', hiddenCondicionSunat.value || 'NO VERIFICADO');
+                    previewRazonSocial.textContent = txtRazonSocial.value.trim().toUpperCase();
+                    previewRazonSocial.classList.add('filled');
+                    previewEmision.textContent = 'FACTURA ELECTRÓNICA';
+                    previewEmision.className = 'badge bg-primary-subtle text-primary border border-primary';
+
+                    const estadoGuardado = (hiddenEstadoSunat.value || '').trim().toUpperCase();
+                    const condicionGuardada = (hiddenCondicionSunat.value || '').trim().toUpperCase();
+
+                    actualizarEstadoTributarioVisual(estadoGuardado || 'NO VERIFICADO', condicionGuardada || 'NO VERIFICADO');
                     setCheck(iconChkDigitos, lblChkDigitos, true, 'RUC válido (Módulo 11)');
-                    setCheck(iconChkSunat, lblChkSunat, true, `SUNAT: ${hiddenCondicionSunat.value} y ${hiddenEstadoSunat.value}`);
+                    setCheck(iconChkSunat, lblChkSunat, estadoGuardado === 'ACTIVO' && condicionGuardada === 'HABIDO', `SUNAT: ${condicionGuardada || 'NO VERIFICADO'} y ${estadoGuardado || 'NO VERIFICADO'}`);
+                    
                     if (txtDireccion.value.trim().length > 0) {
                         setCheck(iconChkDireccion, lblChkDireccion, true, 'Dirección registrada');
                     }

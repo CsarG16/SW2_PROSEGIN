@@ -362,6 +362,8 @@ namespace Prosegin.Web.Controllers
                 return RedirectToAction(nameof(Create));
             }
 
+            ViewBag.FormAction = "Create";
+            ViewBag.FormTitle = "Registrar cliente";
             return View(model);
         }
 
