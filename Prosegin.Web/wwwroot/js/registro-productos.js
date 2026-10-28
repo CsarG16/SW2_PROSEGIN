@@ -22,7 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const zona = document.getElementById('dropzoneBox');
     const cargado = document.getElementById('boxFichaSeleccionada');
     const fichaError = document.getElementById('fichaError');
-    const errorArchivo = 'El archivo no cumple con el formato o tamaño admitido';
+    const errorFormato = 'Solo se admiten archivos en formato PDF';
+    const errorTamano = 'El archivo no debe superar los 5 MB';
     let skuTimer;
     let skuVersion = 0;
     let skuDuplicado = false;
@@ -32,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let fichaValidada = false;
     let fichaObjectUrl = null;
     let fichaPagina = 1;
+    let fichaTotalPaginas = 1;
     let fichaZoom = 100;
 
     const visor = document.getElementById('visorFichaTecnica');
@@ -42,19 +44,30 @@ document.addEventListener('DOMContentLoaded', () => {
     function actualizarVisor() {
         if (!visorFrame || !fichaObjectUrl) return;
         visorFrame.src = `${fichaObjectUrl}#page=${fichaPagina}&zoom=${fichaZoom}`;
-        visorPaginaTexto.textContent = `Página ${fichaPagina}`;
+        visorPaginaTexto.textContent = `Página ${fichaPagina} de ${fichaTotalPaginas}`;
         visorZoomTexto.textContent = `${fichaZoom}%`;
     }
 
-    function mostrarVisor(file) {
+    async function mostrarVisor(file) {
         if (!visor || !visorFrame) return;
         if (fichaObjectUrl) URL.revokeObjectURL(fichaObjectUrl);
         fichaObjectUrl = URL.createObjectURL(file);
         fichaPagina = 1;
+        fichaTotalPaginas = await contarPaginasPdf(file);
         fichaZoom = 100;
         document.getElementById('visorFichaNombre').textContent = file.name;
         visor.classList.remove('d-none');
         actualizarVisor();
+    }
+
+    async function contarPaginasPdf(file) {
+        try {
+            const bytes = new TextDecoder('latin1').decode(await file.arrayBuffer());
+            const paginas = bytes.match(/\/Type\s*\/Page\b/g);
+            return Math.max(1, paginas ? paginas.length : 1);
+        } catch {
+            return 1;
+        }
     }
 
     function costoValido() {
@@ -331,6 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function resetearFicha() {
         fichaVersion++;
         fichaValidada = false;
+        fichaTotalPaginas = 1;
         archivo.value = '';
         if (fichaObjectUrl) {
             URL.revokeObjectURL(fichaObjectUrl);
@@ -354,20 +368,28 @@ document.addEventListener('DOMContentLoaded', () => {
         fichaError.textContent = '';
         actualizarEstado();
         let valida = false;
+        let mensajeError = errorFormato;
         try {
-            if (file && /\.pdf$/i.test(file.name) && file.size >= 8 && file.size <= 5 * 1024 * 1024) {
+            if (!file || !/\.pdf$/i.test(file.name)) {
+                mensajeError = errorFormato;
+            } else if (file.size > 5 * 1024 * 1024) {
+                mensajeError = errorTamano;
+            } else if (file.size >= 8) {
                 const decoder = new TextDecoder('ascii');
                 const cabecera = decoder.decode(await file.slice(0, 8).arrayBuffer());
                 const final = decoder.decode(await file.slice(Math.max(0, file.size - 1024)).arrayBuffer());
                 valida = /^%PDF-(1\.[0-7]|2\.0)$/.test(cabecera) && final.trimEnd().endsWith('%%EOF');
+                if (!valida) mensajeError = errorFormato;
             }
         } catch {
             valida = false;
+            mensajeError = errorFormato;
         }
         if (version !== fichaVersion) return;
         if (!valida) {
             resetearFicha();
-            fichaError.textContent = errorArchivo;
+            fichaError.textContent = mensajeError;
+            window.ProseginToast?.error(mensajeError);
             return;
         }
         fichaValidada = true;
@@ -375,7 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('lblFichaTamano').textContent = `(${(file.size / 1024 / 1024).toFixed(2)} MB)`;
         cargado.classList.remove('d-none');
         zona.classList.add('d-none');
-        mostrarVisor(file);
+        await mostrarVisor(file);
         actualizarEstado();
     }
 
@@ -387,6 +409,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     zona.addEventListener('drop', e => {
+        if (e.dataTransfer.files.length > 1) {
+            window.ProseginToast?.error('Solo se admite un archivo de ficha técnica por producto');
+            return;
+        }
         if (!e.dataTransfer.files.length) return;
         const transferencia = new DataTransfer();
         transferencia.items.add(e.dataTransfer.files[0]);
@@ -404,15 +430,19 @@ document.addEventListener('DOMContentLoaded', () => {
         actualizarVisor();
     });
     document.getElementById('visorPaginaSiguiente').addEventListener('click', () => {
+        if (fichaPagina >= fichaTotalPaginas) {
+            window.ProseginToast?.info('Ya se encuentra en la última página del documento');
+            return;
+        }
         fichaPagina++;
         actualizarVisor();
     });
     document.getElementById('visorZoomMenos').addEventListener('click', () => {
-        fichaZoom = Math.max(50, fichaZoom - 10);
+        fichaZoom = Math.max(50, fichaZoom - 25);
         actualizarVisor();
     });
     document.getElementById('visorZoomMas').addEventListener('click', () => {
-        fichaZoom = Math.min(200, fichaZoom + 10);
+        fichaZoom = Math.min(200, fichaZoom + 25);
         actualizarVisor();
     });
     [nombre, categoria, costo].forEach(control => {
@@ -456,8 +486,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (!valido || (window.jQuery && !window.jQuery(form).valid())) {
             e.preventDefault();
-            if (window.ProseginToast) {
-                ProseginToast.error('Por favor completa o corrige los campos obligatorios marcados en rojo.');
+            if (!sku.value.trim() || !nombre.value.trim() || !categoria.value || !costo.value.trim()) {
+                window.ProseginToast?.error('Complete los campos obligatorios');
+            } else if (skuDuplicado) {
+                window.ProseginToast?.error('El código SKU ya se encuentra registrado');
+            } else if (!costoValido()) {
+                window.ProseginToast?.error('Ingrese un costo base válido');
+            } else {
+                window.ProseginToast?.error('Por favor completa o corrige los campos obligatorios marcados en rojo.');
             }
             return;
         }

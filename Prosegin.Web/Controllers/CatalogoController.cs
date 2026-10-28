@@ -136,7 +136,7 @@ public class CatalogoController : Controller
         if (model.FichaTecnica != null
             && !await FichaTecnicaValidator.EsValidaAsync(model.FichaTecnica, cancellationToken))
         {
-            ModelState.AddModelError(nameof(model.FichaTecnica), FichaTecnicaValidator.MensajeError);
+            ModelState.AddModelError(nameof(model.FichaTecnica), FichaTecnicaValidator.ObtenerMensajeError(model.FichaTecnica));
         }
 
         var proveedorIds = model.ProveedorIds.Distinct().ToList();
@@ -327,7 +327,7 @@ public class CatalogoController : Controller
         {
             if (!await FichaTecnicaValidator.EsValidaAsync(FichaTecnica, cancellationToken))
             {
-                TempData["ErrorMessage"] = FichaTecnicaValidator.MensajeError;
+                TempData["ErrorMessage"] = FichaTecnicaValidator.ObtenerMensajeError(FichaTecnica);
                 return RedirectToAction(nameof(Index));
             }
 

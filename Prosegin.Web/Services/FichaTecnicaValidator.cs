@@ -7,7 +7,16 @@ namespace Prosegin.Web.Services;
 public static class FichaTecnicaValidator
 {
     public const long MaxBytes = 5 * 1024 * 1024;
-    public const string MensajeError = "El archivo no cumple con el formato o tamaño admitido";
+    public const string MensajeError = "La ficha técnica debe ser un PDF válido de hasta 5 MB.";
+    public const string MensajeFormato = "Solo se admiten archivos en formato PDF";
+    public const string MensajeTamano = "El archivo no debe superar los 5 MB";
+
+    public static string ObtenerMensajeError(IFormFile archivo) =>
+        !string.Equals(Path.GetExtension(archivo.FileName), ".pdf", StringComparison.OrdinalIgnoreCase)
+            ? MensajeFormato
+            : archivo.Length > MaxBytes
+                ? MensajeTamano
+                : MensajeError;
 
     public static async Task<bool> EsValidaAsync(IFormFile archivo, CancellationToken cancellationToken)
     {

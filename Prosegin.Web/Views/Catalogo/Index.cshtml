@@ -377,6 +377,7 @@
             contenedor.classList.toggle('d-none', !url);
             if (!url) {
                 frame.removeAttribute('src');
+                window.ProseginToast?.info('El producto no tiene una ficha técnica registrada');
                 return;
             }
             nombre.textContent = nombreArchivo || 'Ficha técnica guardada';
@@ -409,6 +410,16 @@
                 editFile.addEventListener('change', () => {
                     const file = editFile.files && editFile.files[0];
                     if (!file) return;
+                    if (!/\.pdf$/i.test(file.name)) {
+                        editFile.value = '';
+                        window.ProseginToast?.error('Solo se admiten archivos en formato PDF');
+                        return;
+                    }
+                    if (file.size > 5 * 1024 * 1024) {
+                        editFile.value = '';
+                        window.ProseginToast?.error('El archivo no debe superar los 5 MB');
+                        return;
+                    }
                     if (editObjectUrl) URL.revokeObjectURL(editObjectUrl);
                     editObjectUrl = URL.createObjectURL(file);
                     configurarVisorFicha(editViewer, editFrame, editName, editObjectUrl, file.name);
