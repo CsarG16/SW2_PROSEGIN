@@ -190,7 +190,9 @@
                                         <button type="button" class="btn btn-sm btn-outline-secondary" id="editZoomMas">+</button>
                                     </div>
                             </div>
-                            <iframe id="editFichaFrame" title="Vista previa de la ficha técnica" class="ficha-viewer-frame"></iframe>
+                            <div class="ficha-viewer-page-wrap">
+                                <canvas id="editFichaCanvas" aria-label="Contenido de la ficha técnica"></canvas>
+                            </div>
                         </div>
                     </div>
 
@@ -372,42 +374,44 @@
             applyFilters();
         })();
 
-        function configurarVisorFicha(contenedor, frame, nombre, url, nombreArchivo) {
-            if (!contenedor || !frame) return;
+        let editPdfViewer = null;
+
+        async function configurarVisorFicha(contenedor, canvas, nombre, url, nombreArchivo, paginaTexto, zoomTexto) {
+            if (!contenedor || !canvas) return;
             contenedor.classList.toggle('d-none', !url);
             if (!url) {
-                frame.removeAttribute('src');
+                editPdfViewer?.destroy();
+                editPdfViewer = null;
                 window.ProseginToast?.info('El producto no tiene una ficha técnica registrada');
                 return;
             }
             nombre.textContent = nombreArchivo || 'Ficha técnica guardada';
-            frame.src = `${url}#page=1&zoom=100`;
-        }
-
-        function controlarVisorFicha(frame, paginaTexto, zoomTexto) {
-            let pagina = 1;
-            let zoom = 100;
-            const actualizar = () => {
-                frame.src = `${frame.src.split('#')[0]}#page=${pagina}&zoom=${zoom}`;
-                paginaTexto.textContent = `Página ${pagina}`;
-                zoomTexto.textContent = `${zoom}%`;
-            };
-            return {
-                paginaAnterior: () => { pagina = Math.max(1, pagina - 1); actualizar(); },
-                paginaSiguiente: () => { pagina++; actualizar(); },
-                zoomMenos: () => { zoom = Math.max(50, zoom - 10); actualizar(); },
-                zoomMas: () => { zoom = Math.min(200, zoom + 10); actualizar(); }
-            };
+            editPdfViewer?.destroy();
+            editPdfViewer = await window.ProseginPdfViewer.mount({
+                canvas,
+                source: url,
+                onChange: (pagina, total, zoom) => {
+                    paginaTexto.textContent = `Página ${pagina} de ${total}`;
+                    zoomTexto.textContent = `${zoom}%`;
+                }
+            });
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             const editFile = document.getElementById('editProductFile');
             const editViewer = document.getElementById('editFichaViewer');
-            const editFrame = document.getElementById('editFichaFrame');
+            const editCanvas = document.getElementById('editFichaCanvas');
             const editName = document.getElementById('editFichaName');
+            const editPaginaTexto = document.getElementById('editPaginaTexto');
+            const editZoomTexto = document.getElementById('editZoomTexto');
             let editObjectUrl = null;
+
+            async function cargarEdicion(source, nombre) {
+                await configurarVisorFicha(editViewer, editCanvas, editName, source, nombre, editPaginaTexto, editZoomTexto);
+            }
+
             if (editFile) {
-                editFile.addEventListener('change', () => {
+                editFile.addEventListener('change', async () => {
                     const file = editFile.files && editFile.files[0];
                     if (!file) return;
                     if (!/\.pdf$/i.test(file.name)) {
@@ -422,17 +426,22 @@
                     }
                     if (editObjectUrl) URL.revokeObjectURL(editObjectUrl);
                     editObjectUrl = URL.createObjectURL(file);
-                    configurarVisorFicha(editViewer, editFrame, editName, editObjectUrl, file.name);
+                    await cargarEdicion(editObjectUrl, file.name);
                 });
             }
-            const visor = controlarVisorFicha(
-                editFrame,
-                document.getElementById('editPaginaTexto'),
-                document.getElementById('editZoomTexto'));
-            document.getElementById('editPaginaAnterior').addEventListener('click', visor.paginaAnterior);
-            document.getElementById('editPaginaSiguiente').addEventListener('click', visor.paginaSiguiente);
-            document.getElementById('editZoomMenos').addEventListener('click', visor.zoomMenos);
-            document.getElementById('editZoomMas').addEventListener('click', visor.zoomMas);
+
+            document.getElementById('editPaginaAnterior').addEventListener('click', () => {
+                editPdfViewer?.previous().then(changed => {
+                    if (!changed) window.ProseginToast?.info('Ya se encuentra en la primera página del documento');
+                });
+            });
+            document.getElementById('editPaginaSiguiente').addEventListener('click', () => {
+                editPdfViewer?.next().then(changed => {
+                    if (!changed) window.ProseginToast?.info('Ya se encuentra en la última página del documento');
+                });
+            });
+            document.getElementById('editZoomMenos').addEventListener('click', () => editPdfViewer?.zoomOut());
+            document.getElementById('editZoomMas').addEventListener('click', () => editPdfViewer?.zoomIn());
         });
 
         function populateEditModal(btn) {
@@ -444,10 +453,12 @@
             document.getElementById('editProductWeight').value = Number(btn.dataset.weight || btn.dataset.peso || 0).toFixed(3);
             configurarVisorFicha(
                 document.getElementById('editFichaViewer'),
-                document.getElementById('editFichaFrame'),
+                document.getElementById('editFichaCanvas'),
                 document.getElementById('editFichaName'),
                 btn.dataset.fichaUrl,
-                btn.dataset.fichaName);
+                btn.dataset.fichaName,
+                document.getElementById('editPaginaTexto'),
+                document.getElementById('editZoomTexto'));
 
             const container = document.getElementById('editProviderTariffs');
             container.replaceChildren();

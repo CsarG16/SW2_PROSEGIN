@@ -490,7 +490,9 @@ namespace Prosegin.Web.Controllers
                 }
 
                 if (!string.IsNullOrWhiteSpace(contacto.Correo)
-                    && !new EmailAddressAttribute().IsValid(contacto.Correo))
+                    && !System.Text.RegularExpressions.Regex.IsMatch(
+                        contacto.Correo,
+                        @"^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*@[A-Za-z0-9]+(?:[.-][A-Za-z0-9]+)*\.[A-Za-z]{2,}$"))
                 {
                     ModelState.AddModelError($"Contactos[{i}].Correo", "Ingrese un correo electrónico válido");
                 }
