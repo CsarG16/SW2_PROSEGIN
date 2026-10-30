@@ -119,9 +119,8 @@ public class CuentaBancariaProveedorViewModel
     [RegularExpression(@"^[0-9-]{0,30}$", ErrorMessage = "La cuenta debe contener solo números y guiones.")]
     public string? NumeroCuenta { get; set; }
 
-    [Required(ErrorMessage = "El CCI es obligatorio.")]
     [RegularExpression(@"^[0-9]{20}$", ErrorMessage = "El CCI debe tener 20 dígitos.")]
-    public string Cci { get; set; } = string.Empty;
+    public string? Cci { get; set; }
 
     public bool EsPrincipal { get; set; }
 }

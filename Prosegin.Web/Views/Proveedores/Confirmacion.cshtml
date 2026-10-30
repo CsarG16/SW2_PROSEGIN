@@ -1,0 +1,16 @@
+@model int
+
+@{
+    ViewData["Title"] = "Proveedor registrado";
+}
+
+<div class="container-fluid px-0">
+    <section class="prosegin-card mx-auto p-4 p-md-5 text-center" style="max-width: 640px;">
+        <i class="material-symbols-outlined text-success" style="font-size: 3rem;">check_circle</i>
+        <h1 class="page-title mt-3">Proveedor registrado correctamente</h1>
+        <p class="page-subtitle mt-2">El proveedor se guardó en el directorio de proveedores de EPP.</p>
+        <a asp-action="Index" asp-route-proveedorNuevoId="@Model" class="btn-prosegin-primary mt-3">
+            Cerrar y volver al directorio
+        </a>
+    </section>
+</div>

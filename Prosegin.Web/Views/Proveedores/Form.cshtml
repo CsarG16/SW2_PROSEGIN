@@ -14,7 +14,7 @@
     <form asp-action="@(edicion ? "Edit" : "Create")" asp-route-id="@Model.Id" method="post" id="formProveedor">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="Id" />
-        <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-3"></div>
+        <div asp-validation-summary="All" class="alert alert-danger mb-3"></div>
 
         <div class="row g-3">
             <div class="col-lg-8">
@@ -59,6 +59,18 @@
                             <input asp-for="DireccionFiscal" id="direccionFiscalProveedor" class="form-control form-control-prosegin" readonly="@(!edicion)" />
                             <span asp-validation-for="DireccionFiscal" class="text-danger small"></span>
                         </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-6">
+                                <label asp-for="Telefono" class="form-label-prosegin proveedor-label">Teléfono Comercial *</label>
+                                <input asp-for="Telefono" class="form-control form-control-prosegin" placeholder="(01) 224-2728" />
+                                <span asp-validation-for="Telefono" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="CorreoComercial" class="form-label-prosegin proveedor-label">Correo Comercial *</label>
+                                <input asp-for="CorreoComercial" class="form-control form-control-prosegin" placeholder="ventas@empresa.com" />
+                                <span asp-validation-for="CorreoComercial" class="text-danger small"></span>
+                            </div>
+                        </div>
                         <div class="row g-2">
                             <div class="col-md-6">
                                 <label asp-for="Especialidad" class="form-label-prosegin proveedor-label">Especialidad / Líneas de EPP Suministradas *</label>
@@ -98,9 +110,12 @@
                         <span class="proveedor-required-note">Receptor oficial de Órdenes de Compra</span>
                     </header>
                     <div class="proveedor-section-body">
+                        <span asp-validation-for="Contactos" class="text-danger small d-block mb-2"></span>
                         <div id="contactos" data-collection>
                             @for (var i = 0; i < Model.Contactos.Count; i++)
                             {
+                                var esContactoPrincipal = Model.Contactos[i].EsPrincipal
+                                    || (Model.Contactos.All(c => !c.EsPrincipal) && i == 0);
                                 <div class="row g-2 proveedor-contact-row" data-row>
                                     <div class="col-md-6">
                                         <label asp-for="Contactos[i].Nombre" class="form-label-prosegin proveedor-label">Nombres y Apellidos Completos *</label>
@@ -123,7 +138,7 @@
                                         <span asp-validation-for="Contactos[i].Telefono" class="text-danger small"></span>
                                     </div>
                                     <div class="col-md-1 d-flex align-items-end justify-content-center pb-2">
-                                        <input asp-for="Contactos[i].EsPrincipal" class="form-check-input contacto-principal" checked="@(i == 0 || Model.Contactos[i].EsPrincipal)" title="Contacto principal" />
+                                        <input asp-for="Contactos[i].EsPrincipal" class="form-check-input contacto-principal" checked="@esContactoPrincipal" title="Contacto principal" />
                                         @if (Model.Contactos.Count > 1)
                                         {
                                             <button type="button" class="btn btn-link text-danger p-1" data-remove-row aria-label="Quitar contacto">
@@ -148,14 +163,12 @@
                         <span>INFORMACIÓN DE PAGO (CUENTAS BANCARIAS)</span>
                     </header>
                     <div class="proveedor-section-body">
-                        <div class="alert alert-warning proveedor-bank-note py-2 mb-2">
-                            <i class="material-symbols-outlined">info</i>
-                            <span>Registre la cuenta oficial de la empresa para la transferencia de fondos por órdenes de compra autorizadas. Se debe incluir al menos una cuenta con su CCI correspondiente.</span>
-                        </div>
+                        <span asp-validation-for="CuentasBancarias" class="text-danger small d-block mb-2"></span>
                         <div id="cuentas" data-collection>
                             @for (var i = 0; i < Model.CuentasBancarias.Count; i++)
                             {
-                                var esPrincipal = i == 0 || Model.CuentasBancarias[i].EsPrincipal;
+                                var esPrincipal = Model.CuentasBancarias[i].EsPrincipal
+                                    || (Model.CuentasBancarias.All(c => !c.EsPrincipal) && i == 0);
                                 <div class="proveedor-bank-card mb-2" data-row>
                                     <div class="proveedor-bank-card-header">
                                         <span><i class="material-symbols-outlined">account_balance</i> Cuenta Bancaria @(esPrincipal ? "Principal" : "Secundaria") (Moneda @(Model.CuentasBancarias[i].Moneda == "USD" ? "Extranjera - USD" : "Nacional - PEN"))</span>
@@ -190,12 +203,12 @@
                                             </select>
                                         </div>
                                         <div class="col-md-3">
-                                            <label asp-for="CuentasBancarias[i].NumeroCuenta" class="form-label-prosegin proveedor-label">Número de Cuenta *</label>
+                                            <label asp-for="CuentasBancarias[i].NumeroCuenta" class="form-label-prosegin proveedor-label">Número de Cuenta</label>
                                             <input asp-for="CuentasBancarias[i].NumeroCuenta" class="form-control form-control-prosegin" placeholder="191-2345678-0-45" />
                                             <span asp-validation-for="CuentasBancarias[i].NumeroCuenta" class="text-danger small"></span>
                                         </div>
                                         <div class="col-md-3">
-                                            <label asp-for="CuentasBancarias[i].Cci" class="form-label-prosegin proveedor-label">Código Interbancario (CCI - 20 dígitos) *</label>
+                                            <label asp-for="CuentasBancarias[i].Cci" class="form-label-prosegin proveedor-label">Código Interbancario (CCI - 20 dígitos)</label>
                                             <input asp-for="CuentasBancarias[i].Cci" class="form-control form-control-prosegin font-monospace" maxlength="20" inputmode="numeric" placeholder="00219100234567804552" />
                                             <span asp-validation-for="CuentasBancarias[i].Cci" class="text-danger small"></span>
                                         </div>
@@ -237,13 +250,6 @@
                     </div>
                 </section>
 
-                <div class="alert alert-success proveedor-confirmation">
-                    <i class="material-symbols-outlined">check_circle</i>
-                    <div>
-                        <strong>Mensaje de Confirmación</strong>
-                        <p class="small mb-0">Al guardar, se confirmará el registro y volverás al directorio general con el nuevo proveedor en la lista.</p>
-                    </div>
-                </div>
             </aside>
         </div>
 
@@ -272,8 +278,8 @@
         <div class="row g-2 align-items-end">
             <div class="col-md-4"><label class="form-label-prosegin proveedor-label">Entidad Bancaria *</label><select name="CuentasBancarias[__index__].Banco" class="form-select form-control-prosegin"><option value="">Selecciona un banco</option><option value="Banco de Crédito del Perú (BCP)">Banco de Crédito del Perú (BCP)</option><option>BBVA</option><option>Interbank</option><option>Scotiabank</option><option>Banco de la Nación</option><option>Otro</option></select></div>
             <div class="col-md-2"><label class="form-label-prosegin proveedor-label">Moneda *</label><select name="CuentasBancarias[__index__].Moneda" class="form-select form-control-prosegin cuenta-moneda"><option value="PEN">PEN</option><option value="USD">USD</option></select></div>
-            <div class="col-md-3"><label class="form-label-prosegin proveedor-label">Número de Cuenta *</label><input name="CuentasBancarias[__index__].NumeroCuenta" class="form-control form-control-prosegin" placeholder="191-2345678-0-45" /></div>
-            <div class="col-md-3"><label class="form-label-prosegin proveedor-label">Código Interbancario (CCI - 20 dígitos) *</label><input name="CuentasBancarias[__index__].Cci" class="form-control form-control-prosegin font-monospace" maxlength="20" inputmode="numeric" /></div>
+            <div class="col-md-3"><label class="form-label-prosegin proveedor-label">Número de Cuenta</label><input name="CuentasBancarias[__index__].NumeroCuenta" class="form-control form-control-prosegin" placeholder="191-2345678-0-45" /></div>
+            <div class="col-md-3"><label class="form-label-prosegin proveedor-label">Código Interbancario (CCI - 20 dígitos)</label><input name="CuentasBancarias[__index__].Cci" class="form-control form-control-prosegin font-monospace" maxlength="20" inputmode="numeric" /></div>
             <input name="CuentasBancarias[__index__].EsPrincipal" type="hidden" value="false" />
             <div class="col-12 text-end"><button type="button" class="btn btn-link btn-sm text-danger p-0" data-remove-row><i class="material-symbols-outlined align-middle">delete</i> Quitar cuenta</button></div>
         </div>
@@ -296,8 +302,6 @@
     .proveedor-sunat-button .material-symbols-outlined { font-size: 1.1rem; }
     .proveedor-contact-row { padding-bottom: .5rem; margin-bottom: .5rem; }
     .proveedor-contact-row + .proveedor-contact-row { border-top: 1px solid #edf1f6; padding-top: .65rem; }
-    .proveedor-bank-note { display: flex; gap: .5rem; align-items: center; font-size: .67rem; color: #647a91; }
-    .proveedor-bank-note .material-symbols-outlined { color: #dc8d18; font-size: 1rem; }
     .proveedor-bank-card { padding: .6rem; border: 1px solid #e2eaf2; border-radius: .4rem; }
     .proveedor-bank-card-header { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: .5rem; color: #35485e; font-size: .65rem; font-weight: 700; }
     .proveedor-bank-card-header .material-symbols-outlined { font-size: .85rem; vertical-align: middle; }
@@ -308,8 +312,6 @@
     .proveedor-status-business { font-size: .75rem; }
     .proveedor-status-line { display: flex; justify-content: space-between; gap: .5rem; align-items: center; padding-top: .28rem; color: #71849a; font-size: .63rem; }
     .proveedor-status-line strong { color: #273d54; text-align: right; }
-    .proveedor-confirmation { display: flex; gap: .55rem; padding: .75rem; font-size: .72rem; }
-    .proveedor-confirmation > .material-symbols-outlined { color: #17a975; }
     .proveedor-form-actions { display: flex; justify-content: flex-end; gap: .6rem; padding: .8rem 0; border-top: 1px solid #e5ebf1; }
     .proveedor-form-actions .btn { font-size: .75rem; }
     @@media (min-width: 992px) { .proveedor-status-card { position: sticky; top: 1rem; } }
@@ -330,12 +332,14 @@
     };
 
     const updateAccountCards = () => {
-        document.querySelectorAll('#cuentas [data-row]').forEach((row, index) => {
+        const rows = [...document.querySelectorAll('#cuentas [data-row]')];
+        const hasPrincipal = rows.some(row => row.querySelector('.cuenta-principal')?.value === 'true');
+        rows.forEach((row, index) => {
             const currency = row.querySelector('.cuenta-moneda').value;
-            const principal = index === 0;
+            const marker = row.querySelector('.cuenta-principal');
+            const principal = marker?.value === 'true' || (!hasPrincipal && index === 0);
             const heading = row.querySelector('.proveedor-bank-card-header span:first-child');
             heading.innerHTML = `<i class="material-symbols-outlined">account_balance</i> Cuenta Bancaria ${principal ? 'Principal' : 'Secundaria'} (Moneda ${currency === 'USD' ? 'Extranjera - USD' : 'Nacional - PEN'})`;
-            const marker = row.querySelector('.cuenta-principal');
             if (marker) marker.value = principal ? 'true' : 'false';
         });
     };

@@ -29,6 +29,7 @@ public class ProveedoresController : Controller
         string? termino,
         int pagina = 1,
         int tamanoPagina = 20,
+        int? proveedorNuevoId = null,
         CancellationToken cancellationToken = default)
     {
         var tamanosPermitidos = new[] { 10, 20, 50 };
@@ -43,28 +44,65 @@ public class ProveedoresController : Controller
             Pagina = Math.Max(1, pagina),
             TamanoPagina = tamanoPagina
         };
-        var proveedores = _context.Proveedores
+        IQueryable<Proveedor> proveedores = _context.Proveedores
             .AsNoTracking()
             .AsQueryable();
 
+        List<int>? idsCoincidentes = null;
         if (!string.IsNullOrWhiteSpace(model.Termino))
         {
-            proveedores = proveedores.Where(p =>
-                EF.Functions.Like(p.Ruc, $"%{model.Termino}%")
-                || EF.Functions.Like(p.RazonSocial, $"%{model.Termino}%")
-                || EF.Functions.Like(p.NombreComercial, $"%{model.Termino}%"));
+            var candidatos = await proveedores
+                .Select(p => new { p.Id, p.Ruc, p.RazonSocial, p.NombreComercial })
+                .ToListAsync(cancellationToken);
+            idsCoincidentes = candidatos
+                .Where(p => ContieneTexto(p.Ruc, model.Termino)
+                    || ContieneTexto(p.RazonSocial, model.Termino)
+                    || ContieneTexto(p.NombreComercial, model.Termino))
+                .OrderBy(p => p.Id == proveedorNuevoId ? 0 : 1)
+                .ThenBy(p => p.RazonSocial, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(p => p.Id)
+                .Select(p => p.Id)
+                .ToList();
+            model.TotalResultados = idsCoincidentes.Count;
         }
-
-        model.TotalResultados = await proveedores.CountAsync(cancellationToken);
+        else
+        {
+            model.TotalResultados = await proveedores.CountAsync(cancellationToken);
+        }
         model.TotalPaginas = Math.Max(1, (int)Math.Ceiling(model.TotalResultados / (double)model.TamanoPagina));
         model.Pagina = Math.Min(model.Pagina, model.TotalPaginas);
-        var registros = await proveedores
+        IQueryable<Proveedor> consultaPagina = proveedores;
+        int[]? idsPagina = null;
+        if (idsCoincidentes != null)
+        {
+            idsPagina = idsCoincidentes
+                .Skip((model.Pagina - 1) * model.TamanoPagina)
+                .Take(model.TamanoPagina)
+                .ToArray();
+            consultaPagina = consultaPagina.Where(p => idsPagina.Contains(p.Id));
+        }
+        else
+        {
+            consultaPagina = consultaPagina
+                .OrderBy(p => p.Id == proveedorNuevoId ? 0 : 1)
+                .ThenBy(p => p.RazonSocial)
+                .ThenBy(p => p.Id)
+                .Skip((model.Pagina - 1) * model.TamanoPagina)
+                .Take(model.TamanoPagina);
+        }
+
+        var registros = await consultaPagina
             .Include(p => p.Contactos)
             .Include(p => p.CuentasBancarias)
-            .OrderBy(p => p.RazonSocial)
-            .Skip((model.Pagina - 1) * model.TamanoPagina)
-            .Take(model.TamanoPagina)
             .ToListAsync(cancellationToken);
+        if (idsPagina != null)
+        {
+            var orden = idsPagina
+                .Select((id, index) => new { id, index })
+                .ToDictionary(item => item.id, item => item.index);
+            registros = registros.OrderBy(p => orden[p.Id]).ToList();
+        }
+
         model.Resultados = registros.Select(p => new ProveedorListaItemViewModel
             {
                 Id = p.Id,
@@ -196,8 +234,16 @@ public class ProveedoresController : Controller
             return View("Form", model);
         }
 
-        TempData["ModalSuccess"] = "Proveedor registrado correctamente.";
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Confirmacion), new { id = proveedor.Id });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Confirmacion(int id, CancellationToken cancellationToken)
+    {
+        var existe = await _context.Proveedores
+            .AsNoTracking()
+            .AnyAsync(p => p.Id == id, cancellationToken);
+        return existe ? View(id) : NotFound();
     }
 
     [HttpGet]
@@ -370,7 +416,7 @@ public class ProveedoresController : Controller
                 || (string.IsNullOrWhiteSpace(c.NumeroCuenta) && string.IsNullOrWhiteSpace(c.Cci))))
         {
             ModelState.AddModelError(nameof(model.CuentasBancarias),
-                "Registra al menos una cuenta con banco y número de cuenta o CCI.");
+                "Registra al menos un banco y un número de cuenta o CCI.");
         }
 
         var cuentasPrincipales = model.CuentasBancarias.Count(c => c.EsPrincipal);
@@ -403,9 +449,15 @@ public class ProveedoresController : Controller
             Banco = c.Banco.Trim(),
             Moneda = c.Moneda,
             NumeroCuenta = c.NumeroCuenta?.Trim() ?? string.Empty,
-            Cci = c.Cci.Trim(),
+            Cci = c.Cci?.Trim() ?? string.Empty,
             EsPrincipal = c.EsPrincipal
         }).ToList();
+    }
+
+    private static bool ContieneTexto(string? valor, string termino)
+    {
+        return !string.IsNullOrEmpty(valor)
+            && valor.Contains(termino, StringComparison.OrdinalIgnoreCase);
     }
 
     private static ProveedorCreateViewModel CrearModelo(Proveedor proveedor)

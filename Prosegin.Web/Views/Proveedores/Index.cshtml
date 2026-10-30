@@ -11,7 +11,7 @@
             <h1 class="page-title mb-0">Directorio de Proveedores de EPP</h1>
         </div>
         <a asp-action="Create" class="btn-prosegin-primary">
-            <i class="material-symbols-outlined">add</i> Nuevo Proveedor
+            <i class="material-symbols-outlined">add</i> Agregar Proveedor
         </a>
     </div>
 
@@ -98,8 +98,8 @@
                                     </a>
                                     @if (proveedor.Activo)
                                     {
-                                        <form asp-action="Inactivate" asp-route-id="@proveedor.Id" method="post" class="d-inline"
-                                              onsubmit="return confirm('¿Inactivar a @proveedor.RazonSocial? Ya no podrá elegirse en nuevas órdenes de compra.');">
+                                        <form asp-action="Inactivate" asp-route-id="@proveedor.Id" method="post" class="d-inline supplier-inactivate-form"
+                                              data-confirm-message="¿Inactivar a @proveedor.RazonSocial? Ya no podrá elegirse en nuevas órdenes de compra.">
                                             @Html.AntiForgeryToken()
                                             <button type="submit" class="supplier-action-button" title="Inactivar"
                                                     aria-label="Inactivar @proveedor.RazonSocial">
@@ -212,6 +212,29 @@
     </div>
 </div>
 
+<div class="modal fade" id="supplierInactivateModal" tabindex="-1" aria-labelledby="supplierInactivateModalTitle" aria-describedby="supplierInactivateModalMessage" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content supplier-confirm-modal">
+            <div class="modal-header border-0 pb-0">
+                <div class="supplier-confirm-icon">
+                    <i class="material-symbols-outlined">block</i>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body pt-2">
+                <h2 class="modal-title fs-5" id="supplierInactivateModalTitle">¿Inactivar proveedor?</h2>
+                <p id="supplierInactivateModalMessage" class="text-muted mb-0"></p>
+            </div>
+            <div class="modal-footer border-0 pt-3">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmSupplierInactivation">
+                    <i class="material-symbols-outlined align-middle">block</i> Inactivar proveedor
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Styles {
     <style>
         .supplier-directory-header { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
@@ -275,7 +298,43 @@
         .supplier-table-footer a:hover { background:#f1f5f9; }
         .supplier-table-footer .is-disabled { color:#cbd5e1; }
         .supplier-table-footer .supplier-current-page { background:var(--dark); color:#fff; font-weight:700; }
+        .supplier-confirm-modal { border:0; border-radius:12px; box-shadow:0 1rem 3rem rgba(15,23,42,.2); }
+        .supplier-confirm-icon { display:grid; place-items:center; width:42px; height:42px; border-radius:50%; background:#fef2f2; color:#dc2626; }
+        .supplier-confirm-icon .material-symbols-outlined { font-size:1.35rem; }
+        .supplier-confirm-modal .modal-title { color:var(--text-dark); font-weight:700; }
+        .supplier-confirm-modal #supplierInactivateModalMessage { margin-top:.6rem; font-size:.9rem; }
         @@media (min-width: 768px) { .supplier-page-size { display:flex; } }
         @@media (max-width: 575px) { .supplier-directory-header { align-items:flex-start; flex-direction:column; } .supplier-search-form { flex-wrap:wrap; } .supplier-result-count { margin-left:auto; } }
     </style>
+}
+
+@section Scripts {
+    <script>
+        const supplierInactivateModalElement = document.getElementById('supplierInactivateModal');
+        const supplierInactivateModal = bootstrap.Modal.getOrCreateInstance(supplierInactivateModalElement);
+        const supplierInactivateMessage = document.getElementById('supplierInactivateModalMessage');
+        const confirmSupplierInactivation = document.getElementById('confirmSupplierInactivation');
+        let supplierFormPendingInactivation = null;
+
+        document.querySelectorAll('.supplier-inactivate-form').forEach(form => {
+            form.addEventListener('submit', event => {
+                event.preventDefault();
+                supplierFormPendingInactivation = form;
+                supplierInactivateMessage.textContent = form.dataset.confirmMessage;
+                supplierInactivateModal.show();
+            });
+        });
+
+        confirmSupplierInactivation.addEventListener('click', () => {
+            if (!supplierFormPendingInactivation) return;
+            const form = supplierFormPendingInactivation;
+            supplierFormPendingInactivation = null;
+            supplierInactivateModal.hide();
+            form.submit();
+        });
+
+        supplierInactivateModalElement.addEventListener('hidden.bs.modal', () => {
+            supplierFormPendingInactivation = null;
+        });
+    </script>
 }

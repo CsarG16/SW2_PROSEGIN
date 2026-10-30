@@ -108,6 +108,31 @@ public sealed class ProveedoresIntegracionTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Directorio_BuscaLiteralmenteYNoDistingueMayusculasEnUnicode()
+    {
+        using (var scope = _app.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
+            context.Proveedores.AddRange(
+                new Proveedor { Ruc = "20200000001", RazonSocial = "Proveedor 100% Seguro S.A.C." },
+                new Proveedor { Ruc = "20200000002", RazonSocial = "Proveedor_A S.A.C." },
+                new Proveedor { Ruc = "20200000003", RazonSocial = "MUÑOZ PERÚ S.A.C." },
+                new Proveedor { Ruc = "20200000004", RazonSocial = "Proveedor Coincidente S.A.C." });
+            await context.SaveChangesAsync();
+        }
+
+        var porcentaje = await _client.GetStringAsync("/Proveedores?termino=%25");
+        var guionBajo = await _client.GetStringAsync("/Proveedores?termino=_");
+        var unicode = await _client.GetStringAsync("/Proveedores?termino=mu%C3%B1oz%20per%C3%BA");
+
+        Assert.Contains("Proveedor 100% Seguro S.A.C.", WebUtility.HtmlDecode(porcentaje));
+        Assert.DoesNotContain("Proveedor_A S.A.C.", WebUtility.HtmlDecode(porcentaje));
+        Assert.Contains("Proveedor_A S.A.C.", WebUtility.HtmlDecode(guionBajo));
+        Assert.DoesNotContain("Proveedor Coincidente S.A.C.", WebUtility.HtmlDecode(guionBajo));
+        Assert.Contains("MUÑOZ PERÚ S.A.C.", WebUtility.HtmlDecode(unicode));
+    }
+
+    [Fact]
     public async Task Directorio_PaginaResultadosYRespetaElTamanoSolicitado()
     {
         using (var scope = _app.Services.CreateScope())
@@ -146,12 +171,27 @@ public sealed class ProveedoresIntegracionTests : IAsyncLifetime
         Assert.Contains("Especialidad / Líneas de EPP Suministradas", html);
         Assert.Contains("Condición de Crédito / Pago Habitual", html);
         Assert.Contains("ESTADO TRIBUTARIO", html);
+        Assert.Contains("id=\"Telefono\"", html);
+        Assert.Contains("id=\"CorreoComercial\"", html);
         Assert.Contains("USD", html);
+        Assert.DoesNotContain("proveedor-confirmation", html);
+        Assert.DoesNotContain("proveedor-bank-note", html);
     }
 
     [Fact]
     public async Task RegistrarProveedor_ConsultaSunatYGuardaContactoYCci()
     {
+        using (var seedScope = _app.Services.CreateScope())
+        {
+            var seedContext = seedScope.ServiceProvider.GetRequiredService<ProseginDbContext>();
+            seedContext.Proveedores.Add(new Proveedor
+            {
+                Ruc = "20100000002",
+                RazonSocial = "AAA Proveedor Anterior S.A.C."
+            });
+            await seedContext.SaveChangesAsync();
+        }
+
         var token = await ObtenerTokenAsync("/Proveedores/Create");
         var fields = new Dictionary<string, string>
         {
@@ -171,13 +211,24 @@ public sealed class ProveedoresIntegracionTests : IAsyncLifetime
             ["Contactos[0].EsPrincipal"] = "true",
             ["CuentasBancarias[0].Banco"] = "BCP",
             ["CuentasBancarias[0].Moneda"] = "USD",
-            ["CuentasBancarias[0].NumeroCuenta"] = "",
-            ["CuentasBancarias[0].Cci"] = "00219123456789012345"
+            ["CuentasBancarias[0].NumeroCuenta"] = "191-2345678-0-45",
+            ["CuentasBancarias[0].Cci"] = ""
         };
 
         var response = await _client.PostAsync("/Proveedores/Create", new FormUrlEncodedContent(fields));
 
         Assert.True(response.StatusCode == HttpStatusCode.Redirect, await response.Content.ReadAsStringAsync());
+        var confirmacion = await _client.GetStringAsync(response.Headers.Location!);
+        Assert.Contains("Proveedor registrado correctamente", confirmacion);
+        var enlaceCerrar = Regex.Match(confirmacion,
+            "<a[^>]*href=\"([^\"]+)\"[^>]*>\\s*Cerrar y volver al directorio",
+            RegexOptions.Singleline);
+        Assert.True(enlaceCerrar.Success, confirmacion);
+        var directorioUrl = WebUtility.HtmlDecode(enlaceCerrar.Groups[1].Value);
+        var directorio = await _client.GetStringAsync(directorioUrl);
+        Assert.True(directorio.IndexOf("EMPRESA OFICIAL S.A.C.", StringComparison.Ordinal)
+            < directorio.IndexOf("AAA Proveedor Anterior S.A.C.", StringComparison.Ordinal), directorio);
+
         using var scope = _app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
         var proveedor = await context.Proveedores
@@ -191,8 +242,167 @@ public sealed class ProveedoresIntegracionTests : IAsyncLifetime
         Assert.Equal("Crédito a 30 días", proveedor.CondicionPago);
         Assert.Single(proveedor.Contactos);
         Assert.Equal("Ana Proveedora", proveedor.Contactos.Single().Nombre);
-        Assert.Equal("00219123456789012345", proveedor.CuentasBancarias.Single().Cci);
+        Assert.Equal("191-2345678-0-45", proveedor.CuentasBancarias.Single().NumeroCuenta);
+        Assert.Empty(proveedor.CuentasBancarias.Single().Cci);
         Assert.Equal("USD", proveedor.CuentasBancarias.Single().Moneda);
+    }
+
+    [Fact]
+    public async Task RegistrarProveedor_MuestraErroresDeCamposYSeccionesObligatorias()
+    {
+        var token = await ObtenerTokenAsync("/Proveedores/Create");
+        var campos = new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = token,
+            ["Ruc"] = "20100047218",
+            ["RazonSocial"] = "Empresa",
+            ["NombreComercial"] = "Empresa",
+            ["DireccionFiscal"] = "Dirección",
+            ["Especialidad"] = "Protección de Manos",
+            ["CondicionPago"] = "Contado",
+            ["Contactos[0].Nombre"] = "Ana",
+            ["Contactos[0].Cargo"] = "Ventas",
+            ["Contactos[0].Telefono"] = "900123456",
+            ["Contactos[0].Correo"] = "ana@empresa.test",
+            ["CuentasBancarias[0].Banco"] = "BCP",
+            ["CuentasBancarias[0].NumeroCuenta"] = "123456",
+            ["CuentasBancarias[0].Cci"] = ""
+        };
+
+        var faltanComerciales = await _client.PostAsync("/Proveedores/Create",
+            new FormUrlEncodedContent(campos));
+        var comercialesHtml = WebUtility.HtmlDecode(await faltanComerciales.Content.ReadAsStringAsync());
+        Assert.Contains("El teléfono comercial es obligatorio.", comercialesHtml);
+        Assert.Contains("El correo comercial es obligatorio.", comercialesHtml);
+
+        campos["Telefono"] = "900123456";
+        campos["CorreoComercial"] = "contacto@empresa.test";
+        campos.Remove("Contactos[0].Nombre");
+        campos.Remove("Contactos[0].Cargo");
+        campos.Remove("Contactos[0].Telefono");
+        campos.Remove("Contactos[0].Correo");
+        var faltaContacto = await _client.PostAsync("/Proveedores/Create",
+            new FormUrlEncodedContent(campos));
+        var contactoHtml = WebUtility.HtmlDecode(await faltaContacto.Content.ReadAsStringAsync());
+        Assert.Contains("Registra al menos una persona de contacto.", contactoHtml);
+
+        campos["Contactos[0].Nombre"] = "Ana";
+        campos["Contactos[0].Cargo"] = "Ventas";
+        campos["Contactos[0].Telefono"] = "900123456";
+        campos["Contactos[0].Correo"] = "ana@empresa.test";
+        campos.Remove("CuentasBancarias[0].Banco");
+        campos.Remove("CuentasBancarias[0].NumeroCuenta");
+        var faltaCuenta = await _client.PostAsync("/Proveedores/Create",
+            new FormUrlEncodedContent(campos));
+        var cuentaHtml = WebUtility.HtmlDecode(await faltaCuenta.Content.ReadAsStringAsync());
+        Assert.Contains("Registra al menos un banco y un número de cuenta o CCI.", cuentaHtml);
+    }
+
+    [Fact]
+    public async Task EditarProveedor_PrecargaUnSoloContactoPrincipalYGuardaCambios()
+    {
+        using (var scope = _app.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
+            var proveedor = await context.Proveedores.SingleAsync(p => p.Id == 1);
+            proveedor.Contactos =
+            [
+                new ContactoProveedor { Nombre = "Contacto Uno", Cargo = "Ventas", Telefono = "900111111", Correo = "uno@empresa.test", EsPrincipal = false },
+                new ContactoProveedor { Nombre = "Contacto Dos", Cargo = "Gerencia", Telefono = "900222222", Correo = "dos@empresa.test", EsPrincipal = true }
+            ];
+            proveedor.CuentasBancarias =
+            [
+                new CuentaBancariaProveedor { Banco = "BCP", Moneda = "PEN", NumeroCuenta = "123456", Cci = "", EsPrincipal = true }
+            ];
+            await context.SaveChangesAsync();
+        }
+
+        var ruta = "/Proveedores/Edit/1";
+        var htmlEditar = await _client.GetStringAsync(ruta);
+        var principalInputs = Regex.Matches(htmlEditar, "<input[^>]*name=\"Contactos\\[\\d+\\]\\.EsPrincipal\"[^>]*>")
+            .Cast<Match>()
+            .Where(match => match.Value.Contains("type=\"checkbox\"", StringComparison.Ordinal))
+            .Select(match => match.Value)
+            .ToList();
+        Assert.Equal(2, principalInputs.Count);
+        Assert.DoesNotContain("checked=\"checked\"", principalInputs[0]);
+        Assert.Contains("checked=\"checked\"", principalInputs[1]);
+
+        var fields = new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = await ObtenerTokenAsync(ruta),
+            ["Id"] = "1",
+            ["Ruc"] = "10100000003",
+            ["RazonSocial"] = "Proveedor actualizado S.A.C.",
+            ["NombreComercial"] = "Proveedor actualizado",
+            ["DireccionFiscal"] = "Av. Actualizada 123",
+            ["Especialidad"] = "Protección de Manos",
+            ["CondicionPago"] = "Contado",
+            ["Telefono"] = "900333333",
+            ["CorreoComercial"] = "ventas@actualizado.test",
+            ["Contactos[0].Nombre"] = "Contacto Uno",
+            ["Contactos[0].Cargo"] = "Ventas",
+            ["Contactos[0].Telefono"] = "900111111",
+            ["Contactos[0].Correo"] = "uno@empresa.test",
+            ["Contactos[0].EsPrincipal"] = "false",
+            ["Contactos[1].Nombre"] = "Contacto Dos Actualizado",
+            ["Contactos[1].Cargo"] = "Gerencia",
+            ["Contactos[1].Telefono"] = "900222222",
+            ["Contactos[1].Correo"] = "dos@empresa.test",
+            ["Contactos[1].EsPrincipal"] = "true",
+            ["CuentasBancarias[0].Banco"] = "BCP",
+            ["CuentasBancarias[0].Moneda"] = "PEN",
+            ["CuentasBancarias[0].NumeroCuenta"] = "123456",
+            ["CuentasBancarias[0].Cci"] = "",
+            ["CuentasBancarias[0].EsPrincipal"] = "true"
+        };
+        var response = await _client.PostAsync(ruta, new FormUrlEncodedContent(fields));
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        using var verifyScope = _app.Services.CreateScope();
+        var verifyContext = verifyScope.ServiceProvider.GetRequiredService<ProseginDbContext>();
+        var updated = await verifyContext.Proveedores
+            .Include(p => p.Contactos)
+            .Include(p => p.CuentasBancarias)
+            .SingleAsync(p => p.Id == 1);
+        Assert.Equal("Proveedor actualizado S.A.C.", updated.RazonSocial);
+        Assert.Equal("900333333", updated.Telefono);
+        Assert.Equal("ventas@actualizado.test", updated.CorreoComercial);
+        Assert.True(updated.Contactos.Single(c => c.Nombre == "Contacto Dos Actualizado").EsPrincipal);
+        Assert.Single(updated.Contactos.Where(c => c.EsPrincipal));
+        Assert.Empty(updated.CuentasBancarias.Single().Cci);
+
+        fields["__RequestVerificationToken"] = await ObtenerTokenAsync(ruta);
+        fields["Contactos[0].EsPrincipal"] = "true";
+        var invalidEdit = await _client.PostAsync(ruta, new FormUrlEncodedContent(fields));
+        var invalidHtml = WebUtility.HtmlDecode(await invalidEdit.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, invalidEdit.StatusCode);
+        Assert.Contains("Solo puede haber un contacto principal.", invalidHtml);
+    }
+
+    [Fact]
+    public async Task Directorio_ConfirmaInactivacionSinInsertarNombreEnJavascript()
+    {
+        using (var scope = _app.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
+            context.Proveedores.Add(new Proveedor
+            {
+                Ruc = "20200000005",
+                RazonSocial = "Proveedor O'Brien S.A.C."
+            });
+            await context.SaveChangesAsync();
+        }
+
+        var html = await _client.GetStringAsync("/Proveedores?termino=O%27Brien");
+
+        Assert.Contains("data-confirm-message=", html);
+        Assert.Contains("id=\"supplierInactivateModal\"", html);
+        Assert.Contains("id=\"confirmSupplierInactivation\"", html);
+        Assert.Contains("bootstrap.Modal.getOrCreateInstance", html);
+        Assert.DoesNotContain("window.confirm", html);
+        Assert.DoesNotContain("onsubmit=", html);
+        Assert.Contains("Proveedor O&#x27;Brien", html);
     }
 
     [Fact]
