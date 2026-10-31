@@ -129,6 +129,13 @@
                         <span class="sidebar-floating-tag">Gestión de Pedidos</span>
                     </a>
                 </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "OrdenesCompra" ? "active" : "")" asp-controller="OrdenesCompra" asp-action="Index">
+                        <i class="material-symbols-outlined">receipt_long</i>
+                        <span class="sidebar-nav-text">Órdenes de Compra</span>
+                        <span class="sidebar-floating-tag">Órdenes de Compra</span>
+                    </a>
+                </li>
             </ul>
         </div>
     </aside>

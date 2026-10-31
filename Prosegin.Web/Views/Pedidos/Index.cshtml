@@ -193,6 +193,116 @@
         border: 1px solid var(--border-card, #e2e8f0);
     }
 
+    .fiscal-documentation-panel {
+        background: #f8fafc;
+        border: 1px solid var(--border-card, #e2e8f0);
+    }
+
+    .fiscal-recipient-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #64748b;
+        white-space: nowrap;
+    }
+
+    .fiscal-recipient-select {
+        min-width: 270px;
+        border-color: #d8dee8;
+        background-color: #ffffff;
+        font-size: 0.78rem;
+        color: #475569;
+    }
+
+    .fiscal-document-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        min-height: 43px;
+        padding: 8px 12px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+    }
+
+    .fiscal-document-name {
+        min-width: 0;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #334155;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .fiscal-document-name .document-extension {
+        margin-left: 4px;
+        font-size: 0.66rem;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+    }
+
+    .btn-fiscal-pdf {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        min-height: 28px;
+        padding: 4px 9px;
+        border: 1px solid #f1d7a7;
+        border-radius: 6px;
+        background: #fffaf0;
+        color: #b45309;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .btn-fiscal-pdf:hover {
+        border-color: #e9b949;
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .fiscal-actions {
+        justify-content: flex-end;
+    }
+
+    .fiscal-actions .btn-prosegin-primary {
+        background: #e9a91a;
+        border-color: #d99a0f;
+        color: #ffffff;
+        box-shadow: 0 2px 5px rgba(217, 154, 15, 0.22);
+    }
+
+    .fiscal-actions .btn-prosegin-primary:hover {
+        background: #d99a0f;
+        border-color: #c98a08;
+    }
+
+    @@media (max-width: 575px) {
+        .fiscal-recipient-select {
+            min-width: 0;
+            width: 100%;
+        }
+
+        .fiscal-document-row {
+            grid-template-columns: 1fr;
+        }
+
+        .fiscal-actions {
+            width: 100%;
+        }
+
+        .fiscal-actions button {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
     .prosegin-toast {
         position: fixed;
         top: 1.25rem;
@@ -573,6 +683,27 @@
             </div>
         </div>
 
+        <div id="modalFiscalDocumentation" class="d-none fiscal-documentation-panel p-3 rounded-3 mb-4">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-3">
+                <span class="text-muted text-uppercase" style="font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em;">
+                    Documentación fiscal vinculada
+                </span>
+                <div class="d-flex align-items-center gap-2 flex-grow-1 flex-md-grow-0">
+                    <label for="modalFiscalRecipient" class="fiscal-recipient-label mb-0">(C) Destinatario:</label>
+                    <select id="modalFiscalRecipient" class="form-select form-select-sm fiscal-recipient-select"></select>
+                </div>
+            </div>
+            <div id="modalFiscalRows" class="d-flex flex-column gap-2"></div>
+            <div class="fiscal-actions d-flex flex-column flex-sm-row gap-2 mt-3">
+                <button type="button" class="btn-prosegin-secondary" onclick="descargarComprobantesSeleccionados()">
+                    <span class="material-symbols-outlined me-1">download</span>Descargar Localmente
+                </button>
+                <button type="button" class="btn-prosegin-primary" onclick="enviarComprobantesSeleccionados()">
+                    <span class="material-symbols-outlined me-1">send</span>Enviar Comprobantes
+                </button>
+            </div>
+        </div>
+
         <div class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center justify-content-between gap-2 pt-3 border-top">
             <button type="button" class="btn-prosegin-secondary" style="min-width: 120px;" onclick="closeDetailModal()">
                 Cerrar
@@ -603,6 +734,8 @@
     const abastecimientoUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("Index", "Abastecimiento")));
     const guiaRemisionUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("GuiaRemision", "Pedidos")));
     const facturaUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("Factura", "Pedidos")));
+    const descargarComprobantesUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("DescargarComprobantes", "Pedidos")));
+    const enviarComprobantesUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("EnviarComprobantes", "Pedidos")));
     const recepcionUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("Recepcion", "Pedidos")));
     let pedidoSeleccionado;
     function openDetailModal(orderId) {
@@ -688,7 +821,138 @@
             guiaBtn.href = url.pathname + url.search;
         }
 
+        configurarDocumentacionFiscal(pedido);
+
         document.getElementById('detailModal').classList.remove('d-none');
+    }
+
+    function configurarDocumentacionFiscal(pedido) {
+        const contenedor = document.getElementById('modalFiscalDocumentation');
+        const filas = document.getElementById('modalFiscalRows');
+        const destinatarios = document.getElementById('modalFiscalRecipient');
+        filas.replaceChildren();
+        destinatarios.replaceChildren();
+
+        const contactos = pedido.Destinatarios && pedido.Destinatarios.length > 0
+            ? pedido.Destinatarios
+            : (pedido.ClienteCorreoPrincipal ? [{
+                Nombre: 'Contacto principal',
+                Correo: pedido.ClienteCorreoPrincipal,
+                EsPrincipal: true
+            }] : []);
+
+        contactos.forEach(contacto => {
+            const option = document.createElement('option');
+            option.value = contacto.Correo;
+            option.textContent = `${contacto.Nombre ? contacto.Nombre + ' - ' : ''}${contacto.Correo}${contacto.EsPrincipal ? ' (Principal)' : ''}`;
+            destinatarios.appendChild(option);
+        });
+
+        const documentos = [];
+        if (pedido.FacturaEmitida && pedido.EnlacePdfFactura) {
+            documentos.push({
+                tipo: 'factura',
+                nombre: `Factura Electrónica ${pedido.NumeroFactura || ''}`,
+                enlace: pedido.EnlacePdfFactura
+            });
+        }
+        if (pedido.GuiaRemisionEmitida && pedido.EnlacePdfGuia) {
+            documentos.push({
+                tipo: 'guia',
+                nombre: `Guía Remitente ${pedido.NumeroGuiaRemision || ''}`,
+                enlace: pedido.EnlacePdfGuia
+            });
+        }
+
+        documentos.forEach(documento => {
+            const fila = document.createElement('div');
+            fila.className = 'fiscal-document-row';
+
+            const seleccion = document.createElement('label');
+            seleccion.className = 'd-flex align-items-center gap-2 mb-0 flex-grow-1';
+            const check = document.createElement('input');
+            check.type = 'checkbox';
+            check.className = 'form-check-input fiscal-document-check';
+            check.dataset.tipo = documento.tipo;
+            check.checked = true;
+            const texto = document.createElement('span');
+            texto.className = 'fiscal-document-name';
+            texto.textContent = documento.nombre;
+            seleccion.append(check, texto);
+
+            const ver = document.createElement('a');
+            ver.href = documento.enlace;
+            ver.target = '_blank';
+            ver.rel = 'noopener';
+            ver.className = 'btn-fiscal-pdf';
+            ver.innerHTML = '<span class="material-symbols-outlined align-middle" style="font-size:15px">visibility</span>Ver PDF';
+
+            fila.append(seleccion, ver);
+            filas.appendChild(fila);
+        });
+
+        contenedor.classList.toggle('d-none', documentos.length === 0);
+    }
+
+    function comprobantesSeleccionados() {
+        const seleccionados = [...document.querySelectorAll('.fiscal-document-check:checked')]
+            .map(check => check.dataset.tipo);
+        return {
+            factura: seleccionados.includes('factura'),
+            guia: seleccionados.includes('guia')
+        };
+    }
+
+    async function descargarComprobantesSeleccionados() {
+        if (!pedidoSeleccionado) return;
+        const seleccionados = comprobantesSeleccionados();
+        const formulario = new FormData();
+        formulario.append('numeroPedido', pedidoSeleccionado.NumeroPedido);
+        formulario.append('factura', seleccionados.factura);
+        formulario.append('guia', seleccionados.guia);
+        formulario.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]')?.value || '');
+
+        const response = await fetch(descargarComprobantesUrl, { method: 'POST', body: formulario });
+        if (!response.ok) {
+            const mensaje = await response.text();
+            window.ProseginToast?.error(mensaje || 'No se pudieron descargar los comprobantes.');
+            return;
+        }
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const enlace = document.createElement('a');
+        enlace.href = url;
+        enlace.download = `Comprobantes_${pedidoSeleccionado.NumeroPedido}.zip`;
+        enlace.click();
+        URL.revokeObjectURL(url);
+    }
+
+    async function enviarComprobantesSeleccionados() {
+        if (!pedidoSeleccionado) return;
+        const seleccionados = comprobantesSeleccionados();
+        const formulario = new FormData();
+        formulario.append('numeroPedido', pedidoSeleccionado.NumeroPedido);
+        formulario.append('destinatario', document.getElementById('modalFiscalRecipient').value);
+        formulario.append('factura', seleccionados.factura);
+        formulario.append('guia', seleccionados.guia);
+        formulario.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]')?.value || '');
+
+        const response = await fetch(enviarComprobantesUrl, { method: 'POST', body: formulario });
+        const resultado = await response.json().catch(() => ({ mensaje: 'No se pudo procesar la solicitud.' }));
+        if (response.ok) {
+            const mensaje = resultado.mensaje || 'Comprobantes enviados exitosamente al destinatario';
+            if (window.ProseginToast) {
+                window.ProseginToast.success(mensaje);
+            } else if (window.ProseginAlert) {
+                window.ProseginAlert.success(mensaje, 'Operación Exitosa');
+            } else {
+                document.querySelector('#detailModal')?.insertAdjacentHTML('afterbegin',
+                    `<div class="alert alert-success m-3" role="alert">${mensaje}</div>`);
+            }
+            closeDetailModal();
+        } else {
+            window.ProseginToast?.error(resultado.mensaje || 'No se pudieron enviar los comprobantes.');
+        }
     }
 
     function closeDetailModal() {

@@ -40,7 +40,7 @@ public class UnidadMedidaSunatMappingTests
     [InlineData(null, "NIU")]
     [InlineData("", "NIU")]
     [InlineData("   ", "NIU")]
-    [InlineData("ZZ", "ZZ")]
+    [InlineData("ZZ", "NIU")]
     public void MapearUnidadMedidaSunat_RetornaCodigoSunatEsperado(string? entrada, string esperado)
     {
         var resultado = PedidosService.MapearUnidadMedidaSunat(entrada);

@@ -56,8 +56,10 @@
                         @for (var i = 0; i < Model.Productos.Count; i++)
                         {
                             var producto = Model.Productos[i];
-                            var costoSeleccionado = producto.Proveedores.FirstOrDefault(p => p.Id == producto.ProveedorSeleccionadoId)?.CostoUnitario
-                                ?? producto.Proveedores.First().CostoUnitario;
+                            var costoSeleccionado = producto.Proveedores
+                                .FirstOrDefault(p => p.Id == producto.ProveedorSeleccionadoId)?.CostoUnitario
+                                ?? producto.Proveedores.FirstOrDefault()?.CostoUnitario
+                                ?? 0m;
                             <tr data-product-row data-product-index="@i">
                                 <td>
                                     <input type="hidden" name="selecciones[@i].ProductoId" value="@producto.ProductoId" />

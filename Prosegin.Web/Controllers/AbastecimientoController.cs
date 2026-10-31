@@ -118,6 +118,16 @@ public class AbastecimientoController : Controller
             return RedirectToAction(nameof(Index), new { id = ordenVentaId });
         }
 
+        var correlativosExistentes = await _context.OrdenesCompra
+            .AsNoTracking()
+            .Select(orden => orden.Correlativo)
+            .ToListAsync(cancellationToken);
+        var siguienteCorrelativo = correlativosExistentes
+            .Select(orden => orden.Split('-', StringSplitOptions.RemoveEmptyEntries).LastOrDefault())
+            .Select(texto => int.TryParse(texto, out var numero) ? numero : 0)
+            .DefaultIfEmpty(1043)
+            .Max() + 1;
+
         foreach (var grupo in costosPorDetalle.Values.GroupBy(item => item.Tarifa.ProveedorId))
         {
             var lineas = grupo.Select(item =>
@@ -136,6 +146,7 @@ public class AbastecimientoController : Controller
             }).ToList();
             _context.OrdenesCompra.Add(new OrdenCompra
             {
+                Correlativo = $"OC-PROV-{siguienteCorrelativo++}",
                 ProveedorId = grupo.Key,
                 OrdenVentaId = ordenVenta.Id,
                 FechaCompra = DateTime.UtcNow,
