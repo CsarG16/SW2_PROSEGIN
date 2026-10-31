@@ -10,4 +10,6 @@ public interface IPedidosService
     Task<EmitirFacturaResult> EmitirFacturaAsync(string numeroPedido, CancellationToken cancellationToken = default);
     Task<GuiaRemisionPreviewViewModel?> PrevisualizarGuiaRemisionAsync(string numeroPedido, CancellationToken cancellationToken = default);
     Task<EmitirGuiaRemisionResult> EmitirGuiaRemisionAsync(EmitirGuiaRemisionRequest request, CancellationToken cancellationToken = default);
+    Task<RecepcionMercaderiaViewModel?> ObtenerRecepcionAsync(string numeroPedido, CancellationToken cancellationToken = default);
+    Task<(bool Exito, string Mensaje)> GuardarRecepcionAsync(GuardarRecepcionRequest request, CancellationToken cancellationToken = default);
 }

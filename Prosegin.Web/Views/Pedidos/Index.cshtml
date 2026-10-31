@@ -581,6 +581,9 @@
                 <a href="#" class="btn-prosegin-primary d-none" id="modalGeneratePurchase">
                     <i class="material-symbols-outlined me-1">inventory_2</i> GENERAR ORDEN DE COMPRA A PROVEEDORES
                 </a>
+                <a href="#" class="btn-prosegin-primary d-none" id="modalControlReception">
+                    <i class="material-symbols-outlined me-1">fact_check</i> Controlar Recepción de Mercadería
+                </a>
                 <a href="#" class="btn-prosegin-primary d-none" id="modalGenerateInvoice">
                     <i class="material-symbols-outlined me-1">bolt</i> Factura Electrónica
                 </a>
@@ -600,6 +603,7 @@
     const abastecimientoUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("Index", "Abastecimiento")));
     const guiaRemisionUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("GuiaRemision", "Pedidos")));
     const facturaUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("Factura", "Pedidos")));
+    const recepcionUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("Recepcion", "Pedidos")));
     let pedidoSeleccionado;
     function openDetailModal(orderId) {
         const pedido = pedidosDataset.find(p => p.NumeroPedido.toLowerCase() === orderId.toLowerCase());
@@ -668,6 +672,13 @@
             const url = new URL(facturaUrl, window.location.origin);
             url.searchParams.set('numeroPedido', pedido.NumeroPedido);
             facturaBtn.href = url.pathname + url.search;
+        }
+        const recepcionBtn = document.getElementById('modalControlReception');
+        recepcionBtn.classList.toggle('d-none', pedido.EstadoOperativo !== 'EN_PREPARACION');
+        if (pedido.EstadoOperativo === 'EN_PREPARACION') {
+            const url = new URL(recepcionUrl, window.location.origin);
+            url.searchParams.set('numeroPedido', pedido.NumeroPedido);
+            recepcionBtn.href = url.pathname + url.search;
         }
         const guiaBtn = document.getElementById('modalGenerateGuide');
         guiaBtn.classList.toggle('d-none', !pedido.PuedeGenerarGuiaRemision);

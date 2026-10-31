@@ -42,6 +42,30 @@ public class PedidosController : Controller
     }
 
     [HttpGet]
+    public async Task<IActionResult> Recepcion(string numeroPedido, CancellationToken cancellationToken)
+    {
+        var model = await _pedidosService.ObtenerRecepcionAsync(numeroPedido, cancellationToken);
+        if (model == null)
+        {
+            TempData["ToastError"] = "El pedido debe estar En Preparación para controlar la recepción";
+            return RedirectToAction(nameof(Index), new { termino = numeroPedido });
+        }
+
+        ViewData["Title"] = "Control de Recepción";
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> GuardarRecepcion([FromBody] GuardarRecepcionRequest request, CancellationToken cancellationToken)
+    {
+        var resultado = await _pedidosService.GuardarRecepcionAsync(request, cancellationToken);
+        if (!resultado.Exito)
+            return UnprocessableEntity(new { mensaje = resultado.Mensaje });
+        return Ok(new { mensaje = resultado.Mensaje });
+    }
+
+    [HttpGet]
     public async Task<IActionResult> Factura(string numeroPedido, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(numeroPedido))
