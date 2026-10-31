@@ -1,0 +1,177 @@
+@model Prosegin.Web.ViewModels.Pedidos.DirectorioOrdenesCompraViewModel
+
+@{
+    ViewData["Title"] = "Directorio de Órdenes de Compra Emitidas";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/ordenes-compra.css" asp-append-version="true" />
+}
+
+<div class="container-fluid py-4 ordenes-compra-page">
+    <nav aria-label="breadcrumb" class="small mb-2">
+        <span class="text-muted">Operaciones EPP</span>
+        <span class="text-muted mx-1">&gt;</span>
+        <span class="text-muted">Órdenes de Compra</span>
+        <span class="text-muted mx-1">&gt;</span>
+        <strong>Directorio General</strong>
+    </nav>
+
+    <div class="ordenes-search-card prosegin-card mb-3">
+        <div class="prosegin-page-header--accent" style="margin-bottom: 0;">
+            <div class="header-content">
+                <h1 class="page-title">Directorio de Órdenes de Compra Emitidas</h1>
+                <p class="page-subtitle">Control, trazabilidad y emisión documental de pedidos autorizados.</p>
+            </div>
+        </div>
+
+        <form asp-action="Index" method="get" class="ordenes-search-form" id="busquedaOrdenesCompra">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0">
+                    <i class="material-symbols-outlined text-muted">search</i>
+                </span>
+                <input asp-for="Termino"
+                       class="form-control border-start-0"
+                       placeholder="Ej. OC-PROV-1045, 20100123330, COT-2026-0824"
+                       autocomplete="off"
+                       maxlength="100" />
+                <button class="ordenes-search-button" type="submit">
+                    <i class="material-symbols-outlined align-middle me-1">search</i>Buscar
+                </button>
+                <button class="ordenes-clear-button" type="button" id="limpiarBusqueda">
+                    <i class="material-symbols-outlined align-middle me-1">refresh</i>Limpiar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Mensaje))
+    {
+        <div class="alert alert-warning d-flex align-items-center gap-2" role="alert">
+            <i class="material-symbols-outlined">info</i>
+            <span>@Model.Mensaje</span>
+        </div>
+    }
+
+    <div class="ordenes-directory">
+        <div class="table-responsive">
+            <table class="prosegin-table mb-0" aria-label="Pedidos y órdenes de compra emitidas">
+                <thead>
+                    <tr class="orden-parent-row">
+                        <th>Pedido vinculado</th>
+                        <th>Cliente</th>
+                        <th class="text-center">Cant. órdenes emitidas</th>
+                        <th class="text-end">Acciones / Expande</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var pedido in Model.Pedidos)
+                    {
+                        var detallesId = $"detalle-{pedido.Id}";
+                        <tr class="orden-parent-row">
+                            <td>
+                                <span class="small text-muted">PEDIDO</span>
+                                <span class="d-block fw-bold font-monospace">@pedido.NumeroPedido</span>
+                            </td>
+                            <td>
+                                <span class="fw-semibold">@pedido.Cliente</span>
+                                <span class="d-block small text-muted">RUC: @pedido.ClienteRuc</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge @(pedido.CantidadOrdenes > 0 ? "text-bg-warning" : "text-bg-light")">
+                                    @pedido.CantidadOrdenes órdenes emitidas
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <button type="button"
+                                        class="btn-prosegin-secondary detalle-pedido"
+                                        data-target="@detallesId"
+                                        data-cantidad="@pedido.CantidadOrdenes"
+                                        aria-expanded="false"
+                                        aria-controls="@detallesId">
+                                    Detalle <i class="material-symbols-outlined align-middle">expand_more</i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr class="detalle-contenido is-collapsed" id="@detallesId" aria-hidden="true">
+                            <td colspan="4" class="p-0">
+                                <div class="ordenes-detail-panel">
+                                    <div class="ordenes-detail-panel-inner">
+                                    @if (pedido.OrdenesCompra.Count == 0)
+                                    {
+                                        <div class="p-3 text-muted pedido-sin-ordenes">El pedido no tiene órdenes de compra emitidas</div>
+                                    }
+                                    else
+                                    {
+                                        <table class="ordenes-inner-table" aria-label="Órdenes del pedido @pedido.NumeroPedido">
+                                        <thead>
+                                            <tr>
+                                                <th>N° orden</th>
+                                                <th>Proveedor</th>
+                                                <th>RUC proveedor</th>
+                                                <th class="text-end">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var orden in pedido.OrdenesCompra)
+                                            {
+                                                <tr>
+                                                    <td class="font-monospace fw-bold">@orden.NumeroOrdenCompra</td>
+                                                    <td class="fw-semibold">@orden.Proveedor</td>
+                                                    <td class="font-monospace">RUC: @orden.ProveedorRuc</td>
+                                                    <td class="text-end ordenes-actions-cell">
+                                                        <a asp-action="VerPdf" asp-route-id="@orden.Id" target="_blank"
+                                                           class="orden-action-btn">
+                                                            <i class="material-symbols-outlined">picture_as_pdf</i> Ver PDF
+                                                        </a>
+                                                        <a asp-action="Descargar" asp-route-id="@orden.Id"
+                                                           class="orden-action-btn">
+                                                            <i class="material-symbols-outlined">download</i> Descargar
+                                                        </a>
+                                                        <form asp-action="Reenviar" asp-route-id="@orden.Id" method="post" class="d-inline">
+                                                            @Html.AntiForgeryToken()
+                                                            <button type="submit" class="orden-action-btn">
+                                                                <i class="material-symbols-outlined">send</i> Reenviar
+                                                            </button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                    }
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.detalle-pedido').forEach(function (button) {
+            button.addEventListener('click', function () {
+                var target = document.getElementById(button.dataset.target);
+                var isOpen = button.getAttribute('aria-expanded') === 'true';
+                var willOpen = !isOpen;
+
+                target.classList.toggle('is-collapsed', !willOpen);
+                target.classList.toggle('is-expanded', willOpen);
+                target.setAttribute('aria-hidden', String(!willOpen));
+                button.setAttribute('aria-expanded', String(willOpen));
+                button.innerHTML = (willOpen ? 'Contraer ' : 'Detalle ') +
+                    '<span class="material-symbols-outlined">expand_' + (willOpen ? 'less' : 'more') + '</span>';
+                button.closest('.orden-parent-row')?.classList.toggle('is-expanded', willOpen);
+            });
+        });
+
+        document.getElementById('limpiarBusqueda').addEventListener('click', function () {
+            document.getElementById('Termino').value = '';
+            window.location.href = '@Url.Action("Index", "OrdenesCompra")';
+        });
+    </script>
+}

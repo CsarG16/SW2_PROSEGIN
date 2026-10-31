@@ -3,6 +3,7 @@ namespace Prosegin.Data.Entities;
 public class OrdenCompra
 {
     public int Id { get; set; }
+    public string Correlativo { get; set; } = string.Empty;
     public int ProveedorId { get; set; }
     public int? OrdenVentaId { get; set; } // Nullable, puede no estar ligada a una OV directa en un futuro
     public DateTime FechaCompra { get; set; } = DateTime.UtcNow;

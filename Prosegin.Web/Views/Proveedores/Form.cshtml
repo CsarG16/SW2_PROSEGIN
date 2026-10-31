@@ -14,7 +14,10 @@
     <form asp-action="@(edicion ? "Edit" : "Create")" asp-route-id="@Model.Id" method="post" id="formProveedor">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="Id" />
-        <div asp-validation-summary="All" class="alert alert-danger mb-3"></div>
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div asp-validation-summary="All" class="alert alert-danger mb-3"></div>
+        }
 
         <div class="row g-3">
             <div class="col-lg-8">

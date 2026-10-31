@@ -87,6 +87,8 @@ public class ProseginDbContext : DbContext
         modelBuilder.Entity<OrdenCompra>(entity =>
         {
             entity.ToTable("OrdenesCompra");
+            entity.Property(e => e.Correlativo).HasMaxLength(30).IsRequired();
+            entity.HasIndex(e => e.Correlativo).IsUnique();
             entity.Property(e => e.Total).HasPrecision(18, 2);
         });
 

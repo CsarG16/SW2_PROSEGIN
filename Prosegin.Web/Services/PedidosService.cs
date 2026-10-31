@@ -264,6 +264,8 @@ public class PedidosService : IPedidosService
             .Include(ov => ov.Cotizacion)
                 .ThenInclude(c => c.Cliente)
             .Include(ov => ov.Cotizacion)
+                .ThenInclude(c => c.Cliente.Contactos)
+            .Include(ov => ov.Cotizacion)
                 .ThenInclude(c => c.Detalles)
                     .ThenInclude(d => d.Producto)
             .Include(ov => ov.OrdenesCompra)
@@ -321,6 +323,24 @@ public class PedidosService : IPedidosService
                 Total = cotizacion.Total,
                 CondicionPago = cotizacion.CondicionPago,
                 DireccionFiscal = cotizacion.Cliente.DireccionFiscal,
+                ClienteCorreoPrincipal = cotizacion.Cliente.Contactos
+                    .Where(contacto => contacto.EsPrincipal)
+                    .Select(contacto => contacto.Correo)
+                    .FirstOrDefault()
+                    ?? cotizacion.Cliente.Contactos.Select(contacto => contacto.Correo).FirstOrDefault()
+                    ?? cotizacion.Cliente.CorreoElectronico
+                    ?? string.Empty,
+                Destinatarios = cotizacion.Cliente.Contactos
+                    .OrderByDescending(contacto => contacto.EsPrincipal)
+                    .ThenBy(contacto => contacto.Id)
+                    .Where(contacto => !string.IsNullOrWhiteSpace(contacto.Correo))
+                    .Select(contacto => new PedidoContactoViewModel
+                    {
+                        Nombre = contacto.Nombre,
+                        Correo = contacto.Correo.Trim(),
+                        EsPrincipal = contacto.EsPrincipal
+                    })
+                    .ToList(),
                 Items = cotizacion.Detalles
                     .OrderBy(d => d.Id)
                     .Select(d => new PedidoItemViewModel
@@ -663,7 +683,7 @@ public class PedidosService : IPedidosService
                 {
                     Codigo = item.Codigo,
                     Descripcion = item.Descripcion,
-                    UnidadDeMedida = MapearUnidadMedidaSunat(item.UnidadMedida),
+                    UnidadDeMedida = "NIU",
                     Cantidad = item.Cantidad
                 }).ToList()
             }, cancellationToken);
@@ -867,7 +887,7 @@ public class PedidosService : IPedidosService
         if (string.IsNullOrWhiteSpace(unidadMedida))
             return "NIU";
 
-        return unidadMedida.Trim().ToUpperInvariant() switch
+        var unidadNormalizada = unidadMedida.Trim().ToUpperInvariant() switch
         {
             "PAR" or "PARES" or "PR" => "PAR",
             "CJA" or "CAJA" or "CAJAS" or "BX" => "BX",
@@ -878,9 +898,17 @@ public class PedidosService : IPedidosService
             "DZN" or "DOC" or "DOCENA" or "DOCENAS" => "DZN",
             "GLI" or "GL" or "GALON" or "GALONES" => "GLI",
             "UND" or "UNI" or "UNIDAD" or "UNIDADES" or "PZA" or "PIEZA" or "NIU" => "NIU",
-            _ => unidadMedida.Trim().Length <= 3 ? unidadMedida.Trim().ToUpperInvariant() : "NIU"
+            _ => "NIU"
         };
+
+        return UnidadMedidaPermitidaSunat.Contains(unidadNormalizada) ? unidadNormalizada : "NIU";
     }
+
+    private static readonly HashSet<string> UnidadMedidaPermitidaSunat =
+        new(StringComparer.Ordinal)
+        {
+            "NIU", "PAR", "BX", "SET", "KGM", "MTR", "LTR", "DZN", "GLI"
+        };
 
     private static decimal Redondear(decimal importe) => Math.Round(importe, 2, MidpointRounding.AwayFromZero);
     private static decimal RedondearPeso(decimal importe) => Math.Round(importe, 3, MidpointRounding.AwayFromZero);

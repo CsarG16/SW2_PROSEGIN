@@ -42,6 +42,15 @@ public class PedidoDetalleViewModel
     public decimal Total { get; set; }
     public string CondicionPago { get; set; } = string.Empty;
     public string DireccionFiscal { get; set; } = string.Empty;
+    public string ClienteCorreoPrincipal { get; set; } = string.Empty;
+    public List<PedidoContactoViewModel> Destinatarios { get; set; } = new();
 
     public List<PedidoItemViewModel> Items { get; set; } = new();
+}
+
+public class PedidoContactoViewModel
+{
+    public string Nombre { get; set; } = string.Empty;
+    public string Correo { get; set; } = string.Empty;
+    public bool EsPrincipal { get; set; }
 }

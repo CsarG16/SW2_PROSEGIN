@@ -637,6 +637,7 @@ public static class DbSeeder
                 {
                     var oc1 = new OrdenCompra
                     {
+                        Correlativo = "OC-PROV-1044",
                         ProveedorId = prov3M.Id,
                         OrdenVentaId = ov1.Id,
                         FechaCompra = hoy.AddDays(-1),
