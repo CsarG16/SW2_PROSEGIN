@@ -102,6 +102,161 @@ public class PedidosService : IPedidosService
             string.Equals(p.NumeroPedido, numeroPedido, StringComparison.OrdinalIgnoreCase));
     }
 
+    public async Task<RecepcionMercaderiaViewModel?> ObtenerRecepcionAsync(
+        string numeroPedido,
+        CancellationToken cancellationToken = default)
+    {
+        var orden = await BuscarOrdenConComprasAsync(numeroPedido, cancellationToken);
+        if (orden == null || NormalizarEstadoLogistico(orden.EstadoLogistico) != PedidoLogisticaRules.EstadoEnPreparacion)
+            return null;
+
+        var avances = await _context.RecepcionesMercaderia
+            .AsNoTracking()
+            .Where(r => r.OrdenVentaId == orden.Id)
+            .ToDictionaryAsync(r => r.ProductoId, cancellationToken);
+        var detalles = orden.OrdenesCompra.SelectMany(oc => oc.Detalles).ToList();
+        var items = detalles.Count > 0
+            ? detalles
+            .GroupBy(d => d.ProductoId)
+            .Select(g =>
+            {
+                var detalle = g.First();
+                avances.TryGetValue(g.Key, out var avance);
+                return new RecepcionItemViewModel
+                {
+                    ProductoId = g.Key,
+                    Codigo = detalle.Producto.Sku,
+                    Descripcion = detalle.Producto.Nombre,
+                    Proveedor = string.Join(", ", g.Select(d => d.OrdenCompra.Proveedor.RazonSocial).Distinct()),
+                    CantidadSolicitada = g.Sum(d => d.Cantidad),
+                    CantidadRecibida = avance?.CantidadRecibida ?? 0,
+                    UnidadMedida = detalle.Producto.UnidadMedida,
+                    EstadoInspeccion = avance?.EstadoInspeccion ?? "Pendiente",
+                    Observaciones = avance?.Observaciones ?? string.Empty
+                };
+            }).ToList()
+            : orden.Cotizacion.Detalles
+            .GroupBy(d => d.ProductoId)
+            .Select(g =>
+            {
+                var detalle = g.First();
+                avances.TryGetValue(g.Key, out var avance);
+                return new RecepcionItemViewModel
+                {
+                    ProductoId = g.Key,
+                    Codigo = detalle.Producto.Sku,
+                    Descripcion = detalle.Producto.Nombre,
+                    Proveedor = "Pendiente de abastecimiento",
+                    CantidadSolicitada = g.Sum(d => d.Cantidad),
+                    CantidadRecibida = avance?.CantidadRecibida ?? 0,
+                    UnidadMedida = detalle.Producto.UnidadMedida,
+                    EstadoInspeccion = avance?.EstadoInspeccion ?? "Pendiente",
+                    Observaciones = avance?.Observaciones ?? string.Empty
+                };
+            }).ToList();
+
+        return new RecepcionMercaderiaViewModel
+        {
+            NumeroPedido = numeroPedido,
+            NumeroOrdenCompra = orden.Cotizacion.NumeroOrdenCompraCliente ?? string.Empty,
+            DocumentoReferencia = orden.GuiasRemision
+                .OrderByDescending(g => g.FechaEmision)
+                .Select(g => g.NumeroGuia)
+                .FirstOrDefault(numero => !string.IsNullOrWhiteSpace(numero))
+                ?? orden.Cotizacion.NumeroOrdenCompraCliente
+                ?? "Sin documento asociado",
+            Revision = orden.Revision > 0 ? orden.Revision : 1,
+            FechaDocumento = orden.FechaCreacion,
+            Cliente = orden.Cotizacion.Cliente.RazonSocial,
+            Items = items
+        };
+    }
+
+    public async Task<(bool Exito, string Mensaje)> GuardarRecepcionAsync(
+        GuardarRecepcionRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var orden = await BuscarOrdenConComprasAsync(request.NumeroPedido, cancellationToken);
+        if (orden == null || NormalizarEstadoLogistico(orden.EstadoLogistico) != PedidoLogisticaRules.EstadoEnPreparacion)
+            return (false, "El pedido debe estar En Preparación para controlar la recepción");
+
+        var solicitadas = orden.OrdenesCompra.SelectMany(oc => oc.Detalles)
+            .GroupBy(d => d.ProductoId)
+            .ToDictionary(g => g.Key, g => g.Sum(d => d.Cantidad));
+        if (solicitadas.Count == 0)
+        {
+            solicitadas = orden.Cotizacion.Detalles
+                .GroupBy(d => d.ProductoId)
+                .ToDictionary(g => g.Key, g => g.Sum(d => d.Cantidad));
+        }
+        if (request.Items == null || request.Items.Count == 0)
+            return (false, "Ingrese al menos una cantidad recibida para guardar el avance");
+
+        foreach (var item in request.Items)
+        {
+            if (!solicitadas.TryGetValue(item.ProductoId, out var solicitada))
+                return (false, "El producto no pertenece al pedido");
+            if (item.CantidadRecibida < 0)
+                return (false, "Ingrese una cantidad recibida válida");
+            if (item.CantidadRecibida > solicitada)
+                return (false, "La cantidad recibida no puede ser mayor a la solicitada");
+            if (item.EstadoInspeccion.Equals("Conforme", StringComparison.OrdinalIgnoreCase)
+                && item.CantidadRecibida < solicitada)
+                return (false, "Una cantidad menor a la solicitada no puede marcarse como Conforme");
+            if ((item.EstadoInspeccion.Equals("Incompleto", StringComparison.OrdinalIgnoreCase)
+                 || item.EstadoInspeccion.Equals("Mercadería Dañada", StringComparison.OrdinalIgnoreCase))
+                && string.IsNullOrWhiteSpace(item.Observaciones))
+                return (false, "Ingrese las observaciones de la incidencia");
+        }
+
+        if (request.ConfirmarTotal)
+        {
+            if (request.Items.Count != solicitadas.Count
+                || request.Items.Any(i => i.CantidadRecibida != solicitadas[i.ProductoId]))
+                return (false, "No se puede confirmar la recepción total: existen cantidades distintas a las solicitadas");
+            if (request.Items.Any(i => !i.EstadoInspeccion.Equals("Conforme", StringComparison.OrdinalIgnoreCase)))
+                return (false, "No se puede confirmar la recepción total: existen incidencias pendientes");
+        }
+        else if (!request.Items.Any(i => i.CantidadRecibida > 0))
+        {
+            return (false, "Ingrese al menos una cantidad recibida para guardar el avance");
+        }
+
+        foreach (var item in request.Items)
+        {
+            var avance = await _context.RecepcionesMercaderia
+                .FirstOrDefaultAsync(r => r.OrdenVentaId == orden.Id && r.ProductoId == item.ProductoId, cancellationToken);
+            if (avance == null)
+            {
+                avance = new RecepcionMercaderia { OrdenVentaId = orden.Id, ProductoId = item.ProductoId };
+                _context.RecepcionesMercaderia.Add(avance);
+            }
+            avance.CantidadSolicitada = solicitadas[item.ProductoId];
+            avance.CantidadRecibida = item.CantidadRecibida;
+            avance.EstadoInspeccion = item.EstadoInspeccion;
+            avance.Observaciones = item.Observaciones?.Trim() ?? string.Empty;
+            avance.FechaActualizacion = DateTime.UtcNow;
+        }
+
+        if (request.ConfirmarTotal)
+            orden.EstadoLogistico = "ListoParaDespacho";
+        await _context.SaveChangesAsync(cancellationToken);
+        return (true, request.ConfirmarTotal
+            ? "Recepción total confirmada correctamente"
+            : "Avance de recepción guardado con éxito");
+    }
+
+    private async Task<OrdenVenta?> BuscarOrdenConComprasAsync(string numeroPedido, CancellationToken cancellationToken)
+    {
+        return await _context.OrdenesVenta
+            .Include(ov => ov.Cotizacion).ThenInclude(c => c.Cliente)
+            .Include(ov => ov.Cotizacion).ThenInclude(c => c.Detalles).ThenInclude(d => d.Producto)
+            .Include(ov => ov.OrdenesCompra).ThenInclude(oc => oc.Proveedor)
+            .Include(ov => ov.OrdenesCompra).ThenInclude(oc => oc.Detalles).ThenInclude(d => d.Producto)
+            .Include(ov => ov.GuiasRemision)
+            .FirstOrDefaultAsync(ov => ov.Cotizacion.Correlativo == numeroPedido, cancellationToken);
+    }
+
     private async Task<List<PedidoDetalleViewModel>> ObtenerListaBasePedidosAsync(CancellationToken cancellationToken)
     {
         var ordenesVenta = await _context.OrdenesVenta

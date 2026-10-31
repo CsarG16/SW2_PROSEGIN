@@ -980,6 +980,49 @@ namespace Prosegin.Data.Migrations
                     b.ToTable("PuntosEntrega");
                 });
 
+            modelBuilder.Entity("Prosegin.Data.Entities.RecepcionMercaderia", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CantidadRecibida")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CantidadSolicitada")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EstadoInspeccion")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<DateTime>("FechaActualizacion")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Observaciones")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<int>("OrdenVentaId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductoId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductoId");
+
+                    b.HasIndex("OrdenVentaId", "ProductoId")
+                        .IsUnique();
+
+                    b.ToTable("RecepcionesMercaderia", (string)null);
+                });
+
             modelBuilder.Entity("Prosegin.Data.Entities.ContactoCliente", b =>
                 {
                     b.HasOne("Prosegin.Data.Entities.Cliente", "Cliente")
@@ -1186,6 +1229,25 @@ namespace Prosegin.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Cliente");
+                });
+
+            modelBuilder.Entity("Prosegin.Data.Entities.RecepcionMercaderia", b =>
+                {
+                    b.HasOne("Prosegin.Data.Entities.OrdenVenta", "OrdenVenta")
+                        .WithMany()
+                        .HasForeignKey("OrdenVentaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Prosegin.Data.Entities.Producto", "Producto")
+                        .WithMany()
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("OrdenVenta");
+
+                    b.Navigation("Producto");
                 });
 
             modelBuilder.Entity("Prosegin.Data.Entities.Cliente", b =>

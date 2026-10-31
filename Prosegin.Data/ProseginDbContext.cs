@@ -26,6 +26,7 @@ public class ProseginDbContext : DbContext
     public DbSet<FacturaDetalle> FacturaDetalles { get; set; }
     public DbSet<GuiaRemision> GuiasRemision { get; set; }
     public DbSet<GuiaRemisionDetalle> GuiaRemisionDetalles { get; set; }
+    public DbSet<RecepcionMercaderia> RecepcionesMercaderia { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -153,6 +154,17 @@ public class ProseginDbContext : DbContext
             entity.ToTable("OrdenCompraDetalles");
             entity.Property(e => e.CostoUnitario).HasPrecision(18, 2);
             entity.Property(e => e.Subtotal).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<RecepcionMercaderia>(entity =>
+        {
+            entity.ToTable("RecepcionesMercaderia");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EstadoInspeccion).HasMaxLength(30).IsRequired();
+            entity.Property(e => e.Observaciones).HasMaxLength(500);
+            entity.HasIndex(e => new { e.OrdenVentaId, e.ProductoId }).IsUnique();
+            entity.HasOne(e => e.OrdenVenta).WithMany().HasForeignKey(e => e.OrdenVentaId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Producto).WithMany().HasForeignKey(e => e.ProductoId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Factura>(entity =>
