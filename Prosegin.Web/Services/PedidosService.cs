@@ -115,8 +115,10 @@ public class PedidosService : IPedidosService
             .Where(r => r.OrdenVentaId == orden.Id)
             .ToDictionaryAsync(r => r.ProductoId, cancellationToken);
         var detalles = orden.OrdenesCompra.SelectMany(oc => oc.Detalles).ToList();
-        var items = detalles.Count > 0
-            ? detalles
+        if (detalles.Count == 0)
+            return null;
+
+        var items = detalles
             .GroupBy(d => d.ProductoId)
             .Select(g =>
             {
@@ -128,25 +130,6 @@ public class PedidosService : IPedidosService
                     Codigo = detalle.Producto.Sku,
                     Descripcion = detalle.Producto.Nombre,
                     Proveedor = string.Join(", ", g.Select(d => d.OrdenCompra.Proveedor.RazonSocial).Distinct()),
-                    CantidadSolicitada = g.Sum(d => d.Cantidad),
-                    CantidadRecibida = avance?.CantidadRecibida ?? 0,
-                    UnidadMedida = detalle.Producto.UnidadMedida,
-                    EstadoInspeccion = avance?.EstadoInspeccion ?? "Pendiente",
-                    Observaciones = avance?.Observaciones ?? string.Empty
-                };
-            }).ToList()
-            : orden.Cotizacion.Detalles
-            .GroupBy(d => d.ProductoId)
-            .Select(g =>
-            {
-                var detalle = g.First();
-                avances.TryGetValue(g.Key, out var avance);
-                return new RecepcionItemViewModel
-                {
-                    ProductoId = g.Key,
-                    Codigo = detalle.Producto.Sku,
-                    Descripcion = detalle.Producto.Nombre,
-                    Proveedor = "Pendiente de abastecimiento",
                     CantidadSolicitada = g.Sum(d => d.Cantidad),
                     CantidadRecibida = avance?.CantidadRecibida ?? 0,
                     UnidadMedida = detalle.Producto.UnidadMedida,
@@ -172,6 +155,12 @@ public class PedidosService : IPedidosService
         };
     }
 
+    public async Task<bool> TieneOrdenesCompraAsync(string numeroPedido, CancellationToken cancellationToken = default)
+    {
+        var orden = await BuscarOrdenConComprasAsync(numeroPedido, cancellationToken);
+        return orden != null && orden.OrdenesCompra.Any(oc => oc.Detalles.Count > 0);
+    }
+
     public async Task<(bool Exito, string Mensaje)> GuardarRecepcionAsync(
         GuardarRecepcionRequest request,
         CancellationToken cancellationToken = default)
@@ -184,11 +173,7 @@ public class PedidosService : IPedidosService
             .GroupBy(d => d.ProductoId)
             .ToDictionary(g => g.Key, g => g.Sum(d => d.Cantidad));
         if (solicitadas.Count == 0)
-        {
-            solicitadas = orden.Cotizacion.Detalles
-                .GroupBy(d => d.ProductoId)
-                .ToDictionary(g => g.Key, g => g.Sum(d => d.Cantidad));
-        }
+            return (false, "El pedido no tiene órdenes de compra emitidas");
         if (request.Items == null || request.Items.Count == 0)
             return (false, "Ingrese al menos una cantidad recibida para guardar el avance");
 

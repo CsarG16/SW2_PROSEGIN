@@ -10,10 +10,12 @@ namespace Prosegin.Web.Controllers;
 public class PedidosController : Controller
 {
     private readonly IPedidosService _pedidosService;
+    private readonly IHttpClientFactory _httpClientFactory;
 
-    public PedidosController(IPedidosService pedidosService)
+    public PedidosController(IPedidosService pedidosService, IHttpClientFactory httpClientFactory)
     {
         _pedidosService = pedidosService;
+        _httpClientFactory = httpClientFactory;
     }
 
     [HttpGet]
@@ -52,23 +54,33 @@ public class PedidosController : Controller
         bool guia,
         CancellationToken cancellationToken)
     {
+        if (!factura && !guia)
+            return BadBadRequestComprobante();
+
         var pedido = await _pedidosService.ObtenerDetallePedidoAsync(numeroPedido, cancellationToken);
-        var documentos = await ObtenerDocumentosAsync(pedido, factura, guia, cancellationToken);
-        if (documentos.Count == 0)
-            return BadRequest(new { mensaje = "Seleccione al menos un comprobante disponible." });
-
-        using var archivo = new MemoryStream();
-        using (var zip = new ZipArchive(archivo, ZipArchiveMode.Create, true))
+        try
         {
-            foreach (var documento in documentos)
-            {
-                var entrada = zip.CreateEntry(documento.Nombre, CompressionLevel.Optimal);
-                using var salida = entrada.Open();
-                await salida.WriteAsync(documento.Contenido, cancellationToken);
-            }
-        }
+            var documentos = await ObtenerDocumentosAsync(pedido, factura, guia, cancellationToken);
+            if (documentos.Count == 0)
+                return StatusCode(502, new { mensaje = "No se pudo obtener los documentos desde Nubefact. Intente nuevamente." });
 
-        return File(archivo.ToArray(), "application/zip", $"Comprobantes_{numeroPedido}.zip");
+            using var archivo = new MemoryStream();
+            using (var zip = new ZipArchive(archivo, ZipArchiveMode.Create, true))
+            {
+                foreach (var documento in documentos)
+                {
+                    var entrada = zip.CreateEntry(documento.Nombre, CompressionLevel.Optimal);
+                    using var salida = entrada.Open();
+                    await salida.WriteAsync(documento.Contenido, cancellationToken);
+                }
+            }
+
+            return File(archivo.ToArray(), "application/zip", $"Comprobantes_{numeroPedido}.zip");
+        }
+        catch (PdfComprobanteException exception)
+        {
+            return StatusCode(502, new { mensaje = exception.Message });
+        }
     }
 
     [HttpPost]
@@ -82,6 +94,8 @@ public class PedidosController : Controller
     {
         if (string.IsNullOrWhiteSpace(destinatario))
             return BadRequest(new { mensaje = "Seleccione un destinatario." });
+        if (!factura && !guia)
+            return BadRequest(new { mensaje = "Seleccione al menos un comprobante disponible." });
 
         try
         {
@@ -93,9 +107,15 @@ public class PedidosController : Controller
         }
 
         var pedido = await _pedidosService.ObtenerDetallePedidoAsync(numeroPedido, cancellationToken);
-        var documentos = await ObtenerDocumentosAsync(pedido, factura, guia, cancellationToken);
-        if (documentos.Count == 0)
-            return BadRequest(new { mensaje = "Seleccione al menos un comprobante disponible." });
+        List<(string Nombre, byte[] Contenido)> documentos;
+        try
+        {
+            documentos = await ObtenerDocumentosAsync(pedido, factura, guia, cancellationToken);
+        }
+        catch (PdfComprobanteException exception)
+        {
+            return StatusCode(502, new { mensaje = exception.Message });
+        }
 
         var smtpHost = Environment.GetEnvironmentVariable("SMTP_HOST");
         if (string.IsNullOrWhiteSpace(smtpHost))
@@ -146,29 +166,52 @@ public class PedidosController : Controller
 
         if (factura && !string.IsNullOrWhiteSpace(pedido.EnlacePdfFactura))
         {
-            var contenido = await ObtenerPdfAsync(pedido.EnlacePdfFactura, cancellationToken);
-            if (contenido.Length > 0)
-                documentos.Add(($"{pedido.NumeroFactura ?? "Factura"}.pdf", contenido));
+            var contenido = await ObtenerPdfAsync(pedido.EnlacePdfFactura, "factura", cancellationToken);
+            documentos.Add(($"{pedido.NumeroFactura ?? "Factura"}.pdf", contenido));
         }
 
         if (guia && !string.IsNullOrWhiteSpace(pedido.EnlacePdfGuia))
         {
-            var contenido = await ObtenerPdfAsync(pedido.EnlacePdfGuia, cancellationToken);
-            if (contenido.Length > 0)
-                documentos.Add(($"{pedido.NumeroGuiaRemision ?? "GuiaRemision"}.pdf", contenido));
+            var contenido = await ObtenerPdfAsync(pedido.EnlacePdfGuia, "guía", cancellationToken);
+            documentos.Add(($"{pedido.NumeroGuiaRemision ?? "GuiaRemision"}.pdf", contenido));
         }
 
         return documentos;
     }
 
-    private async Task<byte[]> ObtenerPdfAsync(string enlace, CancellationToken cancellationToken)
+    private async Task<byte[]> ObtenerPdfAsync(string enlace, string tipoDocumento, CancellationToken cancellationToken)
     {
         if (!Uri.TryCreate(enlace, UriKind.Absolute, out var uri))
-            return [];
+            throw new PdfComprobanteException($"No se pudo obtener el PDF de la {tipoDocumento} desde Nubefact. Intente nuevamente.");
 
-        using var httpClient = new HttpClient();
-        using var response = await httpClient.GetAsync(uri, cancellationToken);
-        return response.IsSuccessStatusCode ? await response.Content.ReadAsByteArrayAsync(cancellationToken) : [];
+        var httpClient = _httpClientFactory.CreateClient("ComprobantesClient");
+        try
+        {
+            using var response = await httpClient.GetAsync(uri, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                throw new PdfComprobanteException($"No se pudo obtener el PDF de la {tipoDocumento} desde Nubefact. Intente nuevamente.");
+
+            var contenido = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+            if (contenido.Length == 0)
+                throw new PdfComprobanteException($"No se pudo obtener el PDF de la {tipoDocumento} desde Nubefact. Intente nuevamente.");
+            return contenido;
+        }
+        catch (HttpRequestException)
+        {
+            throw new PdfComprobanteException($"No se pudo obtener el PDF de la {tipoDocumento} desde Nubefact. Intente nuevamente.");
+        }
+        catch (TaskCanceledException)
+        {
+            throw new PdfComprobanteException("La descarga del comprobante desde Nubefact tardó demasiado. Intente nuevamente.");
+        }
+    }
+
+    private BadRequestObjectResult BadBadRequestComprobante() =>
+        BadRequest(new { mensaje = "Seleccione al menos un comprobante disponible." });
+
+    private sealed class PdfComprobanteException : Exception
+    {
+        public PdfComprobanteException(string mensaje) : base(mensaje) { }
     }
 
     [HttpGet]
@@ -177,7 +220,10 @@ public class PedidosController : Controller
         var model = await _pedidosService.ObtenerRecepcionAsync(numeroPedido, cancellationToken);
         if (model == null)
         {
-            TempData["ToastError"] = "El pedido debe estar En Preparación para controlar la recepción";
+            var ordenTieneCompras = await _pedidosService.TieneOrdenesCompraAsync(numeroPedido, cancellationToken);
+            TempData["ToastError"] = ordenTieneCompras
+                ? "El pedido debe estar En Preparación para controlar la recepción"
+                : "El pedido no tiene órdenes de compra emitidas";
             return RedirectToAction(nameof(Index), new { termino = numeroPedido });
         }
 
@@ -192,6 +238,8 @@ public class PedidosController : Controller
         var resultado = await _pedidosService.GuardarRecepcionAsync(request, cancellationToken);
         if (!resultado.Exito)
             return UnprocessableEntity(new { mensaje = resultado.Mensaje });
+        if (request.ConfirmarTotal)
+            TempData["ToastSuccess"] = resultado.Mensaje;
         return Ok(new { mensaje = resultado.Mensaje });
     }
 

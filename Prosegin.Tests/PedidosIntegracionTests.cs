@@ -39,6 +39,10 @@ public class PedidosIntegracionTests : IAsyncLifetime
         builder.Logging.ClearProviders();
         builder.WebHost.UseUrls("http://127.0.0.1:0");
         builder.Services.AddControllersWithViews().AddApplicationPart(typeof(PedidosController).Assembly);
+        builder.Services.AddHttpClient("ComprobantesClient", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(15);
+        });
         builder.Services.AddDbContext<ProseginDbContext>(options =>
             options.UseSqlite($"Data Source={_database};Pooling=False"));
         builder.Services.AddScoped<IPedidosService, PedidosService>();
@@ -173,7 +177,7 @@ public class PedidosIntegracionTests : IAsyncLifetime
             .Include(ov => ov.OrdenesCompra)
                 .ThenInclude(oc => oc.Detalles)
             .SingleAsync(ov => ov.Id == 1);
-        Assert.Equal("ListoParaDespacho", order.EstadoLogistico);
+        Assert.Equal("EnPreparacion", order.EstadoLogistico);
         Assert.Equal(1, order.Revision);
         Assert.Equal(2, order.OrdenesCompra.Count);
         Assert.Equal(25.00m, order.OrdenesCompra.Single(oc => oc.ProveedorId == 1).Total);

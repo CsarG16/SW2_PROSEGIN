@@ -48,6 +48,11 @@ if (connectionArgIndex >= 0 && connectionArgIndex + 1 < args.Length)
 builder.Services.AddControllersWithViews();
 builder.Services.AddDataServices(builder.Configuration);
 
+builder.Services.AddHttpClient("ComprobantesClient", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
+
 // Servicio de integración SUNAT con IHttpClientFactory
 builder.Services.AddHttpClient("SunatClient", client =>
 {
