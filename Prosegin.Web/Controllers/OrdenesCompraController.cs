@@ -18,7 +18,7 @@ public class OrdenesCompraController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(string? termino, CancellationToken cancellationToken)
+    public async Task<IActionResult> Index(string? termino, int? expandir, CancellationToken cancellationToken)
     {
         var model = new DirectorioOrdenesCompraViewModel
         {
@@ -32,7 +32,7 @@ public class OrdenesCompraController : Controller
         }
 
         if (!string.IsNullOrWhiteSpace(termino)
-            && !Regex.IsMatch(termino.Trim(), @"^[\p{L}\p{N}\s\-\.]+$"))
+            && !BusquedaValida(termino))
         {
             model.Mensaje = "Ingrese un número de orden, proveedor o pedido válido";
             return View(model);
@@ -70,10 +70,12 @@ public class OrdenesCompraController : Controller
                     .ToList()
             })
             .Where(pedido => string.IsNullOrWhiteSpace(filtro)
-                || pedido.NumeroPedido.Contains(filtro, StringComparison.OrdinalIgnoreCase)
+                || CoincideBusqueda(pedido.NumeroPedido, filtro)
+                || CoincideBusqueda(pedido.ClienteRuc, filtro)
                 || pedido.OrdenesCompra.Any(orden =>
-                    orden.NumeroOrdenCompra.Contains(filtro, StringComparison.OrdinalIgnoreCase)
-                    || orden.Proveedor.Contains(filtro, StringComparison.OrdinalIgnoreCase)))
+                    CoincideBusqueda(orden.NumeroOrdenCompra, filtro)
+                    || CoincideBusqueda(orden.Proveedor, filtro)
+                    || CoincideBusqueda(orden.ProveedorRuc, filtro)))
             .ToList();
 
         if (!string.IsNullOrWhiteSpace(filtro) && model.Pedidos.Count == 0)
@@ -122,13 +124,13 @@ public class OrdenesCompraController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Reenviar(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Reenviar(int id, string? termino, int? expandir, CancellationToken cancellationToken)
     {
         var orden = await ObtenerOrdenPdfAsync(id, cancellationToken);
         if (!DocumentoDisponible(orden))
         {
             TempData["ToastError"] = "El documento PDF de la orden de compra no está disponible";
-            return RedirectToAction(nameof(Index));
+            return RedirigirAIndex(termino, expandir);
         }
 
         var proveedorOrden = await _context.Proveedores
@@ -158,7 +160,7 @@ public class OrdenesCompraController : Controller
         if (string.IsNullOrWhiteSpace(correo))
         {
             TempData["ToastError"] = "El proveedor no tiene un correo de contacto registrado";
-            return RedirectToAction(nameof(Index));
+            return RedirigirAIndex(termino, expandir);
         }
 
         try
@@ -168,14 +170,14 @@ public class OrdenesCompraController : Controller
         catch (FormatException)
         {
             TempData["ToastError"] = "El correo de contacto registrado no es válido";
-            return RedirectToAction(nameof(Index));
+            return RedirigirAIndex(termino, expandir);
         }
 
         var smtpHost = Environment.GetEnvironmentVariable("SMTP_HOST");
         if (string.IsNullOrWhiteSpace(smtpHost))
         {
             TempData["ToastError"] = "No se pudo enviar el correo: la configuración SMTP no está disponible";
-            return RedirectToAction(nameof(Index));
+            return RedirigirAIndex(termino, expandir);
         }
 
         try
@@ -210,11 +212,11 @@ public class OrdenesCompraController : Controller
         catch (Exception exception) when (exception is SmtpException or InvalidOperationException)
         {
             TempData["ToastError"] = "No se pudo enviar el correo. Verifique la configuración SMTP";
-            return RedirectToAction(nameof(Index));
+            return RedirigirAIndex(termino, expandir);
         }
 
         TempData["ToastSuccess"] = "Orden de compra enviada correctamente";
-        return RedirectToAction(nameof(Index));
+        return RedirigirAIndex(termino, expandir);
     }
 
     private Task<Data.Entities.OrdenCompra?> ObtenerOrdenPdfAsync(int id, CancellationToken cancellationToken)
@@ -233,9 +235,41 @@ public class OrdenesCompraController : Controller
     private static bool DocumentoDisponible(Data.Entities.OrdenCompra? orden) =>
         orden != null && orden.Detalles.Count > 0;
 
+    public static bool CoincideBusqueda(string? valor, string? termino)
+    {
+        if (string.IsNullOrWhiteSpace(valor) || string.IsNullOrWhiteSpace(termino))
+            return false;
+
+        return QuitarTildes(valor).Contains(QuitarTildes(termino), StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static string QuitarTildes(string? valor)
+    {
+        if (string.IsNullOrWhiteSpace(valor))
+            return string.Empty;
+
+        var sinTildes = valor.Normalize(System.Text.NormalizationForm.FormD);
+        return new string(sinTildes
+            .Where(caracter => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(caracter)
+                != System.Globalization.UnicodeCategory.NonSpacingMark)
+            .ToArray())
+            .Normalize(System.Text.NormalizationForm.FormC);
+    }
+
+    public static bool BusquedaValida(string? termino)
+    {
+        if (string.IsNullOrWhiteSpace(termino))
+            return false;
+
+        return Regex.IsMatch(termino.Trim(), @"^[\p{L}\p{N}\s\-\.&,\/'()]+$");
+    }
+
     private static string NombreArchivoPdf(Data.Entities.OrdenCompra orden)
     {
-        var proveedorSinAcentos = orden.Proveedor.RazonSocial.Normalize(System.Text.NormalizationForm.FormD);
+        var nombreBase = string.IsNullOrWhiteSpace(orden.Proveedor.NombreComercial)
+            ? orden.Proveedor.RazonSocial
+            : orden.Proveedor.NombreComercial;
+        var proveedorSinAcentos = nombreBase.Normalize(System.Text.NormalizationForm.FormD);
         var proveedor = new string(proveedorSinAcentos
             .Where(caracter => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(caracter)
                 != System.Globalization.UnicodeCategory.NonSpacingMark
@@ -245,5 +279,10 @@ public class OrdenesCompraController : Controller
             .Normalize(System.Text.NormalizationForm.FormC);
         var nombreCorto = string.Join("_", proveedor.Split(' ', StringSplitOptions.RemoveEmptyEntries));
         return $"Orden_Compra_{orden.Correlativo}_{nombreCorto}.pdf";
+    }
+
+    private RedirectToActionResult RedirigirAIndex(string? termino, int? expandir)
+    {
+        return RedirectToAction(nameof(Index), new { termino, expandir });
     }
 }

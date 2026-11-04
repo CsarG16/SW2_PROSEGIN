@@ -100,7 +100,7 @@ public class AbastecimientoController : Controller
         }
 
         var ordenYaProcesada = await _context.Database.ExecuteSqlInterpolatedAsync(
-            $"UPDATE OrdenesVenta SET EstadoLogistico = 'ListoParaDespacho', Revision = Revision + 1 WHERE Id = {ordenVentaId} AND EstadoLogistico = 'PorPreparar' AND 0 = (SELECT COUNT(*) FROM OrdenesCompra WHERE OrdenVentaId = {ordenVentaId})",
+            $"UPDATE OrdenesVenta SET EstadoLogistico = 'EnPreparacion', Revision = Revision + 1 WHERE Id = {ordenVentaId} AND EstadoLogistico = 'PorPreparar' AND 0 = (SELECT COUNT(*) FROM OrdenesCompra WHERE OrdenVentaId = {ordenVentaId})",
             cancellationToken);
 
         if (ordenYaProcesada == 0)
@@ -111,7 +111,7 @@ public class AbastecimientoController : Controller
         }
 
         var registroActualizado = await _context.OrdenesVenta.AsNoTracking().SingleOrDefaultAsync(ov => ov.Id == ordenVentaId, cancellationToken);
-        if (registroActualizado == null || registroActualizado.EstadoLogistico != "ListoParaDespacho")
+        if (registroActualizado == null || registroActualizado.EstadoLogistico != "EnPreparacion")
         {
             await transaction.RollbackAsync(cancellationToken);
             TempData["ModalError"] = "El pedido ya fue procesado por otra operación. Las órdenes de compra ya fueron generadas.";
@@ -173,7 +173,7 @@ public class AbastecimientoController : Controller
         }
 
         TempData["ModalSuccess"] = "Órdenes de compra generadas y consolidadas con éxito";
-        return RedirectToAction("Index", "Pedidos", new { estado = PedidoLogisticaRules.EstadoListoDespacho });
+        return RedirectToAction("Index", "Pedidos", new { estado = PedidoLogisticaRules.EstadoEnPreparacion, abrirDetalle = ordenVenta.Cotizacion.Correlativo });
     }
 
     private Task<OrdenVenta?> ObtenerOrdenVentaAsync(int id, CancellationToken cancellationToken)

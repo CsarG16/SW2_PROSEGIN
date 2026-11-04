@@ -695,10 +695,10 @@
             </div>
             <div id="modalFiscalRows" class="d-flex flex-column gap-2"></div>
             <div class="fiscal-actions d-flex flex-column flex-sm-row gap-2 mt-3">
-                <button type="button" class="btn-prosegin-secondary" onclick="descargarComprobantesSeleccionados()">
+                <button type="button" id="btnDescargarComprobantes" class="btn-prosegin-secondary" onclick="descargarComprobantesSeleccionados()">
                     <span class="material-symbols-outlined me-1">download</span>Descargar Localmente
                 </button>
-                <button type="button" class="btn-prosegin-primary" onclick="enviarComprobantesSeleccionados()">
+                <button type="button" id="btnEnviarComprobantes" class="btn-prosegin-primary" onclick="enviarComprobantesSeleccionados()">
                     <span class="material-symbols-outlined me-1">send</span>Enviar Comprobantes
                 </button>
             </div>
@@ -874,7 +874,7 @@
             check.type = 'checkbox';
             check.className = 'form-check-input fiscal-document-check';
             check.dataset.tipo = documento.tipo;
-            check.checked = true;
+            check.checked = false;
             const texto = document.createElement('span');
             texto.className = 'fiscal-document-name';
             texto.textContent = documento.nombre;
@@ -906,30 +906,53 @@
     async function descargarComprobantesSeleccionados() {
         if (!pedidoSeleccionado) return;
         const seleccionados = comprobantesSeleccionados();
+        if (!seleccionados.factura && !seleccionados.guia) {
+            window.ProseginToast?.error('Seleccione al menos un comprobante disponible.');
+            return;
+        }
+        const boton = document.getElementById('btnDescargarComprobantes');
+        const textoOriginal = boton.innerHTML;
+        boton.disabled = true;
+        boton.innerHTML = '<span class="material-symbols-outlined me-1">download</span>Descargando...';
         const formulario = new FormData();
         formulario.append('numeroPedido', pedidoSeleccionado.NumeroPedido);
         formulario.append('factura', seleccionados.factura);
         formulario.append('guia', seleccionados.guia);
         formulario.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]')?.value || '');
 
-        const response = await fetch(descargarComprobantesUrl, { method: 'POST', body: formulario });
-        if (!response.ok) {
-            const mensaje = await response.text();
-            window.ProseginToast?.error(mensaje || 'No se pudieron descargar los comprobantes.');
-            return;
+        try {
+            const response = await fetch(descargarComprobantesUrl, { method: 'POST', body: formulario });
+            if (!response.ok) {
+                const resultado = await response.json().catch(() => null);
+                window.ProseginToast?.error(resultado?.mensaje || 'No se pudieron descargar los comprobantes.');
+                return;
+            }
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const enlace = document.createElement('a');
+            enlace.href = url;
+            enlace.download = `Comprobantes_${pedidoSeleccionado.NumeroPedido}.zip`;
+            enlace.click();
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            window.ProseginToast?.error('No se pudieron descargar los comprobantes. Intente nuevamente.');
+        } finally {
+            boton.disabled = false;
+            boton.innerHTML = textoOriginal;
         }
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const enlace = document.createElement('a');
-        enlace.href = url;
-        enlace.download = `Comprobantes_${pedidoSeleccionado.NumeroPedido}.zip`;
-        enlace.click();
-        URL.revokeObjectURL(url);
     }
 
     async function enviarComprobantesSeleccionados() {
         if (!pedidoSeleccionado) return;
         const seleccionados = comprobantesSeleccionados();
+        if (!seleccionados.factura && !seleccionados.guia) {
+            window.ProseginToast?.error('Seleccione al menos un comprobante disponible.');
+            return;
+        }
+        const boton = document.getElementById('btnEnviarComprobantes');
+        const textoOriginal = boton.innerHTML;
+        boton.disabled = true;
+        boton.innerHTML = '<span class="material-symbols-outlined me-1">send</span>Enviando...';
         const formulario = new FormData();
         formulario.append('numeroPedido', pedidoSeleccionado.NumeroPedido);
         formulario.append('destinatario', document.getElementById('modalFiscalRecipient').value);
@@ -937,21 +960,28 @@
         formulario.append('guia', seleccionados.guia);
         formulario.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]')?.value || '');
 
-        const response = await fetch(enviarComprobantesUrl, { method: 'POST', body: formulario });
-        const resultado = await response.json().catch(() => ({ mensaje: 'No se pudo procesar la solicitud.' }));
-        if (response.ok) {
-            const mensaje = resultado.mensaje || 'Comprobantes enviados exitosamente al destinatario';
-            if (window.ProseginToast) {
-                window.ProseginToast.success(mensaje);
-            } else if (window.ProseginAlert) {
-                window.ProseginAlert.success(mensaje, 'Operación Exitosa');
+        try {
+            const response = await fetch(enviarComprobantesUrl, { method: 'POST', body: formulario });
+            const resultado = await response.json().catch(() => ({ mensaje: 'No se pudo procesar la solicitud.' }));
+            if (response.ok) {
+                const mensaje = resultado.mensaje || 'Comprobantes enviados exitosamente al destinatario';
+                if (window.ProseginToast) {
+                    window.ProseginToast.success(mensaje);
+                } else if (window.ProseginAlert) {
+                    window.ProseginAlert.success(mensaje, 'Operación Exitosa');
+                } else {
+                    document.querySelector('#detailModal')?.insertAdjacentHTML('afterbegin',
+                        `<div class="alert alert-success m-3" role="alert">${mensaje}</div>`);
+                }
+                closeDetailModal();
             } else {
-                document.querySelector('#detailModal')?.insertAdjacentHTML('afterbegin',
-                    `<div class="alert alert-success m-3" role="alert">${mensaje}</div>`);
+                window.ProseginToast?.error(resultado.mensaje || 'No se pudieron enviar los comprobantes.');
             }
-            closeDetailModal();
-        } else {
-            window.ProseginToast?.error(resultado.mensaje || 'No se pudieron enviar los comprobantes.');
+        } catch (error) {
+            window.ProseginToast?.error('No se pudieron enviar los comprobantes. Intente nuevamente.');
+        } finally {
+            boton.disabled = false;
+            boton.innerHTML = textoOriginal;
         }
     }
 

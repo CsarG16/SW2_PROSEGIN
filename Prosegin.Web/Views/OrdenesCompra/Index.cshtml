@@ -85,6 +85,7 @@
                             <td class="text-end">
                                 <button type="button"
                                         class="btn-prosegin-secondary detalle-pedido"
+                                        data-pedido-id="@pedido.Id"
                                         data-target="@detallesId"
                                         data-cantidad="@pedido.CantidadOrdenes"
                                         aria-expanded="false"
@@ -130,6 +131,8 @@
                                                         </a>
                                                         <form asp-action="Reenviar" asp-route-id="@orden.Id" method="post" class="d-inline">
                                                             @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="termino" value="@Model.Termino" />
+                                                            <input type="hidden" name="expandir" value="@pedido.Id" />
                                                             <button type="submit" class="orden-action-btn">
                                                                 <i class="material-symbols-outlined">send</i> Reenviar
                                                             </button>
@@ -167,6 +170,12 @@
                     '<span class="material-symbols-outlined">expand_' + (willOpen ? 'less' : 'more') + '</span>';
                 button.closest('.orden-parent-row')?.classList.toggle('is-expanded', willOpen);
             });
+
+            var pedidoExpandir = '@Context.Request.Query["expandir"].ToString()';
+            if (pedidoExpandir) {
+                var botonExpandir = document.querySelector('.detalle-pedido[data-pedido-id="' + pedidoExpandir + '"]');
+                botonExpandir?.click();
+            }
         });
 
         document.getElementById('limpiarBusqueda').addEventListener('click', function () {
