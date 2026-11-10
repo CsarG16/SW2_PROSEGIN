@@ -1,0 +1,142 @@
+@model Prosegin.Web.ViewModels.Finanzas.RegistroPagosViewModel
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Registro de Pago";
+    var culture = CultureInfo.GetCultureInfo("es-PE");
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/finanzas.css" asp-append-version="true" />
+}
+
+<div class="container-fluid px-0 finance-page">
+    <header class="finance-page-header">
+        <div class="finance-page-heading">
+            <span class="finance-page-icon"><i class="material-symbols-outlined">payments</i></span>
+            <div>
+                <div class="finance-page-kicker">Finanzas / Cobranzas</div>
+                <h1 class="finance-page-title">Registro de Pago</h1>
+                <p class="finance-page-subtitle">Registra abonos o pagos totales de facturas pendientes.</p>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 finance-page-header-actions">
+            <a asp-action="CuentasPorCobrar" class="btn-prosegin-secondary">Cuentas por cobrar</a>
+            <a asp-action="FacturasPorVencer" class="btn-prosegin-secondary">Facturas por vencer</a>
+            <span class="finance-brand-pill"><i class="material-symbols-outlined">payments</i>PROSEGIN</span>
+        </div>
+    </header>
+
+    <form asp-action="RegistroPago" method="get" class="finance-filter-panel">
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-8 col-lg-6">
+                    <label for="buscarFactura" class="form-label">Buscar factura o cliente</label>
+                    <input id="buscarFactura" name="busqueda" value="@Model.Busqueda" class="form-control"
+                           placeholder="Número de factura o nombre del cliente" />
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn-prosegin-primary">Buscar</button>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Busqueda))
+                {
+                    <div class="col-auto">
+                        <a asp-action="RegistroPago" class="btn-prosegin-secondary">Limpiar</a>
+                    </div>
+                }
+            </div>
+        </div>
+    </form>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Mensaje))
+    {
+        <div class="finance-empty-state @(Model.BusquedaInvalida ? "is-warning" : "")" role="status">@Model.Mensaje</div>
+    }
+
+    @if (Model.Facturas.Count > 0)
+    {
+        <div class="text-muted small mb-2">Mostrando @Model.Facturas.Count de @Model.TotalFacturas facturas pendientes</div>
+        <form asp-action="RegistrarPago" method="post" class="finance-data-card mb-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Busqueda" value="@Model.Busqueda" />
+            <input type="hidden" name="Pagina" value="@Model.Pagina" />
+            <div class="table-responsive">
+                <table class="table table-hover align-middle finance-table">
+                    <thead>
+                        <tr>
+                            <th>Seleccionar</th>
+                            <th>Factura</th>
+                            <th>Cliente</th>
+                            <th class="text-end">Monto total</th>
+                            <th class="text-end">Saldo pendiente</th>
+                            <th>Vencimiento</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var factura in Model.Facturas)
+                        {
+                            <tr>
+                                <td>
+                                    <input class="form-check-input" type="radio" name="FacturaId" value="@factura.Id"
+                                           checked="@(Model.FacturaIdSeleccionada == factura.Id)"
+                                           aria-label="Seleccionar factura @factura.NumeroFactura" />
+                                </td>
+                                <td class="finance-document-number">@factura.NumeroFactura</td>
+                                <td>@factura.Cliente</td>
+                                <td class="text-end">@factura.MontoTotal.ToString("C", culture)</td>
+                                <td class="text-end fw-semibold">@factura.SaldoPendiente.ToString("C", culture)</td>
+                                <td>@factura.FechaVencimiento.ToString("dd/MM/yyyy", culture)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card-body border-top">
+            <h2 class="finance-section-title mb-3">Datos del pago</h2>
+                <div class="row g-3 align-items-end">
+                    <div class="col-sm-6 col-lg-2">
+                        <label for="montoPago" class="form-label">Monto del pago</label>
+                        <input id="montoPago" name="Monto" type="number" min="0.01" step="0.01" class="form-control" />
+                    </div>
+                    <div class="col-sm-6 col-lg-2">
+                        <label for="fechaPago" class="form-label">Fecha de pago</label>
+                        <input id="fechaPago" name="FechaPago" type="date" value="@Model.FechaPagoPredeterminada.ToString("yyyy-MM-dd")" class="form-control" />
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <label for="metodoPago" class="form-label">Método de pago</label>
+                        <select id="metodoPago" name="MetodoPago" class="form-select">
+                            <option value="">Seleccione un método</option>
+                            <option value="Transferencia">Transferencia</option>
+                            <option value="Depósito">Depósito</option>
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Tarjeta">Tarjeta</option>
+                            <option value="Cheque">Cheque</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <label for="referenciaPago" class="form-label">Referencia (opcional)</label>
+                        <input id="referenciaPago" name="Referencia" maxlength="100" class="form-control" />
+                    </div>
+                    <div class="col-lg-2 d-grid">
+                        <button type="submit" class="btn-prosegin-primary">Registrar Pago</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        @if (Model.TotalPaginas > 1)
+        {
+            <nav class="mt-3" aria-label="Paginación de facturas pendientes">
+                <ul class="pagination justify-content-end">
+                    @for (var pagina = 1; pagina <= Model.TotalPaginas; pagina++)
+                    {
+                        <li class="page-item @(pagina == Model.Pagina ? "active" : "")">
+                            <a class="page-link" asp-action="RegistroPago" asp-route-busqueda="@Model.Busqueda" asp-route-pagina="@pagina">@pagina</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+</div>

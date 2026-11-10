@@ -1,0 +1,77 @@
+@model Prosegin.Web.ViewModels.Cotizaciones.HistorialDetalleViewModel
+@using System.Globalization
+
+@{
+    ViewData["Title"] = $"Detalle {Model.Documento.NumeroDocumento}";
+    var culture = CultureInfo.GetCultureInfo("es-PE");
+}
+
+<div class="container-fluid px-0">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">Detalle de @Model.Documento.Tipo</h1>
+            <p class="text-muted mb-0">@Model.Documento.NumeroDocumento</p>
+        </div>
+        <a asp-action="Historial"
+           asp-route-busqueda="@ViewData["HistorialBusqueda"]"
+           asp-route-pagina="@ViewData["HistorialPagina"]"
+           class="btn btn-outline-secondary">
+            <i class="material-symbols-outlined align-middle">arrow_back</i>
+            Volver al historial
+        </a>
+    </div>
+
+    <section class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-sm-6 col-lg-3"><span class="text-muted d-block">Cliente</span><strong>@Model.Documento.Cliente</strong></div>
+                <div class="col-sm-6 col-lg-3"><span class="text-muted d-block">RUC</span><strong>@Model.Documento.NumeroDocumentoCliente</strong></div>
+                <div class="col-sm-6 col-lg-2"><span class="text-muted d-block">Fecha</span><strong>@Model.Documento.Fecha.ToLocalTime().ToString("dd/MM/yyyy", culture)</strong></div>
+                <div class="col-sm-6 col-lg-2"><span class="text-muted d-block">Estado</span><strong>@Model.Documento.Estado</strong></div>
+                <div class="col-sm-6 col-lg-2"><span class="text-muted d-block">Monto</span><strong>@Model.Documento.Total.ToString("C", culture)</strong></div>
+                @if (Model.Documento.Tipo == "Compra")
+                {
+                    <div class="col-sm-6 col-lg-3"><span class="text-muted d-block">Pedido relacionado</span><strong>@Model.Documento.NumeroPedido</strong></div>
+                    <div class="col-sm-6 col-lg-3"><span class="text-muted d-block">Factura</span><strong>@(Model.NumeroFactura ?? "No emitida")</strong></div>
+                    @if (!string.IsNullOrWhiteSpace(Model.EstadoFactura))
+                    {
+                        <div class="col-sm-6 col-lg-3"><span class="text-muted d-block">Estado de factura</span><strong>@Model.EstadoFactura</strong></div>
+                    }
+                }
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-header bg-white"><strong>Productos y precios aplicados</strong></div>
+        @if (Model.Items.Count == 0)
+        {
+            <div class="card-body text-muted">No hay detalle disponible para este documento.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th>Código</th><th>Producto</th><th class="text-end">Cantidad</th><th class="text-end">Precio unitario</th><th class="text-end">Subtotal</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>@item.Codigo</td>
+                                <td>@item.Descripcion</td>
+                                <td class="text-end">@item.Cantidad</td>
+                                <td class="text-end">@item.PrecioUnitario.ToString("C", culture)</td>
+                                <td class="text-end">@item.Subtotal.ToString("C", culture)</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr><th colspan="4" class="text-end">Total</th><th class="text-end">@Model.Documento.Total.ToString("C", culture)</th></tr>
+                    </tfoot>
+                </table>
+            </div>
+        }
+    </section>
+</div>

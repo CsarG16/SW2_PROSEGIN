@@ -11,6 +11,7 @@ public class PedidoListViewModel
     public int TotalPorPreparar { get; set; }
     public int TotalEnPreparacion { get; set; }
     public int TotalListoDespacho { get; set; }
+    public int TotalEnRuta { get; set; }
     public int TotalEntregado { get; set; }
     public int TotalUrgentes { get; set; }
     public int Pagina { get; set; } = 1;
@@ -21,4 +22,5 @@ public class PedidoListViewModel
     public int Hasta => TotalFiltrados == 0 ? 0 : Desde + Pedidos.Count - 1;
 
     public string MensajeSinResultados { get; set; } = Prosegin.Data.Validation.PedidoLogisticaRules.MensajeSinResultados;
+    public bool BusquedaInvalida { get; set; }
 }

@@ -47,6 +47,8 @@ public sealed class CotizacionesTestHost : IAsyncLifetime
         builder.WebHost.UseUrls("http://127.0.0.1:0");
         builder.Services.AddControllersWithViews().AddApplicationPart(typeof(CotizacionesController).Assembly);
         builder.Services.AddDbContext<ProseginDbContext>(options => options.UseSqlite($"Data Source={_database};Pooling=False"));
+        builder.Services.AddHttpClient("ComprobantesClient")
+            .ConfigurePrimaryHttpMessageHandler(() => new RespuestaPdfPruebaHandler());
         builder.Services.AddSingleton<ISunatService>(Sunat);
         builder.Services.AddSingleton<ISupabaseStorageService, SupabaseStoragePrueba>();
         _app = builder.Build();
@@ -152,6 +154,15 @@ public sealed class CotizacionesTestHost : IAsyncLifetime
         public string ObtenerUrlPublica(string carpeta, string nombreArchivo) =>
             $"https://fake-supabase.co/storage/v1/object/public/{carpeta}/{nombreArchivo}";
     }
+
+    private sealed class RespuestaPdfPruebaHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent("%PDF-1.7 prueba"u8.ToArray())
+            });
+    }
 }
 
 public class CotizacionesIntegracionTests : IAsyncLifetime
@@ -159,6 +170,149 @@ public class CotizacionesIntegracionTests : IAsyncLifetime
     private readonly CotizacionesTestHost _host = new();
     public Task InitializeAsync() => _host.InitializeAsync();
     public Task DisposeAsync() => _host.DisposeAsync();
+
+    [Fact]
+    public async Task Historial_SinRegistros_MuestraMensajeEsperado()
+    {
+        var response = await _host.Client.GetAsync("/Cotizaciones/Historial");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("No se encontraron cotizaciones ni compras registradas", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Historial_BuscaPorNombreYRuc_YRechazaCaracteresInvalidos()
+    {
+        await SeedCotizacionAsync("Rechazada", DateTime.UtcNow.AddDays(-1), null);
+
+        var porNombre = await _host.Client.GetStringAsync("/Cotizaciones/Historial?busqueda=Cliente%20de%20prueba%20A");
+        var porRuc = await _host.Client.GetStringAsync("/Cotizaciones/Historial?busqueda=20123456789");
+        var sinCoincidencias = WebUtility.HtmlDecode(await _host.Client.GetStringAsync("/Cotizaciones/Historial?busqueda=Minera%20Fantasma%20S.A.C."));
+        var invalida = WebUtility.HtmlDecode(await _host.Client.GetStringAsync("/Cotizaciones/Historial?busqueda=%40%40%23%23%25%25"));
+
+        Assert.Contains("COT-2026-TEST-", porNombre);
+        Assert.Contains("COT-2026-TEST-", porRuc);
+        Assert.Contains("No se encontraron registros que coincidan con la búsqueda", sinCoincidencias);
+        Assert.Contains("Ingrese un nombre de cliente o número de documento válido", invalida);
+    }
+
+    [Fact]
+    public async Task HistorialDetalle_CotizacionMuestraDatosYProductos()
+    {
+        var id = await SeedCotizacionAsync("Aprobada", DateTime.UtcNow.AddDays(-1), null);
+
+        var response = await _host.Client.GetAsync($"/Cotizaciones/DetalleHistorial?tipo=Cotizacion&id={id}");
+        var contenido = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("Cliente de prueba A", contenido);
+        Assert.Contains("Casco de prueba", contenido);
+        Assert.Contains("20123456789", contenido);
+    }
+
+    [Fact]
+    public async Task HistorialDescargar_CotizacionConDetalleDevuelvePdf()
+    {
+        var id = await SeedCotizacionAsync("Aprobada", DateTime.UtcNow.AddDays(-1), null);
+
+        var response = await _host.Client.GetAsync($"/Cotizaciones/DescargarHistorial?tipo=Cotizacion&id={id}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("application/pdf", response.Content.Headers.ContentType?.MediaType);
+        Assert.Contains(".pdf", response.Content.Headers.ContentDisposition?.FileName ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task HistorialDetalle_YDescarga_SinDetalleMuestranMensajesEsperados()
+    {
+        var cotizacionId = 0;
+        await _host.WithDatabaseAsync(async context =>
+        {
+            var cotizacion = new Cotizacion
+            {
+                Correlativo = "COT-2026-SIN-DETALLE",
+                ClienteId = 1,
+                Estado = "Rechazada",
+                FechaEmision = DateTime.UtcNow.AddDays(-1)
+            };
+            context.Cotizaciones.Add(cotizacion);
+            await context.SaveChangesAsync();
+            cotizacionId = cotizacion.Id;
+        });
+
+        var detalle = await _host.Client.GetAsync($"/Cotizaciones/DetalleHistorial?tipo=Cotizacion&id={cotizacionId}");
+        Assert.Equal(HttpStatusCode.Redirect, detalle.StatusCode);
+        var paginaDetalle = WebUtility.HtmlDecode(await _host.Client.GetStringAsync(detalle.Headers.Location!));
+        Assert.Contains("No se pudo cargar el detalle del documento", paginaDetalle);
+
+        var descarga = await _host.Client.GetAsync($"/Cotizaciones/DescargarHistorial?tipo=Cotizacion&id={cotizacionId}");
+        Assert.Equal(HttpStatusCode.Redirect, descarga.StatusCode);
+        var paginaDescarga = WebUtility.HtmlDecode(await _host.Client.GetStringAsync(descarga.Headers.Location!));
+        Assert.Contains("El documento PDF no está disponible", paginaDescarga);
+    }
+
+    [Fact]
+    public async Task Historial_IncluyeComprasEntregadasYPdfFaltanteRedirige()
+    {
+        var cotizacionId = await SeedCotizacionAsync("Aprobada", DateTime.UtcNow.AddDays(-2), null);
+        var ordenVentaId = 0;
+        await _host.WithDatabaseAsync(async context =>
+        {
+            var orden = new OrdenVenta
+            {
+                CotizacionId = cotizacionId,
+                EstadoLogistico = "Entregado",
+                FechaCreacion = DateTime.UtcNow.AddDays(-1)
+            };
+            context.OrdenesVenta.Add(orden);
+            await context.SaveChangesAsync();
+            ordenVentaId = orden.Id;
+        });
+
+        var historial = await _host.Client.GetStringAsync("/Cotizaciones/Historial");
+        var descarga = await _host.Client.GetAsync($"/Cotizaciones/DescargarHistorial?tipo=Compra&id={ordenVentaId}");
+
+        Assert.Contains($"COM-{ordenVentaId:D6}", historial);
+        Assert.Equal(HttpStatusCode.Redirect, descarga.StatusCode);
+        Assert.Contains("/Cotizaciones/Historial", descarga.Headers.Location?.ToString());
+    }
+
+    [Fact]
+    public async Task HistorialDescargar_CompraConFacturaPdfDevuelveDocumento()
+    {
+        var cotizacionId = await SeedCotizacionAsync("Aprobada", DateTime.UtcNow.AddDays(-2), null);
+        var ordenVentaId = 0;
+        await _host.WithDatabaseAsync(async context =>
+        {
+            var orden = new OrdenVenta
+            {
+                CotizacionId = cotizacionId,
+                EstadoLogistico = "Entregado",
+                FechaCreacion = DateTime.UtcNow.AddDays(-1)
+            };
+            context.OrdenesVenta.Add(orden);
+            await context.SaveChangesAsync();
+            context.Facturas.Add(new Factura
+            {
+                OrdenVentaId = orden.Id,
+                ClienteId = 1,
+                NumeroFactura = "F001-000118",
+                FechaEmision = DateTime.UtcNow.AddDays(-1),
+                FechaVencimiento = DateTime.UtcNow.AddDays(29),
+                EstadoEmision = "Aceptado",
+                Total = 24m,
+                EnlacePdf = "https://example.test/factura.pdf"
+            });
+            await context.SaveChangesAsync();
+            ordenVentaId = orden.Id;
+        });
+
+        var response = await _host.Client.GetAsync($"/Cotizaciones/DescargarHistorial?tipo=Compra&id={ordenVentaId}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("application/pdf", response.Content.Headers.ContentType?.MediaType);
+        Assert.Equal("%PDF-1.7 prueba", await response.Content.ReadAsStringAsync());
+    }
 
     private static Dictionary<string, string> ProductForm(string quantity = "2", int productId = 1) => new()
     {

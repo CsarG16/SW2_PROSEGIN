@@ -22,6 +22,8 @@ public class PedidoDetalleViewModel
     /// </summary>
     public string EstadoOperativo { get; set; } = "POR_PREPARAR";
     public string EstadoOperativoTexto { get; set; } = "Por Preparar";
+    public string? MotivoCancelacion { get; set; }
+    public bool PuedeCancelar { get; set; }
 
     public string AlmacenOrigen { get; set; } = "Central Huachipa";
     public string Embalaje { get; set; } = "Packs Paletizados";

@@ -7,8 +7,9 @@ public class OrdenVenta
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     public int Revision { get; set; }
     
-    // PorPreparar, EnPreparacion, EnConsolidacion, Despachado, Entregado
+    // PorPreparar, EnPreparacion, ListoParaDespacho, EnRuta, Entregado, Cancelado
     public string EstadoLogistico { get; set; } = "PorPreparar";
+    public string? MotivoCancelacion { get; set; }
 
     // Navegación
     public Cotizacion Cotizacion { get; set; } = null!;

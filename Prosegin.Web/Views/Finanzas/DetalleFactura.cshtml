@@ -1,0 +1,80 @@
+@model Prosegin.Web.ViewModels.Finanzas.DetalleCuentaPorCobrarViewModel
+@using System.Globalization
+
+@{
+    ViewData["Title"] = $"Detalle {Model.NumeroFactura}";
+    var culture = CultureInfo.GetCultureInfo("es-PE");
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/finanzas.css" asp-append-version="true" />
+}
+
+<div class="container-fluid px-0 finance-page">
+    <header class="finance-page-header">
+        <div class="finance-page-heading">
+            <span class="finance-page-icon"><i class="material-symbols-outlined">description</i></span>
+            <div>
+                <div class="finance-page-kicker">Finanzas / Cobranzas</div>
+                <h1 class="finance-page-title">Detalle de factura</h1>
+                <p class="finance-page-subtitle">@Model.NumeroFactura</p>
+            </div>
+        </div>
+        <div class="d-flex gap-2 finance-page-header-actions">
+            @if (Model.SaldoPendiente > 0)
+            {
+                <a asp-action="RegistroPago" asp-route-facturaId="@Model.Id" class="btn-prosegin-primary">Registrar pago</a>
+            }
+            <a asp-action="CuentasPorCobrar" class="btn-prosegin-secondary">Volver a cuentas por cobrar</a>
+        </div>
+    </header>
+
+    <section class="finance-detail-panel mb-4" aria-labelledby="datosFacturaHeading">
+        <h2 id="datosFacturaHeading" class="finance-section-title mb-4">Datos de la factura</h2>
+        <dl class="row mb-0">
+                <dt class="col-sm-3">Cliente</dt>
+                <dd class="col-sm-9">@Model.Cliente (RUC @Model.RucCliente)</dd>
+                <dt class="col-sm-3">Fecha de emisión</dt>
+                <dd class="col-sm-9">@Model.FechaEmision.ToString("dd/MM/yyyy", culture)</dd>
+                <dt class="col-sm-3">Fecha de vencimiento</dt>
+                <dd class="col-sm-9">@Model.FechaVencimiento.ToString("dd/MM/yyyy", culture)</dd>
+                <dt class="col-sm-3">Plazo</dt>
+                <dd class="col-sm-9">@Model.PlazoDias días</dd>
+                <dt class="col-sm-3">Monto total</dt>
+                <dd class="col-sm-9">@Model.MontoTotal.ToString("C", culture)</dd>
+                <dt class="col-sm-3">Saldo pendiente</dt>
+                <dd class="col-sm-9 fw-semibold">@Model.SaldoPendiente.ToString("C", culture)</dd>
+                <dt class="col-sm-3">Estado</dt>
+                <dd class="col-sm-9">
+                    <span class="finance-status @(Model.Estado == "Pagada" ? "is-paid" : Model.Estado == "Vencida" ? "is-overdue" : "is-current")">
+                        @Model.Estado
+                    </span>
+                </dd>
+        </dl>
+    </section>
+
+    @if (Model.Detalles.Count > 0)
+    {
+        <section class="finance-data-card">
+            <div class="prosegin-card-header"><h2 class="finance-section-title">Detalle de productos</h2></div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle finance-table">
+                    <thead>
+                        <tr><th>Descripción</th><th class="text-end">Cantidad</th><th class="text-end">Precio unitario</th><th class="text-end">Total</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var detalle in Model.Detalles)
+                        {
+                            <tr>
+                                <td>@detalle.Descripcion</td>
+                                <td class="text-end">@detalle.Cantidad</td>
+                                <td class="text-end">@detalle.PrecioUnitario.ToString("C", culture)</td>
+                                <td class="text-end">@detalle.Total.ToString("C", culture)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+</div>

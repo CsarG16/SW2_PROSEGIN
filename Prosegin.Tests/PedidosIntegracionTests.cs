@@ -77,6 +77,162 @@ public class PedidosIntegracionTests : IAsyncLifetime
         Assert.Matches("<button[^>]*disabled[^>]*aria-label=\"Página siguiente\"", segunda);
     }
 
+    [Fact]
+    public async Task Seguimiento_FiltraPedidosYValidaElTermino()
+    {
+        var pedidoFiltrado = await _client.GetStringAsync("/Pedidos?termino=COT-2026-0839");
+        var sinCoincidencias = WebUtility.HtmlDecode(await _client.GetStringAsync("/Pedidos?termino=PV-999999"));
+        var caracteresInvalidos = WebUtility.HtmlDecode(await _client.GetStringAsync($"/Pedidos?termino={Uri.EscapeDataString("@@##%%")}"));
+
+        Assert.Equal(new[] { "COT-2026-0839" }, Pedidos(pedidoFiltrado));
+        Assert.Contains("No se encontraron pedidos que coincidan con la búsqueda", sinCoincidencias);
+        Assert.Contains("Ingrese un número de pedido o cliente válido", caracteresInvalidos);
+        Assert.Contains("Actualizar estado", pedidoFiltrado);
+    }
+
+    [Fact]
+    public async Task ActualizarEstadoLogistico_AvanceSecuencialYRechazaCambiosInvalidos()
+    {
+        using var scope = _app.Services.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<IPedidosService>();
+
+        var listo = await service.ActualizarEstadoLogisticoAsync("COT-2026-0842", "LISTO_DESPACHO");
+        var ruta = await service.ActualizarEstadoLogisticoAsync("COT-2026-0842", "EN_RUTA");
+        var entregado = await service.ActualizarEstadoLogisticoAsync("COT-2026-0842", "ENTREGADO");
+
+        Assert.True(listo.Exito);
+        Assert.True(ruta.Exito);
+        Assert.True(entregado.Exito);
+        Assert.Equal("Estado logístico actualizado correctamente", entregado.Mensaje);
+
+        var mismoEstado = await service.ActualizarEstadoLogisticoAsync("COT-2026-0839", "EN_PREPARACION");
+        var retroceso = await service.ActualizarEstadoLogisticoAsync("COT-2026-0824", "EN_PREPARACION");
+        var yaEntregado = await service.ActualizarEstadoLogisticoAsync("COT-2026-0842", "EN_RUTA");
+
+        Assert.Equal("Seleccione un estado distinto al actual", mismoEstado.Mensaje);
+        Assert.Equal("El estado seleccionado no está permitido para este pedido", retroceso.Mensaje);
+        Assert.Equal("El pedido ya fue entregado y no admite cambios de estado", yaEntregado.Mensaje);
+    }
+
+    [Fact]
+    public async Task ActualizarEstadoLogistico_PostGuardaEstadoYRedirigeAlListado()
+    {
+        var html = await _client.GetStringAsync("/Pedidos");
+        var tokenInput = Regex.Match(html, "<input[^>]*name=\"__RequestVerificationToken\"[^>]*>").Value;
+        var token = WebUtility.HtmlDecode(Regex.Match(tokenInput, "value=\"([^\"]+)\"").Groups[1].Value);
+        using var form = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = token,
+            ["numeroPedido"] = "COT-2026-0842",
+            ["nuevoEstado"] = "LISTO_DESPACHO",
+            ["estado"] = "ALL",
+            ["pagina"] = "1"
+        });
+
+        var response = await _client.PostAsync("/Pedidos/ActualizarEstado", form);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("Estado logístico actualizado correctamente", WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync()));
+        using var scope = _app.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
+        var orden = await context.OrdenesVenta.SingleAsync(item => item.Cotizacion.Correlativo == "COT-2026-0842");
+        Assert.Equal("ListoParaDespacho", orden.EstadoLogistico);
+    }
+
+    [Fact]
+    public async Task CancelarPedido_ValidaMotivoGuardaCancelacionYNoPermiteRepetirla()
+    {
+        using var scope = _app.Services.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<IPedidosService>();
+
+        var vacio = await service.CancelarPedidoAsync("COT-2026-0842", "   ");
+        var corto = await service.CancelarPedidoAsync("COT-2026-0842", "ok");
+        var cancelacion = await service.CancelarPedidoAsync("COT-2026-0842", "Cliente solicitó anular la compra");
+        var repetida = await service.CancelarPedidoAsync("COT-2026-0842", "Cliente solicitó anular la compra");
+
+        Assert.Equal("Ingrese el motivo de la cancelación", vacio.Mensaje);
+        Assert.Equal("El motivo debe tener al menos 10 caracteres", corto.Mensaje);
+        Assert.True(cancelacion.Exito);
+        Assert.Equal("Pedido cancelado correctamente", cancelacion.Mensaje);
+        Assert.Equal("El pedido ya se encuentra cancelado", repetida.Mensaje);
+
+        var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
+        var orden = await context.OrdenesVenta.SingleAsync(item => item.Cotizacion.Correlativo == "COT-2026-0842");
+        Assert.Equal("Cancelado", orden.EstadoLogistico);
+        Assert.Equal("Cliente solicitó anular la compra", orden.MotivoCancelacion);
+    }
+
+    [Fact]
+    public async Task CancelarPedido_RechazaPedidosDespachadosYFacturados()
+    {
+        using var scope = _app.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
+        var enRuta = await context.OrdenesVenta
+            .SingleAsync(item => item.Cotizacion.Correlativo == "COT-2026-0839");
+        enRuta.EstadoLogistico = "EnRuta";
+        var facturado = await context.OrdenesVenta
+            .Include(item => item.Cotizacion)
+            .ThenInclude(cotizacion => cotizacion.Cliente)
+            .SingleAsync(item => item.Cotizacion.Correlativo == "COT-2026-0831");
+        facturado.EstadoLogistico = "Entregado";
+        context.Facturas.Add(new Factura
+        {
+            OrdenVentaId = facturado.Id,
+            ClienteId = facturado.Cotizacion.ClienteId,
+            NumeroFactura = "F001-000130",
+            Serie = "F001",
+            Numero = 130,
+            FechaEmision = DateTime.Today,
+            FechaVencimiento = DateTime.Today.AddDays(30),
+            EstadoPago = "Pendiente",
+            EstadoEmision = "Aceptado",
+            Total = facturado.Cotizacion.Total
+        });
+        await context.SaveChangesAsync();
+
+        var service = scope.ServiceProvider.GetRequiredService<IPedidosService>();
+        var resultadoEnRuta = await service.CancelarPedidoAsync("COT-2026-0839", "Error en el pedido");
+        var resultadoDespachado = await service.CancelarPedidoAsync("COT-2026-0824", "Error en el pedido");
+        var resultadoFacturado = await service.CancelarPedidoAsync("COT-2026-0831", "Error en el pedido");
+
+        Assert.Equal("El pedido ya fue despachado y no admite cancelación", resultadoEnRuta.Mensaje);
+        Assert.Equal("El pedido ya fue despachado y no admite cancelación", resultadoDespachado.Mensaje);
+        Assert.Equal("El pedido ya fue facturado y no admite cancelación", resultadoFacturado.Mensaje);
+        Assert.Equal("EnRuta", enRuta.EstadoLogistico);
+        Assert.Equal("Entregado", facturado.EstadoLogistico);
+    }
+
+    [Fact]
+    public async Task CancelarPedido_PostConfirmaCambioYVolverDejaElPedidoIntacto()
+    {
+        var html = await _client.GetStringAsync("/Pedidos");
+        Assert.Contains("Cancelar pedido de venta", html);
+        Assert.Contains("Volver", html);
+        Assert.Contains("order-dialog-header", html);
+        Assert.Contains("btn-prosegin-danger", html);
+        var tokenInput = Regex.Match(html, "<input[^>]*name=\"__RequestVerificationToken\"[^>]*>").Value;
+        var token = WebUtility.HtmlDecode(Regex.Match(tokenInput, "value=\"([^\"]+)\"").Groups[1].Value);
+        using var form = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = token,
+            ["numeroPedido"] = "COT-2026-0842",
+            ["motivo"] = "Cliente solicitó anular la compra",
+            ["estado"] = "ALL",
+            ["pagina"] = "1"
+        });
+
+        var response = await _client.PostAsync("/Pedidos/CancelarPedido", form);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("Pedido cancelado correctamente", WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync()));
+        Assert.Contains("Cancelado", WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync()));
+        using var scope = _app.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
+        var orden = await context.OrdenesVenta.SingleAsync(item => item.Cotizacion.Correlativo == "COT-2026-0842");
+        Assert.Equal("Cancelado", orden.EstadoLogistico);
+        Assert.Equal("Cliente solicitó anular la compra", orden.MotivoCancelacion);
+    }
+
     [Theory]
     [InlineData("?termino=20601928471&estado=EN_PREPARACION&pagina=2", 1)]
     [InlineData("?termino=NO_EXISTE&estado=POR_PREPARAR&pagina=99", 0)]

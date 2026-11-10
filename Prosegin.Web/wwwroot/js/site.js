@@ -24,6 +24,20 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    document.querySelectorAll('[data-sidebar-submenu-toggle]').forEach(function (toggle) {
+        const submenuId = toggle.getAttribute('aria-controls');
+        const submenu = submenuId ? document.getElementById(submenuId) : null;
+        const group = toggle.closest('.sidebar-nav-group');
+        if (!submenu || !group) return;
+
+        toggle.addEventListener('click', function () {
+            const expanded = toggle.getAttribute('aria-expanded') === 'true';
+            toggle.setAttribute('aria-expanded', String(!expanded));
+            submenu.hidden = expanded;
+            group.classList.toggle('is-expanded', !expanded);
+        });
+    });
+
     // 2. Funciones de colapso/expansión en escritorio
     function isDesktop() {
         return window.innerWidth >= 992;

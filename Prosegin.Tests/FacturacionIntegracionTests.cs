@@ -180,8 +180,11 @@ public class FacturacionIntegracionTests
         Assert.True(guiaResult.Exito);
         Assert.Equal(1, nubefact.GuiasEnviadas);
 
-        // 3. El estado de la orden cambió automáticamente a "Entregado"
+        // 3. La guía aceptada deja el pedido en ruta, y la entrega se confirma por separado.
         var ordenActualizada = await context.OrdenesVenta.SingleAsync(ov => ov.Cotizacion.Correlativo == "COT-FLUJO-001");
+        Assert.Equal("EnRuta", ordenActualizada.EstadoLogistico);
+        var entrega = await service.ActualizarEstadoLogisticoAsync("COT-FLUJO-001", "ENTREGADO");
+        Assert.True(entrega.Exito);
         Assert.Equal("Entregado", ordenActualizada.EstadoLogistico);
 
         // 4. Ahora sí se puede previsualizar y emitir la factura con éxito

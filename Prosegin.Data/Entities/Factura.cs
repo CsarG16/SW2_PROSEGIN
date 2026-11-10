@@ -28,4 +28,5 @@ public class Factura
     public OrdenVenta OrdenVenta { get; set; } = null!;
     public Cliente Cliente { get; set; } = null!;
     public ICollection<FacturaDetalle> Detalles { get; set; } = new List<FacturaDetalle>();
+    public ICollection<PagoFactura> Pagos { get; set; } = new List<PagoFactura>();
 }

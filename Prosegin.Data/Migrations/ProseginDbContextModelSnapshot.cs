@@ -466,6 +466,43 @@ namespace Prosegin.Data.Migrations
                     b.ToTable("FacturaDetalles", (string)null);
                 });
 
+            modelBuilder.Entity("Prosegin.Data.Entities.PagoFactura", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("FacturaId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("FechaPago")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("FechaRegistro")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("Monto")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("MetodoPago")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<string>("Referencia")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FacturaId");
+
+                    b.ToTable("PagosFactura", (string)null);
+                });
+
             modelBuilder.Entity("Prosegin.Data.Entities.GuiaRemision", b =>
                 {
                     b.Property<int>("Id")
@@ -717,6 +754,10 @@ namespace Prosegin.Data.Migrations
 
                     b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<string>("MotivoCancelacion")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
 
                     b.Property<int>("Revision")
                         .IsConcurrencyToken()
@@ -1124,6 +1165,17 @@ namespace Prosegin.Data.Migrations
                     b.Navigation("Factura");
                 });
 
+            modelBuilder.Entity("Prosegin.Data.Entities.PagoFactura", b =>
+                {
+                    b.HasOne("Prosegin.Data.Entities.Factura", "Factura")
+                        .WithMany("Pagos")
+                        .HasForeignKey("FacturaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Factura");
+                });
+
             modelBuilder.Entity("Prosegin.Data.Entities.GuiaRemision", b =>
                 {
                     b.HasOne("Prosegin.Data.Entities.Cliente", "Cliente")
@@ -1279,6 +1331,8 @@ namespace Prosegin.Data.Migrations
             modelBuilder.Entity("Prosegin.Data.Entities.Factura", b =>
                 {
                     b.Navigation("Detalles");
+
+                    b.Navigation("Pagos");
                 });
 
             modelBuilder.Entity("Prosegin.Data.Entities.GuiaRemision", b =>
