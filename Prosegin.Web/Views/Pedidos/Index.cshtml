@@ -336,6 +336,53 @@
         font-size: 1.25rem;
         line-height: 1;
     }
+    #updateStatusDialog, #cancelOrderDialog {
+        width: min(520px, calc(100% - 2rem));
+        border: 1px solid var(--border-card, #e2e8f0);
+        border-radius: 12px;
+        padding: 0;
+        color: var(--text-body, #334155);
+        background: var(--bg-card, #ffffff);
+        box-shadow: 0 20px 50px rgba(15, 23, 42, .2);
+    }
+    #updateStatusDialog::backdrop, #cancelOrderDialog::backdrop { background: rgba(15, 23, 42, .48); }
+    .order-dialog-header {
+        padding-bottom: 0.9rem;
+        border-bottom: 1px solid var(--border-light, #f1f5f9);
+    }
+    .order-dialog-title {
+        color: var(--text-dark, #000d31);
+        font-weight: 800;
+    }
+    .order-dialog-icon {
+        display: inline-flex;
+        width: 36px;
+        height: 36px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(247, 167, 2, .28);
+        border-radius: 10px;
+        background: var(--accent-light, #fef6e6);
+        color: var(--accent-text, #b46500);
+    }
+    .order-dialog-footer {
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-light, #f1f5f9);
+    }
+    .order-dialog-warning {
+        padding: 0.75rem 0.9rem;
+        border: 1px solid rgba(247, 167, 2, .28);
+        border-left: 4px solid var(--accent, #f7a702);
+        border-radius: 8px;
+        background: var(--accent-light, #fef6e6);
+        color: var(--text-dark, #000d31);
+        font-size: 0.84rem;
+    }
+    #updateStatusDialog .form-select:focus,
+    #cancelOrderDialog .form-control:focus {
+        border-color: var(--accent, #f7a702);
+        box-shadow: 0 0 0 3px var(--accent-shadow, rgba(247, 167, 2, .32));
+    }
     .prosegin-toast.is-error .prosegin-toast-icon {
         color: #dc2626;
     }
@@ -375,10 +422,10 @@
                     <div class="d-flex align-items-center gap-1 text-uppercase text-muted" style="font-size: 0.72rem; letter-spacing: 0.06em; font-weight: 600;">
                         <span>Logística y Despachos</span>
                         <span class="material-symbols-outlined" style="font-size: 14px;">chevron_right</span>
-                        <span style="color: var(--accent-text, #b45309); font-weight: 700;">Gestión de Pedidos</span>
+                        <span style="color: var(--accent-text, #b45309); font-weight: 700;">Seguimiento de Pedidos</span>
                     </div>
                     <h1 class="mb-0 mt-1" style="font-size: 1.5rem; font-weight: 800; color: var(--text-dark, #0f172a); letter-spacing: -0.02em;">
-                        Gestión de Pedidos Confirmados
+                        Pedidos de venta
                     </h1>
                     <p class="mb-0 text-muted" style="font-size: 0.85rem;">
                         Priorización y control cronológico de despachos de EPP
@@ -406,7 +453,7 @@
 
             <div class="flex-grow-1 d-flex flex-column gap-1">
                 <label for="searchInput" class="text-muted" style="font-size: 0.8rem; font-weight: 600;">
-                    Buscar por N° de Pedido, RUC o Razón Social
+                Buscar por N° de Pedido o Cliente
                 </label>
                 <div class="position-relative">
                     <span class="material-symbols-outlined position-absolute" style="left: 12px; top: 50%; transform: translateY(-50%); font-size: 20px; color: var(--accent-text, #b45309); pointer-events: none;">
@@ -417,7 +464,7 @@
                            name="termino"
                            class="search-input-field"
                            value="@Model.Termino"
-                           placeholder="Ej: PED-2026-0842, 20492817263 o Consorcio Vial..."
+                           placeholder="Ej: PED-2026-0842 o Consorcio Vial..."
                            autocomplete="off" />
                 </div>
             </div>
@@ -425,7 +472,7 @@
             <div class="d-flex align-items-center gap-2">
                 <button type="submit" class="btn-prosegin-primary" id="btnSearchSubmit">
                     <span class="material-symbols-outlined" style="font-size: 18px;">search</span>
-                    <span>Buscar</span>
+                    <span>Filtrar</span>
                 </button>
                 <a asp-action="Index" id="btnClearFilters" class="btn-prosegin-secondary">
                     <span class="material-symbols-outlined" style="font-size: 18px;">restart_alt</span>
@@ -461,6 +508,11 @@
                     data-status="LISTO_DESPACHO"
                     >
                 Listos para Despacho <span class="ms-1 opacity-75">(@Model.TotalListoDespacho)</span>
+            </a>
+            <a asp-action="Index" asp-route-termino="@Model.Termino" asp-route-estado="EN_RUTA"
+                    class="tab-pill-btn @(Model.EstadoFiltro == "EN_RUTA" ? "active-tab" : "")"
+                    data-status="EN_RUTA">
+                En transporte <span class="ms-1 opacity-75">(@Model.TotalEnRuta)</span>
             </a>
             <a asp-action="Index" asp-route-termino="@Model.Termino" asp-route-estado="ENTREGADO"
                     class="tab-pill-btn @(Model.EstadoFiltro == "ENTREGADO" ? "active-tab" : "")"
@@ -539,7 +591,7 @@
                                 {
                                     <span class="badge-status-pill badge-en-preparacion">
                                         <span class="badge-dot dot-en-preparacion"></span>
-                                        @pedido.EstadoOperativoTexto
+                                        Esperando al proveedor
                                     </span>
                                 }
                                 else if (pedido.EstadoOperativo == "LISTO_DESPACHO")
@@ -556,6 +608,13 @@
                                         @pedido.EstadoOperativoTexto
                                     </span>
                                 }
+                                else if (pedido.EstadoOperativo == "CANCELADO")
+                                {
+                                    <span class="badge-status-pill text-danger">
+                                        <span class="badge-dot bg-danger"></span>
+                                        @pedido.EstadoOperativoTexto
+                                    </span>
+                                }
                                 else
                                 {
                                     <span class="badge-status-pill badge-listo-despacho">
@@ -565,12 +624,38 @@
                                 }
                             </td>
                             <td class="text-end">
-                                <button type="button"
-                                        class="btn-prosegin-primary btn-sm"
-                                        onclick="openDetailModal('@pedido.NumeroPedido')">
-                                    <span>Ver Detalle</span>
-                                    <span class="material-symbols-outlined" style="font-size: 15px;">visibility</span>
-                                </button>
+                                <div class="d-inline-flex gap-1">
+                                    <button type="button"
+                                            class="btn-prosegin-primary btn-sm"
+                                            onclick="openDetailModal('@pedido.NumeroPedido')">
+                                        <span>Ver Detalle</span>
+                                        <span class="material-symbols-outlined" style="font-size: 15px;">visibility</span>
+                                    </button>
+                                    <button type="button"
+                                            class="btn-prosegin-secondary btn-sm"
+                                            title="Actualizar estado"
+                                            aria-label="Actualizar estado de @pedido.NumeroPedido"
+                                            data-pedido="@pedido.NumeroPedido"
+                                            data-cliente="@pedido.ClienteRazonSocial"
+                                            data-fecha="@pedido.FechaConfirmacion.ToString("dd/MM/yyyy")"
+                                            data-estado="@pedido.EstadoOperativo"
+                                            onclick="abrirActualizacionEstado(this)">
+                                        <span class="material-symbols-outlined" style="font-size: 18px;">edit</span>
+                                    </button>
+                                    <button type="button"
+                                            class="btn-prosegin-danger btn-sm"
+                                            title="Cancelar pedido"
+                                            aria-label="Cancelar pedido @pedido.NumeroPedido"
+                                            data-pedido="@pedido.NumeroPedido"
+                                            data-cliente="@pedido.ClienteRazonSocial"
+                                            data-monto="@pedido.Total.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("es-PE"))"
+                                            data-estado="@pedido.EstadoOperativo"
+                                            data-facturado="@pedido.FacturaEmitida.ToString().ToLowerInvariant()"
+                                            data-cancelable="@pedido.PuedeCancelar.ToString().ToLowerInvariant()"
+                                            onclick="abrirCancelacionPedido(this)">
+                                        <span class="material-symbols-outlined" style="font-size: 18px;">cancel</span>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     }
@@ -583,9 +668,9 @@
             <div class="d-flex align-items-center justify-content-center mb-3" style="width: 56px; height: 56px; border-radius: 50%; background: var(--accent-light, #fef3c7); color: var(--accent-text, #b45309);">
                 <span class="material-symbols-outlined" style="font-size: 28px;">search_off</span>
             </div>
-            <h5 class="mb-1" style="font-weight: 700; color: #1e293b;">No se encontraron pedidos confirmados</h5>
+            <h5 class="mb-1" style="font-weight: 700; color: #1e293b;">@Model.MensajeSinResultados</h5>
             <p class="text-muted mb-3" style="font-size: 0.85rem; max-width: 440px;">
-                No se encontraron pedidos confirmados con los criterios ingresados. Verifique el número de orden de compra, RUC o limpie los filtros.
+                @(Model.BusquedaInvalida ? "Revise el texto ingresado." : Model.MensajeSinResultados)
             </p>
             <a asp-action="Index" class="btn btn-sm btn-link text-decoration-none d-inline-flex align-items-center gap-1" style="color: var(--accent-text, #b45309); font-weight: 700;">
                 <span class="material-symbols-outlined" style="font-size: 16px;">refresh</span>
@@ -596,7 +681,7 @@
         <!-- 6. PIE DE PAGINACIÓN -->
         <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between px-3 py-2 border-top gap-2" style="background: #f8fafc; font-size: 0.8rem;">
             <span class="text-muted" id="paginationText">
-                Mostrando <strong style="color: #0f172a;">@Model.Desde–@Model.Hasta</strong> de <strong style="color: #0f172a;" id="filteredOrdersCount">@Model.TotalFiltrados</strong> pedidos coincidentes (@Model.TotalPedidos activos)
+                Mostrando <strong style="color: #0f172a;">@Model.Desde–@Model.Hasta</strong> de <strong style="color: #0f172a;" id="filteredOrdersCount">@Model.TotalFiltrados</strong> pedidos coincidentes (@Model.TotalPedidos registrados)
             </span>
             <nav class="d-flex align-items-center gap-1" aria-label="Páginas de pedidos">
                 @if (Model.Pagina > 1)
@@ -624,6 +709,71 @@
         </div>
     </div>
 </div>
+
+<dialog id="updateStatusDialog">
+    <form asp-action="ActualizarEstado" method="post" id="updateStatusForm" class="p-4">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="numeroPedido" id="estadoPedidoNumero" />
+        <input type="hidden" name="termino" value="@Model.Termino" />
+        <input type="hidden" name="estado" value="@Model.EstadoFiltro" />
+        <input type="hidden" name="pagina" value="@Model.Pagina" />
+        <div class="order-dialog-header d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h2 class="order-dialog-title h5 mb-1">Actualizar estado logístico</h2>
+                <span class="text-muted">Pedido <strong id="estadoPedidoTitulo"></strong></span>
+            </div>
+            <button type="button" class="btn-close" aria-label="Cerrar" onclick="cerrarActualizacionEstado()"></button>
+        </div>
+        <dl class="row small mb-3">
+            <dt class="col-4">Cliente</dt><dd class="col-8" id="estadoPedidoCliente"></dd>
+            <dt class="col-4">Fecha de pedido</dt><dd class="col-8" id="estadoPedidoFecha"></dd>
+            <dt class="col-4">Estado actual</dt><dd class="col-8" id="estadoPedidoActual"></dd>
+        </dl>
+        <label for="nuevoEstadoLogistico" class="form-label fw-semibold">Nuevo estado logístico</label>
+        <select id="nuevoEstadoLogistico" name="nuevoEstado" class="form-select">
+            <option value="">Seleccione un estado</option>
+        </select>
+        <div class="order-dialog-footer d-flex justify-content-end gap-2 mt-4">
+            <button type="button" class="btn-prosegin-secondary" onclick="cerrarActualizacionEstado()">Cancelar</button>
+            <button type="submit" class="btn-prosegin-primary">Guardar cambios</button>
+        </div>
+    </form>
+</dialog>
+
+<dialog id="cancelOrderDialog">
+    <form asp-action="CancelarPedido" method="post" id="cancelOrderForm" class="p-4">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="numeroPedido" id="cancelOrderNumber" />
+        <input type="hidden" name="termino" value="@Model.Termino" />
+        <input type="hidden" name="estado" value="@Model.EstadoFiltro" />
+        <input type="hidden" name="pagina" value="@Model.Pagina" />
+        <div class="order-dialog-header d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <span class="order-dialog-icon"><i class="material-symbols-outlined">cancel</i></span>
+                <div>
+                <h2 class="order-dialog-title h5 mb-1">Cancelar pedido de venta</h2>
+                <span class="text-muted">Pedido <strong id="cancelOrderTitle"></strong></span>
+                </div>
+            </div>
+            <button type="button" class="btn-close" aria-label="Cerrar" onclick="cerrarCancelacionPedido()"></button>
+        </div>
+        <dl class="row small mb-3">
+            <dt class="col-4">Cliente</dt><dd class="col-8" id="cancelOrderClient"></dd>
+            <dt class="col-4">Monto</dt><dd class="col-8" id="cancelOrderAmount"></dd>
+        </dl>
+        <div class="order-dialog-warning d-none" id="cancelOrderWarning" role="alert"></div>
+        <div id="cancelOrderFields">
+            <label for="cancelOrderReason" class="form-label fw-semibold">Motivo de cancelación</label>
+            <textarea id="cancelOrderReason" name="motivo" class="form-control" rows="3" maxlength="500"
+                      placeholder="Describa el motivo (mínimo 10 caracteres)"></textarea>
+            <div class="form-text">El motivo debe tener al menos 10 caracteres.</div>
+        </div>
+        <div class="order-dialog-footer d-flex justify-content-end gap-2 mt-4">
+            <button type="button" class="btn-prosegin-secondary" onclick="cerrarCancelacionPedido()">Volver</button>
+            <button type="submit" class="btn-prosegin-danger" id="confirmCancelOrder">Confirmar cancelación</button>
+        </div>
+    </form>
+</dialog>
 
 <!-- 7. MODAL DETALLE DE PEDIDO (AMPLIADO Y SIN ACCIONES AJENAS A LA HU) -->
 <div id="detailModal" class="detail-modal-overlay d-none" onclick="handleBackdropClick(event)">
@@ -737,6 +887,92 @@
     const descargarComprobantesUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("DescargarComprobantes", "Pedidos")));
     const enviarComprobantesUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("EnviarComprobantes", "Pedidos")));
     const recepcionUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("Recepcion", "Pedidos")));
+    const estadosSeguimiento = [
+        { valor: 'LISTO_DESPACHO', texto: 'Listo para despacho', orden: 1 },
+        { valor: 'EN_RUTA', texto: 'En transporte', orden: 2 },
+        { valor: 'ENTREGADO', texto: 'Entregado', orden: 3 }
+    ];
+    function ordenEstadoSeguimiento(estado) {
+        if (estado === 'POR_PREPARAR' || estado === 'EN_PREPARACION') return 0;
+        if (estado === 'LISTO_DESPACHO') return 1;
+        if (estado === 'EN_RUTA') return 2;
+        if (estado === 'ENTREGADO') return 3;
+        return -1;
+    }
+    function abrirActualizacionEstado(boton) {
+        const estadoActual = boton.dataset.estado;
+        if (estadoActual === 'CANCELADO') {
+            window.ProseginToast?.error('El pedido ya se encuentra cancelado');
+            return;
+        }
+        if (estadoActual === 'ENTREGADO') {
+            window.ProseginToast?.error('El pedido ya fue entregado y no admite cambios de estado');
+            return;
+        }
+        document.getElementById('estadoPedidoNumero').value = boton.dataset.pedido;
+        document.getElementById('estadoPedidoTitulo').textContent = boton.dataset.pedido;
+        document.getElementById('estadoPedidoCliente').textContent = boton.dataset.cliente;
+        document.getElementById('estadoPedidoFecha').textContent = boton.dataset.fecha;
+        document.getElementById('estadoPedidoActual').textContent =
+            estadoActual === 'POR_PREPARAR' || estadoActual === 'EN_PREPARACION' ? 'Esperando al proveedor'
+            : estadoActual === 'LISTO_DESPACHO' ? 'Listo para despacho'
+            : estadoActual === 'EN_RUTA' ? 'En transporte' : estadoActual;
+
+        const select = document.getElementById('nuevoEstadoLogistico');
+        select.replaceChildren(new Option('Seleccione un estado', ''));
+        const siguienteOrden = ordenEstadoSeguimiento(estadoActual) + 1;
+        estadosSeguimiento.filter(opcion => opcion.orden === siguienteOrden)
+            .forEach(opcion => select.add(new Option(opcion.texto, opcion.valor)));
+        document.getElementById('updateStatusDialog').showModal();
+    }
+    function cerrarActualizacionEstado() {
+        document.getElementById('updateStatusDialog').close();
+    }
+    function abrirCancelacionPedido(boton) {
+        const dialog = document.getElementById('cancelOrderDialog');
+        const estado = boton.dataset.estado;
+        const facturado = boton.dataset.facturado === 'true';
+        const cancelable = boton.dataset.cancelable === 'true';
+        const warning = document.getElementById('cancelOrderWarning');
+        const fields = document.getElementById('cancelOrderFields');
+        const confirm = document.getElementById('confirmCancelOrder');
+        const mensaje = estado === 'CANCELADO'
+            ? 'El pedido ya se encuentra cancelado'
+            : facturado
+                ? 'El pedido ya fue facturado y no admite cancelación'
+                : !cancelable
+                    ? 'El pedido ya fue despachado y no admite cancelación'
+                    : '';
+
+        document.getElementById('cancelOrderNumber').value = boton.dataset.pedido;
+        document.getElementById('cancelOrderTitle').textContent = boton.dataset.pedido;
+        document.getElementById('cancelOrderClient').textContent = boton.dataset.cliente;
+        document.getElementById('cancelOrderAmount').textContent = boton.dataset.monto;
+        document.getElementById('cancelOrderReason').value = '';
+        warning.textContent = mensaje;
+        warning.classList.toggle('d-none', !mensaje);
+        fields.classList.toggle('d-none', Boolean(mensaje));
+        confirm.classList.toggle('d-none', Boolean(mensaje));
+        dialog.showModal();
+    }
+    function cerrarCancelacionPedido() {
+        document.getElementById('cancelOrderDialog').close();
+    }
+    document.getElementById('updateStatusForm').addEventListener('submit', event => {
+        if (!document.getElementById('nuevoEstadoLogistico').value) {
+            event.preventDefault();
+            window.ProseginToast?.warning('Seleccione un estado logístico válido');
+        }
+    });
+    document.getElementById('cancelOrderForm').addEventListener('submit', event => {
+        const motivo = document.getElementById('cancelOrderReason').value.trim();
+        if (motivo.length < 10) {
+            event.preventDefault();
+            window.ProseginToast?.warning(motivo.length === 0
+                ? 'Ingrese el motivo de la cancelación'
+                : 'El motivo debe tener al menos 10 caracteres');
+        }
+    });
     let pedidoSeleccionado;
     function openDetailModal(orderId) {
         const pedido = pedidosDataset.find(p => p.NumeroPedido.toLowerCase() === orderId.toLowerCase());

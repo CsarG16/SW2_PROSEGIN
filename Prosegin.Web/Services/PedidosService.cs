@@ -43,6 +43,7 @@ public class PedidosService : IPedidosService
         var totalPorPreparar = pedidos.Count(p => p.EstadoOperativo == PedidoLogisticaRules.EstadoPorPreparar);
         var totalEnPreparacion = pedidos.Count(p => p.EstadoOperativo == PedidoLogisticaRules.EstadoEnPreparacion);
         var totalListoDespacho = pedidos.Count(p => p.EstadoOperativo == PedidoLogisticaRules.EstadoListoDespacho);
+        var totalEnRuta = pedidos.Count(p => p.EstadoOperativo == PedidoLogisticaRules.EstadoEnRuta);
         var totalEntregado = pedidos.Count(p => p.EstadoOperativo == PedidoLogisticaRules.EstadoEntregado);
         var totalUrgentes = pedidos.Count(p => p.EsUrgenteMenor24h);
 
@@ -87,10 +88,96 @@ public class PedidosService : IPedidosService
             TotalPorPreparar = totalPorPreparar,
             TotalEnPreparacion = totalEnPreparacion,
             TotalListoDespacho = totalListoDespacho,
+            TotalEnRuta = totalEnRuta,
             TotalEntregado = totalEntregado,
             TotalUrgentes = totalUrgentes,
             MensajeSinResultados = PedidoLogisticaRules.MensajeSinResultados
         };
+    }
+
+    public async Task<(bool Exito, string Mensaje)> ActualizarEstadoLogisticoAsync(
+        string numeroPedido,
+        string nuevoEstado,
+        CancellationToken cancellationToken = default)
+    {
+        var orden = await _context.OrdenesVenta
+            .Include(venta => venta.Cotizacion)
+            .FirstOrDefaultAsync(venta => venta.Cotizacion.Correlativo == numeroPedido, cancellationToken);
+        if (orden == null)
+            return (false, "No se encontró el pedido");
+
+        var estadoActual = NormalizarEstadoLogistico(orden.EstadoLogistico);
+        if (estadoActual == "CANCELADO")
+            return (false, "El pedido ya se encuentra cancelado");
+        if (estadoActual == PedidoLogisticaRules.EstadoEntregado)
+            return (false, "El pedido ya fue entregado y no admite cambios de estado");
+
+        if (!TryNormalizarEstadoSeguimiento(nuevoEstado, out var estadoSolicitado))
+            return (false, "Seleccione un estado logístico válido");
+
+        if (estadoSolicitado == estadoActual)
+            return (false, "Seleccione un estado distinto al actual");
+
+        if (!PedidoLogisticaRules.EsTransicionPermitida(estadoActual, estadoSolicitado))
+            return (false, "El estado seleccionado no está permitido para este pedido");
+
+        orden.EstadoLogistico = estadoSolicitado switch
+        {
+            PedidoLogisticaRules.EstadoListoDespacho => "ListoParaDespacho",
+            PedidoLogisticaRules.EstadoEnRuta => "EnRuta",
+            PedidoLogisticaRules.EstadoEntregado => "Entregado",
+            _ => orden.EstadoLogistico
+        };
+        orden.Revision++;
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return (false, "El pedido fue modificado por otro usuario. Actualice el listado e intente nuevamente");
+        }
+        return (true, "Estado logístico actualizado correctamente");
+    }
+
+    public async Task<(bool Exito, string Mensaje)> CancelarPedidoAsync(
+        string numeroPedido,
+        string? motivo,
+        CancellationToken cancellationToken = default)
+    {
+        var motivoNormalizado = motivo?.Trim();
+        if (string.IsNullOrWhiteSpace(motivoNormalizado))
+            return (false, "Ingrese el motivo de la cancelación");
+        if (motivoNormalizado.Length < 10)
+            return (false, "El motivo debe tener al menos 10 caracteres");
+
+        var orden = await _context.OrdenesVenta
+            .Include(venta => venta.Facturas)
+            .FirstOrDefaultAsync(venta => venta.Cotizacion.Correlativo == numeroPedido, cancellationToken);
+        if (orden == null)
+            return (false, "No se encontró el pedido");
+
+        var estado = NormalizarEstadoLogistico(orden.EstadoLogistico);
+        if (estado == "CANCELADO")
+            return (false, "El pedido ya se encuentra cancelado");
+        if (orden.Facturas.Count > 0)
+            return (false, "El pedido ya fue facturado y no admite cancelación");
+        if (PedidoYaDespachado(orden.EstadoLogistico))
+            return (false, "El pedido ya fue despachado y no admite cancelación");
+
+        orden.EstadoLogistico = "Cancelado";
+        orden.MotivoCancelacion = motivoNormalizado;
+        orden.Revision++;
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return (false, "El pedido fue modificado por otro usuario. Actualice el listado e intente nuevamente");
+        }
+
+        return (true, "Pedido cancelado correctamente");
     }
 
     public async Task<PedidoDetalleViewModel?> ObtenerDetallePedidoAsync(
@@ -286,6 +373,10 @@ public class PedidosService : IPedidosService
                 SedeAlias = "Dirección fiscal del cliente",
                 EstadoOperativo = estado,
                 EstadoOperativoTexto = TextoEstado(estado),
+                MotivoCancelacion = orden.MotivoCancelacion,
+                PuedeCancelar = estado != "CANCELADO"
+                    && orden.Facturas.Count == 0
+                    && !PedidoYaDespachado(orden.EstadoLogistico),
                 AlmacenOrigen = "Central Huachipa",
                 Embalaje = "Por definir",
                 VentaAprobada = true,
@@ -354,9 +445,19 @@ public class PedidosService : IPedidosService
             "ENCONSOLIDACION" => PedidoLogisticaRules.EstadoEnPreparacion,
             "LISTOPARADESPACHO" => PedidoLogisticaRules.EstadoListoDespacho,
             "DESPACHADO" => PedidoLogisticaRules.EstadoListoDespacho,
+            "ENRUTA" or "ENTRANSPORTE" => PedidoLogisticaRules.EstadoEnRuta,
             "ENTREGADO" => PedidoLogisticaRules.EstadoEntregado,
+            "CANCELADO" => "CANCELADO",
             _ => PedidoLogisticaRules.EstadoPorPreparar
         };
+    }
+
+    private static bool PedidoYaDespachado(string? estado)
+    {
+        var estadoNormalizado = estado?.Replace(" ", string.Empty, StringComparison.Ordinal)
+            .Replace("_", string.Empty, StringComparison.Ordinal)
+            .ToUpperInvariant();
+        return estadoNormalizado is "DESPACHADO" or "ENRUTA" or "ENTRANSPORTE" or "ENTREGADO";
     }
 
     private static string TextoEstado(string estado)
@@ -365,9 +466,25 @@ public class PedidosService : IPedidosService
         {
             PedidoLogisticaRules.EstadoPorPreparar => PedidoLogisticaRules.TextoPorPreparar,
             PedidoLogisticaRules.EstadoEnPreparacion => PedidoLogisticaRules.TextoEnPreparacion,
+            PedidoLogisticaRules.EstadoEnRuta => PedidoLogisticaRules.TextoEnRuta,
             PedidoLogisticaRules.EstadoEntregado => PedidoLogisticaRules.TextoEntregado,
+            "CANCELADO" => "Cancelado",
             _ => PedidoLogisticaRules.TextoListoDespacho
         };
+    }
+
+    private static bool TryNormalizarEstadoSeguimiento(string? estado, out string estadoNormalizado)
+    {
+        estadoNormalizado = estado?.Trim().ToUpperInvariant() switch
+        {
+            "POR_PREPARAR" or "PORPREPARAR" => PedidoLogisticaRules.EstadoPorPreparar,
+            "EN_PREPARACION" or "ENPREPARACION" => PedidoLogisticaRules.EstadoEnPreparacion,
+            "LISTO_DESPACHO" or "LISTOPARADESPACHO" => PedidoLogisticaRules.EstadoListoDespacho,
+            "EN_RUTA" or "ENRUTA" or "EN TRANSPORTE" => PedidoLogisticaRules.EstadoEnRuta,
+            "ENTREGADO" => PedidoLogisticaRules.EstadoEntregado,
+            _ => string.Empty
+        };
+        return !string.IsNullOrEmpty(estadoNormalizado);
     }
 
     public async Task<FacturaPreviewViewModel?> PrevisualizarFacturaAsync(
@@ -702,7 +819,7 @@ public class PedidosService : IPedidosService
 
         if (response.Exito)
         {
-            orden.EstadoLogistico = "Entregado";
+            orden.EstadoLogistico = "EnRuta";
         }
 
         await _context.SaveChangesAsync(cancellationToken);

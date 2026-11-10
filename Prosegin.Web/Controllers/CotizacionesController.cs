@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Prosegin.Data;
@@ -17,17 +18,20 @@ public class CotizacionesController : Controller
     private readonly ISunatService _sunatService;
     private readonly IWebHostEnvironment _env;
     private readonly ILogger<CotizacionesController> _logger;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     public CotizacionesController(
         ProseginDbContext context,
         ISunatService sunatService,
         IWebHostEnvironment env,
-        ILogger<CotizacionesController> logger)
+        ILogger<CotizacionesController> logger,
+        IHttpClientFactory httpClientFactory)
     {
         _context = context;
         _sunatService = sunatService;
         _env = env;
         _logger = logger;
+        _httpClientFactory = httpClientFactory;
     }
 
     [HttpGet]
@@ -134,6 +138,237 @@ public class CotizacionesController : Controller
 
         ViewData["Title"] = "Cotizaciones";
         return View("Index", model);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Historial(string? busqueda, int pagina = 1, CancellationToken cancellationToken = default)
+    {
+        const int registrosPorPagina = 5;
+        var termino = busqueda?.Trim() ?? string.Empty;
+        var model = new HistorialViewModel { Busqueda = termino };
+        if (!string.IsNullOrEmpty(termino) && !BusquedaHistorialValida(termino))
+        {
+            model.Mensaje = "Ingrese un nombre de cliente o número de documento válido";
+            return View(model);
+        }
+
+        var cotizaciones = await _context.Cotizaciones
+            .AsNoTracking()
+            .Where(c => c.Estado != "Borrador")
+            .Select(c => new HistorialDocumentoViewModel
+            {
+                Tipo = "Cotización",
+                NumeroDocumento = c.Correlativo,
+                Id = c.Id,
+                NumeroPedido = c.Correlativo,
+                Cliente = c.Cliente.RazonSocial,
+                NumeroDocumentoCliente = c.Cliente.Ruc,
+                Fecha = c.FechaEmision,
+                Total = c.Total,
+                Estado = c.Estado,
+                PdfDisponible = c.Detalles.Any()
+            })
+            .ToListAsync(cancellationToken);
+
+        var ventasEntregadas = await _context.OrdenesVenta
+            .AsNoTracking()
+            .Where(venta => venta.EstadoLogistico == "Entregado")
+            .Select(venta => new
+            {
+                venta.Id,
+                venta.FechaCreacion,
+                Cotizacion = venta.Cotizacion,
+                Cliente = venta.Cotizacion.Cliente,
+                Factura = venta.Facturas
+                    .OrderByDescending(factura => factura.Id)
+                    .Select(factura => new
+                    {
+                        factura.NumeroFactura,
+                        factura.FechaEmision,
+                        factura.EstadoEmision,
+                        factura.Total,
+                        factura.EnlacePdf
+                    })
+                    .FirstOrDefault()
+            })
+            .ToListAsync(cancellationToken);
+
+        var compras = ventasEntregadas.Select(venta => new HistorialDocumentoViewModel
+        {
+            Tipo = "Compra",
+            NumeroDocumento = $"COM-{venta.Id:D6}",
+            Id = venta.Id,
+            NumeroPedido = venta.Cotizacion.Correlativo,
+            Cliente = venta.Cliente.RazonSocial,
+            NumeroDocumentoCliente = venta.Cliente.Ruc,
+            Fecha = venta.Factura?.FechaEmision ?? venta.FechaCreacion,
+            Total = venta.Factura?.Total ?? venta.Cotizacion.Total,
+            Estado = "Completada",
+            PdfDisponible = !string.IsNullOrWhiteSpace(venta.Factura?.EnlacePdf)
+        });
+
+        var registros = cotizaciones.Concat(compras)
+            .Where(registro => string.IsNullOrEmpty(termino)
+                || CoincideBusquedaHistorial(registro.Cliente, termino)
+                || CoincideBusquedaHistorial(registro.NumeroDocumentoCliente, termino)
+                || CoincideBusquedaHistorial(registro.NumeroDocumento, termino)
+                || CoincideBusquedaHistorial(registro.NumeroPedido, termino))
+            .OrderByDescending(registro => registro.Fecha)
+            .ThenByDescending(registro => registro.NumeroDocumento, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        model.TotalRegistros = registros.Count;
+        if (!string.IsNullOrEmpty(termino) && registros.Count == 0)
+        {
+            model.Mensaje = "No se encontraron registros que coincidan con la búsqueda";
+            return View(model);
+        }
+
+        if (registros.Count == 0)
+            model.Mensaje = "No se encontraron cotizaciones ni compras registradas";
+
+        model.TotalPaginas = Math.Max(1, (int)Math.Ceiling(registros.Count / (double)registrosPorPagina));
+        model.Pagina = Math.Clamp(pagina, 1, model.TotalPaginas);
+        model.Registros = registros
+            .Skip((model.Pagina - 1) * registrosPorPagina)
+            .Take(registrosPorPagina)
+            .ToList();
+        return View(model);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> DetalleHistorial(string tipo, int id, string? busqueda, int pagina = 1, CancellationToken cancellationToken = default)
+    {
+        HistorialDetalleViewModel? model;
+        if (string.Equals(tipo, "Cotizacion", StringComparison.OrdinalIgnoreCase))
+        {
+            var cotizacion = await ObtenerCotizacionPdfAsync(id, cancellationToken);
+            if (cotizacion == null || cotizacion.Detalles.Count == 0)
+                return DetalleHistorialNoDisponible(busqueda, pagina);
+
+            model = new HistorialDetalleViewModel
+            {
+                Documento = new HistorialDocumentoViewModel
+                {
+                    Tipo = "Cotización",
+                    NumeroDocumento = cotizacion.Correlativo,
+                    Id = cotizacion.Id,
+                    NumeroPedido = cotizacion.Correlativo,
+                    Cliente = cotizacion.Cliente.RazonSocial,
+                    NumeroDocumentoCliente = cotizacion.Cliente.Ruc,
+                    Fecha = cotizacion.FechaEmision,
+                    Total = cotizacion.Total,
+                    Estado = cotizacion.Estado,
+                    PdfDisponible = true
+                },
+                Items = cotizacion.Detalles.OrderBy(detalle => detalle.Id).Select(detalle => new HistorialDetalleItemViewModel
+                {
+                    Codigo = detalle.Producto.Sku,
+                    Descripcion = detalle.NombreProducto,
+                    Cantidad = detalle.Cantidad,
+                    PrecioUnitario = detalle.PrecioVentaCalculado,
+                    Subtotal = detalle.Subtotal
+                }).ToList()
+            };
+        }
+        else if (string.Equals(tipo, "Compra", StringComparison.OrdinalIgnoreCase))
+        {
+            var venta = await _context.OrdenesVenta
+                .AsNoTracking()
+                .Include(orden => orden.Cotizacion).ThenInclude(cotizacion => cotizacion.Cliente)
+                .Include(orden => orden.Cotizacion).ThenInclude(cotizacion => cotizacion.Detalles).ThenInclude(detalle => detalle.Producto)
+                .Include(orden => orden.Facturas)
+                .FirstOrDefaultAsync(orden => orden.Id == id && orden.EstadoLogistico == "Entregado", cancellationToken);
+            if (venta == null || venta.Cotizacion.Detalles.Count == 0)
+                return DetalleHistorialNoDisponible(busqueda, pagina);
+
+            var factura = venta.Facturas.OrderByDescending(item => item.Id).FirstOrDefault();
+            model = new HistorialDetalleViewModel
+            {
+                Documento = new HistorialDocumentoViewModel
+                {
+                    Tipo = "Compra",
+                    NumeroDocumento = $"COM-{venta.Id:D6}",
+                    Id = venta.Id,
+                    NumeroPedido = venta.Cotizacion.Correlativo,
+                    Cliente = venta.Cotizacion.Cliente.RazonSocial,
+                    NumeroDocumentoCliente = venta.Cotizacion.Cliente.Ruc,
+                    Fecha = factura?.FechaEmision ?? venta.FechaCreacion,
+                    Total = factura?.Total ?? venta.Cotizacion.Total,
+                    Estado = "Completada",
+                    PdfDisponible = !string.IsNullOrWhiteSpace(factura?.EnlacePdf)
+                },
+                NumeroFactura = factura?.NumeroFactura,
+                EstadoFactura = factura?.EstadoEmision,
+                Items = venta.Cotizacion.Detalles.OrderBy(detalle => detalle.Id).Select(detalle => new HistorialDetalleItemViewModel
+                {
+                    Codigo = detalle.Producto.Sku,
+                    Descripcion = detalle.NombreProducto,
+                    Cantidad = detalle.Cantidad,
+                    PrecioUnitario = detalle.PrecioVentaCalculado,
+                    Subtotal = detalle.Subtotal
+                }).ToList()
+            };
+        }
+        else
+        {
+            return DetalleHistorialNoDisponible(busqueda, pagina);
+        }
+
+        ViewData["Title"] = $"Detalle {model.Documento.NumeroDocumento}";
+        ViewData["HistorialBusqueda"] = busqueda ?? string.Empty;
+        ViewData["HistorialPagina"] = pagina;
+        return View("HistorialDetalle", model);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> DescargarHistorial(string tipo, int id, string? busqueda, int pagina = 1, CancellationToken cancellationToken = default)
+    {
+        if (string.Equals(tipo, "Cotizacion", StringComparison.OrdinalIgnoreCase))
+        {
+            var cotizacion = await ObtenerCotizacionPdfAsync(id, cancellationToken);
+            if (cotizacion == null || cotizacion.Detalles.Count == 0)
+                return DocumentoHistorialNoDisponible(busqueda, pagina);
+
+            return File(GenerarPdf(cotizacion), "application/pdf", NombreArchivoPdf(cotizacion));
+        }
+
+        if (!string.Equals(tipo, "Compra", StringComparison.OrdinalIgnoreCase))
+            return DocumentoHistorialNoDisponible(busqueda, pagina);
+
+        var factura = await _context.Facturas
+            .AsNoTracking()
+            .Include(item => item.OrdenVenta)
+            .Where(item => item.OrdenVentaId == id && item.OrdenVenta.EstadoLogistico == "Entregado")
+            .OrderByDescending(item => item.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (!Uri.TryCreate(factura?.EnlacePdf, UriKind.Absolute, out var pdfUri)
+            || pdfUri.Scheme != Uri.UriSchemeHttps)
+            return DocumentoHistorialNoDisponible(busqueda, pagina);
+
+        try
+        {
+            using var response = await _httpClientFactory.CreateClient("ComprobantesClient").GetAsync(pdfUri, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return DocumentoHistorialNoDisponible(busqueda, pagina);
+
+            var contenido = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+            if (contenido.Length == 0)
+                return DocumentoHistorialNoDisponible(busqueda, pagina);
+
+            var nombre = string.IsNullOrWhiteSpace(factura!.NumeroFactura)
+                ? $"COM-{id:D6}.pdf"
+                : $"{SanitizeFileName(factura.NumeroFactura)}.pdf";
+            return File(contenido, "application/pdf", nombre);
+        }
+        catch (HttpRequestException)
+        {
+            return DocumentoHistorialNoDisponible(busqueda, pagina);
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return DocumentoHistorialNoDisponible(busqueda, pagina);
+        }
     }
 
     [HttpGet]
@@ -1019,6 +1254,34 @@ public class CotizacionesController : Controller
             return Url.Action("VerFicha", "Catalogo", new { id = productoId }, Request.Scheme);
         },
         logoPath: Path.Combine(_env.WebRootPath, "logo_horizontal.png"));
+
+    private IActionResult DetalleHistorialNoDisponible(string? busqueda, int pagina)
+    {
+        TempData["ToastError"] = "No se pudo cargar el detalle del documento";
+        return RedirectToAction(nameof(Historial), new { busqueda, pagina });
+    }
+
+    private IActionResult DocumentoHistorialNoDisponible(string? busqueda, int pagina)
+    {
+        TempData["ToastError"] = "El documento PDF no está disponible";
+        return RedirectToAction(nameof(Historial), new { busqueda, pagina });
+    }
+
+    private static bool BusquedaHistorialValida(string termino) =>
+        Regex.IsMatch(termino, @"^[\p{L}\p{N}\s\-\.&,/'()]+$");
+
+    private static bool CoincideBusquedaHistorial(string valor, string termino) =>
+        QuitarTildesHistorial(valor).Contains(QuitarTildesHistorial(termino), StringComparison.OrdinalIgnoreCase);
+
+    private static string QuitarTildesHistorial(string valor)
+    {
+        var normalizado = valor.Normalize(System.Text.NormalizationForm.FormD);
+        return new string(normalizado
+            .Where(caracter => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(caracter)
+                != System.Globalization.UnicodeCategory.NonSpacingMark)
+            .ToArray())
+            .Normalize(System.Text.NormalizationForm.FormC);
+    }
 
     private RedirectToActionResult RedirigirAListado(
         string busqueda,

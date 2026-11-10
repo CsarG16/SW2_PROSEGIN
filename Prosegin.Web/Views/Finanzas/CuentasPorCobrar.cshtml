@@ -1,0 +1,166 @@
+@model Prosegin.Web.ViewModels.Finanzas.CuentasPorCobrarViewModel
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Cuentas por cobrar";
+    var culture = CultureInfo.GetCultureInfo("es-PE");
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/finanzas.css" asp-append-version="true" />
+}
+
+<div class="container-fluid px-0 finance-page">
+    <header class="finance-page-header">
+        <div class="finance-page-heading">
+            <span class="finance-page-icon"><i class="material-symbols-outlined">account_balance_wallet</i></span>
+            <div>
+                <div class="finance-page-kicker">Finanzas / Cobranzas</div>
+                <h1 class="finance-page-title">Cuentas por cobrar</h1>
+                <p class="finance-page-subtitle">Consulta facturas, saldos pendientes y estados de pago de tus clientes.</p>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 finance-page-header-actions">
+            <a asp-action="FacturasPorVencer" class="btn-prosegin-secondary">Facturas por vencer</a>
+            <a asp-action="RegistroPago" class="btn-prosegin-primary">Registro de Pago</a>
+            <span class="finance-brand-pill"><i class="material-symbols-outlined">payments</i>PROSEGIN</span>
+        </div>
+    </header>
+
+    <form asp-action="CuentasPorCobrar" method="get" class="finance-filter-panel">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-6 col-xl-3">
+                    <label class="form-label" for="clienteId">Cliente</label>
+                    <select class="form-select" id="clienteId" name="clienteId">
+                        <option value="">Todos los clientes</option>
+                        @foreach (var cliente in Model.Clientes)
+                        {
+                            <option value="@cliente.Id" selected="@(Model.ClienteId == cliente.Id)">@cliente.Nombre</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6 col-xl-2">
+                    <label class="form-label" for="estado">Estado de pago</label>
+                    <select class="form-select" id="estado" name="estado">
+                        <option value="TODAS" selected="@(Model.Estado == "TODAS")">Todos los estados</option>
+                        <option value="AL_DIA" selected="@(Model.Estado == "AL_DIA")">Al día / por vencer</option>
+                        <option value="VENCIDA" selected="@(Model.Estado == "VENCIDA")">Vencida</option>
+                        <option value="PAGADA" selected="@(Model.Estado == "PAGADA")">Pagada</option>
+                    </select>
+                </div>
+                <div class="col-md-6 col-xl-2">
+                    <label class="form-label" for="fechaEmisionDesde">Emisión desde</label>
+                    <input class="form-control" type="date" id="fechaEmisionDesde" name="fechaEmisionDesde" value="@Model.FechaEmisionDesde?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-6 col-xl-2">
+                    <label class="form-label" for="fechaEmisionHasta">Emisión hasta</label>
+                    <input class="form-control" type="date" id="fechaEmisionHasta" name="fechaEmisionHasta" value="@Model.FechaEmisionHasta?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-6 col-xl-2">
+                    <label class="form-label" for="fechaVencimientoDesde">Vence desde</label>
+                    <input class="form-control" type="date" id="fechaVencimientoDesde" name="fechaVencimientoDesde" value="@Model.FechaVencimientoDesde?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-6 col-xl-2">
+                    <label class="form-label" for="fechaVencimientoHasta">Vence hasta</label>
+                    <input class="form-control" type="date" id="fechaVencimientoHasta" name="fechaVencimientoHasta" value="@Model.FechaVencimientoHasta?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-6 col-xl-2 d-flex gap-2">
+                    <button class="btn-prosegin-primary flex-grow-1" type="submit">Filtrar</button>
+                    <a asp-action="CuentasPorCobrar" class="btn-prosegin-secondary">Limpiar</a>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Mensaje))
+    {
+        <div class="finance-empty-state" role="status">@Model.Mensaje</div>
+    }
+
+    @if (Model.Facturas.Count > 0)
+    {
+        <p class="text-muted small">Mostrando @Model.Facturas.Count de @Model.TotalRegistros facturas</p>
+        <div class="table-responsive finance-data-card">
+            <table class="table table-hover align-middle finance-table">
+                <thead>
+                    <tr>
+                        <th>Factura</th>
+                        <th>Cliente</th>
+                        <th>Emisión</th>
+                        <th>Vencimiento</th>
+                        <th class="text-end">Monto</th>
+                        <th class="text-end">Saldo pendiente</th>
+                        <th>Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var factura in Model.Facturas)
+                    {
+                        <tr>
+                            <td class="finance-document-number">@factura.NumeroFactura</td>
+                            <td>@factura.Cliente</td>
+                            <td>@factura.FechaEmision.ToString("dd/MM/yyyy", culture)</td>
+                            <td>@factura.FechaVencimiento.ToString("dd/MM/yyyy", culture)</td>
+                            <td class="text-end">@factura.MontoTotal.ToString("C", culture)</td>
+                            <td class="text-end fw-semibold">@factura.SaldoPendiente.ToString("C", culture)</td>
+                            <td>
+                                <span class="finance-status @(factura.Estado == "Pagada" ? "is-paid" : factura.Estado == "Vencida" ? "is-overdue" : "is-current")">
+                                    @factura.Estado
+                                </span>
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <a asp-action="DetalleFactura" asp-route-id="@factura.Id"
+                                   class="btn-prosegin-secondary btn-sm finance-action-button" title="Visualizar factura @factura.NumeroFactura"
+                                   aria-label="Visualizar factura @factura.NumeroFactura">
+                                    <i class="material-symbols-outlined">visibility</i>
+                                </a>
+                                @if (factura.SaldoPendiente > 0)
+                                {
+                                    <a asp-action="RegistroPago" asp-route-facturaId="@factura.Id"
+                                       class="btn-prosegin-secondary-orange btn-sm" title="Registrar pago de @factura.NumeroFactura">
+                                        Registrar pago
+                                    </a>
+                                }
+                                <a asp-action="DescargarFactura" asp-route-id="@factura.Id"
+                                   asp-route-origen="CuentasPorCobrar"
+                                   asp-route-clienteCuentasId="@Model.ClienteId"
+                                   asp-route-estadoCuentas="@Model.Estado"
+                                   asp-route-emisionDesde="@Model.FechaEmisionDesde?.ToString("yyyy-MM-dd")"
+                                   asp-route-emisionHasta="@Model.FechaEmisionHasta?.ToString("yyyy-MM-dd")"
+                                   asp-route-vencimientoDesde="@Model.FechaVencimientoDesde?.ToString("yyyy-MM-dd")"
+                                   asp-route-vencimientoHasta="@Model.FechaVencimientoHasta?.ToString("yyyy-MM-dd")"
+                                   asp-route-pagina="@Model.Pagina"
+                                   class="btn-prosegin-secondary-orange btn-sm finance-action-button" title="Descargar PDF de @factura.NumeroFactura"
+                                   aria-label="Descargar factura @factura.NumeroFactura">
+                                    <i class="material-symbols-outlined">download</i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (Model.TotalPaginas > 1)
+        {
+            <nav class="mt-3" aria-label="Paginación de cuentas por cobrar">
+                <ul class="pagination justify-content-end">
+                    @for (var pagina = 1; pagina <= Model.TotalPaginas; pagina++)
+                    {
+                        <li class="page-item @(pagina == Model.Pagina ? "active" : "")">
+                            <a class="page-link" asp-action="CuentasPorCobrar"
+                               asp-route-clienteId="@Model.ClienteId"
+                               asp-route-estado="@Model.Estado"
+                               asp-route-fechaEmisionDesde="@Model.FechaEmisionDesde?.ToString("yyyy-MM-dd")"
+                               asp-route-fechaEmisionHasta="@Model.FechaEmisionHasta?.ToString("yyyy-MM-dd")"
+                               asp-route-fechaVencimientoDesde="@Model.FechaVencimientoDesde?.ToString("yyyy-MM-dd")"
+                               asp-route-fechaVencimientoHasta="@Model.FechaVencimientoHasta?.ToString("yyyy-MM-dd")"
+                               asp-route-pagina="@pagina">@pagina</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+</div>

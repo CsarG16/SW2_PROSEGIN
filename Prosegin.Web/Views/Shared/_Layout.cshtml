@@ -125,8 +125,8 @@
                 <li class="sidebar-nav-item">
                     <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Pedidos" ? "active" : "")" asp-controller="Pedidos" asp-action="Index">
                         <i class="material-symbols-outlined">local_shipping</i>
-                        <span class="sidebar-nav-text">Gestión de Pedidos</span>
-                        <span class="sidebar-floating-tag">Gestión de Pedidos</span>
+                        <span class="sidebar-nav-text">Pedidos de venta</span>
+                        <span class="sidebar-floating-tag">Pedidos de venta</span>
                     </a>
                 </li>
                 <li class="sidebar-nav-item">
@@ -135,6 +135,35 @@
                         <span class="sidebar-nav-text">Órdenes de Compra</span>
                         <span class="sidebar-floating-tag">Órdenes de Compra</span>
                     </a>
+                </li>
+                <li class="sidebar-nav-divider"></li>
+                @{
+                    var enFinanzas = ViewContext.RouteData.Values["controller"]?.ToString() == "Finanzas";
+                    var accionFinanzas = ViewContext.RouteData.Values["action"]?.ToString();
+                }
+                <li class="sidebar-nav-item sidebar-nav-group @(enFinanzas ? "is-expanded" : "")">
+                    <button class="sidebar-nav-link sidebar-nav-group-toggle @(enFinanzas ? "active" : "")"
+                            type="button" aria-expanded="@(enFinanzas ? "true" : "false")"
+                            aria-controls="finanzasSubmenu" data-sidebar-submenu-toggle>
+                        <i class="material-symbols-outlined">payments</i>
+                        <span class="sidebar-nav-text">Finanzas</span>
+                        <span class="sidebar-floating-tag">Finanzas</span>
+                        <i class="material-symbols-outlined sidebar-nav-chevron">expand_more</i>
+                    </button>
+                    <ul class="sidebar-submenu" id="finanzasSubmenu" @(enFinanzas ? null : "hidden")>
+                        <li>
+                            <a class="sidebar-submenu-link @(accionFinanzas == "CuentasPorCobrar" ? "active" : "")"
+                               asp-controller="Finanzas" asp-action="CuentasPorCobrar">Cuentas por Cobrar</a>
+                        </li>
+                        <li>
+                            <a class="sidebar-submenu-link @(accionFinanzas == "FacturasPorVencer" ? "active" : "")"
+                               asp-controller="Finanzas" asp-action="FacturasPorVencer">Facturas por Vencer</a>
+                        </li>
+                        <li>
+                            <a class="sidebar-submenu-link @(accionFinanzas == "RegistroPago" ? "active" : "")"
+                               asp-controller="Finanzas" asp-action="RegistroPago">Registro de Pago</a>
+                        </li>
+                    </ul>
                 </li>
             </ul>
         </div>

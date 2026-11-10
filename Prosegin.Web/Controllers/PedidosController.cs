@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using System.Net;
 using System.Net.Mail;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Prosegin.Web.Services;
 using Prosegin.Web.ViewModels.Pedidos;
@@ -26,7 +27,55 @@ public class PedidosController : Controller
         int pagina = 1)
     {
         var model = await _pedidosService.ObtenerPedidosConfirmadosAsync(termino, estado, pagina, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(termino) && !BusquedaSeguimientoValida(termino))
+        {
+            model.Pedidos.Clear();
+            model.TotalFiltrados = 0;
+            model.TotalPaginas = 1;
+            model.Pagina = 1;
+            model.BusquedaInvalida = true;
+            model.MensajeSinResultados = "Ingrese un número de pedido o cliente válido";
+        }
+        else if (model.TotalPedidos == 0 && string.IsNullOrWhiteSpace(termino))
+        {
+            model.MensajeSinResultados = "No se encontraron pedidos de venta";
+        }
+        else if (model.TotalFiltrados == 0 && !string.IsNullOrWhiteSpace(termino))
+        {
+            model.MensajeSinResultados = "No se encontraron pedidos que coincidan con la búsqueda";
+        }
+
         return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ActualizarEstado(
+        string numeroPedido,
+        string nuevoEstado,
+        string? termino,
+        string? estado,
+        int pagina = 1,
+        CancellationToken cancellationToken = default)
+    {
+        var resultado = await _pedidosService.ActualizarEstadoLogisticoAsync(numeroPedido, nuevoEstado, cancellationToken);
+        TempData[resultado.Exito ? "ToastSuccess" : "ToastError"] = resultado.Mensaje;
+        return RedirectToAction(nameof(Index), new { termino, estado, pagina });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CancelarPedido(
+        string numeroPedido,
+        string? motivo,
+        string? termino,
+        string? estado,
+        int pagina = 1,
+        CancellationToken cancellationToken = default)
+    {
+        var resultado = await _pedidosService.CancelarPedidoAsync(numeroPedido, motivo, cancellationToken);
+        TempData[resultado.Exito ? "ToastSuccess" : "ToastError"] = resultado.Mensaje;
+        return RedirectToAction(nameof(Index), new { termino, estado, pagina });
     }
 
     [HttpGet]
@@ -208,6 +257,9 @@ public class PedidosController : Controller
 
     private BadRequestObjectResult BadBadRequestComprobante() =>
         BadRequest(new { mensaje = "Seleccione al menos un comprobante disponible." });
+
+    private static bool BusquedaSeguimientoValida(string termino) =>
+        Regex.IsMatch(termino.Trim(), @"^[\p{L}\p{N}\s\-\.&,/'()]+$");
 
     private sealed class PdfComprobanteException : Exception
     {

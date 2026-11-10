@@ -24,6 +24,7 @@ public class ProseginDbContext : DbContext
     public DbSet<OrdenCompraDetalle> OrdenCompraDetalles { get; set; }
     public DbSet<Factura> Facturas { get; set; }
     public DbSet<FacturaDetalle> FacturaDetalles { get; set; }
+    public DbSet<PagoFactura> PagosFactura { get; set; }
     public DbSet<GuiaRemision> GuiasRemision { get; set; }
     public DbSet<GuiaRemisionDetalle> GuiaRemisionDetalles { get; set; }
     public DbSet<RecepcionMercaderia> RecepcionesMercaderia { get; set; }
@@ -204,6 +205,20 @@ public class ProseginDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<PagoFactura>(entity =>
+        {
+            entity.ToTable("PagosFactura");
+            entity.HasKey(pago => pago.Id);
+            entity.Property(pago => pago.Monto).HasPrecision(18, 2);
+            entity.Property(pago => pago.MetodoPago).HasMaxLength(30).IsRequired();
+            entity.Property(pago => pago.Referencia).HasMaxLength(100);
+            entity.HasIndex(pago => pago.FacturaId);
+            entity.HasOne(pago => pago.Factura)
+                .WithMany(factura => factura.Pagos)
+                .HasForeignKey(pago => pago.FacturaId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         modelBuilder.Entity<GuiaRemision>(entity =>
         {
             entity.ToTable("GuiasRemision");
@@ -243,5 +258,8 @@ public class ProseginDbContext : DbContext
         modelBuilder.Entity<OrdenVenta>()
             .Property(e => e.Revision)
             .IsConcurrencyToken();
+        modelBuilder.Entity<OrdenVenta>()
+            .Property(e => e.MotivoCancelacion)
+            .HasMaxLength(500);
     }
 }
