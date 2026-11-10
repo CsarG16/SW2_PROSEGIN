@@ -1,5 +1,8 @@
 // PROSEGIN Core - Inicialización de la aplicación Web
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Prosegin.Data;
 using Prosegin.Web.Services;
 
@@ -47,6 +50,41 @@ if (connectionArgIndex >= 0 && connectionArgIndex + 1 < args.Length)
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddDataServices(builder.Configuration);
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Acceso/Login";
+        options.AccessDeniedPath = "/Acceso/Login";
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+        options.Events.OnValidatePrincipal = async context =>
+        {
+            var userName = context.Principal?.Identity?.Name;
+            if (string.IsNullOrWhiteSpace(userName))
+            {
+                context.RejectPrincipal();
+                await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                return;
+            }
+
+            var db = context.HttpContext.RequestServices.GetRequiredService<ProseginDbContext>();
+            var activa = await db.CuentasPersonal
+                .AsNoTracking()
+                .AnyAsync(c => c.NombreUsuario == userName && c.Activa);
+            if (!activa)
+            {
+                context.RejectPrincipal();
+                await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            }
+        };
+    });
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
+builder.Services.AddScoped<ICuentasPersonalService, CuentasPersonalService>();
 
 builder.Services.AddHttpClient("ComprobantesClient", client =>
 {
@@ -123,6 +161,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
@@ -138,6 +177,8 @@ if (args.Contains("--seed", StringComparer.OrdinalIgnoreCase))
         var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
         await context.Database.MigrateAsync();
     }
+
+    await CuentaPersonalDataSeeder.SeedAsync(app.Services);
 
     Console.WriteLine("[PROSEGIN SEEDER] Sembrando datos de Clientes...");
     await ClienteDataSeeder.SeedAsync(app.Services);
@@ -162,6 +203,7 @@ using (var scope = app.Services.CreateScope())
 
 // Sembrado de datos de clientes si no existen
 await ClienteDataSeeder.SeedAsync(app.Services);
+await CuentaPersonalDataSeeder.SeedAsync(app.Services);
 
 // Ejecución de Seeder de datos iniciales de EPP y proveedores
 using (var scope = app.Services.CreateScope())

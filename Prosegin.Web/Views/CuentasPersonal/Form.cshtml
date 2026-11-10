@@ -1,0 +1,44 @@
+@model Prosegin.Web.ViewModels.CuentasPersonal.CuentaPersonalFormViewModel
+@{
+    var esEdicion = Model.Id > 0;
+    ViewData["Title"] = esEdicion ? "Editar cuenta del personal" : "Nueva cuenta del personal";
+}
+
+<div class="account-form-page">
+    <div class="account-form-breadcrumb"><a asp-action="Index"><i class="material-symbols-outlined">arrow_back</i> Cuentas del Personal</a><i class="material-symbols-outlined">chevron_right</i><span>@ViewData["Title"]</span></div>
+    <div class="account-form-layout">
+        <section class="account-form-intro">
+            <div class="account-form-symbol"><i class="material-symbols-outlined">manage_accounts</i></div>
+            <span class="account-form-kicker">ADMINISTRACIÓN DE ACCESOS</span>
+            <h1>@ViewData["Title"]</h1>
+            <p>@(esEdicion ? "Actualiza los datos permitidos y conserva el control del acceso del colaborador." : "Registra una cuenta para que un colaborador pueda acceder a la plataforma según el rol asignado.")</p>
+            <div class="account-form-notice"><i class="material-symbols-outlined">info</i><span>Los campos marcados con <b>*</b> son obligatorios.</span></div>
+        </section>
+        <section class="account-form-card">
+            <div class="form-card-heading"><i class="material-symbols-outlined">person_add</i><div><h2>Datos de la cuenta</h2><p>Información del colaborador y sus credenciales</p></div></div>
+            <form asp-action="Form" method="post">
+                <input asp-for="Id" type="hidden" />
+                <div asp-validation-summary="ModelOnly" class="form-summary"></div>
+                <div class="form-grid">
+                    <div class="form-field form-field-wide"><label asp-for="NombreCompleto">Nombre completo <b>*</b></label><input asp-for="NombreCompleto" placeholder="Ingresa el nombre completo" /><span asp-validation-for="NombreCompleto"></span></div>
+                    <div class="form-field"><label asp-for="NombreUsuario">Usuario <b>*</b></label>@if (esEdicion) { <input asp-for="NombreUsuario" readonly /> } else { <input asp-for="NombreUsuario" placeholder="Ej. rquispe" /> }<span asp-validation-for="NombreUsuario"></span></div>
+                    <div class="form-field"><label asp-for="CorreoElectronico">Correo electrónico <b>*</b></label><input asp-for="CorreoElectronico" type="email" placeholder="nombre@@prosegin.com" /><span asp-validation-for="CorreoElectronico"></span></div>
+                    <div class="form-field"><label asp-for="Rol">Rol <b>*</b></label><select asp-for="Rol"><option value="">Selecciona un rol</option><option>Administrador</option><option>Ventas</option><option>Finanzas</option><option>Compras</option></select><span asp-validation-for="Rol"></span></div>
+                    <div class="form-field"><label asp-for="Activa">Estado <b>*</b></label><select asp-for="Activa"><option value="true">Activo</option><option value="false">Inactivo</option></select></div>
+                </div>
+                <div class="credentials-divider"><span>@(esEdicion ? "Cambiar contraseña (opcional)" : "Credenciales de acceso")</span></div>
+                <p class="form-help">@(esEdicion ? "Deja estos campos vacíos para conservar la contraseña actual." : "Usa al menos 8 caracteres, una mayúscula, un número y un símbolo.")</p>
+                <div class="form-grid">
+                    <div class="form-field"><label asp-for="Password">Contraseña @(!esEdicion ? Html.Raw("<b>*</b>") : null)</label><input asp-for="Password" placeholder="@(esEdicion ? "Nueva contraseña" : "Ingresa la contraseña")" /><span asp-validation-for="Password"></span></div>
+                    <div class="form-field"><label asp-for="ConfirmarPassword">Confirmar contraseña @(!esEdicion ? Html.Raw("<b>*</b>") : null)</label><input asp-for="ConfirmarPassword" placeholder="Confirma la contraseña" /><span asp-validation-for="ConfirmarPassword"></span></div>
+                </div>
+                <div class="form-actions"><a asp-action="Index" class="btn-form-cancel">Cancelar</a><button type="submit" class="btn-form-save"><i class="material-symbols-outlined">save</i> @(esEdicion ? "Guardar cambios" : "Crear cuenta")</button></div>
+            </form>
+        </section>
+    </div>
+</div>
+<style>
+.account-form-page{max-width:1120px;margin:0 auto;color:#14213d}.account-form-breadcrumb{display:flex;align-items:center;gap:7px;margin-bottom:24px;color:#7a899d;font-size:13px}.account-form-breadcrumb a{display:flex;align-items:center;gap:5px;color:#52647d;text-decoration:none}.account-form-breadcrumb a:hover{color:#f7a702}.account-form-breadcrumb i{font-size:18px}.account-form-layout{display:grid;grid-template-columns:280px minmax(0,680px);gap:52px;align-items:start}.account-form-intro{padding:10px 0}.account-form-symbol{display:grid;width:58px;height:58px;place-items:center;margin-bottom:24px;border-radius:16px;color:#000d31;background:#fef6e6;border:1px solid #f7a702}.account-form-symbol i{font-size:32px}.account-form-kicker{color:#b46500;font-size:11px;font-weight:800;letter-spacing:.1em}.account-form-intro h1{margin:10px 0 14px;font-size:30px;line-height:1.15;font-weight:800}.account-form-intro p{color:#6e7d92;line-height:1.7;font-size:14px}.account-form-notice{display:flex;gap:8px;align-items:flex-start;margin-top:30px;padding:13px;border-left:3px solid #f7a702;border-radius:5px;color:#69788e;background:#fef6e6;font-size:12px;line-height:1.5}.account-form-notice i{color:#b46500;font-size:18px}.account-form-notice b,.form-field label b{color:#d84646}.account-form-card{padding:30px;border:1px solid #e1e8f1;border-radius:14px;background:#fff;box-shadow:0 12px 30px rgba(20,45,80,.06)}.form-card-heading{display:flex;align-items:center;gap:12px;padding-bottom:22px;border-bottom:1px solid #edf1f5}.form-card-heading>i{color:#f7a702;font-size:28px}.form-card-heading h2{margin:0;font-size:19px;font-weight:800}.form-card-heading p{margin:3px 0 0;color:#8290a4;font-size:12px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}.form-field{margin-top:19px}.form-field-wide{grid-column:1/-1}.form-field label{display:block;margin-bottom:7px;color:#263752;font-size:12px;font-weight:700}.form-field input,.form-field select{width:100%;height:43px;padding:0 12px;border:1px solid #dce4ee;border-radius:7px;outline:0;background:#fbfcfe;color:#263752;font-size:13px}.form-field input:focus,.form-field select:focus{border-color:#f7a702;box-shadow:0 0 0 3px #fef6e6;background:#fff}.form-field input[readonly]{color:#8290a4;background:#f2f5f8}.form-field span{display:block;margin-top:4px;color:#d84646;font-size:11px}.form-summary{margin-top:15px;color:#d84646;font-size:12px}.credentials-divider{display:flex;align-items:center;gap:12px;margin-top:28px;color:#263752;font-size:13px;font-weight:800}.credentials-divider:after{content:"";height:1px;flex:1;background:#edf1f5}.form-help{margin:7px 0 0;color:#8290a4;font-size:12px}.form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:30px;padding-top:20px;border-top:1px solid #edf1f5}.btn-form-cancel,.btn-form-save{display:inline-flex;align-items:center;gap:6px;padding:11px 17px;border:1px solid #dce4ee;border-radius:7px;text-decoration:none;background:#fff;color:#526179;font-size:13px}.btn-form-save{border-color:#f7a702;background:#f7a702;color:#000d31;font-weight:800}.btn-form-save:hover{background:#d98a00;color:#fff}.btn-form-save i{font-size:18px}
+@@media(max-width:850px){.account-form-layout{grid-template-columns:1fr;gap:20px}.account-form-intro{padding:0}.account-form-symbol{margin-bottom:15px}.account-form-intro h1{font-size:25px}.account-form-notice{margin-top:18px}.account-form-card{padding:22px}}
+@@media(max-width:560px){.form-grid{grid-template-columns:1fr}.form-field-wide{grid-column:auto}.form-actions{flex-direction:column-reverse}.btn-form-cancel,.btn-form-save{justify-content:center}}
+</style>

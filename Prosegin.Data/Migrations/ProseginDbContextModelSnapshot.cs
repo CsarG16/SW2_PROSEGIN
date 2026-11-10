@@ -323,6 +323,59 @@ namespace Prosegin.Data.Migrations
                     b.ToTable("CuentasBancariasProveedor", (string)null);
                 });
 
+            modelBuilder.Entity("Prosegin.Data.Entities.CuentaPersonal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activa")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("CorreoElectronico")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<DateTime>("FechaActualizacion")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("NombreCompleto")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("NombreUsuario")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("Rol")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CorreoElectronico")
+                        .IsUnique();
+
+                    b.HasIndex("NombreUsuario")
+                        .IsUnique();
+
+                    b.ToTable("CuentasPersonal", (string)null);
+                });
+
             modelBuilder.Entity("Prosegin.Data.Entities.Factura", b =>
                 {
                     b.Property<int>("Id")
@@ -464,43 +517,6 @@ namespace Prosegin.Data.Migrations
                     b.HasIndex("FacturaId");
 
                     b.ToTable("FacturaDetalles", (string)null);
-                });
-
-            modelBuilder.Entity("Prosegin.Data.Entities.PagoFactura", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("FacturaId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("FechaPago")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime>("FechaRegistro")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<decimal>("Monto")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("MetodoPago")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("varchar(30)");
-
-                    b.Property<string>("Referencia")
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FacturaId");
-
-                    b.ToTable("PagosFactura", (string)null);
                 });
 
             modelBuilder.Entity("Prosegin.Data.Entities.GuiaRemision", b =>
@@ -769,6 +785,43 @@ namespace Prosegin.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("OrdenesVenta");
+                });
+
+            modelBuilder.Entity("Prosegin.Data.Entities.PagoFactura", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("FacturaId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("FechaPago")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("FechaRegistro")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("MetodoPago")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<decimal>("Monto")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Referencia")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FacturaId");
+
+                    b.ToTable("PagosFactura", (string)null);
                 });
 
             modelBuilder.Entity("Prosegin.Data.Entities.Producto", b =>
@@ -1165,17 +1218,6 @@ namespace Prosegin.Data.Migrations
                     b.Navigation("Factura");
                 });
 
-            modelBuilder.Entity("Prosegin.Data.Entities.PagoFactura", b =>
-                {
-                    b.HasOne("Prosegin.Data.Entities.Factura", "Factura")
-                        .WithMany("Pagos")
-                        .HasForeignKey("FacturaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Factura");
-                });
-
             modelBuilder.Entity("Prosegin.Data.Entities.GuiaRemision", b =>
                 {
                     b.HasOne("Prosegin.Data.Entities.Cliente", "Cliente")
@@ -1259,6 +1301,17 @@ namespace Prosegin.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Cotizacion");
+                });
+
+            modelBuilder.Entity("Prosegin.Data.Entities.PagoFactura", b =>
+                {
+                    b.HasOne("Prosegin.Data.Entities.Factura", "Factura")
+                        .WithMany("Pagos")
+                        .HasForeignKey("FacturaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Factura");
                 });
 
             modelBuilder.Entity("Prosegin.Data.Entities.ProductoProveedor", b =>

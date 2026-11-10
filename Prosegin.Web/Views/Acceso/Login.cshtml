@@ -1,0 +1,107 @@
+@{
+    ViewData["Title"] = "Iniciar sesión";
+}
+
+<div class="login-shell">
+    <section class="login-brand-panel">
+        <div class="login-brand-content">
+            <img src="~/logo_horizontal.png" alt="PROSEGIN - Prevención Integral" class="login-logo" />
+            <span class="login-eyebrow">PLATAFORMA EMPRESARIAL</span>
+            <h1>Gestión integral para una operación segura.</h1>
+            <p>Administra tus productos EPP, clientes, proveedores, pedidos y procesos operativos desde un solo lugar.</p>
+            <div class="login-features">
+                <span><i class="material-symbols-outlined">verified_user</i> Acceso seguro</span>
+                <span><i class="material-symbols-outlined">inventory_2</i> Operación centralizada</span>
+                <span><i class="material-symbols-outlined">analytics</i> Información trazable</span>
+            </div>
+        </div>
+        <div class="login-brand-footer">© @DateTime.Now.Year PROSEGIN · Prevención Integral</div>
+    </section>
+
+    <section class="login-form-panel">
+        <div class="login-card">
+            <div class="login-card-heading">
+                <div class="login-icon"><i class="material-symbols-outlined">lock</i></div>
+                <div>
+                    <span class="login-card-kicker">Bienvenido de nuevo</span>
+                    <h2>Iniciar sesión</h2>
+                </div>
+            </div>
+            <p class="login-description">Ingresa tus credenciales para continuar en PROSEGIN.</p>
+            <form asp-action="Login" method="post" class="login-form">
+                <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+                <div class="login-field">
+                    <label for="usuario">Usuario</label>
+                    <div class="login-input-wrap">
+                        <i class="material-symbols-outlined">person</i>
+                        <input id="usuario" name="usuario" required autocomplete="username" placeholder="Ingresa tu usuario" autofocus />
+                    </div>
+                </div>
+                <div class="login-field">
+                    <label for="password">Contraseña</label>
+                    <div class="login-input-wrap">
+                        <i class="material-symbols-outlined">key</i>
+                        <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="Ingresa tu contraseña" />
+                        <button type="button" class="login-password-toggle" aria-label="Mostrar contraseña" onclick="togglePassword()">
+                            <i class="material-symbols-outlined" id="passwordIcon">visibility</i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="login-submit">
+                    Ingresar a la plataforma
+                    <i class="material-symbols-outlined">arrow_forward</i>
+                </button>
+            </form>
+            <div class="login-security-note"><i class="material-symbols-outlined">shield</i><span>Tu sesión está protegida y es de uso exclusivo del personal autorizado.</span></div>
+        </div>
+    </section>
+</div>
+
+<style>
+    .prosegin-public-shell { min-height: 100vh; background: #f5f8fc; }
+    .login-shell { min-height: 100vh; display: grid; grid-template-columns: minmax(400px, .9fr) minmax(480px, 1.1fr); }
+    .login-brand-panel { position: relative; display: flex; flex-direction: column; justify-content: center; padding: 8% 12%; overflow: hidden; color: #fff; background: linear-gradient(145deg, #000d31 0%, #10275a 62%, #183f76 100%); }
+    .login-brand-panel::before, .login-brand-panel::after { content: ""; position: absolute; border: 1px solid rgba(255,255,255,.12); border-radius: 50%; pointer-events: none; }
+    .login-brand-panel::before { width: 520px; height: 520px; right: -260px; top: -110px; }
+    .login-brand-panel::after { width: 300px; height: 300px; left: -180px; bottom: -120px; }
+    .login-brand-content, .login-brand-footer { position: relative; z-index: 1; }
+    .login-logo { display: block; width: 230px; height: auto; margin-bottom: 70px; padding: 13px 18px; border-radius: 10px; background: #fff; box-shadow: 0 10px 24px rgba(0, 13, 49, .24); }
+    .login-eyebrow { color: #f7a702; font-size: 12px; font-weight: 800; letter-spacing: .16em; }
+    .login-brand-content h1 { max-width: 500px; margin: 15px 0 18px; font-size: clamp(32px, 3.2vw, 52px); line-height: 1.1; font-weight: 800; }
+    .login-brand-content p { max-width: 500px; margin: 0; color: #d7e3f3; font-size: 16px; line-height: 1.7; }
+    .login-features { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 40px; }
+    .login-features span { display: inline-flex; align-items: center; gap: 7px; color: #dce8f8; font-size: 12px; }
+    .login-features i { color: #f7a702; font-size: 19px; }
+    .login-brand-footer { position: absolute; left: 12%; bottom: 34px; color: #aec1da; font-size: 11px; }
+    .login-form-panel { display: grid; place-items: center; padding: 40px; background: #f7f9fc; }
+    .login-card { width: min(100%, 470px); padding: 42px; border: 1px solid #e4eaf2; border-radius: 18px; background: #fff; box-shadow: 0 22px 60px rgba(20, 45, 80, .1); }
+    .login-card-heading { display: flex; align-items: center; gap: 15px; }
+    .login-icon { display: grid; width: 52px; height: 52px; place-items: center; border-radius: 14px; color: #000d31; background: #fef6e6; border: 1px solid #f7a702; }
+    .login-icon i { font-size: 27px; }
+    .login-card-kicker { color: #7d8ba0; font-size: 12px; font-weight: 600; }
+    .login-card h2 { margin: 3px 0 0; color: #14213d; font-size: 28px; font-weight: 800; }
+    .login-description { margin: 24px 0 30px; color: #718096; font-size: 14px; line-height: 1.5; }
+    .login-field { margin-bottom: 20px; }
+    .login-field label { display: block; margin-bottom: 8px; color: #263752; font-size: 13px; font-weight: 700; }
+    .login-input-wrap { display: flex; align-items: center; gap: 9px; min-height: 50px; padding: 0 13px; border: 1px solid #dce4ee; border-radius: 9px; background: #fbfcfe; transition: border-color .2s, box-shadow .2s; }
+    .login-input-wrap:focus-within { border-color: #3479e8; box-shadow: 0 0 0 3px rgba(52,121,232,.12); background: #fff; }
+    .login-input-wrap > i { color: #8b9ab0; font-size: 21px; }
+    .login-input-wrap input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: #1d2c46; font-size: 14px; }
+    .login-input-wrap input::placeholder { color: #a0adbd; }
+    .login-password-toggle { display: grid; padding: 2px; border: 0; color: #7f8da2; background: transparent; place-items: center; }
+    .login-password-toggle i { font-size: 20px; }
+    .login-submit { display: flex; width: 100%; align-items: center; justify-content: center; gap: 9px; min-height: 51px; margin-top: 30px; border: 0; border-radius: 9px; color: #000d31; background: #f7a702; font-size: 14px; font-weight: 800; transition: background .2s, transform .2s; }
+    .login-submit:hover { background: #d98a00; color: #fff; transform: translateY(-1px); }
+    .login-submit i { font-size: 20px; }
+    .login-security-note { display: flex; align-items: flex-start; gap: 8px; margin-top: 28px; padding-top: 20px; border-top: 1px solid #edf1f5; color: #8290a4; font-size: 11px; line-height: 1.5; }
+    .login-security-note i { color: #21a776; font-size: 18px; }
+    @@media (max-width: 850px) { .login-shell { display: block; }.login-brand-panel { min-height: 300px; padding: 42px 28px 55px; }.login-logo { width: 190px; margin-bottom: 32px; }.login-brand-content h1 { font-size: 32px; }.login-features { margin-top: 24px; }.login-brand-footer { left: 28px; bottom: 20px; }.login-form-panel { padding: 28px 18px 50px; }.login-card { padding: 30px 24px; } }
+</style>
+<script>
+    function togglePassword() {
+        const input = document.getElementById('password');
+        const icon = document.getElementById('passwordIcon');
+        input.type = input.type === 'password' ? 'text' : 'password';
+        icon.textContent = input.type === 'password' ? 'visibility' : 'visibility_off';
+    }
+</script>

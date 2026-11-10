@@ -15,7 +15,13 @@
       "launchBrowser": true,
       "applicationUrl": "http://localhost:5286",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "SMTP_HOST": "smtp-relay.brevo.com",
+        "SMTP_PORT": "587",
+        "SMTP_USER": "c26e39001@smtp-brevo.com",
+        "SMTP_PASSWORD": "PEGA_AQUI_TU_CLAVE_SMTP",
+        "SMTP_FROM": "miguelgarate398@gmail.com",
+        "SMTP_SSL": "true"
       }
     },
     "https": {
@@ -24,7 +30,13 @@
       "launchBrowser": true,
       "applicationUrl": "https://localhost:7177;http://localhost:5286",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "SMTP_HOST": "smtp-relay.brevo.com",
+        "SMTP_PORT": "587",
+        "SMTP_USER": "c26e39001@smtp-brevo.com",
+        "SMTP_PASSWORD": "PEGA_AQUI_TU_CLAVE_SMTP",
+        "SMTP_FROM": "miguelgarate398@gmail.com",
+        "SMTP_SSL": "true"
       }
     },
     "IIS Express": {

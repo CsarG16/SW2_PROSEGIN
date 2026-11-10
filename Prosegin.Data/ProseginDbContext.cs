@@ -28,6 +28,7 @@ public class ProseginDbContext : DbContext
     public DbSet<GuiaRemision> GuiasRemision { get; set; }
     public DbSet<GuiaRemisionDetalle> GuiaRemisionDetalles { get; set; }
     public DbSet<RecepcionMercaderia> RecepcionesMercaderia { get; set; }
+    public DbSet<CuentaPersonal> CuentasPersonal { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -247,6 +248,19 @@ public class ProseginDbContext : DbContext
             entity.Property(e => e.PesoTotalKg).HasPrecision(18, 3);
             entity.HasOne(e => e.GuiaRemision).WithMany(g => g.Detalles).HasForeignKey(e => e.GuiaRemisionId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Producto).WithMany().HasForeignKey(e => e.ProductoId);
+        });
+
+        modelBuilder.Entity<CuentaPersonal>(entity =>
+        {
+            entity.ToTable("CuentasPersonal");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.NombreCompleto).HasMaxLength(150).IsRequired();
+            entity.Property(e => e.NombreUsuario).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.CorreoElectronico).HasMaxLength(150).IsRequired();
+            entity.Property(e => e.Rol).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.PasswordHash).HasMaxLength(500).IsRequired();
+            entity.HasIndex(e => e.NombreUsuario).IsUnique();
+            entity.HasIndex(e => e.CorreoElectronico).IsUnique();
         });
         
         // Relación 1 a 1 de Cotizacion y OrdenVenta

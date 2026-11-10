@@ -1,0 +1,35 @@
+@model Prosegin.Web.ViewModels.CuentasPersonal.CuentaPersonalListViewModel
+@{
+    ViewData["Title"] = "Cuentas del Personal";
+}
+
+<div class="cuentas-page">
+    <div class="cuentas-header">
+        <div><h1><i class="material-symbols-outlined">group</i> Cuentas del Personal</h1><p>Administra las cuentas de acceso del personal al sistema.</p></div>
+        <a asp-action="Form" class="btn-cuenta-primary"><i class="material-symbols-outlined">add</i> Nueva cuenta</a>
+    </div>
+    <section class="cuentas-list-panel">
+            <form method="get" class="cuentas-filters">
+                <div class="search-wrap"><i class="material-symbols-outlined">search</i><input name="busqueda" value="@Model.Busqueda" placeholder="Buscar por nombre, usuario o correo..." /></div>
+                <select name="rol"><option>Todos</option><option selected="@(Model.Rol == "Administrador")">Administrador</option><option selected="@(Model.Rol == "Ventas")">Ventas</option><option selected="@(Model.Rol == "Finanzas")">Finanzas</option><option selected="@(Model.Rol == "Compras")">Compras</option></select>
+                <select name="estado"><option>Todos</option><option selected="@(Model.Estado == "Activo")">Activo</option><option selected="@(Model.Estado == "Inactivo")">Inactivo</option></select>
+                <button class="btn-filter" type="submit"><i class="material-symbols-outlined">search</i> Filtrar</button>
+                <a asp-action="Index" class="btn-clear">Limpiar</a>
+            </form>
+            <div class="table-responsive cuenta-table-wrap">
+                <table class="cuenta-table"><thead><tr><th>Usuario</th><th>Nombre completo</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <tbody>
+                @foreach (var cuenta in Model.Cuentas)
+                {
+                    <tr><td><strong>@cuenta.NombreUsuario</strong></td><td>@cuenta.NombreCompleto</td><td>@cuenta.CorreoElectronico</td><td><span class="role-badge">@cuenta.Rol</span></td><td><span class="status-badge @(cuenta.Activa ? "active" : "inactive")">@(cuenta.Activa ? "Activo" : "Inactivo")</span></td><td class="account-actions"><a asp-action="Form" asp-route-id="@cuenta.Id" title="Editar"><i class="material-symbols-outlined">edit</i></a><form asp-action="Desactivar" method="post" onsubmit="return confirm('¿Desea desactivar esta cuenta?')"><input type="hidden" name="id" value="@cuenta.Id" /><button type="submit" title="Desactivar" disabled="@(!cuenta.Activa)"><i class="material-symbols-outlined">@(cuenta.Activa ? "person_off" : "block")</i></button></form></td></tr>
+                }
+                </tbody></table>
+            </div>
+            <div class="cuentas-pagination"><span>Mostrando @Model.Cuentas.Count de @Model.TotalRegistros registros</span><div>@for (var p = 1; p <= Model.TotalPaginas; p++) { <a class="@(p == Model.Pagina ? "selected" : "")" asp-route-pagina="@p" asp-route-busqueda="@Model.Busqueda" asp-route-rol="@Model.Rol" asp-route-estado="@Model.Estado">@p</a> }</div></div>
+    </section>
+</div>
+<style>
+.cuentas-page{width:100%;color:#14213d}.cuentas-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}.cuentas-header h1{font-size:27px;font-weight:800;margin:0;display:flex;align-items:center;gap:10px}.cuentas-header h1 i{color:#f7a702;font-size:34px}.cuentas-header p{margin:4px 0 0;color:#6b7890}.btn-cuenta-primary,.btn-filter{background:#f7a702;color:#000d31;border:0;border-radius:8px;padding:12px 18px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:6px}.btn-filter{background:#1769e8;color:white}.cuentas-list-panel{min-width:0}.cuentas-filters{display:flex;gap:10px;align-items:center;margin-bottom:18px}.search-wrap{display:flex;align-items:center;gap:7px;flex:1;min-width:220px;border:1px solid #dfe6ef;border-radius:8px;padding:0 12px;background:white}.search-wrap i{color:#8090a7}.cuentas-filters input,.cuentas-filters select{border:0;outline:0;padding:11px 4px;background:white}.cuentas-filters select{border:1px solid #dfe6ef;border-radius:8px;padding:11px 12px}.btn-clear{padding:10px 12px;color:#516078;text-decoration:none}.cuenta-table-wrap{border:1px solid #e3e9f1;border-radius:10px;background:white;overflow:hidden}.cuenta-table{width:100%;border-collapse:collapse}.cuenta-table th{background:#f7f9fc;padding:14px;text-align:left;font-size:12px;color:#5e6d84;text-transform:uppercase}.cuenta-table td{padding:15px 14px;border-top:1px solid #edf1f5}.role-badge,.status-badge{display:inline-block;padding:6px 12px;border-radius:7px;background:#e8ddff;color:#6045b8;font-weight:700;font-size:12px}.status-badge.active{background:#dff5e7;color:#238344}.status-badge.inactive{background:#ffe3e5;color:#c43142}.account-actions{display:flex;gap:8px}.account-actions a,.account-actions button{border:0;background:#f2f5f9;color:#33435e;border-radius:6px;padding:6px;display:flex}.account-actions form{margin:0}.account-actions button:not(:disabled){background:#ffe3e5;color:#cc3348}.cuentas-pagination{display:flex;justify-content:space-between;align-items:center;padding:18px 4px;color:#64738a}.cuentas-pagination a{display:inline-flex;width:30px;height:30px;align-items:center;justify-content:center;text-decoration:none;color:#34425a;border-radius:6px}.cuentas-pagination a.selected{background:#f7a702}
+@@media(max-width:800px){.cuentas-header,.cuentas-filters,.cuentas-pagination{align-items:stretch;flex-direction:column}.cuentas-filters input{min-width:0}.cuentas-header h1{font-size:22px}}
+@@media(max-width:800px){.cuentas-header,.cuentas-filters,.cuentas-pagination{align-items:stretch;flex-direction:column}.cuentas-filters input{min-width:0}.cuentas-header h1{font-size:22px}}
+</style>
