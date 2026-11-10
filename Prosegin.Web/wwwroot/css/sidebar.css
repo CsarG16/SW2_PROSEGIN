@@ -301,13 +301,21 @@
 .prosegin-topbar {
   background: #ffffff;
   border-bottom: 1px solid var(--border-card);
-  padding: 0.85rem 1.75rem;
+  min-height: 68px;
+  padding: 0.7rem 1.75rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: sticky;
   top: 0;
   z-index: 1030;
+}
+
+.topbar-navigation {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 /* Botón toggle ultra-minimalista: ícono suelto sin contenedor ni caja */
@@ -366,6 +374,114 @@
 .crumb-current {
   color: var(--text-dark);
   font-weight: 700;
+}
+
+.topbar-account {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  padding: 0.35rem 0.4rem 0.35rem 0.65rem;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  background: #fbfcfe;
+}
+
+.topbar-account-avatar {
+  display: grid;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-light);
+  color: var(--accent-on);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.topbar-account-info {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.topbar-account-info strong {
+  max-width: 160px;
+  overflow: hidden;
+  color: var(--text-dark);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-account-info span {
+  margin-top: 0.2rem;
+  color: var(--text-muted);
+  font-size: 0.65rem;
+}
+
+.topbar-account-divider {
+  width: 1px;
+  height: 25px;
+  margin: 0 0.25rem;
+  background: #e1e7ef;
+}
+
+.topbar-account form {
+  margin: 0;
+}
+
+.topbar-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.55rem;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.topbar-logout:hover {
+  background: #fff3e0;
+  color: #b46500;
+}
+
+.topbar-logout i {
+  font-size: 1.05rem;
+}
+
+@media (max-width: 700px) {
+  .prosegin-topbar {
+    padding: 0.65rem 1rem;
+  }
+
+  .topbar-account-info,
+  .topbar-account-divider,
+  .topbar-logout span {
+    display: none;
+  }
+
+  .topbar-account {
+    padding: 0.25rem;
+    border: 0;
+    background: transparent;
+  }
+
+  .topbar-logout {
+    padding: 0.4rem;
+  }
+
+  .topbar-breadcrumbs {
+    gap: 0.35rem;
+    font-size: 0.78rem;
+  }
 }
 
 .prosegin-content-body {

@@ -38,6 +38,18 @@
     </script>
 </head>
 <body>
+@{
+    var esPaginaPublica = string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "Acceso", StringComparison.OrdinalIgnoreCase)
+        && string.Equals(ViewContext.RouteData.Values["action"]?.ToString(), "Login", StringComparison.OrdinalIgnoreCase);
+}
+@if (esPaginaPublica)
+{
+    <main class="prosegin-public-shell">
+        @RenderBody()
+    </main>
+}
+else
+{
 <div class="prosegin-app-container">
     <!-- Backdrop móvil -->
     <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
@@ -165,15 +177,36 @@
                         </li>
                     </ul>
                 </li>
+                @if (User.IsInRole("Administrador"))
+                {
+                    <li class="sidebar-nav-divider"></li>
+                    <li class="menu-section-header">
+                        <span class="menu-section-title">ADMINISTRACIÓN</span>
+                        <span class="menu-section-dot"></span>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "CuentasPersonal" ? "active" : "")" asp-controller="CuentasPersonal" asp-action="Index">
+                            <i class="material-symbols-outlined">manage_accounts</i>
+                            <span class="sidebar-nav-text">Cuentas del personal</span>
+                            <span class="sidebar-floating-tag">Cuentas del personal</span>
+                        </a>
+                    </li>
+                }
             </ul>
         </div>
     </aside>
 
     <!-- Área de Contenido Principal -->
     <div class="prosegin-main-wrapper">
-        <!-- Topbar limpia con botón de colapso accesible -->
+        @{
+            var nombreCompletoUsuario = User.FindFirst("NombreCompleto")?.Value ?? User.Identity?.Name ?? "Usuario";
+            var rolUsuario = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Usuario";
+            var inicialUsuario = nombreCompletoUsuario.Trim().Length > 0
+                ? nombreCompletoUsuario.Trim()[0].ToString().ToUpperInvariant()
+                : "U";
+        }
         <header class="prosegin-topbar">
-            <div class="d-flex align-items-center gap-3">
+            <div class="topbar-navigation">
                 <button type="button" class="topbar-toggle-btn" id="btnSidebarToggle" aria-label="Alternar menú lateral" title="Alternar menú lateral">
                     <i class="material-symbols-outlined">menu_open</i>
                 </button>
@@ -183,6 +216,24 @@
                     <span class="crumb-current">@ViewData["Title"]</span>
                 </div>
             </div>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="topbar-account">
+                    <div class="topbar-account-avatar" aria-hidden="true">@inicialUsuario</div>
+                    <div class="topbar-account-info">
+                        <strong title="@nombreCompletoUsuario">@nombreCompletoUsuario</strong>
+                        <span>@rolUsuario</span>
+                    </div>
+                    <span class="topbar-account-divider"></span>
+                    <form asp-controller="Acceso" asp-action="Logout" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="topbar-logout" title="Cerrar sesión">
+                            <i class="material-symbols-outlined">logout</i>
+                            <span>Cerrar sesión</span>
+                        </button>
+                    </form>
+                </div>
+            }
         </header>
 
         <!-- Cuerpo de Vista -->
@@ -191,6 +242,7 @@
         </main>
     </div>
 </div>
+}
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
