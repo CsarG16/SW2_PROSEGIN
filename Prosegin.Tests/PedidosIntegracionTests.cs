@@ -87,56 +87,68 @@ public class PedidosIntegracionTests : IAsyncLifetime
         Assert.Equal(new[] { "COT-2026-0839" }, Pedidos(pedidoFiltrado));
         Assert.Contains("No se encontraron pedidos que coincidan con la búsqueda", sinCoincidencias);
         Assert.Contains("Ingrese un número de pedido o cliente válido", caracteresInvalidos);
-        Assert.Contains("Actualizar estado", pedidoFiltrado);
+        Assert.DoesNotContain("Actualizar estado", pedidoFiltrado);
+        Assert.DoesNotContain("updateStatusDialog", pedidoFiltrado);
     }
 
     [Fact]
-    public async Task ActualizarEstadoLogistico_AvanceSecuencialYRechazaCambiosInvalidos()
-    {
-        using var scope = _app.Services.CreateScope();
-        var service = scope.ServiceProvider.GetRequiredService<IPedidosService>();
-
-        var listo = await service.ActualizarEstadoLogisticoAsync("COT-2026-0842", "LISTO_DESPACHO");
-        var ruta = await service.ActualizarEstadoLogisticoAsync("COT-2026-0842", "EN_RUTA");
-        var entregado = await service.ActualizarEstadoLogisticoAsync("COT-2026-0842", "ENTREGADO");
-
-        Assert.True(listo.Exito);
-        Assert.True(ruta.Exito);
-        Assert.True(entregado.Exito);
-        Assert.Equal("Estado logístico actualizado correctamente", entregado.Mensaje);
-
-        var mismoEstado = await service.ActualizarEstadoLogisticoAsync("COT-2026-0839", "EN_PREPARACION");
-        var retroceso = await service.ActualizarEstadoLogisticoAsync("COT-2026-0824", "EN_PREPARACION");
-        var yaEntregado = await service.ActualizarEstadoLogisticoAsync("COT-2026-0842", "EN_RUTA");
-
-        Assert.Equal("Seleccione un estado distinto al actual", mismoEstado.Mensaje);
-        Assert.Equal("El estado seleccionado no está permitido para este pedido", retroceso.Mensaje);
-        Assert.Equal("El pedido ya fue entregado y no admite cambios de estado", yaEntregado.Mensaje);
-    }
-
-    [Fact]
-    public async Task ActualizarEstadoLogistico_PostGuardaEstadoYRedirigeAlListado()
+    public async Task Seguimiento_NoExponeEndpointManualActualizarEstado()
     {
         var html = await _client.GetStringAsync("/Pedidos");
-        var tokenInput = Regex.Match(html, "<input[^>]*name=\"__RequestVerificationToken\"[^>]*>").Value;
-        var token = WebUtility.HtmlDecode(Regex.Match(tokenInput, "value=\"([^\"]+)\"").Groups[1].Value);
+        Assert.DoesNotContain("updateStatusDialog", html);
+        Assert.Contains("modalPhaseStepper", html);
+        Assert.Contains("modalBlockerAlert", html);
+
         using var form = new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            ["__RequestVerificationToken"] = token,
             ["numeroPedido"] = "COT-2026-0842",
-            ["nuevoEstado"] = "LISTO_DESPACHO",
-            ["estado"] = "ALL",
-            ["pagina"] = "1"
+            ["nuevoEstado"] = "LISTO_DESPACHO"
         });
-
         var response = await _client.PostAsync("/Pedidos/ActualizarEstado", form);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("Estado logístico actualizado correctamente", WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync()));
         using var scope = _app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
         var orden = await context.OrdenesVenta.SingleAsync(item => item.Cotizacion.Correlativo == "COT-2026-0842");
-        Assert.Equal("ListoParaDespacho", orden.EstadoLogistico);
+        Assert.Equal("PorPreparar", orden.EstadoLogistico);
+    }
+
+    [Fact]
+    public async Task DetallePedido_ValidaSunatEnTransporte_YRespetaSoloLecturaEnEntregado()
+    {
+        using var scope = _app.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
+        var enRutaSinSunat = await context.OrdenesVenta
+            .Include(ov => ov.Cotizacion)
+                .ThenInclude(c => c.Cliente)
+            .SingleAsync(item => item.Cotizacion.Correlativo == "COT-2026-0839");
+        enRutaSinSunat.EstadoLogistico = "EnRuta";
+        enRutaSinSunat.Cotizacion.Cliente.EstadoSunat = "BAJA DEFINITIVA";
+
+        var entregado = await context.OrdenesVenta
+            .SingleAsync(item => item.Cotizacion.Correlativo == "COT-2026-0824");
+        entregado.EstadoLogistico = "Entregado";
+        await context.SaveChangesAsync();
+
+        var service = scope.ServiceProvider.GetRequiredService<IPedidosService>();
+        var detalleEnRutaBloqueado = await service.ObtenerDetallePedidoAsync("COT-2026-0839");
+        var detalleEntregado = await service.ObtenerDetallePedidoAsync("COT-2026-0824");
+
+        Assert.NotNull(detalleEnRutaBloqueado);
+        Assert.Equal("EN_RUTA", detalleEnRutaBloqueado.EstadoOperativo);
+        Assert.Equal(3, detalleEnRutaBloqueado.FaseActualOrden);
+        Assert.False(string.IsNullOrWhiteSpace(detalleEnRutaBloqueado.BloqueoOperativo));
+        Assert.Contains("SUNAT", detalleEnRutaBloqueado.BloqueoOperativo, StringComparison.OrdinalIgnoreCase);
+        Assert.False(detalleEnRutaBloqueado.PuedeGenerarFactura);
+
+        Assert.NotNull(detalleEntregado);
+        Assert.Equal("ENTREGADO", detalleEntregado.EstadoOperativo);
+        Assert.Equal(4, detalleEntregado.FaseActualOrden);
+        Assert.Null(detalleEntregado.BloqueoOperativo);
+        Assert.False(detalleEntregado.PuedeGenerarOrdenesCompra);
+        Assert.False(detalleEntregado.PuedeGenerarGuiaRemision);
+        Assert.False(detalleEntregado.PuedeGenerarFactura);
+        Assert.False(detalleEntregado.PuedeCancelar);
     }
 
     [Fact]

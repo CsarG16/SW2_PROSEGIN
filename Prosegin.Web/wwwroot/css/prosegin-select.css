@@ -1,0 +1,115 @@
+/* PROSEGIN - Dropdown personalizado (ver js/prosegin-select.js) */
+
+.ps-select {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+/* El <select> real queda oculto pero en su sitio, para que la validación nativa funcione. */
+.ps-select > select.ps-native {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  margin: 0;
+}
+
+.ps-select-trigger {
+  display: block;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  font-family: inherit;
+}
+
+.ps-select-trigger .ps-select-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ps-select-trigger .ps-select-text.is-placeholder { color: #94a3b8; }
+
+.ps-select-trigger.is-open {
+  border-color: var(--dark, #000d31);
+  box-shadow: 0 0 0 3px rgba(0, 13, 49, 0.12);
+}
+
+.ps-select-trigger:disabled { cursor: not-allowed; opacity: .65; }
+
+.quote-field .ps-select-trigger {
+  height: 36px;
+  padding: 0.35rem 2rem 0.35rem 0.55rem;
+  border-radius: 2px;
+  font-size: 0.82rem;
+}
+
+/* Menú desplegable */
+.ps-select-menu {
+  position: fixed;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #dbe3ec;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(0, 13, 49, 0.16);
+  font-family: var(--font-sans, inherit);
+  font-size: 0.88rem;
+  outline: none;
+}
+
+.ps-select-search { padding: 8px; border-bottom: 1px solid #eef2f6; }
+
+.ps-select-search input {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.ps-select-search input:focus {
+  border-color: var(--dark, #000d31);
+  box-shadow: 0 0 0 3px rgba(0, 13, 49, 0.1);
+}
+
+.ps-select-list { overflow-y: auto; padding: 5px; }
+
+.ps-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  color: #1e293b;
+  cursor: pointer;
+}
+
+.ps-select-option.is-indented { padding-left: 20px; }
+.ps-select-option.is-active { background: #f1f5f9; }
+.ps-select-option.is-selected { background: var(--accent-light, #fef6e6); color: var(--dark, #000d31); font-weight: 600; }
+.ps-select-option.is-selected.is-active { background: #fde9bd; }
+.ps-select-option.is-disabled { color: #a0aec0; cursor: not-allowed; }
+
+.ps-select-check { color: var(--accent, #f7a702); font-size: 18px; }
+
+.ps-select-group {
+  padding: 8px 10px 4px;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.ps-select-empty { padding: 12px 10px; color: #94a3b8; text-align: center; font-size: 0.82rem; }

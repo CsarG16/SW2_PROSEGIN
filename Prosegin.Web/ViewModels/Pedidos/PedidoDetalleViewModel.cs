@@ -18,10 +18,12 @@ public class PedidoDetalleViewModel
     public string SedeAlias { get; set; } = string.Empty;
 
     /// <summary>
-    /// Fases operativas: POR_PREPARAR, EN_PREPARACION, LISTO_DESPACHO
+    /// Fases operativas: POR_PREPARAR, EN_PREPARACION, LISTO_DESPACHO, EN_RUTA, ENTREGADO, CANCELADO
     /// </summary>
     public string EstadoOperativo { get; set; } = "POR_PREPARAR";
     public string EstadoOperativoTexto { get; set; } = "Por Preparar";
+    public int FaseActualOrden { get; set; }
+    public string? BloqueoOperativo { get; set; }
     public string? MotivoCancelacion { get; set; }
     public bool PuedeCancelar { get; set; }
 

@@ -5,19 +5,27 @@ using Prosegin.Data;
 using Prosegin.Data.Entities;
 using Prosegin.Data.Validation;
 using Prosegin.Web.Services;
+using Prosegin.Web.Services.Nubefact;
 using Prosegin.Web.ViewModels.Clientes;
 
 namespace Prosegin.Web.Controllers
 {
     public class ClientesController : Controller
     {
+        private const int TamanoPaginaHistorial = 10;
+
         private readonly ProseginDbContext _context;
         private readonly ISunatService _sunatService;
+        private readonly IWebHostEnvironment _env;
 
-        public ClientesController(ProseginDbContext context, ISunatService sunatService)
+        public ClientesController(
+            ProseginDbContext context,
+            ISunatService sunatService,
+            IWebHostEnvironment env)
         {
             _context = context;
             _sunatService = sunatService;
+            _env = env;
         }
 
         [HttpGet]
@@ -872,6 +880,327 @@ namespace Prosegin.Web.Controllers
                 totalActivas
             });
         }
+
+        // GET: Clientes/Historial/5
+        [HttpGet]
+        public async Task<IActionResult> Historial(
+            int id,
+            bool soloCompras = false,
+            int pagina = 1,
+            CancellationToken cancellationToken = default)
+        {
+            var cliente = await _context.Clientes
+                .AsNoTracking()
+                .Include(c => c.PuntosEntrega)
+                .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+
+            if (cliente == null)
+            {
+                TempData["ToastWarning"] = "Cliente no encontrado.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var condicionEntregaCliente = ResolverCondicionEntregaCliente(cliente);
+            var registros = new List<ClienteHistorialDocumentoViewModel>();
+
+            if (!soloCompras)
+            {
+                var cotizaciones = await _context.Cotizaciones
+                    .AsNoTracking()
+                    .Include(c => c.Detalles)
+                        .ThenInclude(d => d.Producto)
+                    .Where(c => c.ClienteId == id && c.Estado != "Borrador")
+                    .ToListAsync(cancellationToken);
+
+                foreach (var cot in cotizaciones)
+                {
+                    var (estadoTexto, estadoCss) = MapearEstadoCotizacion(cot.Estado);
+                    var tasaIgv = cot.Subtotal > 0m ? cot.Igv / cot.Subtotal : 0.18m;
+
+                    registros.Add(new ClienteHistorialDocumentoViewModel
+                    {
+                        Id = cot.Id,
+                        Tipo = "Cotización",
+                        NumeroDocumento = cot.Correlativo,
+                        FechaEmision = cot.FechaEmision,
+                        Moneda = "PEN",
+                        Subtotal = cot.Subtotal,
+                        Igv = cot.Igv,
+                        Total = cot.Total,
+                        Estado = estadoTexto,
+                        EstadoCss = estadoCss,
+                        PdfDisponible = cot.Detalles.Count > 0,
+                        CondicionesPago = cot.CondicionPago,
+                        CondicionesEntrega = condicionEntregaCliente,
+                        NumeroOrdenCompraCliente = cot.NumeroOrdenCompraCliente,
+                        Items = cot.Detalles
+                            .OrderBy(d => d.Id)
+                            .Select(d => new ClienteHistorialItemViewModel
+                            {
+                                Sku = d.Producto?.Sku ?? "—",
+                                Producto = string.IsNullOrWhiteSpace(d.NombreProducto)
+                                    ? (d.Producto?.Nombre ?? "Producto sin nombre")
+                                    : d.NombreProducto,
+                                UnidadMedida = d.Producto?.UnidadMedida ?? "UND",
+                                Cantidad = d.Cantidad,
+                                PrecioUnitario = d.PrecioVentaCalculado,
+                                Subtotal = d.Subtotal,
+                                Total = decimal.Round(d.Subtotal * (1m + tasaIgv), 2, MidpointRounding.AwayFromZero)
+                            })
+                            .ToList()
+                    });
+                }
+            }
+
+            var ventasFormalizadas = await _context.OrdenesVenta
+                .AsNoTracking()
+                .Include(ov => ov.Cotizacion)
+                    .ThenInclude(c => c.Detalles)
+                        .ThenInclude(d => d.Producto)
+                .Include(ov => ov.Facturas)
+                    .ThenInclude(f => f.Detalles)
+                .Include(ov => ov.GuiasRemision)
+                .Where(ov => ov.Cotizacion.ClienteId == id
+                             && ov.EstadoLogistico != "Cancelado"
+                             && (ov.EstadoLogistico == "Entregado"
+                                 || ov.Facturas.Any(f => f.EstadoEmision != NubefactService.EstadoRechazado)))
+                .ToListAsync(cancellationToken);
+
+            foreach (var venta in ventasFormalizadas)
+            {
+                var factura = venta.Facturas
+                    .Where(f => f.EstadoEmision != NubefactService.EstadoRechazado)
+                    .OrderByDescending(f => f.Id)
+                    .FirstOrDefault();
+
+                var guia = venta.GuiasRemision
+                    .Where(g => g.EstadoEmision != NubefactService.EstadoRechazado)
+                    .OrderByDescending(g => g.Id)
+                    .FirstOrDefault();
+
+                var numeroDocumento = !string.IsNullOrWhiteSpace(factura?.NumeroFactura)
+                    ? factura.NumeroFactura
+                    : !string.IsNullOrWhiteSpace(venta.Cotizacion.NumeroOrdenCompraCliente)
+                        ? venta.Cotizacion.NumeroOrdenCompraCliente
+                        : $"OV-{venta.Id:D6}";
+
+                var subtotal = factura != null && factura.Detalles.Count > 0
+                    ? factura.Detalles.Sum(d => d.Subtotal)
+                    : venta.Cotizacion.Subtotal;
+                var igv = factura != null && factura.Detalles.Count > 0
+                    ? factura.Detalles.Sum(d => d.Igv)
+                    : venta.Cotizacion.Igv;
+                var total = factura?.Total ?? venta.Cotizacion.Total;
+                var tasaIgv = subtotal > 0m ? igv / subtotal : 0.18m;
+
+                var items = factura != null && factura.Detalles.Count > 0
+                    ? factura.Detalles
+                        .OrderBy(d => d.Id)
+                        .Select(d => new ClienteHistorialItemViewModel
+                        {
+                            Sku = d.Codigo,
+                            Producto = d.Descripcion,
+                            UnidadMedida = d.UnidadMedida,
+                            Cantidad = d.Cantidad,
+                            PrecioUnitario = d.ValorUnitario,
+                            Subtotal = d.Subtotal,
+                            Total = d.Total
+                        })
+                        .ToList()
+                    : venta.Cotizacion.Detalles
+                        .OrderBy(d => d.Id)
+                        .Select(d => new ClienteHistorialItemViewModel
+                        {
+                            Sku = d.Producto?.Sku ?? "—",
+                            Producto = string.IsNullOrWhiteSpace(d.NombreProducto)
+                                ? (d.Producto?.Nombre ?? "Producto sin nombre")
+                                : d.NombreProducto,
+                            UnidadMedida = d.Producto?.UnidadMedida ?? "UND",
+                            Cantidad = d.Cantidad,
+                            PrecioUnitario = d.PrecioVentaCalculado,
+                            Subtotal = d.Subtotal,
+                            Total = decimal.Round(d.Subtotal * (1m + tasaIgv), 2, MidpointRounding.AwayFromZero)
+                        })
+                        .ToList();
+
+                registros.Add(new ClienteHistorialDocumentoViewModel
+                {
+                    Id = venta.Id,
+                    Tipo = "Compra",
+                    NumeroDocumento = numeroDocumento,
+                    FechaEmision = factura?.FechaEmision ?? venta.FechaCreacion,
+                    Moneda = "PEN",
+                    Subtotal = subtotal,
+                    Igv = igv,
+                    Total = total,
+                    Estado = "Aprobada",
+                    EstadoCss = "badge-status-success",
+                    PdfDisponible = items.Count > 0,
+                    CondicionesPago = venta.Cotizacion.CondicionPago,
+                    CondicionesEntrega = !string.IsNullOrWhiteSpace(guia?.PuntoLlegadaDireccion)
+                        ? guia.PuntoLlegadaDireccion
+                        : condicionEntregaCliente,
+                    NumeroOrdenCompraCliente = venta.Cotizacion.NumeroOrdenCompraCliente,
+                    ReferenciaOrigen = venta.Cotizacion.Correlativo,
+                    Items = items
+                });
+            }
+
+            var ordenados = registros
+                .OrderByDescending(r => r.FechaEmision)
+                .ThenByDescending(r => r.Id)
+                .ToList();
+
+            var totalRegistros = ordenados.Count;
+            var totalPaginas = Math.Max(1, (int)Math.Ceiling(totalRegistros / (double)TamanoPaginaHistorial));
+            var paginaActual = Math.Clamp(pagina < 1 ? 1 : pagina, 1, totalPaginas);
+            var paginados = ordenados
+                .Skip((paginaActual - 1) * TamanoPaginaHistorial)
+                .Take(TamanoPaginaHistorial)
+                .ToList();
+
+            var model = new ClienteHistorialViewModel
+            {
+                Cliente = cliente,
+                SoloCompras = soloCompras,
+                Pagina = paginaActual,
+                TotalPaginas = totalPaginas,
+                TotalRegistros = totalRegistros,
+                Registros = paginados,
+                Mensaje = paginados.Count == 0
+                    ? (soloCompras
+                        ? "Esta empresa cliente aún no registra compras formalizadas."
+                        : "Esta empresa cliente aún no cuenta con cotizaciones ni compras registradas.")
+                    : null
+            };
+
+            return View(model);
+        }
+
+        // GET: Clientes/DescargarHistorial/5?tipo=Cotizacion&docId=10
+        [HttpGet]
+        public async Task<IActionResult> DescargarHistorial(
+            int id,
+            string tipo,
+            int docId,
+            CancellationToken cancellationToken = default)
+        {
+            if (string.Equals(tipo, "Cotizacion", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(tipo, "Cotización", StringComparison.OrdinalIgnoreCase))
+            {
+                var cotizacion = await _context.Cotizaciones
+                    .AsNoTracking()
+                    .Include(c => c.Cliente)
+                    .Include(c => c.Detalles)
+                        .ThenInclude(d => d.Producto)
+                    .FirstOrDefaultAsync(c => c.Id == docId && c.ClienteId == id && c.Estado != "Borrador", cancellationToken);
+
+                if (cotizacion == null || cotizacion.Detalles.Count == 0)
+                {
+                    TempData["ToastWarning"] = "El documento de cotización solicitado no está disponible para descarga.";
+                    return RedirectToAction(nameof(Historial), new { id });
+                }
+
+                var pdfBytes = CotizacionPdfGenerator.GenerarConFichas(
+                    cotizacion,
+                    _env.WebRootPath,
+                    productoId => Url.Action("VerFicha", "Catalogo", new { id = productoId }, Request.Scheme));
+
+                return File(pdfBytes, "application/pdf", CotizacionPdfGenerator.NombreArchivoCotizacion(cotizacion));
+            }
+
+            if (string.Equals(tipo, "Compra", StringComparison.OrdinalIgnoreCase))
+            {
+                var venta = await _context.OrdenesVenta
+                    .AsNoTracking()
+                    .Include(ov => ov.Cotizacion)
+                        .ThenInclude(c => c.Cliente)
+                    .Include(ov => ov.Cotizacion)
+                        .ThenInclude(c => c.Detalles)
+                            .ThenInclude(d => d.Producto)
+                    .Include(ov => ov.Facturas)
+                        .ThenInclude(f => f.Detalles)
+                    .FirstOrDefaultAsync(ov => ov.Id == docId
+                                               && ov.Cotizacion.ClienteId == id
+                                               && ov.EstadoLogistico != "Cancelado"
+                                               && (ov.EstadoLogistico == "Entregado"
+                                                   || ov.Facturas.Any(f => f.EstadoEmision != NubefactService.EstadoRechazado)),
+                        cancellationToken);
+
+                if (venta == null)
+                {
+                    TempData["ToastWarning"] = "El documento de compra solicitado no está disponible para descarga.";
+                    return RedirectToAction(nameof(Historial), new { id });
+                }
+
+                var factura = venta.Facturas
+                    .Where(f => f.EstadoEmision != NubefactService.EstadoRechazado)
+                    .OrderByDescending(f => f.Id)
+                    .FirstOrDefault();
+
+                var codigoArchivo = !string.IsNullOrWhiteSpace(factura?.NumeroFactura)
+                    ? factura.NumeroFactura
+                    : !string.IsNullOrWhiteSpace(venta.Cotizacion.NumeroOrdenCompraCliente)
+                        ? venta.Cotizacion.NumeroOrdenCompraCliente
+                        : $"OV-{venta.Id:D6}";
+
+                if ((factura?.Detalles.Count ?? 0) == 0 && venta.Cotizacion.Detalles.Count == 0)
+                {
+                    TempData["ToastWarning"] = "El comprobante no registra productos disponibles para generar el PDF.";
+                    return RedirectToAction(nameof(Historial), new { id });
+                }
+
+                var localPdfBytes = CompraPdfGenerator.Generate(
+                    venta,
+                    factura,
+                    CotizacionPdfGenerator.ResolverLogoPath(_env.WebRootPath));
+                return File(localPdfBytes, "application/pdf",
+                    $"{CotizacionPdfGenerator.SanitizeFileName(codigoArchivo)}.pdf");
+            }
+
+            TempData["ToastWarning"] = "Tipo de documento no reconocido.";
+            return RedirectToAction(nameof(Historial), new { id });
+        }
+
+        private static string ResolverCondicionEntregaCliente(Cliente cliente)
+        {
+            var sedeDefault = cliente.PuntosEntrega
+                .Where(p => p.Activo)
+                .OrderByDescending(p => p.EsPredeterminada)
+                .ThenBy(p => p.Id)
+                .FirstOrDefault();
+
+            if (sedeDefault != null)
+            {
+                var partes = new List<string>();
+                if (!string.IsNullOrWhiteSpace(sedeDefault.NombreAlias))
+                {
+                    partes.Add(sedeDefault.NombreAlias.Trim());
+                }
+                if (!string.IsNullOrWhiteSpace(sedeDefault.Direccion))
+                {
+                    partes.Add(sedeDefault.Direccion.Trim());
+                }
+                if (!string.IsNullOrWhiteSpace(sedeDefault.HorarioRecepcion))
+                {
+                    partes.Add($"Horario: {sedeDefault.HorarioRecepcion.Trim()}");
+                }
+                return string.Join(" — ", partes);
+            }
+
+            return !string.IsNullOrWhiteSpace(cliente.DireccionFiscal)
+                ? cliente.DireccionFiscal
+                : "Entrega según coordinación comercial";
+        }
+
+        private static (string Texto, string Css) MapearEstadoCotizacion(string estado) => estado switch
+        {
+            "Aprobada" => ("Aprobada", "badge-status-success"),
+            "Enviada" => ("Pendiente", "badge-status-warning"),
+            "Rechazada" => ("Rechazada", "badge-status-danger"),
+            "Vencida" => ("Vencida", "badge-status-danger"),
+            _ => (estado, "badge-status-neutral")
+        };
     }
 
     public class DesactivarDireccionRequest

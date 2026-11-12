@@ -415,9 +415,12 @@ public static class CotizacionPdfGenerator
         double panelX = page.Width - Margin - panelW;
 
         // Subtotal row
+        var igvPorcentaje = cot.Subtotal > 0m
+            ? decimal.Round((cot.Igv / cot.Subtotal) * 100m, 0, MidpointRounding.AwayFromZero)
+            : 18m;
         DrawTotalRow(gfx, "Subtotal (sin IGV)", FormatMoney(cot.Subtotal), panelX, y, panelW, f, subtle: true);
         y += 22;
-        DrawTotalRow(gfx, "IGV 18%", FormatMoney(cot.Igv), panelX, y, panelW, f, subtle: true);
+        DrawTotalRow(gfx, $"IGV {igvPorcentaje}%", FormatMoney(cot.Igv), panelX, y, panelW, f, subtle: true);
         y += 22;
 
         // Separator
@@ -652,9 +655,53 @@ public static class CotizacionPdfGenerator
         return text[..(maxChars - 1)] + "…";
     }
 
-    private static string FormatMoney(decimal amount) => $"S/ {amount.ToString("N2", PeruCulture)}";
+    internal static string SanitizeFileName(string value)
+    {
+        var invalid = Path.GetInvalidFileNameChars().Concat("<>:\"/\\|?*").ToHashSet();
+        var safeName = new string(value
+            .Select(ch => invalid.Contains(ch) || char.IsControl(ch) ? '_' : ch)
+            .ToArray())
+            .Trim()
+            .Trim('.');
+        return string.IsNullOrWhiteSpace(safeName) ? "Cliente" : safeName;
+    }
 
-    private static string AmountInWords(decimal amount)
+    internal static string NombreArchivoCotizacion(Cotizacion cotizacion) =>
+        $"{SanitizeFileName(string.IsNullOrWhiteSpace(cotizacion.Correlativo) ? $"Cotizacion-{cotizacion.Id}" : cotizacion.Correlativo)}_{SanitizeFileName(cotizacion.Cliente?.RazonSocial ?? "Cliente")}.pdf";
+
+    internal static byte[] GenerarConFichas(
+        Cotizacion cotizacion,
+        string? webRootPath,
+        Func<int, string?> fallbackLocalUrl)
+    {
+        return Generate(
+            cotizacion,
+            productoId =>
+            {
+                var detalle = cotizacion.Detalles?.FirstOrDefault(d => d.ProductoId == productoId);
+                var rutaFicha = detalle?.Producto?.RutaFichaTecnicaPdf?.Trim();
+                if (!string.IsNullOrWhiteSpace(rutaFicha)
+                    && (rutaFicha.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+                        || rutaFicha.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
+                {
+                    return rutaFicha;
+                }
+
+                return fallbackLocalUrl(productoId);
+            },
+            ResolverLogoPath(webRootPath));
+    }
+
+    internal static string? ResolverLogoPath(string? webRootPath)
+    {
+        if (string.IsNullOrWhiteSpace(webRootPath)) return null;
+        var candidate = Path.Combine(webRootPath, "logo_horizontal.png");
+        return File.Exists(candidate) ? candidate : null;
+    }
+
+    internal static string FormatMoney(decimal amount) => $"S/ {amount.ToString("N2", PeruCulture)}";
+
+    internal static string AmountInWords(decimal amount)
     {
         var abs = Math.Abs(amount);
         var whole = decimal.ToInt64(decimal.Truncate(abs));

@@ -25,6 +25,7 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/sidebar.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/prosegin-toast.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/prosegin-select.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Prosegin.Web.styles.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
     <script>
@@ -61,7 +62,7 @@ else
             <a asp-controller="Home" asp-action="Index" class="brand-link" title="PROSEGIN - Inicio">
                 <img src="~/logo_horizontal.png" alt="PROSEGIN - Prevención Integral" class="sidebar-brand-logo" />
                 <div class="sidebar-brand-mini" title="PROSEGIN - Prevención Integral">
-                    <span class="brand-mini-letter">P</span>
+                    <img src="~/favicon.png" alt="PROSEGIN" class="brand-mini-img" />
                 </div>
             </a>
         </div>
@@ -94,7 +95,7 @@ else
 
                 <!-- Módulo 2: Gestión de Clientes -->
                 <li class="sidebar-nav-item">
-                    <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Clientes" && (ViewContext.RouteData.Values["action"]?.ToString() == "Index" || ViewContext.RouteData.Values["action"]?.ToString() == "Direcciones") ? "active" : "")" asp-controller="Clientes" asp-action="Index">
+                    <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Clientes" && (ViewContext.RouteData.Values["action"]?.ToString() == "Index" || ViewContext.RouteData.Values["action"]?.ToString() == "Direcciones" || ViewContext.RouteData.Values["action"]?.ToString() == "Historial") ? "active" : "")" asp-controller="Clientes" asp-action="Index">
                         <i class="material-symbols-outlined">group</i>
                         <span class="sidebar-nav-text">Clientes</span>
                         <span class="sidebar-floating-tag">Clientes</span>
@@ -248,6 +249,7 @@ else
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/prosegin-alerts.js" asp-append-version="true"></script>
     <script src="~/js/prosegin-toast.js" asp-append-version="true"></script>
+    <script src="~/js/prosegin-select.js" asp-append-version="true"></script>
     <script src="~/js/prosegin-pdf-viewer.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 

@@ -1,0 +1,565 @@
+@model Prosegin.Web.ViewModels.Clientes.ClienteHistorialViewModel
+@using System.Globalization
+
+@{
+    ViewData["Title"] = $"Historial Comercial - {Model.Cliente.RazonSocial}";
+    var culture = CultureInfo.GetCultureInfo("es-PE");
+}
+
+<div class="container-fluid px-0">
+    <!-- 1. Encabezado del Cliente -->
+    <div class="prosegin-card mb-3 p-3 p-md-4">
+        <div class="prosegin-page-header--accent mb-0 flex-wrap gap-3">
+            <div class="header-content">
+                <span class="prosegin-section-label d-block mb-1">HISTORIAL COMERCIAL DEL CLIENTE</span>
+                <h1 class="page-title mb-2" style="font-size: 1.5rem;">@Model.Cliente.RazonSocial</h1>
+                <div class="d-flex flex-wrap align-items-center gap-3 text-muted small">
+                    <span class="d-inline-flex align-items-center gap-1">
+                        <strong class="text-dark">RUC:</strong>
+                        <span class="font-monospace text-dark fw-semibold">@Model.Cliente.Ruc</span>
+                    </span>
+                    @if (!string.IsNullOrWhiteSpace(Model.Cliente.DireccionFiscal))
+                    {
+                        <span class="text-secondary">•</span>
+                        <span class="d-inline-flex align-items-center gap-1">
+                            <i class="material-symbols-outlined" style="font-size: 1rem;">location_on</i>
+                            <span>@Model.Cliente.DireccionFiscal</span>
+                        </span>
+                    }
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <a asp-controller="Cotizaciones" asp-action="Create" asp-route-clienteId="@Model.Cliente.Id"
+                   class="btn-prosegin-primary">
+                    <i class="material-symbols-outlined" style="font-size: 1.1rem;">add_circle</i>
+                    <span>Nueva Cotización</span>
+                </a>
+                <a asp-controller="Clientes" asp-action="Index" class="btn-prosegin-secondary">
+                    <i class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</i>
+                    <span>Volver a Clientes</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Barra de Filtro: Solo Compras cerradas -->
+    <div class="prosegin-card mb-4 p-3 p-md-4">
+        <form asp-controller="Clientes" asp-action="Historial" asp-route-id="@Model.Cliente.Id" method="get"
+              id="formFiltroHistorial" class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <input type="hidden" name="pagina" value="1" />
+
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
+                    <input class="form-check-input prosegin-switch m-0" type="checkbox" role="switch"
+                           id="soloComprasSwitch" name="soloCompras" value="true"
+                           @(Model.SoloCompras ? "checked" : null)
+                           onchange="document.getElementById('formFiltroHistorial').submit();" />
+                    <label class="form-check-label fw-semibold text-dark user-select-none" for="soloComprasSwitch" style="cursor: pointer;">
+                        Solo Compras cerradas
+                    </label>
+                </div>
+                <span class="text-muted small">
+                    Oculta cotizaciones preliminares y muestra únicamente operaciones formalizadas en venta.
+                </span>
+            </div>
+
+            @if (Model.SoloCompras)
+            {
+                <a asp-controller="Clientes" asp-action="Historial" asp-route-id="@Model.Cliente.Id"
+                   class="btn-prosegin-secondary btn-sm">
+                    <i class="material-symbols-outlined" style="font-size: 1rem;">filter_alt_off</i>
+                    <span>Ver todas</span>
+                </a>
+            }
+        </form>
+    </div>
+
+    <!-- 3. Listado Histórico o Estado Vacío -->
+    @if (!Model.Registros.Any())
+    {
+        <div class="prosegin-card p-5 text-center">
+            <div class="mb-3">
+                <i class="material-symbols-outlined text-muted" style="font-size: 2.75rem; opacity: 0.6;">receipt_long</i>
+            </div>
+            <h2 class="h5 fw-bold text-dark mb-2">@(Model.Mensaje ?? "Sin operaciones comerciales registradas.")</h2>
+            <p class="text-muted small mb-4">
+                @(Model.SoloCompras
+                    ? "Desactive el filtro 'Solo Compras cerradas' para revisar cotizaciones previas enviadas o en evaluación."
+                    : "Cuando registre cotizaciones o formalice ventas para este cliente, aparecerán aquí para consulta rápida.")
+            </p>
+            @if (Model.SoloCompras)
+            {
+                <a asp-controller="Clientes" asp-action="Historial" asp-route-id="@Model.Cliente.Id" class="btn-prosegin-secondary">
+                    Mostrar cotizaciones y compras
+                </a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="prosegin-card overflow-hidden">
+            <div class="prosegin-results-header px-3 px-md-4 pt-3 pb-2 border-bottom">
+                <div class="results-title">
+                    <span>Operaciones Comerciales</span>
+                    <span class="count-pill">@Model.TotalRegistros</span>
+                </div>
+                <span class="text-muted small d-inline-flex align-items-center gap-1">
+                    <i class="material-symbols-outlined" style="font-size: 0.95rem;">lock_outline</i>
+                    <span>Historial de consulta auditada • Ordenado por emisión reciente</span>
+                </span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="prosegin-table mb-0 align-middle" id="tablaHistorialCliente">
+                    <thead>
+                        <tr>
+                            <th style="width: 44px;" aria-label="Expandir"></th>
+                            <th>CÓDIGO DOC.</th>
+                            <th>TIPO</th>
+                            <th>FECHA DE EMISIÓN</th>
+                            <th>MONEDA</th>
+                            <th class="text-end">MONTO TOTAL</th>
+                            <th>ESTADO</th>
+                            <th class="text-end" style="width: 110px;">ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var registro in Model.Registros)
+                        {
+                            var esCompra = string.Equals(registro.Tipo, "Compra", StringComparison.OrdinalIgnoreCase);
+                            var tipoParam = esCompra ? "Compra" : "Cotizacion";
+                            var collapseId = $"detalle-{(esCompra ? "compra" : "cot")}-{registro.Id}";
+
+                            <tr class="historial-main-row">
+                                <td class="text-center">
+                                    <button type="button"
+                                            class="btn-action-minimal btn-detail-toggle"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#@collapseId"
+                                            aria-expanded="false"
+                                            aria-controls="@collapseId"
+                                            title="Desplegar detalle de productos y condiciones">
+                                        <i class="material-symbols-outlined chevron-icon">expand_more</i>
+                                    </button>
+                                </td>
+                                <td>
+                                    <span class="font-monospace fw-bold text-dark">@registro.NumeroDocumento</span>
+                                </td>
+                                <td>
+                                    @if (esCompra)
+                                    {
+                                        <span class="badge-tag-compra">
+                                            <i class="material-symbols-outlined">shopping_bag</i>
+                                            <span>Compra</span>
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-tag-cotizacion">
+                                            <i class="material-symbols-outlined">request_quote</i>
+                                            <span>Cotización</span>
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-nowrap text-dark">
+                                    @registro.FechaEmision.ToLocalTime().ToString("dd/MM/yyyy HH:mm", culture)
+                                </td>
+                                <td>
+                                    <span class="badge-currency">@registro.Moneda</span>
+                                </td>
+                                <td class="text-end font-monospace fw-bold text-dark text-nowrap">
+                                    @registro.Total.ToString("C", culture)
+                                </td>
+                                <td>
+                                    <span class="badge-status @registro.EstadoCss">
+                                        <span class="status-dot"></span>
+                                        <span>@registro.Estado</span>
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-inline-flex align-items-center justify-content-end gap-2">
+                                        <button type="button"
+                                                class="btn-action-minimal"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#@collapseId"
+                                                aria-expanded="false"
+                                                aria-controls="@collapseId"
+                                                title="Desplegar detalle">
+                                            <i class="material-symbols-outlined">visibility</i>
+                                        </button>
+
+                                        @if (registro.PdfDisponible)
+                                        {
+                                            <a asp-controller="Clientes"
+                                               asp-action="DescargarHistorial"
+                                               asp-route-id="@Model.Cliente.Id"
+                                               asp-route-tipo="@tipoParam"
+                                               asp-route-docId="@registro.Id"
+                                               class="btn-action-minimal btn-action-download"
+                                               title="Descargar PDF oficial">
+                                                <i class="material-symbols-outlined">download</i>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="btn-action-minimal is-disabled" title="PDF no disponible para este documento">
+                                                <i class="material-symbols-outlined">download</i>
+                                            </span>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Fila Desplegable: Detalle Read-Only de Productos EPP y Condiciones de Entrega -->
+                            <tr class="historial-detail-row">
+                                <td colspan="8" class="p-0 border-0">
+                                    <div id="@collapseId" class="collapse">
+                                        <div class="historial-detail-card my-2 ms-4 me-3">
+                                            <!-- Condiciones de Entrega y Pago -->
+                                            <div class="row g-3 pb-3 mb-3 border-bottom" style="border-color: var(--border-card, #e2e8f0) !important;">
+                                                <div class="col-md-4">
+                                                    <span class="detail-meta-label">CONDICIONES DE PAGO</span>
+                                                    <div class="detail-meta-value">@registro.CondicionesPago</div>
+                                                </div>
+                                                <div class="col-md-5">
+                                                    <span class="detail-meta-label">CONDICIONES DE ENTREGA</span>
+                                                    <div class="detail-meta-value">@registro.CondicionesEntrega</div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    @if (!string.IsNullOrWhiteSpace(registro.NumeroOrdenCompraCliente))
+                                                    {
+                                                        <span class="detail-meta-label">N.° OC CLIENTE</span>
+                                                        <div class="detail-meta-value font-monospace">@registro.NumeroOrdenCompraCliente</div>
+                                                    }
+                                                    else if (!string.IsNullOrWhiteSpace(registro.ReferenciaOrigen))
+                                                    {
+                                                        <span class="detail-meta-label">COTIZACIÓN DE ORIGEN</span>
+                                                        <div class="detail-meta-value font-monospace">@registro.ReferenciaOrigen</div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="detail-meta-label">AUDITORÍA</span>
+                                                        <div class="detail-meta-value text-muted">Registro histórico inmutable</div>
+                                                    }
+                                                </div>
+                                            </div>
+
+                                            <!-- Tabla de Productos EPP Pactados -->
+                                            @if (registro.Items.Any())
+                                            {
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm mb-0 align-middle historial-items-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>SKU</th>
+                                                                <th>PRODUCTO EPP</th>
+                                                                <th class="text-center">U.M.</th>
+                                                                <th class="text-end">CANTIDAD</th>
+                                                                <th class="text-end">P. UNIT. PACTADO</th>
+                                                                <th class="text-end">SUBTOTAL</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var item in registro.Items)
+                                                            {
+                                                                var cantTexto = item.Cantidad == decimal.Truncate(item.Cantidad)
+                                                                    ? item.Cantidad.ToString("N0", culture)
+                                                                    : item.Cantidad.ToString("N2", culture);
+                                                                <tr>
+                                                                    <td class="font-monospace text-muted small">@item.Sku</td>
+                                                                    <td class="fw-medium text-dark">@item.Producto</td>
+                                                                    <td class="text-center text-muted small">@item.UnidadMedida</td>
+                                                                    <td class="text-end font-monospace text-dark">@cantTexto</td>
+                                                                    <td class="text-end font-monospace text-dark">@item.PrecioUnitario.ToString("C", culture)</td>
+                                                                    <td class="text-end font-monospace fw-semibold text-dark">@item.Subtotal.ToString("C", culture)</td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                        <tfoot>
+                                                            <tr class="detail-total-row">
+                                                                <td colspan="5" class="text-end text-muted small">
+                                                                    Subtotal: <strong class="text-dark font-monospace">@registro.Subtotal.ToString("C", culture)</strong>
+                                                                    <span class="mx-2">|</span>
+                                                                    IGV: <strong class="text-dark font-monospace">@registro.Igv.ToString("C", culture)</strong>
+                                                                    <span class="mx-2">|</span>
+                                                                    <span class="fw-bold text-dark">TOTAL OPERACIÓN:</span>
+                                                                </td>
+                                                                <td class="text-end font-monospace fw-bold text-accent-total">@registro.Total.ToString("C", culture)</td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="text-muted small py-2">
+                                                    <em>No se registraron ítems EPP detallados en esta operación.</em>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pie de Paginación Corporativa Prosegin -->
+            <div class="prosegin-pagination-footer d-flex flex-column flex-sm-row align-items-center justify-content-between px-3 py-3 border-top gap-3">
+                <span class="text-muted small">
+                    Mostrando página <strong class="text-dark">@Model.Pagina</strong> de <strong class="text-dark">@Model.TotalPaginas</strong> (@Model.TotalRegistros registros)
+                </span>
+
+                @if (Model.TotalPaginas > 1)
+                {
+                    <nav class="prosegin-pager-nav" aria-label="Paginación del historial comercial del cliente">
+                        @if (Model.Pagina > 1)
+                        {
+                            <a class="prosegin-pager-btn" asp-controller="Clientes" asp-action="Historial"
+                               asp-route-id="@Model.Cliente.Id"
+                               asp-route-soloCompras="@Model.SoloCompras"
+                               asp-route-pagina="@(Model.Pagina - 1)"
+                               title="Página anterior" aria-label="Página anterior">
+                                <i class="material-symbols-outlined">chevron_left</i>
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="prosegin-pager-btn is-disabled" aria-hidden="true">
+                                <i class="material-symbols-outlined">chevron_left</i>
+                            </span>
+                        }
+
+                        @for (var p = 1; p <= Model.TotalPaginas; p++)
+                        {
+                            if (p == Model.Pagina)
+                            {
+                                <span class="prosegin-pager-number is-active" aria-current="page">@p</span>
+                            }
+                            else
+                            {
+                                <a class="prosegin-pager-number" asp-controller="Clientes" asp-action="Historial"
+                                   asp-route-id="@Model.Cliente.Id"
+                                   asp-route-soloCompras="@Model.SoloCompras"
+                                   asp-route-pagina="@p">@p</a>
+                            }
+                        }
+
+                        @if (Model.Pagina < Model.TotalPaginas)
+                        {
+                            <a class="prosegin-pager-btn" asp-controller="Clientes" asp-action="Historial"
+                               asp-route-id="@Model.Cliente.Id"
+                               asp-route-soloCompras="@Model.SoloCompras"
+                               asp-route-pagina="@(Model.Pagina + 1)"
+                               title="Página siguiente" aria-label="Página siguiente">
+                                <i class="material-symbols-outlined">chevron_right</i>
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="prosegin-pager-btn is-disabled" aria-hidden="true">
+                                <i class="material-symbols-outlined">chevron_right</i>
+                            </span>
+                        }
+                    </nav>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .prosegin-switch:checked {
+        background-color: var(--accent, #F7A702);
+        border-color: var(--accent, #F7A702);
+    }
+    .prosegin-switch:focus {
+        box-shadow: 0 0 0 0.25rem var(--accent-shadow, rgba(247, 167, 2, 0.25));
+        border-color: var(--accent, #F7A702);
+    }
+
+    .badge-tag-compra {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 9px;
+        border-radius: 6px;
+        font-size: 0.76rem;
+        font-weight: 700;
+        background-color: var(--accent-light, #FEF6E6);
+        color: var(--accent-text, #B46500);
+        border: 1px solid rgba(247, 167, 2, 0.28);
+    }
+    .badge-tag-compra i,
+    .badge-tag-cotizacion i {
+        font-size: 14px;
+    }
+    .badge-tag-cotizacion {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 9px;
+        border-radius: 6px;
+        font-size: 0.76rem;
+        font-weight: 600;
+        background-color: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+    }
+
+    .badge-currency {
+        display: inline-block;
+        padding: 2px 7px;
+        border-radius: 4px;
+        font-size: 0.74rem;
+        font-weight: 600;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        color: #475569;
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+    }
+
+    /* Botones minimalistas en acciones de fila */
+    .btn-action-minimal {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        border: none;
+        border-radius: 6px;
+        background: transparent;
+        color: #64748b;
+        text-decoration: none;
+        transition: color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+    }
+    .btn-action-minimal:hover {
+        color: var(--dark, #000D31);
+        background-color: #f1f5f9;
+    }
+    .btn-action-minimal.btn-action-download {
+        color: var(--accent, #F7A702);
+    }
+    .btn-action-minimal.btn-action-download:hover {
+        color: var(--accent-text, #B46500);
+        background-color: var(--accent-light, #FEF6E6);
+    }
+    .btn-action-minimal.is-disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    .btn-detail-toggle .chevron-icon {
+        transition: transform 0.2s ease;
+    }
+    .btn-detail-toggle[aria-expanded="true"] .chevron-icon {
+        transform: rotate(180deg);
+        color: var(--dark, #000D31);
+    }
+
+    /* Panel desplegable read-only */
+    .historial-detail-card {
+        background-color: #f8fafc;
+        border: 1px solid var(--border-card, #e2e8f0);
+        border-left: 3px solid var(--accent, #F7A702);
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+    }
+    .detail-meta-label {
+        display: block;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        color: #64748b;
+        margin-bottom: 2px;
+    }
+    .detail-meta-value {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--dark, #000D31);
+    }
+    .historial-items-table thead th {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: #64748b;
+        background-color: transparent;
+        border-bottom: 1px solid #cbd5e1;
+        padding: 0.45rem 0.5rem;
+    }
+    .historial-items-table tbody td {
+        padding: 0.5rem;
+        font-size: 0.84rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .detail-total-row td {
+        padding-top: 0.65rem;
+        border-bottom: none !important;
+    }
+    .text-accent-total {
+        color: var(--accent-text, #B46500);
+        font-size: 0.95rem;
+    }
+
+    /* Paginación corporativa Prosegin */
+    .prosegin-pager-nav {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .prosegin-pager-btn,
+    .prosegin-pager-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 34px;
+        height: 34px;
+        padding: 0 8px;
+        border-radius: 8px;
+        border: 1px solid var(--border-card, #e2e8f0);
+        background-color: #ffffff;
+        color: var(--dark, #000D31);
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.15s ease;
+    }
+    .prosegin-pager-btn:hover,
+    .prosegin-pager-number:hover {
+        border-color: var(--accent, #F7A702);
+        color: var(--accent-text, #B46500);
+        background-color: var(--accent-light, #FEF6E6);
+    }
+    .prosegin-pager-number.is-active {
+        background-color: var(--accent, #F7A702);
+        border-color: var(--accent, #F7A702);
+        color: #ffffff;
+    }
+    .prosegin-pager-btn.is-disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('#tablaHistorialCliente .collapse').forEach(function (panel) {
+                panel.addEventListener('show.bs.collapse', function () {
+                    document.querySelectorAll('[data-bs-target="#' + panel.id + '"]').forEach(function (btn) {
+                        btn.setAttribute('aria-expanded', 'true');
+                    });
+                });
+                panel.addEventListener('hide.bs.collapse', function () {
+                    document.querySelectorAll('[data-bs-target="#' + panel.id + '"]').forEach(function (btn) {
+                        btn.setAttribute('aria-expanded', 'false');
+                    });
+                });
+            });
+        });
+    </script>
+}

@@ -50,21 +50,6 @@ public class PedidosController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ActualizarEstado(
-        string numeroPedido,
-        string nuevoEstado,
-        string? termino,
-        string? estado,
-        int pagina = 1,
-        CancellationToken cancellationToken = default)
-    {
-        var resultado = await _pedidosService.ActualizarEstadoLogisticoAsync(numeroPedido, nuevoEstado, cancellationToken);
-        TempData[resultado.Exito ? "ToastSuccess" : "ToastError"] = resultado.Mensaje;
-        return RedirectToAction(nameof(Index), new { termino, estado, pagina });
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> CancelarPedido(
         string numeroPedido,
         string? motivo,
@@ -274,7 +259,7 @@ public class PedidosController : Controller
         {
             var ordenTieneCompras = await _pedidosService.TieneOrdenesCompraAsync(numeroPedido, cancellationToken);
             TempData["ToastError"] = ordenTieneCompras
-                ? "El pedido debe estar En Preparación para controlar la recepción"
+                ? "El pedido debe estar Esperando al proveedor para controlar la recepción"
                 : "El pedido no tiene órdenes de compra emitidas";
             return RedirectToAction(nameof(Index), new { termino = numeroPedido });
         }
@@ -306,7 +291,7 @@ public class PedidosController : Controller
         var preview = await _pedidosService.PrevisualizarFacturaAsync(numeroPedido, cancellationToken);
         if (preview == null)
         {
-            TempData["ToastError"] = "El pedido no está entregado, el cliente no está activo y habido en SUNAT o ya tiene una factura emitida.";
+            TempData["ToastError"] = "El pedido no está en transporte, el cliente no está activo y habido en SUNAT o ya tiene una factura emitida.";
             return RedirectToAction(nameof(Index), new { termino = numeroPedido });
         }
 
@@ -322,7 +307,7 @@ public class PedidosController : Controller
 
         var preview = await _pedidosService.PrevisualizarFacturaAsync(numeroPedido, cancellationToken);
         if (preview == null)
-            return Conflict("El pedido no está entregado, el cliente no está activo y habido en SUNAT o ya tiene una factura.");
+            return Conflict("El pedido no está en transporte, el cliente no está activo y habido en SUNAT o ya tiene una factura.");
 
         return Json(preview);
     }

@@ -57,12 +57,12 @@ document.addEventListener('DOMContentLoaded', function () {
             appContainer.classList.add('sidebar-collapsed');
             try {
                 localStorage.setItem(STORAGE_KEY, 'true');
-            } catch (e) {}
+            } catch (e) { }
         } else {
             appContainer.classList.remove('sidebar-collapsed');
             try {
                 localStorage.setItem(STORAGE_KEY, 'false');
-            } catch (e) {}
+            } catch (e) { }
         }
 
         updateToggleButton(collapsed);
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (savedCollapsed) {
                     setSidebarCollapsed(true);
                 }
-            } catch (e) {}
+            } catch (e) { }
         }
     });
 });

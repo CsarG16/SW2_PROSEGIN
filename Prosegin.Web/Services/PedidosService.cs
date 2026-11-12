@@ -95,51 +95,6 @@ public class PedidosService : IPedidosService
         };
     }
 
-    public async Task<(bool Exito, string Mensaje)> ActualizarEstadoLogisticoAsync(
-        string numeroPedido,
-        string nuevoEstado,
-        CancellationToken cancellationToken = default)
-    {
-        var orden = await _context.OrdenesVenta
-            .Include(venta => venta.Cotizacion)
-            .FirstOrDefaultAsync(venta => venta.Cotizacion.Correlativo == numeroPedido, cancellationToken);
-        if (orden == null)
-            return (false, "No se encontró el pedido");
-
-        var estadoActual = NormalizarEstadoLogistico(orden.EstadoLogistico);
-        if (estadoActual == "CANCELADO")
-            return (false, "El pedido ya se encuentra cancelado");
-        if (estadoActual == PedidoLogisticaRules.EstadoEntregado)
-            return (false, "El pedido ya fue entregado y no admite cambios de estado");
-
-        if (!TryNormalizarEstadoSeguimiento(nuevoEstado, out var estadoSolicitado))
-            return (false, "Seleccione un estado logístico válido");
-
-        if (estadoSolicitado == estadoActual)
-            return (false, "Seleccione un estado distinto al actual");
-
-        if (!PedidoLogisticaRules.EsTransicionPermitida(estadoActual, estadoSolicitado))
-            return (false, "El estado seleccionado no está permitido para este pedido");
-
-        orden.EstadoLogistico = estadoSolicitado switch
-        {
-            PedidoLogisticaRules.EstadoListoDespacho => "ListoParaDespacho",
-            PedidoLogisticaRules.EstadoEnRuta => "EnRuta",
-            PedidoLogisticaRules.EstadoEntregado => "Entregado",
-            _ => orden.EstadoLogistico
-        };
-        orden.Revision++;
-        try
-        {
-            await _context.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            return (false, "El pedido fue modificado por otro usuario. Actualice el listado e intente nuevamente");
-        }
-        return (true, "Estado logístico actualizado correctamente");
-    }
-
     public async Task<(bool Exito, string Mensaje)> CancelarPedidoAsync(
         string numeroPedido,
         string? motivo,
@@ -254,7 +209,7 @@ public class PedidosService : IPedidosService
     {
         var orden = await BuscarOrdenConComprasAsync(request.NumeroPedido, cancellationToken);
         if (orden == null || NormalizarEstadoLogistico(orden.EstadoLogistico) != PedidoLogisticaRules.EstadoEnPreparacion)
-            return (false, "El pedido debe estar En Preparación para controlar la recepción");
+            return (false, "El pedido debe estar Esperando al proveedor para controlar la recepción");
 
         var solicitadas = orden.OrdenesCompra.SelectMany(oc => oc.Detalles)
             .GroupBy(d => d.ProductoId)
@@ -311,7 +266,10 @@ public class PedidosService : IPedidosService
         }
 
         if (request.ConfirmarTotal)
+        {
             orden.EstadoLogistico = "ListoParaDespacho";
+            orden.Revision++;
+        }
         await _context.SaveChangesAsync(cancellationToken);
         return (true, request.ConfirmarTotal
             ? "Recepción total confirmada correctamente"
@@ -348,6 +306,16 @@ public class PedidosService : IPedidosService
                 && ov.Cotizacion.NumeroOrdenCompraCliente != "")
             .ToListAsync(cancellationToken);
 
+        var ordenIds = ordenesVenta.Select(o => o.Id).ToList();
+        var recepcionesPorOrden = ordenIds.Count == 0
+            ? new Dictionary<int, List<RecepcionMercaderia>>()
+            : (await _context.RecepcionesMercaderia
+                .AsNoTracking()
+                .Where(r => ordenIds.Contains(r.OrdenVentaId))
+                .ToListAsync(cancellationToken))
+                .GroupBy(r => r.OrdenVentaId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
         var culture = CultureInfo.GetCultureInfo("es-PE");
 
         return ordenesVenta.Select(orden =>
@@ -357,6 +325,16 @@ public class PedidosService : IPedidosService
                 DateTime.SpecifyKind(orden.FechaCreacion, DateTimeKind.Utc),
                 ZonaHorariaEntrega);
             var estado = NormalizarEstadoLogistico(orden.EstadoLogistico);
+            var facturaActiva = orden.Facturas
+                .Where(f => f.EstadoEmision != NubefactService.EstadoRechazado)
+                .OrderByDescending(f => f.Id)
+                .FirstOrDefault();
+            var ultimaFactura = facturaActiva ?? orden.Facturas.OrderByDescending(f => f.Id).FirstOrDefault();
+            var facturaEmitida = facturaActiva != null;
+            var puedeFacturarCliente = EsClienteValidoParaFactura(cotizacion.Cliente)
+                && RucValidator.ValidarFormato(cotizacion.Cliente.Ruc, out _);
+            var recepcionesOrden = recepcionesPorOrden.GetValueOrDefault(orden.Id) ?? [];
+
             return new PedidoDetalleViewModel
             {
                 Id = orden.Id,
@@ -373,27 +351,30 @@ public class PedidosService : IPedidosService
                 SedeAlias = "Dirección fiscal del cliente",
                 EstadoOperativo = estado,
                 EstadoOperativoTexto = TextoEstado(estado),
+                FaseActualOrden = PedidoLogisticaRules.ObtenerIndiceFase(estado),
+                BloqueoOperativo = DeterminarBloqueoOperativo(orden, estado, recepcionesOrden),
                 MotivoCancelacion = orden.MotivoCancelacion,
                 PuedeCancelar = estado != "CANCELADO"
-                    && orden.Facturas.Count == 0
+                    && estado != PedidoLogisticaRules.EstadoEntregado
+                    && !facturaEmitida
                     && !PedidoYaDespachado(orden.EstadoLogistico),
                 AlmacenOrigen = "Central Huachipa",
                 Embalaje = "Por definir",
                 VentaAprobada = true,
                 PuedeGenerarOrdenesCompra = estado == PedidoLogisticaRules.EstadoPorPreparar
                     && orden.OrdenesCompra.Count == 0,
-                PuedeGenerarFactura = estado == PedidoLogisticaRules.EstadoEntregado
-                    && orden.Facturas.Count == 0
-                    && EsClienteValidoParaFactura(cotizacion.Cliente),
+                PuedeGenerarFactura = estado == PedidoLogisticaRules.EstadoEnRuta
+                    && !facturaEmitida
+                    && puedeFacturarCliente,
                 PuedeGenerarGuiaRemision = estado == PedidoLogisticaRules.EstadoListoDespacho
                     && !TieneGuiaRemisionActiva(orden.GuiasRemision),
                 GuiaRemisionEmitida = TieneGuiaRemisionActiva(orden.GuiasRemision),
                 NumeroGuiaRemision = orden.GuiasRemision.OrderByDescending(g => g.Id).Select(g => g.NumeroGuia).FirstOrDefault(),
                 EnlacePdfGuia = orden.GuiasRemision.OrderByDescending(g => g.Id).Select(g => g.EnlacePdf).FirstOrDefault(),
-                FacturaEmitida = orden.Facturas.Count > 0,
-                NumeroFactura = orden.Facturas.OrderByDescending(f => f.Id).Select(f => f.NumeroFactura).FirstOrDefault(),
-                EstadoEmisionFactura = orden.Facturas.OrderByDescending(f => f.Id).Select(f => f.EstadoEmision).FirstOrDefault(),
-                EnlacePdfFactura = orden.Facturas.OrderByDescending(f => f.Id).Select(f => f.EnlacePdf).FirstOrDefault(),
+                FacturaEmitida = facturaEmitida,
+                NumeroFactura = ultimaFactura?.NumeroFactura,
+                EstadoEmisionFactura = ultimaFactura?.EstadoEmision,
+                EnlacePdfFactura = facturaActiva?.EnlacePdf,
                 Subtotal = cotizacion.Subtotal,
                 Igv = cotizacion.Igv,
                 Total = cotizacion.Total,
@@ -473,20 +454,6 @@ public class PedidosService : IPedidosService
         };
     }
 
-    private static bool TryNormalizarEstadoSeguimiento(string? estado, out string estadoNormalizado)
-    {
-        estadoNormalizado = estado?.Trim().ToUpperInvariant() switch
-        {
-            "POR_PREPARAR" or "PORPREPARAR" => PedidoLogisticaRules.EstadoPorPreparar,
-            "EN_PREPARACION" or "ENPREPARACION" => PedidoLogisticaRules.EstadoEnPreparacion,
-            "LISTO_DESPACHO" or "LISTOPARADESPACHO" => PedidoLogisticaRules.EstadoListoDespacho,
-            "EN_RUTA" or "ENRUTA" or "EN TRANSPORTE" => PedidoLogisticaRules.EstadoEnRuta,
-            "ENTREGADO" => PedidoLogisticaRules.EstadoEntregado,
-            _ => string.Empty
-        };
-        return !string.IsNullOrEmpty(estadoNormalizado);
-    }
-
     public async Task<FacturaPreviewViewModel?> PrevisualizarFacturaAsync(
         string numeroPedido,
         CancellationToken cancellationToken = default)
@@ -496,7 +463,7 @@ public class PedidosService : IPedidosService
             .OrderByDescending(f => f.Id)
             .FirstOrDefault();
         if (orden == null || !EsClienteValidoParaFactura(orden.Cotizacion.Cliente)
-            || !EsEstadoEntregado(orden.EstadoLogistico)
+            || !EsEstadoEnTransporte(orden.EstadoLogistico)
             || (facturaExistente != null && facturaExistente.EstadoEmision != NubefactService.EstadoRechazado))
         {
             return null;
@@ -521,8 +488,8 @@ public class PedidosService : IPedidosService
 
         if (orden == null)
             return EmitirFacturaResult.Fallido("Pedido no encontrado.");
-        if (!EsEstadoEntregado(orden.EstadoLogistico))
-            return EmitirFacturaResult.Fallido("Solo se puede facturar un pedido entregado.");
+        if (!EsEstadoEnTransporte(orden.EstadoLogistico))
+            return EmitirFacturaResult.Fallido("Solo se puede facturar un pedido en transporte.");
         if (!EsClienteValidoParaFactura(orden.Cotizacion.Cliente))
             return EmitirFacturaResult.Fallido("El cliente debe estar activo y habido en SUNAT.");
         if (!RucValidator.ValidarFormato(orden.Cotizacion.Cliente.Ruc, out var errorRuc))
@@ -645,6 +612,11 @@ public class PedidosService : IPedidosService
         factura.NumeroFactura = response.Serie is not null && response.Numero.HasValue
             ? $"{response.Serie}-{response.Numero}"
             : factura.NumeroFactura;
+        if (response.Exito)
+        {
+            orden.EstadoLogistico = "Entregado";
+            orden.Revision++;
+        }
         await _context.SaveChangesAsync(cancellationToken);
 
         return response.Exito
@@ -820,6 +792,7 @@ public class PedidosService : IPedidosService
         if (response.Exito)
         {
             orden.EstadoLogistico = "EnRuta";
+            orden.Revision++;
         }
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -972,11 +945,90 @@ public class PedidosService : IPedidosService
         string.Equals(estado?.Replace(" ", string.Empty), "ListoParaDespacho", StringComparison.OrdinalIgnoreCase)
         || string.Equals(estado, "Despachado", StringComparison.OrdinalIgnoreCase);
 
-    private static bool EsEstadoEntregado(string? estado) =>
-        string.Equals(estado?.Replace(" ", string.Empty), "Entregado", StringComparison.OrdinalIgnoreCase);
+    private static bool EsEstadoEnTransporte(string? estado) =>
+        NormalizarEstadoLogistico(estado) == PedidoLogisticaRules.EstadoEnRuta;
 
     private static bool TieneGuiaRemisionActiva(IEnumerable<GuiaRemision> guias) =>
         guias.Any(g => g.EstadoEmision != NubefactService.EstadoRechazado);
+
+    private static bool TieneFacturaActiva(IEnumerable<Factura> facturas) =>
+        facturas.Any(f => f.EstadoEmision != NubefactService.EstadoRechazado);
+
+    private static string? DeterminarBloqueoOperativo(
+        OrdenVenta orden,
+        string estadoOperativo,
+        IReadOnlyCollection<RecepcionMercaderia> recepciones)
+    {
+        switch (estadoOperativo)
+        {
+            case "EN_PREPARACION":
+            {
+                if (recepciones.Any(r => string.Equals(r.EstadoInspeccion, "Mercadería Dañada", StringComparison.OrdinalIgnoreCase)))
+                {
+                    return "Incidencia en almacén: se reportó mercadería dañada en la recepción; requiere reposición antes de avanzar a despacho.";
+                }
+
+                if (recepciones.Any(r =>
+                        string.Equals(r.EstadoInspeccion, "Incompleto", StringComparison.OrdinalIgnoreCase) ||
+                        (!string.Equals(r.EstadoInspeccion, "Pendiente", StringComparison.OrdinalIgnoreCase) && r.CantidadRecibida < r.CantidadSolicitada)))
+                {
+                    return "Recepción parcial en almacén: aún faltan unidades por entregar del proveedor para completar el pedido.";
+                }
+
+                return null;
+            }
+            case "LISTO_DESPACHO":
+            {
+                if (!TienePesosRegistrados(orden.Cotizacion.Detalles))
+                {
+                    return "Bloqueo de despacho: hay productos sin peso unitario configurado para emitir la Guía de Remisión.";
+                }
+
+                var ultimaGuia = orden.GuiasRemision.OrderByDescending(g => g.Id).FirstOrDefault();
+                if (!TieneGuiaRemisionActiva(orden.GuiasRemision) && ultimaGuia?.EstadoEmision == NubefactService.EstadoRechazado)
+                {
+                    return string.IsNullOrWhiteSpace(ultimaGuia.MensajeError)
+                        ? "Bloqueo en Guía de Remisión: rechazada por SUNAT/Nubefact; revise los datos e intente reemitir."
+                        : $"Bloqueo en Guía de Remisión: {ultimaGuia.MensajeError}";
+                }
+
+                if (ultimaGuia?.EstadoEmision == NubefactService.EstadoPendienteEnvio)
+                {
+                    return "Guía de Remisión pendiente de aceptación en SUNAT/Nubefact; aún no puede pasar a En transporte.";
+                }
+
+                return null;
+            }
+            case "EN_RUTA":
+            {
+                var cliente = orden.Cotizacion.Cliente;
+                if (!RucValidator.ValidarFormato(cliente.Ruc, out _))
+                {
+                    return "Bloqueo SUNAT: el RUC del cliente no cumple el formato válido de 11 dígitos para emitir Factura Electrónica.";
+                }
+
+                if (!EsClienteValidoParaFactura(cliente))
+                {
+                    return $"Bloqueo SUNAT: el cliente figura como {cliente.EstadoSunat} / {cliente.CondicionSunat}; debe estar Activo y Habido para emitir Factura Electrónica.";
+                }
+
+                var ultimaFactura = orden.Facturas.OrderByDescending(f => f.Id).FirstOrDefault();
+                if (!TieneFacturaActiva(orden.Facturas) && ultimaFactura?.EstadoEmision == NubefactService.EstadoRechazado)
+                {
+                    return "Bloqueo en Factura Electrónica: el último comprobante fue rechazado por SUNAT/Nubefact y requiere reemisión.";
+                }
+
+                if (ultimaFactura?.EstadoEmision == NubefactService.EstadoPendienteEnvio)
+                {
+                    return "Factura Electrónica pendiente de aceptación en SUNAT/Nubefact para completar la entrega.";
+                }
+
+                return null;
+            }
+            default:
+                return null;
+        }
+    }
 
     private static int ExtraerDias(string? condicionPago)
     {

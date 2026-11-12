@@ -68,18 +68,19 @@
 /* Isotipo mini para modo contraído */
 .sidebar-brand-mini {
   display: none;
-  width: 38px;
-  height: 38px;
-  background: linear-gradient(135deg, var(--accent) 0%, #d97706 100%);
-  color: #ffffff;
-  font-weight: 800;
-  font-size: 1.15rem;
-  border-radius: 10px;
+  width: 44px;
+  height: 44px;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.35);
   transition: transform 0.2s ease;
   user-select: none;
+}
+
+.sidebar-brand-mini .brand-mini-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .sidebar-brand-mini:hover {

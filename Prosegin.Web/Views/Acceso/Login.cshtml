@@ -5,15 +5,10 @@
 <div class="login-shell">
     <section class="login-brand-panel">
         <div class="login-brand-content">
-            <img src="~/logo_horizontal.png" alt="PROSEGIN - Prevención Integral" class="login-logo" />
+            <div class="login-logo-plate"><img src="~/logo_horizontal.png" alt="PROSEGIN - Prevención Integral" class="login-logo" /></div>
             <span class="login-eyebrow">PLATAFORMA EMPRESARIAL</span>
             <h1>Gestión integral para una operación segura.</h1>
             <p>Administra tus productos EPP, clientes, proveedores, pedidos y procesos operativos desde un solo lugar.</p>
-            <div class="login-features">
-                <span><i class="material-symbols-outlined">verified_user</i> Acceso seguro</span>
-                <span><i class="material-symbols-outlined">inventory_2</i> Operación centralizada</span>
-                <span><i class="material-symbols-outlined">analytics</i> Información trazable</span>
-            </div>
         </div>
         <div class="login-brand-footer">© @DateTime.Now.Year PROSEGIN · Prevención Integral</div>
     </section>
@@ -52,7 +47,6 @@
                     <i class="material-symbols-outlined">arrow_forward</i>
                 </button>
             </form>
-            <div class="login-security-note"><i class="material-symbols-outlined">shield</i><span>Tu sesión está protegida y es de uso exclusivo del personal autorizado.</span></div>
         </div>
     </section>
 </div>
@@ -65,7 +59,8 @@
     .login-brand-panel::before { width: 520px; height: 520px; right: -260px; top: -110px; }
     .login-brand-panel::after { width: 300px; height: 300px; left: -180px; bottom: -120px; }
     .login-brand-content, .login-brand-footer { position: relative; z-index: 1; }
-    .login-logo { display: block; width: 230px; height: auto; margin-bottom: 70px; padding: 13px 18px; border-radius: 10px; background: #fff; box-shadow: 0 10px 24px rgba(0, 13, 49, .24); }
+    .login-logo-plate { display: inline-block; margin-bottom: 70px; padding: 13px 18px; border-radius: 10px; background: #fff; }
+    .login-logo { display: block; width: 230px; height: auto; box-shadow: none; }
     .login-eyebrow { color: #f7a702; font-size: 12px; font-weight: 800; letter-spacing: .16em; }
     .login-brand-content h1 { max-width: 500px; margin: 15px 0 18px; font-size: clamp(32px, 3.2vw, 52px); line-height: 1.1; font-weight: 800; }
     .login-brand-content p { max-width: 500px; margin: 0; color: #d7e3f3; font-size: 16px; line-height: 1.7; }
@@ -95,7 +90,7 @@
     .login-submit i { font-size: 20px; }
     .login-security-note { display: flex; align-items: flex-start; gap: 8px; margin-top: 28px; padding-top: 20px; border-top: 1px solid #edf1f5; color: #8290a4; font-size: 11px; line-height: 1.5; }
     .login-security-note i { color: #21a776; font-size: 18px; }
-    @@media (max-width: 850px) { .login-shell { display: block; }.login-brand-panel { min-height: 300px; padding: 42px 28px 55px; }.login-logo { width: 190px; margin-bottom: 32px; }.login-brand-content h1 { font-size: 32px; }.login-features { margin-top: 24px; }.login-brand-footer { left: 28px; bottom: 20px; }.login-form-panel { padding: 28px 18px 50px; }.login-card { padding: 30px 24px; } }
+    @@media (max-width: 850px) { .login-shell { display: block; }.login-brand-panel { min-height: 300px; padding: 42px 28px 55px; }.login-logo { width: 190px; }.login-logo-plate { margin-bottom: 32px; }.login-brand-content h1 { font-size: 32px; }.login-features { margin-top: 24px; }.login-brand-footer { left: 28px; bottom: 20px; }.login-form-panel { padding: 28px 18px 50px; }.login-card { padding: 30px 24px; } }
 </style>
 <script>
     function togglePassword() {

@@ -10,10 +10,21 @@ public static class CuentaPersonalDataSeeder
     {
         using var scope = serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
+
+        var password = Environment.GetEnvironmentVariable("PROSEGIN_ADMIN_PASSWORD") ?? "1234";
+
+        var adminExistente = await context.CuentasPersonal.FirstOrDefaultAsync(c => c.NombreUsuario == "admin");
+        if (adminExistente != null)
+        {
+            adminExistente.PasswordHash = PasswordHashService.Hash(password);
+            adminExistente.Activa = true;
+            await context.SaveChangesAsync();
+            return;
+        }
+
         if (await context.CuentasPersonal.AnyAsync())
             return;
 
-        var password = Environment.GetEnvironmentVariable("PROSEGIN_ADMIN_PASSWORD") ?? "Prosegin#2026";
         context.CuentasPersonal.Add(new CuentaPersonal
         {
             NombreCompleto = "Administrador PROSEGIN",

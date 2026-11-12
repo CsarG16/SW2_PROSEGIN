@@ -34,7 +34,7 @@ public class FacturacionIntegracionTests
         };
         context.OrdenesVenta.Add(new OrdenVenta
         {
-            EstadoLogistico = "Entregado",
+            EstadoLogistico = "EnRuta",
             Cotizacion = new Cotizacion
             {
                 Correlativo = "COT-FACT-001",
@@ -82,12 +82,14 @@ public class FacturacionIntegracionTests
         Assert.Equal(1, nubefact.FacturasEnviadas);
         var factura = await context.Facturas.Include(f => f.Detalles).SingleAsync();
         Assert.Equal("Aceptado", factura.EstadoEmision);
+        var ordenActualizada = await context.OrdenesVenta.SingleAsync(ov => ov.Cotizacion.Correlativo == "COT-FACT-001");
+        Assert.Equal("Entregado", ordenActualizada.EstadoLogistico);
         var detalle = Assert.Single(factura.Detalles);
         Assert.Equal(50m, detalle.ValorUnitario);
 
         var second = await service.EmitirFacturaAsync("COT-FACT-001");
         Assert.False(second.Exito);
-        Assert.Contains("ya tiene una factura", second.Mensaje, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("en transporte", second.Mensaje, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(1, nubefact.FacturasEnviadas);
     }
 
@@ -109,7 +111,7 @@ public class FacturacionIntegracionTests
     }
 
     [Fact]
-    public async Task FlujoListoDespacho_GuiaRemision_PasaAEntregado_YHabilitaFactura()
+    public async Task FlujoListoDespacho_GuiaRemision_PasaAEnRuta_YFacturaPasaAEntregado()
     {
         await using var context = CrearContext();
         var cliente = new Cliente
@@ -168,9 +170,9 @@ public class FacturacionIntegracionTests
         // 1. En ListoParaDespacho, no se puede emitir la factura todavía
         var facturaRechazada = await service.EmitirFacturaAsync("COT-FLUJO-001");
         Assert.False(facturaRechazada.Exito);
-        Assert.Contains("Solo se puede facturar un pedido entregado", facturaRechazada.Mensaje);
+        Assert.Contains("Solo se puede facturar un pedido en transporte", facturaRechazada.Mensaje);
 
-        // 2. Se emite la guía de remisión
+        // 2. Se emite la guía de remisión y pasa automáticamente a EnRuta (En transporte)
         var guiaResult = await service.EmitirGuiaRemisionAsync(new EmitirGuiaRemisionRequest
         {
             NumeroPedido = "COT-FLUJO-001",
@@ -180,20 +182,30 @@ public class FacturacionIntegracionTests
         Assert.True(guiaResult.Exito);
         Assert.Equal(1, nubefact.GuiasEnviadas);
 
-        // 3. La guía aceptada deja el pedido en ruta, y la entrega se confirma por separado.
         var ordenActualizada = await context.OrdenesVenta.SingleAsync(ov => ov.Cotizacion.Correlativo == "COT-FLUJO-001");
         Assert.Equal("EnRuta", ordenActualizada.EstadoLogistico);
-        var entrega = await service.ActualizarEstadoLogisticoAsync("COT-FLUJO-001", "ENTREGADO");
-        Assert.True(entrega.Exito);
-        Assert.Equal("Entregado", ordenActualizada.EstadoLogistico);
 
-        // 4. Ahora sí se puede previsualizar y emitir la factura con éxito
+        var detalleEnRuta = await service.ObtenerDetallePedidoAsync("COT-FLUJO-001");
+        Assert.NotNull(detalleEnRuta);
+        Assert.True(detalleEnRuta.PuedeGenerarFactura);
+
+        // 3. Estando en transporte, se puede previsualizar y emitir la factura y pasa automáticamente a Entregado
         var preview = await service.PrevisualizarFacturaAsync("COT-FLUJO-001");
         Assert.NotNull(preview);
 
         var facturaResult = await service.EmitirFacturaAsync("COT-FLUJO-001");
         Assert.True(facturaResult.Exito);
         Assert.Equal(1, nubefact.FacturasEnviadas);
+        Assert.Equal("Entregado", ordenActualizada.EstadoLogistico);
+
+        var detalleFinal = await service.ObtenerDetallePedidoAsync("COT-FLUJO-001");
+        Assert.NotNull(detalleFinal);
+        Assert.Equal("ENTREGADO", detalleFinal.EstadoOperativo);
+        Assert.Equal(4, detalleFinal.FaseActualOrden);
+        Assert.Null(detalleFinal.BloqueoOperativo);
+        Assert.False(detalleFinal.PuedeGenerarFactura);
+        Assert.False(detalleFinal.PuedeGenerarGuiaRemision);
+        Assert.False(detalleFinal.PuedeCancelar);
     }
 
     private static OrdenVenta CrearOrden(string correlativo, bool activo, string condicion)
@@ -210,7 +222,7 @@ public class FacturacionIntegracionTests
         var producto = new Producto { Sku = correlativo, Nombre = "Producto", UnidadMedida = "UND" };
         return new OrdenVenta
         {
-            EstadoLogistico = "Entregado",
+            EstadoLogistico = "EnRuta",
             Cotizacion = new Cotizacion
             {
                 Correlativo = correlativo,

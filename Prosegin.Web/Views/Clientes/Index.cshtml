@@ -147,7 +147,7 @@
                             <th class="text-center" style="width: 140px; white-space: nowrap;">RUC</th>
                             <th style="min-width: 220px;">DIRECCIÓN FISCAL</th>
                             <th class="text-center" style="width: 180px; white-space: nowrap;">ESTADO SUNAT</th>
-                            <th class="text-end pe-4" style="width: 240px; min-width: 240px; white-space: nowrap;">ACCIONES</th>
+                            <th class="text-end pe-4" style="width: 100px; white-space: nowrap;">ACCIONES</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -201,37 +201,70 @@
 
                                 <!-- Acciones -->
                                 <td class="text-end pe-4" style="white-space: nowrap;">
-                                    <div class="d-inline-flex align-items-center justify-content-end gap-2 flex-nowrap">
-                                        <a asp-controller="Clientes" asp-action="Edit" asp-route-id="@cliente.Id"
-                                           class="btn-prosegin-secondary btn-sm" title="Editar cliente y contactos">
-                                            <i class="material-symbols-outlined" style="font-size: 1rem;">edit</i> Editar
-                                        </a>
+                                    <div class="dropdown d-inline-block">
+                                        <button type="button"
+                                                class="btn-prosegin-dropdown-trigger"
+                                                id="accionesCliente-@cliente.Id"
+                                                data-bs-toggle="dropdown"
+                                                data-cliente-actions-dropdown
+                                                aria-expanded="false"
+                                                aria-label="Acciones para @cliente.RazonSocial"
+                                                title="Opciones">
+                                            <i class="material-symbols-outlined">expand_more</i>
+                                        </button>
 
-                                        <!-- Botón Sedes -->
-                                        <a asp-controller="Clientes" asp-action="Direcciones" asp-route-clienteId="@cliente.Id"
-                                           class="btn-prosegin-secondary btn-sm"
-                                           title="Ver @cliente.CantidadSedes sedes registradas">
-                                            <i class="material-symbols-outlined" style="font-size: 1rem;">domain</i>
-                                            <span>Sedes</span>
-                                            <span class="btn-sedes-count">@cliente.CantidadSedes</span>
-                                        </a>
-
-                                        <!-- Botón Cotizar -->
-                                        @if (ClienteBusquedaRules.PuedeAbrirCotizacion(cliente.EstadoSunat, cliente.CondicionSunat) && !cliente.ClienteBloqueado)
-                                        {
-                                            <a asp-controller="Cotizaciones" asp-action="Create" asp-route-clienteId="@cliente.Id"
-                                               class="btn-prosegin-primary btn-sm"
-                                               title="Generar Cotización">
-                                                <i class="material-symbols-outlined" style="font-size: 1rem;">description</i> Cotizar
-                                            </a>
-                                        }
-                                        else
-                                        {
-                                            <button type="button" class="btn-prosegin-primary btn-sm" disabled
-                                                    title="@(cliente.ClienteBloqueado ? cliente.MensajeBloqueo : "Cliente no figura ACTIVO y HABIDO")">
-                                                <i class="material-symbols-outlined" style="font-size: 1rem;">description</i> Cotizar
-                                            </button>
-                                        }
+                                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-prosegin"
+                                            aria-labelledby="accionesCliente-@cliente.Id"
+                                            style="min-width: 175px;">
+                                            <li>
+                                                <a asp-controller="Clientes" asp-action="Edit" asp-route-id="@cliente.Id"
+                                                   class="dropdown-item" title="Editar cliente y contactos">
+                                                    <i class="material-symbols-outlined">edit</i>
+                                                    <span>Editar</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a asp-controller="Clientes" asp-action="Direcciones" asp-route-clienteId="@cliente.Id"
+                                                   class="dropdown-item justify-content-between"
+                                                   title="Ver @cliente.CantidadSedes sedes registradas">
+                                                    <span class="d-inline-flex align-items-center" style="gap: 0.6rem;">
+                                                        <i class="material-symbols-outlined">domain</i>
+                                                        <span>Sedes</span>
+                                                    </span>
+                                                    <span class="dropdown-count-pill">@cliente.CantidadSedes</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a asp-controller="Clientes" asp-action="Historial" asp-route-id="@cliente.Id"
+                                                   class="dropdown-item" title="Consultar historial de cotizaciones y compras">
+                                                    <i class="material-symbols-outlined">history</i>
+                                                    <span>Historial</span>
+                                                </a>
+                                            </li>
+                                            <li><hr class="dropdown-divider" /></li>
+                                            <li>
+                                                @if (ClienteBusquedaRules.PuedeAbrirCotizacion(cliente.EstadoSunat, cliente.CondicionSunat) && !cliente.ClienteBloqueado)
+                                                {
+                                                    <a asp-controller="Cotizaciones" asp-action="Create" asp-route-clienteId="@cliente.Id"
+                                                       class="dropdown-item dropdown-item-primary"
+                                                       title="Generar Cotización">
+                                                        <i class="material-symbols-outlined">description</i>
+                                                        <span>Cotizar</span>
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <button type="button"
+                                                            class="dropdown-item disabled"
+                                                            disabled
+                                                            aria-disabled="true"
+                                                            title="@(cliente.ClienteBloqueado ? cliente.MensajeBloqueo : "Cliente no figura ACTIVO y HABIDO")">
+                                                        <i class="material-symbols-outlined">description</i>
+                                                        <span>Cotizar</span>
+                                                    </button>
+                                                }
+                                            </li>
+                                        </ul>
                                     </div>
                                 </td>
                             </tr>
@@ -269,3 +302,17 @@
         </div>
     }
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (!window.bootstrap || !window.bootstrap.Dropdown) return;
+            document.querySelectorAll('[data-cliente-actions-dropdown]').forEach(function (trigger) {
+                window.bootstrap.Dropdown.getOrCreateInstance(trigger, {
+                    boundary: 'viewport',
+                    popperConfig: { strategy: 'fixed' }
+                });
+            });
+        });
+    </script>
+}
