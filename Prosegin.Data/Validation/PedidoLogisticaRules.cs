@@ -17,19 +17,6 @@ public static class PedidoLogisticaRules
     public const string TextoEnRuta = "En transporte";
     public const string TextoEntregado = "Entregado";
 
-    /// <summary>
-    /// Retorna el índice base 0 de la fase del ciclo de vida del pedido (0..4) o -1 si está cancelado/desconocido.
-    /// </summary>
-    public static int ObtenerIndiceFase(string? estadoOperativo) => estadoOperativo switch
-    {
-        "POR_PREPARAR" => 0,
-        "EN_PREPARACION" => 1,
-        "LISTO_DESPACHO" => 2,
-        "EN_RUTA" => 3,
-        "ENTREGADO" => 4,
-        _ => -1
-    };
-
     public static bool EsTransicionPermitida(string? estadoActual, string? estadoNuevo)
     {
         var actual = OrdenEstado(estadoActual);

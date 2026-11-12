@@ -351,7 +351,6 @@ public class PedidosService : IPedidosService
                 SedeAlias = "Dirección fiscal del cliente",
                 EstadoOperativo = estado,
                 EstadoOperativoTexto = TextoEstado(estado),
-                FaseActualOrden = PedidoLogisticaRules.ObtenerIndiceFase(estado),
                 BloqueoOperativo = DeterminarBloqueoOperativo(orden, estado, recepcionesOrden),
                 MotivoCancelacion = orden.MotivoCancelacion,
                 PuedeCancelar = estado != "CANCELADO"
@@ -438,7 +437,8 @@ public class PedidosService : IPedidosService
         var estadoNormalizado = estado?.Replace(" ", string.Empty, StringComparison.Ordinal)
             .Replace("_", string.Empty, StringComparison.Ordinal)
             .ToUpperInvariant();
-        return estadoNormalizado is "DESPACHADO" or "ENRUTA" or "ENTRANSPORTE" or "ENTREGADO";
+        return estadoNormalizado is "LISTOPARADESPACHO" or "LISTODESPACHO" or "DESPACHADO"
+            or "ENRUTA" or "ENTRANSPORTE" or "ENTREGADO";
     }
 
     private static string TextoEstado(string estado)

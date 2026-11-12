@@ -96,7 +96,7 @@ public class PedidosIntegracionTests : IAsyncLifetime
     {
         var html = await _client.GetStringAsync("/Pedidos");
         Assert.DoesNotContain("updateStatusDialog", html);
-        Assert.Contains("modalPhaseStepper", html);
+        Assert.DoesNotContain("modalPhaseStepper", html);
         Assert.Contains("modalBlockerAlert", html);
 
         using var form = new FormUrlEncodedContent(new Dictionary<string, string>
@@ -136,14 +136,12 @@ public class PedidosIntegracionTests : IAsyncLifetime
 
         Assert.NotNull(detalleEnRutaBloqueado);
         Assert.Equal("EN_RUTA", detalleEnRutaBloqueado.EstadoOperativo);
-        Assert.Equal(3, detalleEnRutaBloqueado.FaseActualOrden);
         Assert.False(string.IsNullOrWhiteSpace(detalleEnRutaBloqueado.BloqueoOperativo));
         Assert.Contains("SUNAT", detalleEnRutaBloqueado.BloqueoOperativo, StringComparison.OrdinalIgnoreCase);
         Assert.False(detalleEnRutaBloqueado.PuedeGenerarFactura);
 
         Assert.NotNull(detalleEntregado);
         Assert.Equal("ENTREGADO", detalleEntregado.EstadoOperativo);
-        Assert.Equal(4, detalleEntregado.FaseActualOrden);
         Assert.Null(detalleEntregado.BloqueoOperativo);
         Assert.False(detalleEntregado.PuedeGenerarOrdenesCompra);
         Assert.False(detalleEntregado.PuedeGenerarGuiaRemision);

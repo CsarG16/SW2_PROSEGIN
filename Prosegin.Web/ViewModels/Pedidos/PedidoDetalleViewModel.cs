@@ -22,7 +22,6 @@ public class PedidoDetalleViewModel
     /// </summary>
     public string EstadoOperativo { get; set; } = "POR_PREPARAR";
     public string EstadoOperativoTexto { get; set; } = "Por Preparar";
-    public int FaseActualOrden { get; set; }
     public string? BloqueoOperativo { get; set; }
     public string? MotivoCancelacion { get; set; }
     public bool PuedeCancelar { get; set; }

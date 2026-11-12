@@ -201,7 +201,6 @@ public class FacturacionIntegracionTests
         var detalleFinal = await service.ObtenerDetallePedidoAsync("COT-FLUJO-001");
         Assert.NotNull(detalleFinal);
         Assert.Equal("ENTREGADO", detalleFinal.EstadoOperativo);
-        Assert.Equal(4, detalleFinal.FaseActualOrden);
         Assert.Null(detalleFinal.BloqueoOperativo);
         Assert.False(detalleFinal.PuedeGenerarFactura);
         Assert.False(detalleFinal.PuedeGenerarGuiaRemision);
