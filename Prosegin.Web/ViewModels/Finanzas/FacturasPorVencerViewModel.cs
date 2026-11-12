@@ -41,6 +41,7 @@ public class RegistroPagosViewModel
 {
     public string Busqueda { get; set; } = string.Empty;
     public int? FacturaIdSeleccionada { get; set; }
+    public FacturaPendientePagoViewModel? FacturaSeleccionada { get; set; }
     public string? Mensaje { get; set; }
     public bool BusquedaInvalida { get; set; }
     public DateTime FechaPagoPredeterminada { get; set; } = DateTime.Today;
@@ -55,9 +56,25 @@ public class FacturaPendientePagoViewModel
     public int Id { get; set; }
     public string NumeroFactura { get; set; } = string.Empty;
     public string Cliente { get; set; } = string.Empty;
-    public decimal MontoTotal { get; set; }
-    public decimal SaldoPendiente { get; set; }
+    public string RucCliente { get; set; } = string.Empty;
+    public DateTime FechaEmision { get; set; }
     public DateTime FechaVencimiento { get; set; }
+    public int PlazoDias { get; set; }
+    public decimal MontoTotal { get; set; }
+    public decimal MontoAbonado { get; set; }
+    public decimal SaldoPendiente { get; set; }
+    public string Estado { get; set; } = string.Empty;
+    public int CantidadAbonos { get; set; }
+    public List<AbonoFacturaViewModel> Abonos { get; set; } = new();
+}
+
+public class AbonoFacturaViewModel
+{
+    public int NumeroCuota { get; set; }
+    public decimal Monto { get; set; }
+    public DateTime FechaPago { get; set; }
+    public string MetodoPago { get; set; } = string.Empty;
+    public string? Referencia { get; set; }
 }
 
 public class CuentasPorCobrarViewModel
@@ -82,12 +99,16 @@ public class CuentaPorCobrarItemViewModel
     public int ClienteId { get; set; }
     public string NumeroFactura { get; set; } = string.Empty;
     public string Cliente { get; set; } = string.Empty;
+    public string RucCliente { get; set; } = string.Empty;
     public DateTime FechaEmision { get; set; }
     public DateTime FechaVencimiento { get; set; }
+    public int PlazoDias { get; set; }
     public decimal MontoTotal { get; set; }
+    public decimal MontoAbonado { get; set; }
     public decimal SaldoPendiente { get; set; }
     public string Estado { get; set; } = string.Empty;
     public bool PdfDisponible { get; set; }
+    public List<DetalleFacturaCuentaViewModel> Detalles { get; set; } = new();
 }
 
 public class DetalleCuentaPorCobrarViewModel

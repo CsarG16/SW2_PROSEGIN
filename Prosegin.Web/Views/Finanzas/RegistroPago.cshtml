@@ -1,142 +1,576 @@
-@model Prosegin.Web.ViewModels.Finanzas.RegistroPagosViewModel
 @using System.Globalization
-
+@using System.Text.Json
+@model Prosegin.Web.ViewModels.Finanzas.RegistroPagosViewModel
 @{
     ViewData["Title"] = "Registro de Pago";
-    var culture = CultureInfo.GetCultureInfo("es-PE");
+    var culturaPe = CultureInfo.GetCultureInfo("es-PE");
+    var preseleccionada = Model.FacturaSeleccionada;
+    var montoInicial = preseleccionada != null && preseleccionada.CantidadAbonos == 1
+        ? preseleccionada.SaldoPendiente.ToString("0.00", CultureInfo.InvariantCulture)
+        : string.Empty;
+    var facturasJson = JsonSerializer.Serialize(
+        Model.Facturas,
+        new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase })
+        .Replace("<", "\\u003c");
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/finanzas.css" asp-append-version="true" />
 }
 
-<div class="container-fluid px-0 finance-page">
-    <header class="finance-page-header">
-        <div class="finance-page-heading">
-            <span class="finance-page-icon"><i class="material-symbols-outlined">payments</i></span>
-            <div>
-                <div class="finance-page-kicker">Finanzas / Cobranzas</div>
-                <h1 class="finance-page-title">Registro de Pago</h1>
-                <p class="finance-page-subtitle">Registra abonos o pagos totales de facturas pendientes.</p>
+<div class="container-fluid px-0 finanzas-page">
+    <div class="prosegin-card p-3 p-md-4 mb-3">
+        <div class="prosegin-page-header--accent" style="margin-bottom: 0;">
+            <div class="header-content">
+                <h1 class="page-title">Registro de Pago de Factura</h1>
+                <p class="page-subtitle">Seleccione una factura pendiente y registre un abono parcial (máximo 2 cuotas) o cancelación total.</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-action="CuentasPorCobrar" class="btn-prosegin-secondary">
+                    <span class="material-symbols-outlined">arrow_back</span> Cuentas por Cobrar
+                </a>
+                <a asp-action="FacturasPorVencer" class="btn-prosegin-secondary">
+                    <span class="material-symbols-outlined">event_upcoming</span> Facturas por Vencer
+                </a>
             </div>
         </div>
-        <div class="d-flex align-items-center gap-2 finance-page-header-actions">
-            <a asp-action="CuentasPorCobrar" class="btn-prosegin-secondary">Cuentas por cobrar</a>
-            <a asp-action="FacturasPorVencer" class="btn-prosegin-secondary">Facturas por vencer</a>
-            <span class="finance-brand-pill"><i class="material-symbols-outlined">payments</i>PROSEGIN</span>
-        </div>
-    </header>
+    </div>
 
-    <form asp-action="RegistroPago" method="get" class="finance-filter-panel">
-        <div class="card-body">
-            <div class="row g-2 align-items-end">
-                <div class="col-md-8 col-lg-6">
-                    <label for="buscarFactura" class="form-label">Buscar factura o cliente</label>
-                    <input id="buscarFactura" name="busqueda" value="@Model.Busqueda" class="form-control"
-                           placeholder="Número de factura o nombre del cliente" />
-                </div>
-                <div class="col-auto">
-                    <button type="submit" class="btn-prosegin-primary">Buscar</button>
-                </div>
-                @if (!string.IsNullOrEmpty(Model.Busqueda))
-                {
-                    <div class="col-auto">
-                        <a asp-action="RegistroPago" class="btn-prosegin-secondary">Limpiar</a>
+    <div class="prosegin-card p-3 p-md-4 mb-3">
+        <form asp-action="RegistroPago" method="get" class="row g-3 align-items-center">
+            <div class="col-12 col-lg-7">
+                <div class="row g-2 align-items-center">
+                    <div class="col-12 col-sm">
+                        <div class="prosegin-search-box">
+                            <i class="material-symbols-outlined">search</i>
+                            <input id="busquedaPago"
+                                   type="text"
+                                   name="busqueda"
+                                   value="@Model.Busqueda"
+                                   placeholder="Buscar por número de factura o cliente..."
+                                   aria-label="Buscar factura pendiente por número o cliente" />
+                        </div>
                     </div>
-                }
+                    <div class="col-12 col-sm-auto d-flex gap-2">
+                        <button type="submit" class="btn-prosegin-primary">
+                            <span class="material-symbols-outlined">search</span> Buscar
+                        </button>
+                        <a asp-action="RegistroPago" class="btn-prosegin-secondary">
+                            <span class="material-symbols-outlined">restart_alt</span> Limpiar
+                        </a>
+                    </div>
+                </div>
             </div>
-        </div>
-    </form>
+            <div class="col-12 col-lg-5">
+                <div class="finanzas-selected-pill" id="selectedInvoicePill">
+                    <span class="material-symbols-outlined">verified</span>
+                    <span id="selectedPillText">
+                        @if (preseleccionada != null)
+                        {
+                            <text>Factura seleccionada: <strong>@preseleccionada.NumeroFactura</strong> — @preseleccionada.Cliente @(string.IsNullOrWhiteSpace(preseleccionada.RucCliente) ? "" : $"(RUC: {preseleccionada.RucCliente})")</text>
+                        }
+                        else
+                        {
+                            <text>Seleccione una factura pendiente del listado inferior</text>
+                        }
+                    </span>
+                </div>
+            </div>
+        </form>
+    </div>
 
     @if (!string.IsNullOrWhiteSpace(Model.Mensaje))
     {
-        <div class="finance-empty-state @(Model.BusquedaInvalida ? "is-warning" : "")" role="status">@Model.Mensaje</div>
+        if (Model.BusquedaInvalida)
+        {
+            <div class="prosegin-alert prosegin-alert-warning mb-3" role="alert">
+                <span class="material-symbols-outlined">warning</span>
+                <span>@Model.Mensaje</span>
+            </div>
+        }
+        else if (Model.Facturas.Count == 0)
+        {
+            <div class="prosegin-card">
+                <div class="prosegin-empty-state">
+                    <span class="material-symbols-outlined empty-icon d-block">payments</span>
+                    <div class="empty-title">Sin facturas pendientes</div>
+                    <div class="empty-desc">@Model.Mensaje</div>
+                </div>
+            </div>
+        }
     }
 
-    @if (Model.Facturas.Count > 0)
+    @if (Model.Facturas.Any())
     {
-        <div class="text-muted small mb-2">Mostrando @Model.Facturas.Count de @Model.TotalFacturas facturas pendientes</div>
-        <form asp-action="RegistrarPago" method="post" class="finance-data-card mb-4">
+        <form asp-action="RegistrarPago" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" name="Busqueda" value="@Model.Busqueda" />
             <input type="hidden" name="Pagina" value="@Model.Pagina" />
-            <div class="table-responsive">
-                <table class="table table-hover align-middle finance-table">
-                    <thead>
-                        <tr>
-                            <th>Seleccionar</th>
-                            <th>Factura</th>
-                            <th>Cliente</th>
-                            <th class="text-end">Monto total</th>
-                            <th class="text-end">Saldo pendiente</th>
-                            <th>Vencimiento</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var factura in Model.Facturas)
-                        {
+
+            <div class="prosegin-card overflow-hidden mb-3">
+                <div class="prosegin-results-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="results-title">Facturas pendientes de cobro</span>
+                        <span class="count-pill">@Model.TotalFacturas pendientes</span>
+                    </div>
+                    <span class="results-note">Haga clic en un comprobante para cargar su detalle y cuotas</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="prosegin-table mb-0">
+                        <thead>
                             <tr>
-                                <td>
-                                    <input class="form-check-input" type="radio" name="FacturaId" value="@factura.Id"
-                                           checked="@(Model.FacturaIdSeleccionada == factura.Id)"
-                                           aria-label="Seleccionar factura @factura.NumeroFactura" />
-                                </td>
-                                <td class="finance-document-number">@factura.NumeroFactura</td>
-                                <td>@factura.Cliente</td>
-                                <td class="text-end">@factura.MontoTotal.ToString("C", culture)</td>
-                                <td class="text-end fw-semibold">@factura.SaldoPendiente.ToString("C", culture)</td>
-                                <td>@factura.FechaVencimiento.ToString("dd/MM/yyyy", culture)</td>
+                                <th style="width: 44px;"></th>
+                                <th>FACTURA</th>
+                                <th>CLIENTE</th>
+                                <th>VENCIMIENTO</th>
+                                <th>TOTAL</th>
+                                <th>SALDO</th>
+                                <th>ESTADO</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach (var factura in Model.Facturas)
+                            {
+                                var seleccionada = Model.FacturaIdSeleccionada == factura.Id;
+                                var badgeClass = factura.Estado == "Vencida"
+                                    ? "badge-status-danger"
+                                    : "badge-status-warning";
+
+                                <tr class="finanzas-selectable-row @(seleccionada ? "finanzas-row-selected" : "")"
+                                    data-id="@factura.Id"
+                                    style="cursor: pointer;">
+                                    <td>
+                                        <input class="form-check-input radio-factura-pago"
+                                               type="radio"
+                                               name="FacturaId"
+                                               id="factura-@factura.Id"
+                                               value="@factura.Id"
+                                               checked="@seleccionada"
+                                               aria-label="Seleccionar factura @factura.NumeroFactura" />
+                                    </td>
+                                    <td>
+                                        <label class="fw-bold text-dark mb-0 d-block" for="factura-@factura.Id" style="cursor: pointer;">
+                                            @factura.NumeroFactura
+                                        </label>
+                                        <span class="text-muted" style="font-size: 0.74rem;">
+                                            @(factura.CantidadAbonos == 1 ? "Cuota 2 de 2" : "0 de 2 abonos")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-medium text-dark">@factura.Cliente</div>
+                                        @if (!string.IsNullOrWhiteSpace(factura.RucCliente))
+                                        {
+                                            <div class="text-muted" style="font-size: 0.75rem;">RUC @factura.RucCliente</div>
+                                        }
+                                    </td>
+                                    <td class="text-nowrap">@factura.FechaVencimiento.ToString("dd/MM/yyyy")</td>
+                                    <td class="text-nowrap text-muted">@factura.MontoTotal.ToString("C", culturaPe)</td>
+                                    <td class="text-nowrap fw-bold text-dark">@factura.SaldoPendiente.ToString("C", culturaPe)</td>
+                                    <td>
+                                        <span class="badge-status @badgeClass">
+                                            <span class="status-dot"></span> @factura.Estado
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="prosegin-table-footer">
+                    <span>Mostrando @Model.Facturas.Count de @Model.TotalFacturas facturas</span>
+
+                    @if (Model.TotalPaginas > 1)
+                    {
+                        <nav aria-label="Paginación de facturas pendientes">
+                            <ul class="finanzas-pagination">
+                                @for (var i = 1; i <= Model.TotalPaginas; i++)
+                                {
+                                    <li class="page-item @(i == Model.Pagina ? "active" : "")">
+                                        <a class="page-link"
+                                           asp-action="RegistroPago"
+                                           asp-route-busqueda="@Model.Busqueda"
+                                           asp-route-facturaId="@Model.FacturaIdSeleccionada"
+                                           asp-route-pagina="@i">@i</a>
+                                    </li>
+                                }
+                            </ul>
+                        </nav>
+                    }
+                </div>
             </div>
 
-            <div class="card-body border-top">
-            <h2 class="finance-section-title mb-3">Datos del pago</h2>
-                <div class="row g-3 align-items-end">
-                    <div class="col-sm-6 col-lg-2">
-                        <label for="montoPago" class="form-label">Monto del pago</label>
-                        <input id="montoPago" name="Monto" type="number" min="0.01" step="0.01" class="form-control" />
+            <div class="row g-3 align-items-start">
+                <div class="col-12 col-lg-5 d-flex flex-column gap-3">
+                    <div class="prosegin-card p-3 p-md-4">
+                        <div class="d-flex align-items-center justify-content-between gap-2 pb-2 mb-3 border-bottom">
+                            <span class="prosegin-section-label mb-0">Detalle del comprobante</span>
+                            <span id="comprobantePlazo" class="count-pill @(preseleccionada == null ? "d-none" : "")">
+                                @(preseleccionada == null ? "" : preseleccionada.PlazoDias == 0 ? "Contado" : $"Crédito {preseleccionada.PlazoDias}d")
+                            </span>
+                        </div>
+
+                        <div id="detalleEmptyPlaceholder" class="text-muted @(preseleccionada != null ? "d-none" : "")" style="font-size: 0.86rem;">
+                            Seleccione una factura pendiente de la tabla superior para visualizar sus datos tributarios y saldo actual.
+                        </div>
+
+                        <div id="detalleComprobanteBody" class="@(preseleccionada == null ? "d-none" : "")">
+                            <div class="finanzas-comprobante-grid">
+                                <div>
+                                    <span class="finanzas-meta-label">N° de factura</span>
+                                    <span class="finanzas-meta-value" id="detNumeroFactura">@(preseleccionada?.NumeroFactura ?? "")</span>
+                                </div>
+                                <div>
+                                    <span class="finanzas-meta-label">Moneda operativa</span>
+                                    <span class="finanzas-meta-value">PEN (Soles Peruanos)</span>
+                                </div>
+                                <div style="grid-column: 1 / -1;">
+                                    <span class="finanzas-meta-label">Cliente / Razón social</span>
+                                    <span class="finanzas-meta-value d-block" id="detCliente">@(preseleccionada?.Cliente ?? "")</span>
+                                    <span class="text-muted" id="detRuc" style="font-size: 0.78rem;">
+                                        @(preseleccionada != null && !string.IsNullOrWhiteSpace(preseleccionada.RucCliente) ? $"RUC: {preseleccionada.RucCliente}" : "")
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="finanzas-meta-label">Fecha emisión</span>
+                                    <span class="finanzas-meta-value" id="detFechaEmision">@(preseleccionada?.FechaEmision.ToString("dd/MM/yyyy") ?? "")</span>
+                                </div>
+                                <div>
+                                    <span class="finanzas-meta-label">Vencimiento</span>
+                                    <span class="finanzas-meta-value" id="detVencimiento">
+                                        @(preseleccionada != null ? $"{preseleccionada.FechaVencimiento:dd/MM/yyyy} ({preseleccionada.Estado})" : "")
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="finanzas-summary-box">
+                                <div class="finanzas-summary-row">
+                                    <span>Importe Total Facturado</span>
+                                    <strong class="text-dark" id="detMontoTotal">@(preseleccionada?.MontoTotal.ToString("C", culturaPe) ?? "")</strong>
+                                </div>
+                                <div class="finanzas-summary-row">
+                                    <span id="detAbonadoLabel">
+                                        Total Abonado a la fecha (@(preseleccionada?.CantidadAbonos ?? 0) de 2 cuotas)
+                                    </span>
+                                    <strong id="detMontoAbonado" class="@(preseleccionada?.MontoAbonado > 0 ? "text-success" : "text-muted")">
+                                        @(preseleccionada != null ? $"- {preseleccionada.MontoAbonado.ToString("C", culturaPe)}" : "")
+                                    </strong>
+                                </div>
+                                <div class="finanzas-summary-row is-total">
+                                    <span>SALDO PENDIENTE ACTUAL</span>
+                                    <span class="finanzas-summary-total" id="detSaldoPendiente">@(preseleccionada?.SaldoPendiente.ToString("C", culturaPe) ?? "")</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-sm-6 col-lg-2">
-                        <label for="fechaPago" class="form-label">Fecha de pago</label>
-                        <input id="fechaPago" name="FechaPago" type="date" value="@Model.FechaPagoPredeterminada.ToString("yyyy-MM-dd")" class="form-control" />
+
+                    <div class="prosegin-card p-3 p-md-4">
+                        <div class="prosegin-section-label mb-3">Historial de cuotas y abonos</div>
+                        <div id="cuotasEmptyPlaceholder" class="text-muted @(preseleccionada != null ? "d-none" : "")" style="font-size: 0.85rem;">
+                            El cronograma de cuotas (máximo 2 abonos) aparecerá al seleccionar un comprobante.
+                        </div>
+                        <div id="cuotasLista" class="@(preseleccionada == null ? "d-none" : "")">
+                            @if (preseleccionada != null)
+                            {
+                                foreach (var abono in preseleccionada.Abonos)
+                                {
+                                    <div class="finanzas-cuota-card is-paid">
+                                        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                                            <span class="fw-bold text-dark" style="font-size: 0.85rem;">
+                                                Cuota @abono.NumeroCuota de 2 · Primer Abono
+                                            </span>
+                                            <span class="badge-status badge-status-success">
+                                                <span class="status-dot"></span> Registrado
+                                            </span>
+                                        </div>
+                                        <div class="d-flex flex-wrap justify-content-between gap-2 text-muted" style="font-size: 0.78rem;">
+                                            <span>Fecha: <strong class="text-dark">@abono.FechaPago.ToString("dd/MM/yyyy")</strong></span>
+                                            <span>
+                                                @abono.MetodoPago@(string.IsNullOrWhiteSpace(abono.Referencia) ? "" : $" · {abono.Referencia}")
+                                            </span>
+                                        </div>
+                                        <div class="text-end fw-bold text-dark mt-2" style="font-size: 0.95rem;">
+                                            @abono.Monto.ToString("C", culturaPe)
+                                        </div>
+                                    </div>
+                                }
+
+                                <div class="finanzas-cuota-card is-pending">
+                                    <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+                                        <span class="fw-bold text-dark" style="font-size: 0.85rem;">
+                                            @(preseleccionada.CantidadAbonos == 1 ? "Cuota 2 de 2 · Liquidación Final" : "Cuota 1 de 2 · Abono Parcial o Total")
+                                        </span>
+                                        <span class="badge-status badge-status-warning">
+                                            <span class="status-dot"></span> Por Registrar
+                                        </span>
+                                    </div>
+                                    <div class="text-muted" style="font-size: 0.78rem;">
+                                        @(preseleccionada.CantidadAbonos == 1
+                                            ? "Debe cubrir obligatoriamente el saldo restante completo."
+                                            : "Puede abonar parcialmente o cancelar el total de la deuda.")
+                                    </div>
+                                    <div class="text-end fw-bold mt-2" style="font-size: 0.95rem; color: var(--accent-text);">
+                                        @preseleccionada.SaldoPendiente.ToString("C", culturaPe)
+                                    </div>
+                                </div>
+                            }
+                        </div>
                     </div>
-                    <div class="col-sm-6 col-lg-3">
-                        <label for="metodoPago" class="form-label">Método de pago</label>
-                        <select id="metodoPago" name="MetodoPago" class="form-select">
-                            <option value="">Seleccione un método</option>
-                            <option value="Transferencia">Transferencia</option>
-                            <option value="Depósito">Depósito</option>
-                            <option value="Efectivo">Efectivo</option>
-                            <option value="Tarjeta">Tarjeta</option>
-                            <option value="Cheque">Cheque</option>
-                        </select>
-                    </div>
-                    <div class="col-sm-6 col-lg-3">
-                        <label for="referenciaPago" class="form-label">Referencia (opcional)</label>
-                        <input id="referenciaPago" name="Referencia" maxlength="100" class="form-control" />
-                    </div>
-                    <div class="col-lg-2 d-grid">
-                        <button type="submit" class="btn-prosegin-primary">Registrar Pago</button>
+                </div>
+
+                <div class="col-12 col-lg-7">
+                    <div class="prosegin-card p-3 p-md-4">
+                        <div class="prosegin-section-label pb-2 mb-3 border-bottom">Registrar Nuevo Abono</div>
+
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label-prosegin" for="montoPago">Monto a Pagar (PEN S/) *</label>
+                                <div class="finanzas-input-currency">
+                                    <span class="finanzas-input-currency-prefix">S/</span>
+                                    <input id="montoPago"
+                                           type="number"
+                                           step="0.01"
+                                           min="0.01"
+                                           name="Monto"
+                                           value="@montoInicial"
+                                           placeholder="0.00"
+                                           class="form-control form-control-prosegin" />
+                                </div>
+                                <div id="reglaCuotaHint" class="mt-1 text-muted" style="font-size: 0.78rem;">
+                                    @(preseleccionada != null && preseleccionada.CantidadAbonos == 1
+                                        ? $"Segundo pago obligatorio por el total pendiente ({preseleccionada.SaldoPendiente.ToString("C", culturaPe)})."
+                                        : "Máximo 2 cuotas por factura. El segundo pago deberá liquidar el 100% del saldo.")
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <label class="form-label-prosegin" for="fechaPago">Fecha de Pago *</label>
+                                <input id="fechaPago"
+                                       type="date"
+                                       name="FechaPago"
+                                       value="@Model.FechaPagoPredeterminada.ToString("yyyy-MM-dd")"
+                                       max="@DateTime.Today.ToString("yyyy-MM-dd")"
+                                       class="form-control form-control-prosegin" />
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <label class="form-label-prosegin" for="metodoPago">Método de Pago *</label>
+                                <select id="metodoPago" name="MetodoPago" class="form-select form-select-prosegin">
+                                    <option value="">Seleccione un método...</option>
+                                    <option value="Transferencia">Transferencia</option>
+                                    <option value="Depósito">Depósito</option>
+                                    <option value="Efectivo">Efectivo</option>
+                                    <option value="Tarjeta">Tarjeta</option>
+                                    <option value="Cheque">Cheque</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label-prosegin" for="referenciaPago">N.° de Operación / Código de Referencia (Opcional)</label>
+                                <input id="referenciaPago"
+                                       type="text"
+                                       name="Referencia"
+                                       maxlength="100"
+                                       placeholder="Ej. OP-98310452"
+                                       class="form-control form-control-prosegin" />
+                            </div>
+                        </div>
+
+                        <div class="mt-4 d-flex justify-content-end">
+                            <button type="submit" class="btn-prosegin-primary">
+                                <span class="material-symbols-outlined">check_circle</span> Registrar Pago
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </form>
-
-        @if (Model.TotalPaginas > 1)
-        {
-            <nav class="mt-3" aria-label="Paginación de facturas pendientes">
-                <ul class="pagination justify-content-end">
-                    @for (var pagina = 1; pagina <= Model.TotalPaginas; pagina++)
-                    {
-                        <li class="page-item @(pagina == Model.Pagina ? "active" : "")">
-                            <a class="page-link" asp-action="RegistroPago" asp-route-busqueda="@Model.Busqueda" asp-route-pagina="@pagina">@pagina</a>
-                        </li>
-                    }
-                </ul>
-            </nav>
-        }
     }
 </div>
+
+@section Scripts {
+    <script id="facturasPendientesJson" type="application/json">@Html.Raw(facturasJson)</script>
+    <script>
+        (function () {
+            var jsonEl = document.getElementById('facturasPendientesJson');
+            var facturas = jsonEl ? JSON.parse(jsonEl.textContent || '[]') : [];
+            var map = {};
+            facturas.forEach(function (f) { map[f.id] = f; });
+
+            var pillText = document.getElementById('selectedPillText');
+            var plazoBadge = document.getElementById('comprobantePlazo');
+            var emptyDet = document.getElementById('detalleEmptyPlaceholder');
+            var bodyDet = document.getElementById('detalleComprobanteBody');
+            var emptyCuotas = document.getElementById('cuotasEmptyPlaceholder');
+            var listaCuotas = document.getElementById('cuotasLista');
+
+            var detNum = document.getElementById('detNumeroFactura');
+            var detCli = document.getElementById('detCliente');
+            var detRuc = document.getElementById('detRuc');
+            var detEmi = document.getElementById('detFechaEmision');
+            var detVen = document.getElementById('detVencimiento');
+            var detTot = document.getElementById('detMontoTotal');
+            var detAbonLbl = document.getElementById('detAbonadoLabel');
+            var detAbon = document.getElementById('detMontoAbonado');
+            var detSaldo = document.getElementById('detSaldoPendiente');
+            var montoInput = document.getElementById('montoPago');
+            var reglaHint = document.getElementById('reglaCuotaHint');
+
+            function fmtMoney(val) {
+                return 'S/ ' + Number(val || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            function fmtDate(iso) {
+                if (!iso) return '';
+                var parts = String(iso).substring(0, 10).split('-');
+                return parts.length === 3 ? parts[2] + '/' + parts[1] + '/' + parts[0] : iso;
+            }
+
+            function renderCuotas(f) {
+                if (!listaCuotas) return;
+                listaCuotas.replaceChildren();
+
+                (f.abonos || []).forEach(function (abono) {
+                    var card = document.createElement('div');
+                    card.className = 'finanzas-cuota-card is-paid';
+
+                    var top = document.createElement('div');
+                    top.className = 'd-flex align-items-center justify-content-between gap-2 mb-2';
+                    var title = document.createElement('span');
+                    title.className = 'fw-bold text-dark';
+                    title.style.fontSize = '0.85rem';
+                    title.textContent = 'Cuota ' + abono.numeroCuota + ' de 2 · Primer Abono';
+
+                    var badge = document.createElement('span');
+                    badge.className = 'badge-status badge-status-success';
+                    var dot = document.createElement('span');
+                    dot.className = 'status-dot';
+                    badge.appendChild(dot);
+                    badge.append(' Registrado');
+                    top.append(title, badge);
+
+                    var meta = document.createElement('div');
+                    meta.className = 'd-flex flex-wrap justify-content-between gap-2 text-muted';
+                    meta.style.fontSize = '0.78rem';
+                    var fSpan = document.createElement('span');
+                    fSpan.textContent = 'Fecha: ' + fmtDate(abono.fechaPago);
+                    var mSpan = document.createElement('span');
+                    mSpan.textContent = abono.metodoPago + (abono.referencia ? ' · ' + abono.referencia : '');
+                    meta.append(fSpan, mSpan);
+
+                    var amt = document.createElement('div');
+                    amt.className = 'text-end fw-bold text-dark mt-2';
+                    amt.style.fontSize = '0.95rem';
+                    amt.textContent = fmtMoney(abono.monto);
+
+                    card.append(top, meta, amt);
+                    listaCuotas.appendChild(card);
+                });
+
+                var pendingCard = document.createElement('div');
+                pendingCard.className = 'finanzas-cuota-card is-pending';
+
+                var pTop = document.createElement('div');
+                pTop.className = 'd-flex align-items-center justify-content-between gap-2 mb-1';
+                var pTitle = document.createElement('span');
+                pTitle.className = 'fw-bold text-dark';
+                pTitle.style.fontSize = '0.85rem';
+                pTitle.textContent = f.cantidadAbonos === 1
+                    ? 'Cuota 2 de 2 · Liquidación Final'
+                    : 'Cuota 1 de 2 · Abono Parcial o Total';
+
+                var pBadge = document.createElement('span');
+                pBadge.className = 'badge-status badge-status-warning';
+                var pDot = document.createElement('span');
+                pDot.className = 'status-dot';
+                pBadge.appendChild(pDot);
+                pBadge.append(' Por Registrar');
+                pTop.append(pTitle, pBadge);
+
+                var pDesc = document.createElement('div');
+                pDesc.className = 'text-muted';
+                pDesc.style.fontSize = '0.78rem';
+                pDesc.textContent = f.cantidadAbonos === 1
+                    ? 'Debe cubrir obligatoriamente el saldo restante completo.'
+                    : 'Puede abonar parcialmente o cancelar el total de la deuda.';
+
+                var pAmt = document.createElement('div');
+                pAmt.className = 'text-end fw-bold mt-2';
+                pAmt.style.fontSize = '0.95rem';
+                pAmt.style.color = 'var(--accent-text)';
+                pAmt.textContent = fmtMoney(f.saldoPendiente);
+
+                pendingCard.append(pTop, pDesc, pAmt);
+                listaCuotas.appendChild(pendingCard);
+            }
+
+            function selectInvoice(id) {
+                var f = map[id];
+                if (!f) return;
+
+                document.querySelectorAll('.finanzas-selectable-row').forEach(function (r) {
+                    r.classList.toggle('finanzas-row-selected', parseInt(r.getAttribute('data-id'), 10) === id);
+                });
+
+                if (pillText) {
+                    pillText.replaceChildren();
+                    pillText.append('Factura seleccionada: ');
+                    var strong = document.createElement('strong');
+                    strong.textContent = f.numeroFactura;
+                    pillText.appendChild(strong);
+                    pillText.append(' — ' + f.cliente + (f.rucCliente ? ' (RUC: ' + f.rucCliente + ')' : ''));
+                }
+
+                if (plazoBadge) {
+                    plazoBadge.classList.remove('d-none');
+                    plazoBadge.textContent = f.plazoDias === 0 ? 'Contado' : 'Crédito ' + f.plazoDias + 'd';
+                }
+
+                if (emptyDet) emptyDet.classList.add('d-none');
+                if (bodyDet) bodyDet.classList.remove('d-none');
+                if (emptyCuotas) emptyCuotas.classList.add('d-none');
+                if (listaCuotas) listaCuotas.classList.remove('d-none');
+
+                if (detNum) detNum.textContent = f.numeroFactura;
+                if (detCli) detCli.textContent = f.cliente;
+                if (detRuc) detRuc.textContent = f.rucCliente ? 'RUC: ' + f.rucCliente : '';
+                if (detEmi) detEmi.textContent = fmtDate(f.fechaEmision);
+                if (detVen) detVen.textContent = fmtDate(f.fechaVencimiento) + ' (' + f.estado + ')';
+                if (detTot) detTot.textContent = fmtMoney(f.montoTotal);
+                if (detAbonLbl) detAbonLbl.textContent = 'Total Abonado a la fecha (' + f.cantidadAbonos + ' de 2 cuotas)';
+                if (detAbon) {
+                    detAbon.textContent = '- ' + fmtMoney(f.montoAbonado);
+                    detAbon.className = f.montoAbonado > 0 ? 'text-success' : 'text-muted';
+                }
+                if (detSaldo) detSaldo.textContent = fmtMoney(f.saldoPendiente);
+
+                renderCuotas(f);
+
+                if (reglaHint) {
+                    reglaHint.textContent = f.cantidadAbonos === 1
+                        ? 'Segundo pago obligatorio por el total pendiente (' + fmtMoney(f.saldoPendiente) + ').'
+                        : 'Máximo 2 cuotas por factura. El segundo pago deberá liquidar el 100% del saldo.';
+                }
+
+                if (montoInput) {
+                    if (f.cantidadAbonos === 1) {
+                        montoInput.value = Number(f.saldoPendiente).toFixed(2);
+                        montoInput.setAttribute('data-autofilled', 'true');
+                    } else if (montoInput.getAttribute('data-autofilled') === 'true') {
+                        montoInput.value = '';
+                        montoInput.removeAttribute('data-autofilled');
+                    }
+                }
+            }
+
+            document.querySelectorAll('.finanzas-selectable-row').forEach(function (row) {
+                row.addEventListener('click', function (e) {
+                    var radio = row.querySelector('.radio-factura-pago');
+                    if (radio && e.target !== radio) {
+                        radio.checked = true;
+                    }
+                    var id = parseInt(row.getAttribute('data-id') || '0', 10);
+                    selectInvoice(id);
+                });
+            });
+        })();
+    </script>
+}

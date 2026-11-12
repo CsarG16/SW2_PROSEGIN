@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Prosegin.Data;
 using Prosegin.Data.Entities;
+using Prosegin.Web.Services.Nubefact;
 using Prosegin.Web.ViewModels.Finanzas;
 
 namespace Prosegin.Web.Controllers;
@@ -66,25 +67,36 @@ public class FinanzasController : Controller
             .AsNoTracking()
             .Include(factura => factura.Cliente)
             .Include(factura => factura.Pagos)
+            .Include(factura => factura.Detalles)
+            .Where(factura => factura.EstadoEmision != NubefactService.EstadoRechazado)
             .ToListAsync(cancellationToken);
         var hoy = DateTime.Today;
         var facturas = registros.Select(factura =>
             {
-                var pagada = EsPagada(factura.EstadoPago);
-                var saldo = pagada ? 0 : Math.Max(0, factura.Total - factura.Pagos.Sum(pago => pago.Monto));
-                var vencida = !pagada && factura.FechaVencimiento.Date < hoy;
+                var saldo = CalcularSaldoPendiente(factura);
+                var abonado = Math.Max(0, factura.Total - saldo);
                 return new CuentaPorCobrarItemViewModel
                 {
                     Id = factura.Id,
                     ClienteId = factura.ClienteId,
                     NumeroFactura = factura.NumeroFactura,
                     Cliente = factura.Cliente.RazonSocial,
+                    RucCliente = factura.Cliente.Ruc,
                     FechaEmision = factura.FechaEmision,
                     FechaVencimiento = factura.FechaVencimiento,
+                    PlazoDias = Math.Max(0, (factura.FechaVencimiento.Date - factura.FechaEmision.Date).Days),
                     MontoTotal = factura.Total,
+                    MontoAbonado = abonado,
                     SaldoPendiente = saldo,
-                    Estado = pagada ? "Pagada" : vencida ? "Vencida" : "Al día",
-                    PdfDisponible = !string.IsNullOrWhiteSpace(factura.EnlacePdf)
+                    Estado = EstadoCuenta(factura, hoy),
+                    PdfDisponible = !string.IsNullOrWhiteSpace(factura.EnlacePdf),
+                    Detalles = factura.Detalles.Select(detalle => new DetalleFacturaCuentaViewModel
+                    {
+                        Descripcion = detalle.Descripcion,
+                        Cantidad = detalle.Cantidad,
+                        PrecioUnitario = detalle.PrecioUnitario,
+                        Total = detalle.Total
+                    }).ToList()
                 };
             })
             .Where(factura => !clienteId.HasValue || factura.ClienteId == clienteId.Value)
@@ -130,9 +142,8 @@ public class FinanzasController : Controller
         if (factura == null)
             return NotFound();
 
-        var pagada = EsPagada(factura.EstadoPago);
-        var saldo = pagada ? 0 : Math.Max(0, factura.Total - factura.Pagos.Sum(pago => pago.Monto));
-        var vencida = !pagada && factura.FechaVencimiento.Date < DateTime.Today;
+        var hoy = DateTime.Today;
+        var saldo = CalcularSaldoPendiente(factura);
         var model = new DetalleCuentaPorCobrarViewModel
         {
             Id = factura.Id,
@@ -144,7 +155,7 @@ public class FinanzasController : Controller
             PlazoDias = Math.Max(0, (factura.FechaVencimiento.Date - factura.FechaEmision.Date).Days),
             MontoTotal = factura.Total,
             SaldoPendiente = saldo,
-            Estado = pagada ? "Pagada" : vencida ? "Vencida" : "Al día",
+            Estado = EstadoCuenta(factura, hoy),
             Detalles = factura.Detalles.Select(detalle => new DetalleFacturaCuentaViewModel
             {
                 Descripcion = detalle.Descripcion,
@@ -198,14 +209,13 @@ public class FinanzasController : Controller
             .AsNoTracking()
             .Include(factura => factura.Cliente)
             .Include(factura => factura.Pagos)
+            .Where(factura => factura.EstadoEmision != NubefactService.EstadoRechazado)
             .ToListAsync(cancellationToken);
 
         var facturas = registrosFactura
             .Select(factura =>
             {
-                var saldoPendiente = EsPagada(factura.EstadoPago)
-                    ? 0
-                    : Math.Max(0, factura.Total - factura.Pagos.Sum(pago => pago.Monto));
+                var saldoPendiente = CalcularSaldoPendiente(factura);
                 return new FacturaPorVencerItemViewModel
                 {
                     Id = factura.Id,
@@ -350,22 +360,50 @@ public class FinanzasController : Controller
                 return View(model);
             }
 
+            var hoy = DateTime.Today;
             var pendientes = await _context.Facturas
                 .AsNoTracking()
                 .Include(factura => factura.Cliente)
                 .Include(factura => factura.Pagos)
-                .Where(factura => factura.EstadoPago != "Pagado" && factura.EstadoPago != "Pagada")
+                .Where(factura => factura.EstadoPago != "Pagado"
+                    && factura.EstadoPago != "Pagada"
+                    && factura.EstadoEmision != NubefactService.EstadoRechazado)
                 .ToListAsync(cancellationToken);
 
             var facturas = pendientes
-                .Select(factura => new FacturaPendientePagoViewModel
+                .Select(factura =>
                 {
-                    Id = factura.Id,
-                    NumeroFactura = factura.NumeroFactura,
-                    Cliente = factura.Cliente.RazonSocial,
-                    MontoTotal = factura.Total,
-                    SaldoPendiente = Math.Max(0, factura.Total - factura.Pagos.Sum(pago => pago.Monto)),
-                    FechaVencimiento = factura.FechaVencimiento
+                    var saldo = CalcularSaldoPendiente(factura);
+                    var abonado = Math.Max(0, factura.Total - saldo);
+                    var abonosOrdenados = factura.Pagos
+                        .OrderBy(pago => pago.FechaPago)
+                        .ThenBy(pago => pago.Id)
+                        .Select((pago, idx) => new AbonoFacturaViewModel
+                        {
+                            NumeroCuota = idx + 1,
+                            Monto = pago.Monto,
+                            FechaPago = pago.FechaPago,
+                            MetodoPago = pago.MetodoPago,
+                            Referencia = pago.Referencia
+                        })
+                        .ToList();
+
+                    return new FacturaPendientePagoViewModel
+                    {
+                        Id = factura.Id,
+                        NumeroFactura = factura.NumeroFactura,
+                        Cliente = factura.Cliente.RazonSocial,
+                        RucCliente = factura.Cliente.Ruc,
+                        FechaEmision = factura.FechaEmision,
+                        FechaVencimiento = factura.FechaVencimiento,
+                        PlazoDias = Math.Max(0, (factura.FechaVencimiento.Date - factura.FechaEmision.Date).Days),
+                        MontoTotal = factura.Total,
+                        MontoAbonado = abonado,
+                        SaldoPendiente = saldo,
+                        Estado = EstadoVisible(factura.EstadoPago, factura.FechaVencimiento, hoy),
+                        CantidadAbonos = abonosOrdenados.Count,
+                        Abonos = abonosOrdenados
+                    };
                 })
                 .Where(factura => factura.SaldoPendiente > 0
                     && (string.IsNullOrEmpty(termino)
@@ -384,6 +422,17 @@ public class FinanzasController : Controller
                 return View(model);
             }
 
+            if (facturaId.HasValue)
+            {
+                var indice = facturas.FindIndex(factura => factura.Id == facturaId.Value);
+                if (indice >= 0)
+                {
+                    model.FacturaSeleccionada = facturas[indice];
+                    if (HttpContext?.Request.Query.ContainsKey("pagina") != true)
+                        pagina = (indice / tamanoPagina) + 1;
+                }
+            }
+
             model.TotalPaginas = Math.Max(1, (int)Math.Ceiling(facturas.Count / (double)tamanoPagina));
             model.Pagina = Math.Clamp(pagina, 1, model.TotalPaginas);
             model.Facturas = facturas.Skip((model.Pagina - 1) * tamanoPagina).Take(tamanoPagina).ToList();
@@ -396,21 +445,22 @@ public class FinanzasController : Controller
     {
             var busqueda = request.Busqueda?.Trim();
             var pagina = Math.Max(1, request.Pagina);
+            var facturaSeleccionada = request.FacturaId > 0 ? request.FacturaId : (int?)null;
             if (request.FacturaId <= 0)
                 return PagoInvalido("Seleccione una factura pendiente de pago", busqueda, pagina);
             if (!request.Monto.HasValue || !request.FechaPago.HasValue || string.IsNullOrWhiteSpace(request.MetodoPago))
-                return PagoInvalido("Complete los campos obligatorios", busqueda, pagina);
+                return PagoInvalido("Complete los campos obligatorios", busqueda, pagina, facturaSeleccionada);
             if (request.Monto.Value == 0)
-                return PagoInvalido("Ingrese un monto mayor a S/ 0.00", busqueda, pagina);
+                return PagoInvalido("Ingrese un monto mayor a S/ 0.00", busqueda, pagina, facturaSeleccionada);
             if (request.Monto.Value < 0)
-                return PagoInvalido("Ingrese un monto del pago válido", busqueda, pagina);
+                return PagoInvalido("Ingrese un monto del pago válido", busqueda, pagina, facturaSeleccionada);
             if (request.FechaPago.Value.Date > DateTime.Today)
-                return PagoInvalido("La fecha de pago no puede ser posterior a la fecha actual", busqueda, pagina);
+                return PagoInvalido("La fecha de pago no puede ser posterior a la fecha actual", busqueda, pagina, facturaSeleccionada);
 
             var metodoPago = new[] { "Transferencia", "Efectivo", "Tarjeta", "Depósito", "Cheque" }
                 .FirstOrDefault(metodo => metodo.Equals(request.MetodoPago.Trim(), StringComparison.OrdinalIgnoreCase));
             if (metodoPago == null)
-                return PagoInvalido("Complete los campos obligatorios", busqueda, pagina);
+                return PagoInvalido("Complete los campos obligatorios", busqueda, pagina, facturaSeleccionada);
 
             await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
             var factura = await _context.Facturas
@@ -421,17 +471,27 @@ public class FinanzasController : Controller
             if (EsPagada(factura.EstadoPago))
                 return PagoInvalido("La factura ya se encuentra pagada", busqueda, pagina);
 
-            var saldoPendiente = Math.Max(0, factura.Total - factura.Pagos.Sum(pago => pago.Monto));
+            var saldoPendiente = CalcularSaldoPendiente(factura);
             if (saldoPendiente <= 0)
                 return PagoInvalido("Seleccione una factura pendiente de pago", busqueda, pagina);
+
+            var cantidadAbonos = factura.Pagos.Count;
+            if (cantidadAbonos >= 2)
+                return PagoInvalido("La factura alcanzó el límite máximo de dos cuotas permitidas", busqueda, pagina, facturaSeleccionada);
             if (request.Monto.Value > saldoPendiente)
-                return PagoInvalido("El monto del pago no puede ser mayor al saldo pendiente", busqueda, pagina);
+                return PagoInvalido("El monto del pago no puede ser mayor al saldo pendiente", busqueda, pagina, facturaSeleccionada);
 
             var montoPago = decimal.Round(request.Monto.Value, 2, MidpointRounding.AwayFromZero);
             if (montoPago <= 0)
-                return PagoInvalido("Ingrese un monto del pago válido", busqueda, pagina);
+                return PagoInvalido("Ingrese un monto del pago válido", busqueda, pagina, facturaSeleccionada);
             if (montoPago > saldoPendiente)
-                return PagoInvalido("El monto del pago no puede ser mayor al saldo pendiente", busqueda, pagina);
+                return PagoInvalido("El monto del pago no puede ser mayor al saldo pendiente", busqueda, pagina, facturaSeleccionada);
+            if (cantidadAbonos == 1 && montoPago < saldoPendiente)
+                return PagoInvalido(
+                    "La factura ya cuenta con un primer abono; el segundo pago debe cubrir obligatoriamente la totalidad del saldo pendiente",
+                    busqueda,
+                    pagina,
+                    facturaSeleccionada);
 
             factura.Pagos.Add(new PagoFactura
             {
@@ -448,14 +508,15 @@ public class FinanzasController : Controller
             await _context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
-            TempData["ToastSuccess"] = $"Pago registrado. Saldo pendiente de {factura.NumeroFactura}: {nuevoSaldo.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("es-PE"))}. Estado: {(nuevoSaldo == 0 ? "Pagada" : factura.EstadoPago)}";
+            var estadoToast = EstadoVisible(factura.EstadoPago, factura.FechaVencimiento, DateTime.Today);
+            TempData["ToastSuccess"] = $"Pago registrado. Saldo pendiente de {factura.NumeroFactura}: {nuevoSaldo.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("es-PE"))}. Estado: {estadoToast}";
             return RedirectToAction(nameof(RegistroPago), new { busqueda, pagina });
     }
 
-    private IActionResult PagoInvalido(string mensaje, string? busqueda, int pagina)
+    private IActionResult PagoInvalido(string mensaje, string? busqueda, int pagina, int? facturaId = null)
     {
         TempData["ToastError"] = mensaje;
-        return RedirectToAction(nameof(RegistroPago), new { busqueda, pagina });
+        return RedirectToAction(nameof(RegistroPago), new { busqueda, pagina, facturaId });
     }
 
     private static bool BusquedaPagoValida(string termino) =>
@@ -496,6 +557,18 @@ public class FinanzasController : Controller
     private static bool EsPagada(string estado) =>
         string.Equals(estado, "Pagado", StringComparison.OrdinalIgnoreCase)
         || string.Equals(estado, "Pagada", StringComparison.OrdinalIgnoreCase);
+
+    private static decimal CalcularSaldoPendiente(Factura factura) =>
+        EsPagada(factura.EstadoPago)
+            ? 0
+            : Math.Max(0, factura.Total - factura.Pagos.Sum(pago => pago.Monto));
+
+    private static string EstadoCuenta(Factura factura, DateTime hoy)
+    {
+        if (EsPagada(factura.EstadoPago) || CalcularSaldoPendiente(factura) <= 0)
+            return "Pagada";
+        return factura.FechaVencimiento.Date < hoy.Date ? "Vencida" : "Al día";
+    }
 
     private static int DiasHasta(DateTime vencimiento, DateTime hoy) => (vencimiento.Date - hoy.Date).Days;
 

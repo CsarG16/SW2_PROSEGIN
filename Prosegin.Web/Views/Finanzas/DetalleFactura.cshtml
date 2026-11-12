@@ -1,80 +1,126 @@
-@model Prosegin.Web.ViewModels.Finanzas.DetalleCuentaPorCobrarViewModel
 @using System.Globalization
-
+@model Prosegin.Web.ViewModels.Finanzas.DetalleCuentaPorCobrarViewModel
 @{
-    ViewData["Title"] = $"Detalle {Model.NumeroFactura}";
-    var culture = CultureInfo.GetCultureInfo("es-PE");
+    ViewData["Title"] = $"Detalle de Factura {Model.NumeroFactura}";
+    var culturaPe = CultureInfo.GetCultureInfo("es-PE");
+    var badgeClass = Model.Estado switch
+    {
+        "Pagada" => "badge-status-success",
+        "Vencida" => "badge-status-danger",
+        _ => "badge-status-warning"
+    };
+    var estaPagada = Model.SaldoPendiente <= 0
+        || string.Equals(Model.Estado, "Pagada", StringComparison.OrdinalIgnoreCase);
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/finanzas.css" asp-append-version="true" />
 }
 
-<div class="container-fluid px-0 finance-page">
-    <header class="finance-page-header">
-        <div class="finance-page-heading">
-            <span class="finance-page-icon"><i class="material-symbols-outlined">description</i></span>
-            <div>
-                <div class="finance-page-kicker">Finanzas / Cobranzas</div>
-                <h1 class="finance-page-title">Detalle de factura</h1>
-                <p class="finance-page-subtitle">@Model.NumeroFactura</p>
+<div class="container-fluid px-0 finanzas-page">
+    <div class="prosegin-card p-3 p-md-4 mb-3">
+        <div class="prosegin-page-header--accent" style="margin-bottom: 0;">
+            <div class="header-content">
+                <h1 class="page-title">Detalle de factura @Model.NumeroFactura</h1>
+                <p class="page-subtitle">
+                    @Model.Cliente @(string.IsNullOrWhiteSpace(Model.RucCliente) ? "" : $"· RUC {Model.RucCliente}")
+                </p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-action="CuentasPorCobrar" class="btn-prosegin-secondary">
+                    <span class="material-symbols-outlined">arrow_back</span> Cuentas por Cobrar
+                </a>
+                @if (!estaPagada)
+                {
+                    <a asp-action="RegistroPago" asp-route-facturaId="@Model.Id" class="btn-prosegin-primary">
+                        <span class="material-symbols-outlined">payments</span> Registrar pago
+                    </a>
+                }
             </div>
         </div>
-        <div class="d-flex gap-2 finance-page-header-actions">
-            @if (Model.SaldoPendiente > 0)
-            {
-                <a asp-action="RegistroPago" asp-route-facturaId="@Model.Id" class="btn-prosegin-primary">Registrar pago</a>
-            }
-            <a asp-action="CuentasPorCobrar" class="btn-prosegin-secondary">Volver a cuentas por cobrar</a>
+    </div>
+
+    <div class="prosegin-card p-3 p-md-4 mb-3">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <span class="prosegin-section-label mb-0">Información del comprobante</span>
+            <span class="badge-status @badgeClass">
+                <span class="status-dot"></span> @Model.Estado
+            </span>
         </div>
-    </header>
 
-    <section class="finance-detail-panel mb-4" aria-labelledby="datosFacturaHeading">
-        <h2 id="datosFacturaHeading" class="finance-section-title mb-4">Datos de la factura</h2>
-        <dl class="row mb-0">
-                <dt class="col-sm-3">Cliente</dt>
-                <dd class="col-sm-9">@Model.Cliente (RUC @Model.RucCliente)</dd>
-                <dt class="col-sm-3">Fecha de emisión</dt>
-                <dd class="col-sm-9">@Model.FechaEmision.ToString("dd/MM/yyyy", culture)</dd>
-                <dt class="col-sm-3">Fecha de vencimiento</dt>
-                <dd class="col-sm-9">@Model.FechaVencimiento.ToString("dd/MM/yyyy", culture)</dd>
-                <dt class="col-sm-3">Plazo</dt>
-                <dd class="col-sm-9">@Model.PlazoDias días</dd>
-                <dt class="col-sm-3">Monto total</dt>
-                <dd class="col-sm-9">@Model.MontoTotal.ToString("C", culture)</dd>
-                <dt class="col-sm-3">Saldo pendiente</dt>
-                <dd class="col-sm-9 fw-semibold">@Model.SaldoPendiente.ToString("C", culture)</dd>
-                <dt class="col-sm-3">Estado</dt>
-                <dd class="col-sm-9">
-                    <span class="finance-status @(Model.Estado == "Pagada" ? "is-paid" : Model.Estado == "Vencida" ? "is-overdue" : "is-current")">
-                        @Model.Estado
-                    </span>
-                </dd>
-        </dl>
-    </section>
+        <div class="finanzas-meta-grid">
+            <div>
+                <span class="finanzas-meta-label">Cliente</span>
+                <span class="finanzas-meta-value">@Model.Cliente</span>
+            </div>
+            <div>
+                <span class="finanzas-meta-label">RUC</span>
+                <span class="finanzas-meta-value">@(string.IsNullOrWhiteSpace(Model.RucCliente) ? "—" : Model.RucCliente)</span>
+            </div>
+            <div>
+                <span class="finanzas-meta-label">Fecha de emisión</span>
+                <span class="finanzas-meta-value">@Model.FechaEmision.ToString("dd/MM/yyyy")</span>
+            </div>
+            <div>
+                <span class="finanzas-meta-label">Fecha de vencimiento</span>
+                <span class="finanzas-meta-value">@Model.FechaVencimiento.ToString("dd/MM/yyyy")</span>
+            </div>
+            <div>
+                <span class="finanzas-meta-label">Plazo</span>
+                <span class="finanzas-meta-value">@(Model.PlazoDias == 0 ? "Contado" : $"{Model.PlazoDias} días")</span>
+            </div>
+            <div>
+                <span class="finanzas-meta-label">Monto total</span>
+                <span class="finanzas-meta-value">@Model.MontoTotal.ToString("C", culturaPe)</span>
+            </div>
+            <div>
+                <span class="finanzas-meta-label">Saldo pendiente</span>
+                <span class="finanzas-meta-value text-dark fw-bold">@Model.SaldoPendiente.ToString("C", culturaPe)</span>
+            </div>
+        </div>
+    </div>
 
-    @if (Model.Detalles.Count > 0)
-    {
-        <section class="finance-data-card">
-            <div class="prosegin-card-header"><h2 class="finance-section-title">Detalle de productos</h2></div>
+    <div class="prosegin-card overflow-hidden">
+        <div class="prosegin-results-header">
+            <div class="d-flex align-items-center gap-2">
+                <span class="results-title">Detalle de productos facturados</span>
+                <span class="count-pill">@Model.Detalles.Count ítems</span>
+            </div>
+        </div>
+
+        @if (!Model.Detalles.Any())
+        {
+            <div class="prosegin-empty-state">
+                <span class="material-symbols-outlined empty-icon d-block">inventory_2</span>
+                <div class="empty-title">Sin líneas registradas</div>
+                <div class="empty-desc">Este comprobante no cuenta con ítems de detalle asociados.</div>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
-                <table class="table table-hover align-middle finance-table">
+                <table class="prosegin-table mb-0">
                     <thead>
-                        <tr><th>Descripción</th><th class="text-end">Cantidad</th><th class="text-end">Precio unitario</th><th class="text-end">Total</th></tr>
+                        <tr>
+                            <th>DESCRIPCIÓN</th>
+                            <th class="text-end">CANTIDAD</th>
+                            <th class="text-end">PRECIO UNITARIO</th>
+                            <th class="text-end">TOTAL</th>
+                        </tr>
                     </thead>
                     <tbody>
-                        @foreach (var detalle in Model.Detalles)
+                        @foreach (var item in Model.Detalles)
                         {
                             <tr>
-                                <td>@detalle.Descripcion</td>
-                                <td class="text-end">@detalle.Cantidad</td>
-                                <td class="text-end">@detalle.PrecioUnitario.ToString("C", culture)</td>
-                                <td class="text-end">@detalle.Total.ToString("C", culture)</td>
+                                <td class="fw-medium text-dark">@item.Descripcion</td>
+                                <td class="text-end">@item.Cantidad.ToString("N2", culturaPe)</td>
+                                <td class="text-end text-nowrap">@item.PrecioUnitario.ToString("C", culturaPe)</td>
+                                <td class="text-end fw-bold text-dark text-nowrap">@item.Total.ToString("C", culturaPe)</td>
                             </tr>
                         }
                     </tbody>
                 </table>
             </div>
-        </section>
-    }
+        }
+    </div>
 </div>

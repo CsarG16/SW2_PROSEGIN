@@ -116,8 +116,8 @@ public sealed class FinanzasIntegracionTests : IAsyncLifetime
 
         Assert.Contains("Factura-001", porEmision);
         Assert.DoesNotContain("Factura-002", porEmision);
-        Assert.Contains("finance-status", porEmision);
-        Assert.Contains("finance-data-card", porEmision);
+        Assert.Contains("badge-status", porEmision);
+        Assert.Contains("prosegin-card", porEmision);
         Assert.Contains("Factura-001", porVencimiento);
         Assert.DoesNotContain("Factura-002", porVencimiento);
         Assert.Contains("Cuentas por Cobrar", porEmision);
@@ -169,7 +169,7 @@ public sealed class FinanzasIntegracionTests : IAsyncLifetime
 
         Assert.Contains("Factura-001", listado);
         Assert.DoesNotContain("Factura-004", listado);
-        Assert.Contains("finance-page-header", listado);
+        Assert.Contains("prosegin-page-header--accent", listado);
         Assert.Contains("btn-prosegin-primary", listado);
         Assert.Contains("finanzas.css", listado);
         Assert.Contains("Factura-002", porFactura);
@@ -218,6 +218,35 @@ public sealed class FinanzasIntegracionTests : IAsyncLifetime
             Assert.Equal("Pendiente", factura.EstadoPago);
             Assert.Equal(1000m, factura.Pagos.Sum(pago => pago.Monto));
             Assert.Equal(7900m, factura.Total - factura.Pagos.Sum(pago => pago.Monto));
+        }
+
+        var segundoParcialInvalido = await EnviarPagoAsync(new Dictionary<string, string>
+        {
+            ["FacturaId"] = "2",
+            ["Monto"] = "500",
+            ["FechaPago"] = DateTime.Today.ToString("yyyy-MM-dd"),
+            ["MetodoPago"] = "Transferencia"
+        });
+        Assert.Contains(
+            "el segundo pago debe cubrir obligatoriamente la totalidad del saldo pendiente",
+            await LeerAlertaAsync(segundoParcialInvalido));
+
+        var segundoTotal = await EnviarPagoAsync(new Dictionary<string, string>
+        {
+            ["FacturaId"] = "2",
+            ["Monto"] = "7900",
+            ["FechaPago"] = DateTime.Today.ToString("yyyy-MM-dd"),
+            ["MetodoPago"] = "Transferencia"
+        });
+        Assert.Equal(HttpStatusCode.Redirect, segundoTotal.StatusCode);
+
+        using (var scope = _app.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
+            var factura = await context.Facturas.Include(item => item.Pagos).SingleAsync(item => item.Id == 2);
+            Assert.Equal("Pagado", factura.EstadoPago);
+            Assert.Equal(2, factura.Pagos.Count);
+            Assert.Equal(8900m, factura.Pagos.Sum(pago => pago.Monto));
         }
     }
 

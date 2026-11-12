@@ -154,29 +154,25 @@ else
                     var enFinanzas = ViewContext.RouteData.Values["controller"]?.ToString() == "Finanzas";
                     var accionFinanzas = ViewContext.RouteData.Values["action"]?.ToString();
                 }
-                <li class="sidebar-nav-item sidebar-nav-group @(enFinanzas ? "is-expanded" : "")">
-                    <button class="sidebar-nav-link sidebar-nav-group-toggle @(enFinanzas ? "active" : "")"
-                            type="button" aria-expanded="@(enFinanzas ? "true" : "false")"
-                            aria-controls="finanzasSubmenu" data-sidebar-submenu-toggle>
-                        <i class="material-symbols-outlined">payments</i>
-                        <span class="sidebar-nav-text">Finanzas</span>
-                        <span class="sidebar-floating-tag">Finanzas</span>
-                        <i class="material-symbols-outlined sidebar-nav-chevron">expand_more</i>
-                    </button>
-                    <ul class="sidebar-submenu" id="finanzasSubmenu" @(enFinanzas ? null : "hidden")>
-                        <li>
-                            <a class="sidebar-submenu-link @(accionFinanzas == "CuentasPorCobrar" ? "active" : "")"
-                               asp-controller="Finanzas" asp-action="CuentasPorCobrar">Cuentas por Cobrar</a>
-                        </li>
-                        <li>
-                            <a class="sidebar-submenu-link @(accionFinanzas == "FacturasPorVencer" ? "active" : "")"
-                               asp-controller="Finanzas" asp-action="FacturasPorVencer">Facturas por Vencer</a>
-                        </li>
-                        <li>
-                            <a class="sidebar-submenu-link @(accionFinanzas == "RegistroPago" ? "active" : "")"
-                               asp-controller="Finanzas" asp-action="RegistroPago">Registro de Pago</a>
-                        </li>
-                    </ul>
+                <li class="menu-section-header">
+                    <span class="menu-section-title">FINANZAS</span>
+                    <span class="menu-section-dot"></span>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link @(enFinanzas && (accionFinanzas == "CuentasPorCobrar" || accionFinanzas == "DetalleFactura") ? "active" : "")"
+                       asp-controller="Finanzas" asp-action="CuentasPorCobrar">
+                        <i class="material-symbols-outlined">account_balance_wallet</i>
+                        <span class="sidebar-nav-text">Cuentas por Cobrar</span>
+                        <span class="sidebar-floating-tag">Cuentas por Cobrar</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link @(enFinanzas && accionFinanzas == "FacturasPorVencer" ? "active" : "")"
+                       asp-controller="Finanzas" asp-action="FacturasPorVencer">
+                        <i class="material-symbols-outlined">event_upcoming</i>
+                        <span class="sidebar-nav-text">Facturas por Vencer</span>
+                        <span class="sidebar-floating-tag">Facturas por Vencer</span>
+                    </a>
                 </li>
                 @if (User.IsInRole("Administrador"))
                 {
@@ -196,6 +192,27 @@ else
             </ul>
         </div>
     </aside>
+    <script>
+        // Conserva la posición del scroll del sidebar entre páginas (evita que vuelva al inicio al navegar).
+        (function () {
+            var KEY = 'prosegin_sidebar_scroll';
+            var sidebar = document.getElementById('proseginSidebar');
+            if (!sidebar) return;
+            var saved = 0;
+            try { saved = parseInt(sessionStorage.getItem(KEY), 10) || 0; } catch (e) {}
+            if (saved) {
+                sidebar.style.scrollBehavior = 'auto';
+                sidebar.scrollTop = saved;
+                window.addEventListener('load', function () {
+                    if (Math.abs(sidebar.scrollTop - saved) > 1) sidebar.scrollTop = saved;
+                });
+            }
+            function save() { try { sessionStorage.setItem(KEY, String(sidebar.scrollTop)); } catch (e) {} }
+            sidebar.addEventListener('scroll', save, { passive: true });
+            sidebar.addEventListener('click', save);
+            window.addEventListener('pagehide', save);
+        })();
+    </script>
 
     <!-- Área de Contenido Principal -->
     <div class="prosegin-main-wrapper">
