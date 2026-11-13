@@ -19,7 +19,7 @@
         "SMTP_HOST": "smtp-relay.brevo.com",
         "SMTP_PORT": "587",
         "SMTP_USER": "c26e39001@smtp-brevo.com",
-        "SMTP_PASSWORD": "PEGA_AQUI_TU_CLAVE_SMTP",
+        "SMTP_PASSWORD": "xsmtpsib-745bd1a6d828d088a4370d92a952323367ba9330c2de9f53c17b68a4869f1546-va8CD5xvSYDyCkjk",
         "SMTP_FROM": "miguelgarate398@gmail.com",
         "SMTP_SSL": "true"
       }
@@ -34,7 +34,7 @@
         "SMTP_HOST": "smtp-relay.brevo.com",
         "SMTP_PORT": "587",
         "SMTP_USER": "c26e39001@smtp-brevo.com",
-        "SMTP_PASSWORD": "PEGA_AQUI_TU_CLAVE_SMTP",
+        "SMTP_PASSWORD": "xsmtpsib-745bd1a6d828d088a4370d92a952323367ba9330c2de9f53c17b68a4869f1546-va8CD5xvSYDyCkjk",
         "SMTP_FROM": "miguelgarate398@gmail.com",
         "SMTP_SSL": "true"
       }

@@ -2,17 +2,24 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Caching.Memory;
 using Prosegin.Web.Services;
 
 namespace Prosegin.Web.Controllers;
 
 public class AccesoController : Controller
 {
-    private readonly ICuentasPersonalService _service;
+    private const int MaxIntentosFallidos = 5;
+    private static readonly TimeSpan VentanaBloqueo = TimeSpan.FromMinutes(15);
 
-    public AccesoController(ICuentasPersonalService service)
+    private readonly ICuentasPersonalService _service;
+    private readonly IMemoryCache _cache;
+
+    public AccesoController(ICuentasPersonalService service, IMemoryCache cache)
     {
         _service = service;
+        _cache = cache;
     }
 
     [HttpGet]
@@ -26,15 +33,31 @@ public class AccesoController : Controller
     [HttpPost]
     [Microsoft.AspNetCore.Authorization.AllowAnonymous]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Login(string usuario, string password, string? returnUrl, CancellationToken cancellationToken)
+    [EnableRateLimiting("login")]
+    public async Task<IActionResult> Login(string? usuario, string? password, string? returnUrl, CancellationToken cancellationToken)
     {
-        var resultado = await _service.ValidarAccesoAsync(usuario.Trim(), password, cancellationToken);
+        usuario = usuario?.Trim() ?? string.Empty;
+        password ??= string.Empty;
+
+        // Bloqueo temporal tras varios intentos fallidos consecutivos del mismo usuario.
+        var claveIntentos = $"login-fallos:{usuario.ToLowerInvariant()}";
+        if (_cache.TryGetValue(claveIntentos, out int fallos) && fallos >= MaxIntentosFallidos)
+        {
+            TempData["ToastError"] = "Demasiados intentos fallidos. Intente nuevamente en unos minutos";
+            ViewData["ReturnUrl"] = returnUrl;
+            return View();
+        }
+
+        var resultado = await _service.ValidarAccesoAsync(usuario, password, cancellationToken);
         if (!resultado.Exito)
         {
+            _cache.Set(claveIntentos, fallos + 1, VentanaBloqueo);
             TempData["ToastError"] = resultado.Mensaje;
             ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
+
+        _cache.Remove(claveIntentos);
 
         var claims = new[]
         {

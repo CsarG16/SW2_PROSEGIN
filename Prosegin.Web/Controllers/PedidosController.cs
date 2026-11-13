@@ -215,7 +215,7 @@ public class PedidosController : Controller
 
     private async Task<byte[]> ObtenerPdfAsync(string enlace, string tipoDocumento, CancellationToken cancellationToken)
     {
-        if (!Uri.TryCreate(enlace, UriKind.Absolute, out var uri))
+        if (!Uri.TryCreate(enlace, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps)
             throw new PdfComprobanteException($"No se pudo obtener el PDF de la {tipoDocumento} desde Nubefact. Intente nuevamente.");
 
         var httpClient = _httpClientFactory.CreateClient("ComprobantesClient");

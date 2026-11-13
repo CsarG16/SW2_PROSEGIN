@@ -443,10 +443,10 @@
 
             // Datos registrados del cliente (para prellenar automáticamente en el modal de nueva sede)
             const clienteData = {
-                departamento: '@Html.Raw(Model.Cliente.Departamento ?? "Lima")',
-                provincia: '@Html.Raw(Model.Cliente.Provincia ?? "Lima")',
-                distrito: '@Html.Raw(Model.Cliente.Distrito ?? "Lurín")',
-                ubigeo: '@Html.Raw(Model.Cliente.Ubigeo ?? "150119")'
+                departamento: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Cliente.Departamento ?? "Lima")),
+                provincia: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Cliente.Provincia ?? "Lima")),
+                distrito: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Cliente.Distrito ?? "Lurín")),
+                ubigeo: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Cliente.Ubigeo ?? "150119"))
             };
 
             // Catálogo exhaustivo de Ubigeos oficiales para distritos de Lima y Callao

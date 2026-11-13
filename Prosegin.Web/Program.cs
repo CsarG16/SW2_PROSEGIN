@@ -8,6 +8,18 @@ using Prosegin.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Si no hay variables de entorno SMTP_*, se toman de la sección "Smtp" de appsettings.json.
+foreach (var (variable, clave) in new[]
+{
+    ("SMTP_HOST", "Host"), ("SMTP_PORT", "Port"), ("SMTP_USER", "User"),
+    ("SMTP_PASSWORD", "Password"), ("SMTP_FROM", "From"), ("SMTP_SSL", "Ssl")
+})
+{
+    var valor = builder.Configuration["Smtp:" + clave];
+    if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(variable)) && !string.IsNullOrWhiteSpace(valor))
+        Environment.SetEnvironmentVariable(variable, valor);
+}
+
 // Buscar el archivo .env desde el proyecto hacia la raíz del repositorio/solución.
 var directory = new DirectoryInfo(builder.Environment.ContentRootPath);
 string? envFilePath = null;
@@ -47,12 +59,46 @@ if (connectionArgIndex >= 0 && connectionArgIndex + 1 < args.Length)
     Environment.SetEnvironmentVariable("DB_HOST", null);
 }
 
+// No exponer el encabezado "Server: Kestrel".
+builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddMemoryCache();
+
+// Cookie antiforgery endurecida (HttpOnly, SameSite y Secure fuera de desarrollo).
+builder.Services.AddAntiforgery(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+        ? CookieSecurePolicy.SameAsRequest
+        : CookieSecurePolicy.Always;
+});
+
+// Límite de peticiones al inicio de sesión (mitiga fuerza bruta): 10 intentos por minuto y por IP.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("login", httpContext => System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+        httpContext.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
+        _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
+});
 builder.Services.AddDataServices(builder.Configuration);
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
+        options.Cookie.Name = ".Prosegin.Auth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.SameAsRequest
+            : CookieSecurePolicy.Always;
         options.LoginPath = "/Acceso/Login";
         options.AccessDeniedPath = "/Acceso/Login";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
@@ -157,9 +203,33 @@ var localizationOptions = new RequestLocalizationOptions
 app.UseRequestLocalization(localizationOptions);
 
 app.UseHttpsRedirection();
+
+// Cabeceras de seguridad para todas las respuestas.
+var esDesarrollo = app.Environment.IsDevelopment();
+app.Use(async (context, next) =>
+{
+    var headers = context.Response.Headers;
+    headers["X-Content-Type-Options"] = "nosniff";
+    headers["X-Frame-Options"] = "SAMEORIGIN";
+    headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()";
+    headers["Content-Security-Policy"] =
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline'; " +
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+        "font-src 'self' data: https://fonts.gstatic.com; " +
+        "img-src 'self' data: blob: https:; " +
+        "connect-src 'self' https:" + (esDesarrollo ? " ws: wss: http://localhost:*" : string.Empty) + "; " +
+        "frame-src 'self' blob: https:; " +
+        "object-src 'self' blob: https:; " +
+        "base-uri 'self'; form-action 'self'; frame-ancestors 'self'";
+    await next();
+});
+
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();

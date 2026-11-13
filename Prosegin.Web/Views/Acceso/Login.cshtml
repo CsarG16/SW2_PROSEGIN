@@ -42,6 +42,12 @@
                         </button>
                     </div>
                 </div>
+                <div class="login-field-remember">
+                    <label class="login-remember-label">
+                        <input type="checkbox" id="recordarUsuario" name="recordarUsuario" class="form-check-input" />
+                        <span>Recordar mi usuario</span>
+                    </label>
+                </div>
                 <button type="submit" class="login-submit">
                     Ingresar a la plataforma
                     <i class="material-symbols-outlined">arrow_forward</i>
@@ -78,6 +84,9 @@
     .login-description { margin: 24px 0 30px; color: #718096; font-size: 14px; line-height: 1.5; }
     .login-field { margin-bottom: 20px; }
     .login-field label { display: block; margin-bottom: 8px; color: #263752; font-size: 13px; font-weight: 700; }
+    .login-field-remember { margin-bottom: 20px; }
+    .login-remember-label { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: #4b5b75; font-size: 13px; font-weight: 600; user-select: none; }
+    .login-remember-label input[type="checkbox"] { width: 16px; height: 16px; accent-color: #f7a702; cursor: pointer; }
     .login-input-wrap { display: flex; align-items: center; gap: 9px; min-height: 50px; padding: 0 13px; border: 1px solid #dce4ee; border-radius: 9px; background: #fbfcfe; transition: border-color .2s, box-shadow .2s; }
     .login-input-wrap:focus-within { border-color: #3479e8; box-shadow: 0 0 0 3px rgba(52,121,232,.12); background: #fff; }
     .login-input-wrap > i { color: #8b9ab0; font-size: 21px; }
@@ -99,4 +108,33 @@
         input.type = input.type === 'password' ? 'text' : 'password';
         icon.textContent = input.type === 'password' ? 'visibility' : 'visibility_off';
     }
+
+    (function () {
+        var KEY = 'prosegin_remember_user';
+        var userInput = document.getElementById('usuario');
+        var remCheckbox = document.getElementById('recordarUsuario');
+        var form = document.querySelector('.login-form');
+
+        try {
+            var savedUser = localStorage.getItem(KEY);
+            if (savedUser && userInput && remCheckbox) {
+                userInput.value = savedUser;
+                remCheckbox.checked = true;
+                var passInput = document.getElementById('password');
+                if (passInput) passInput.focus();
+            }
+        } catch (e) {}
+
+        if (form && userInput && remCheckbox) {
+            form.addEventListener('submit', function () {
+                try {
+                    if (remCheckbox.checked && userInput.value.trim()) {
+                        localStorage.setItem(KEY, userInput.value.trim());
+                    } else {
+                        localStorage.removeItem(KEY);
+                    }
+                } catch (e) {}
+            });
+        }
+    })();
 </script>
