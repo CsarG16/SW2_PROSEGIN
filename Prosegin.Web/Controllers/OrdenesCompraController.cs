@@ -151,7 +151,7 @@ public class OrdenesCompraController : Controller
         {
             correo = await _context.ContactosProveedor
                 .AsNoTracking()
-                .Where(contacto => contacto.ProveedorId == orden.ProveedorId
+                .Where(contacto => contacto.ProveedorId == orden!.ProveedorId
                     && !string.IsNullOrWhiteSpace(contacto.Correo))
                 .OrderByDescending(contacto => contacto.EsPrincipal)
                 .Select(contacto => contacto.Correo.Trim())

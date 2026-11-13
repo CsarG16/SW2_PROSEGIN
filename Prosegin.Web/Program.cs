@@ -258,6 +258,7 @@ if (args.Contains("--seed", StringComparer.OrdinalIgnoreCase))
     {
         var context = scope.ServiceProvider.GetRequiredService<ProseginDbContext>();
         await DbSeeder.SeedAsync(context);
+        await FacturaDataSeeder.SeedAsync(context);
     }
 
     Console.WriteLine("[PROSEGIN SEEDER] ¡Datos iniciales sembrados con éxito en la base de datos!");
@@ -283,6 +284,7 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<ProseginDbContext>();
         await DbSeeder.SeedAsync(context);
+        await FacturaDataSeeder.SeedAsync(context);
     }
     catch (Exception ex)
     {
