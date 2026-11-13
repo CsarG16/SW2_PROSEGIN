@@ -154,12 +154,12 @@
                             <!-- 3. Emisión -->
                             <div class="quote-col-emission">
                                 <i class="material-symbols-outlined" style="font-size: 1rem;">calendar_today</i>
-                                <span>@cotizacion.FechaEmision.ToLocalTime().ToString("dd/MM/yyyy HH:mm", peruCulture)</span>
+                                <span>@Prosegin.Web.HoraPeru.ALocal(cotizacion.FechaEmision).ToString("dd/MM/yyyy HH:mm", peruCulture)</span>
                             </div>
 
                             <!-- 4. Vigencia -->
                             <div class="quote-col-validity">
-                                <span class="quote-validity-date">@cotizacion.FechaVencimiento.ToLocalTime().ToString("dd/MM/yyyy HH:mm", peruCulture)</span>
+                                <span class="quote-validity-date">@Prosegin.Web.HoraPeru.ALocal(cotizacion.FechaVencimiento).ToString("dd/MM/yyyy HH:mm", peruCulture)</span>
                                 @if (isEnviada)
                                 {
                                     <span class="quote-badge-expiry-active">

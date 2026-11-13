@@ -70,7 +70,7 @@ public class FinanzasController : Controller
             .Include(factura => factura.Detalles)
             .Where(factura => factura.EstadoEmision != NubefactService.EstadoRechazado)
             .ToListAsync(cancellationToken);
-        var hoy = DateTime.Today;
+        var hoy = Prosegin.Web.HoraPeru.Hoy;
         var facturas = registros.Select(factura =>
             {
                 var saldo = CalcularSaldoPendiente(factura);
@@ -82,7 +82,7 @@ public class FinanzasController : Controller
                     NumeroFactura = factura.NumeroFactura,
                     Cliente = factura.Cliente.RazonSocial,
                     RucCliente = factura.Cliente.Ruc,
-                    FechaEmision = factura.FechaEmision,
+                    FechaEmision = Prosegin.Web.HoraPeru.ALocal(factura.FechaEmision),
                     FechaVencimiento = factura.FechaVencimiento,
                     PlazoDias = Math.Max(0, (factura.FechaVencimiento.Date - factura.FechaEmision.Date).Days),
                     MontoTotal = factura.Total,
@@ -142,7 +142,7 @@ public class FinanzasController : Controller
         if (factura == null)
             return NotFound();
 
-        var hoy = DateTime.Today;
+        var hoy = Prosegin.Web.HoraPeru.Hoy;
         var saldo = CalcularSaldoPendiente(factura);
         var model = new DetalleCuentaPorCobrarViewModel
         {
@@ -150,7 +150,7 @@ public class FinanzasController : Controller
             NumeroFactura = factura.NumeroFactura,
             Cliente = factura.Cliente.RazonSocial,
             RucCliente = factura.Cliente.Ruc,
-            FechaEmision = factura.FechaEmision,
+            FechaEmision = Prosegin.Web.HoraPeru.ALocal(factura.FechaEmision),
             FechaVencimiento = factura.FechaVencimiento,
             PlazoDias = Math.Max(0, (factura.FechaVencimiento.Date - factura.FechaEmision.Date).Days),
             MontoTotal = factura.Total,
@@ -176,7 +176,7 @@ public class FinanzasController : Controller
         int pagina = 1,
         CancellationToken cancellationToken = default)
     {
-        var hoy = DateTime.Today;
+        var hoy = Prosegin.Web.HoraPeru.Hoy;
         var estadoFiltro = string.IsNullOrWhiteSpace(estado) ? "POR_VENCER" : estado.Trim().ToUpperInvariant();
         if (estadoFiltro is not ("POR_VENCER" or "VENCIDA" or "PAGADA" or "TODAS"))
             estadoFiltro = "POR_VENCER";
@@ -360,7 +360,7 @@ public class FinanzasController : Controller
                 return View(model);
             }
 
-            var hoy = DateTime.Today;
+            var hoy = Prosegin.Web.HoraPeru.Hoy;
             var pendientes = await _context.Facturas
                 .AsNoTracking()
                 .Include(factura => factura.Cliente)
@@ -394,7 +394,7 @@ public class FinanzasController : Controller
                         NumeroFactura = factura.NumeroFactura,
                         Cliente = factura.Cliente.RazonSocial,
                         RucCliente = factura.Cliente.Ruc,
-                        FechaEmision = factura.FechaEmision,
+                        FechaEmision = Prosegin.Web.HoraPeru.ALocal(factura.FechaEmision),
                         FechaVencimiento = factura.FechaVencimiento,
                         PlazoDias = Math.Max(0, (factura.FechaVencimiento.Date - factura.FechaEmision.Date).Days),
                         MontoTotal = factura.Total,
@@ -454,7 +454,7 @@ public class FinanzasController : Controller
                 return PagoInvalido("Ingrese un monto mayor a S/ 0.00", busqueda, pagina, facturaSeleccionada);
             if (request.Monto.Value < 0)
                 return PagoInvalido("Ingrese un monto del pago válido", busqueda, pagina, facturaSeleccionada);
-            if (request.FechaPago.Value.Date > DateTime.Today)
+            if (request.FechaPago.Value.Date > Prosegin.Web.HoraPeru.Hoy)
                 return PagoInvalido("La fecha de pago no puede ser posterior a la fecha actual", busqueda, pagina, facturaSeleccionada);
 
             var metodoPago = new[] { "Transferencia", "Efectivo", "Tarjeta", "Depósito", "Cheque" }
@@ -504,11 +504,11 @@ public class FinanzasController : Controller
             var nuevoSaldo = saldoPendiente - montoPago;
             factura.EstadoPago = nuevoSaldo == 0
                 ? "Pagado"
-                : factura.FechaVencimiento.Date < DateTime.Today ? "Vencido" : "Pendiente";
+                : factura.FechaVencimiento.Date < Prosegin.Web.HoraPeru.Hoy ? "Vencido" : "Pendiente";
             await _context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
-            var estadoToast = EstadoVisible(factura.EstadoPago, factura.FechaVencimiento, DateTime.Today);
+            var estadoToast = EstadoVisible(factura.EstadoPago, factura.FechaVencimiento, Prosegin.Web.HoraPeru.Hoy);
             TempData["ToastSuccess"] = $"Pago registrado. Saldo pendiente de {factura.NumeroFactura}: {nuevoSaldo.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("es-PE"))}. Estado: {estadoToast}";
             return RedirectToAction(nameof(RegistroPago), new { busqueda, pagina });
     }

@@ -163,7 +163,7 @@
                                     }
                                 </td>
                                 <td class="text-nowrap text-dark">
-                                    @registro.FechaEmision.ToLocalTime().ToString("dd/MM/yyyy HH:mm", culture)
+                                    @Prosegin.Web.HoraPeru.ALocal(registro.FechaEmision).ToString("dd/MM/yyyy HH:mm", culture)
                                 </td>
                                 <td>
                                     <span class="badge-currency">@registro.Moneda</span>

@@ -38,7 +38,7 @@ public class NubefactFacturaRequest
     public string? ClienteEmail { get; set; }
 
     [JsonPropertyName("fecha_de_emision")]
-    public string FechaDeEmision { get; set; } = DateTime.Now.ToString("dd-MM-yyyy");
+    public string FechaDeEmision { get; set; } = Prosegin.Web.HoraPeru.Ahora.ToString("dd-MM-yyyy");
 
     [JsonPropertyName("fecha_de_vencimiento")]
     public string? FechaDeVencimiento { get; set; }

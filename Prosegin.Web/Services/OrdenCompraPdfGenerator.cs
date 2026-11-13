@@ -204,7 +204,7 @@ public static class OrdenCompraPdfGenerator
         DibujarTarjeta(gfx, x2, top, colW, cardH, "DATOS DE LA ORDEN", f);
         var rx = x2 + 14;
         var ry = top + 30;
-        var fecha = orden.FechaCompra.Kind == DateTimeKind.Utc ? orden.FechaCompra.ToLocalTime() : orden.FechaCompra;
+        var fecha = orden.FechaCompra.Kind == DateTimeKind.Utc ? Prosegin.Web.HoraPeru.ALocal(orden.FechaCompra) : orden.FechaCompra;
         ry = Dato(gfx, f, "Fecha de emisión", fecha.ToString("dd/MM/yyyy", PeruCulture), rx, ry, colW - 28);
         ry = Dato(gfx, f, "Condición de pago", FallBack(prov.CondicionPago), rx, ry, colW - 28);
         ry = Dato(gfx, f, "Moneda", "Soles (PEN)", rx, ry, colW - 28);

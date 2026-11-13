@@ -35,10 +35,10 @@ public class NubefactGuiaRequest
     public string? ClienteEmail { get; set; }
 
     [JsonPropertyName("fecha_de_emision")]
-    public string FechaDeEmision { get; set; } = DateTime.Now.ToString("dd-MM-yyyy");
+    public string FechaDeEmision { get; set; } = Prosegin.Web.HoraPeru.Ahora.ToString("dd-MM-yyyy");
 
     [JsonPropertyName("fecha_de_inicio_de_traslado")]
-    public string FechaDeInicioDeTraslado { get; set; } = DateTime.Now.ToString("dd-MM-yyyy");
+    public string FechaDeInicioDeTraslado { get; set; } = Prosegin.Web.HoraPeru.Ahora.ToString("dd-MM-yyyy");
 
     /// <summary>
     /// 01 = Venta, 14 = Venta con entrega a terceros, etc.

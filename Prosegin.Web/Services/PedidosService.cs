@@ -13,7 +13,6 @@ namespace Prosegin.Web.Services;
 public class PedidosService : IPedidosService
 {
     private const int TamanoPagina = 5;
-    private static readonly TimeZoneInfo ZonaHorariaEntrega = TimeZoneInfo.FindSystemTimeZoneById("America/Lima");
     private readonly ProseginDbContext _context;
     private readonly INubefactService? _nubefactService;
     private readonly NubefactSettings _nubefactSettings;
@@ -191,7 +190,7 @@ public class PedidosService : IPedidosService
                 ?? orden.Cotizacion.NumeroOrdenCompraCliente
                 ?? "Sin documento asociado",
             Revision = orden.Revision > 0 ? orden.Revision : 1,
-            FechaDocumento = orden.FechaCreacion,
+            FechaDocumento = Prosegin.Web.HoraPeru.ALocal(orden.FechaCreacion),
             Cliente = orden.Cotizacion.Cliente.RazonSocial,
             Items = items
         };
@@ -321,9 +320,7 @@ public class PedidosService : IPedidosService
         return ordenesVenta.Select(orden =>
         {
             var cotizacion = orden.Cotizacion;
-            var fechaConfirmacion = TimeZoneInfo.ConvertTimeFromUtc(
-                DateTime.SpecifyKind(orden.FechaCreacion, DateTimeKind.Utc),
-                ZonaHorariaEntrega);
+            var fechaConfirmacion = Prosegin.Web.HoraPeru.ALocal(orden.FechaCreacion);
             var estado = NormalizarEstadoLogistico(orden.EstadoLogistico);
             var facturaActiva = orden.Facturas
                 .Where(f => f.EstadoEmision != NubefactService.EstadoRechazado)
@@ -469,7 +466,7 @@ public class PedidosService : IPedidosService
             return null;
         }
 
-        var fechaEmision = DateTime.Now;
+        var fechaEmision = Prosegin.Web.HoraPeru.Ahora;
         var serie = ObtenerSerieFactura();
         var numero = (facturaExistente != null && facturaExistente.EstadoEmision == NubefactService.EstadoAceptado)
             ? facturaExistente.Numero
@@ -501,7 +498,7 @@ public class PedidosService : IPedidosService
         if (facturaExistente != null && facturaExistente.EstadoEmision != NubefactService.EstadoRechazado)
             return EmitirFacturaResult.Fallido("Este pedido ya tiene una factura registrada.");
 
-        var fechaEmision = DateTime.Now;
+        var fechaEmision = Prosegin.Web.HoraPeru.Ahora;
         var serie = ObtenerSerieFactura();
         var numero = (facturaExistente != null && facturaExistente.EstadoEmision == NubefactService.EstadoAceptado)
             ? facturaExistente.Numero
@@ -514,8 +511,8 @@ public class PedidosService : IPedidosService
             NumeroFactura = $"{preview.Serie}-{preview.Numero}",
             Serie = preview.Serie,
             Numero = preview.Numero,
-            FechaEmision = fechaEmision.ToUniversalTime(),
-            FechaVencimiento = preview.FechaVencimiento.ToUniversalTime(),
+            FechaEmision = Prosegin.Web.HoraPeru.AUtc(fechaEmision),
+            FechaVencimiento = Prosegin.Web.HoraPeru.AUtc(preview.FechaVencimiento),
             EstadoEmision = NubefactService.EstadoPendienteEnvio,
             EstadoPago = "Pendiente",
             Total = preview.Total,
@@ -539,8 +536,8 @@ public class PedidosService : IPedidosService
             factura.Serie = preview.Serie;
             factura.Numero = preview.Numero;
             factura.NumeroFactura = $"{preview.Serie}-{preview.Numero}";
-            factura.FechaEmision = fechaEmision.ToUniversalTime();
-            factura.FechaVencimiento = preview.FechaVencimiento.ToUniversalTime();
+            factura.FechaEmision = Prosegin.Web.HoraPeru.AUtc(fechaEmision);
+            factura.FechaVencimiento = Prosegin.Web.HoraPeru.AUtc(preview.FechaVencimiento);
             factura.EstadoEmision = NubefactService.EstadoPendienteEnvio;
             factura.MensajeError = null;
         }
@@ -643,7 +640,7 @@ public class PedidosService : IPedidosService
         var numero = (guiaExistente != null && guiaExistente.EstadoEmision == NubefactService.EstadoAceptado)
             ? guiaExistente.Numero
             : await ObtenerSiguienteNumeroGuiaAsync(serie, cancellationToken);
-        return CrearPrevisualizacionGuia(orden, DateTime.Now, serie, numero);
+        return CrearPrevisualizacionGuia(orden, Prosegin.Web.HoraPeru.Ahora, serie, numero);
     }
 
     public async Task<EmitirGuiaRemisionResult> EmitirGuiaRemisionAsync(
@@ -678,7 +675,7 @@ public class PedidosService : IPedidosService
         var numero = (guiaExistente != null && guiaExistente.EstadoEmision == NubefactService.EstadoAceptado)
             ? guiaExistente.Numero
             : await ObtenerSiguienteNumeroGuiaAsync(serie, cancellationToken);
-        var fecha = DateTime.Now;
+        var fecha = Prosegin.Web.HoraPeru.Ahora;
         var preview = CrearPrevisualizacionGuia(orden, fecha, serie, numero);
         var guia = guiaExistente ?? new GuiaRemision
         {
@@ -687,8 +684,8 @@ public class PedidosService : IPedidosService
             NumeroGuia = $"{serie}-{numero}",
             Serie = serie,
             Numero = numero,
-            FechaEmision = fecha.ToUniversalTime(),
-            FechaInicioTraslado = fecha.ToUniversalTime(),
+            FechaEmision = Prosegin.Web.HoraPeru.AUtc(fecha),
+            FechaInicioTraslado = Prosegin.Web.HoraPeru.AUtc(fecha),
             PesoBrutoTotal = preview.PesoBrutoTotal,
             NumeroBultos = preview.NumeroBultos,
             PuntoPartidaDireccion = preview.PuntoPartidaDireccion,
@@ -716,8 +713,8 @@ public class PedidosService : IPedidosService
             guia.Serie = serie;
             guia.Numero = numero;
             guia.NumeroGuia = $"{serie}-{numero}";
-            guia.FechaEmision = fecha.ToUniversalTime();
-            guia.FechaInicioTraslado = fecha.ToUniversalTime();
+            guia.FechaEmision = Prosegin.Web.HoraPeru.AUtc(fecha);
+            guia.FechaInicioTraslado = Prosegin.Web.HoraPeru.AUtc(fecha);
             guia.ConductorNombre = request.ConductorNombre.Trim();
             guia.ConductorDocumento = request.ConductorDocumento?.Trim();
             guia.ConductorLicencia = request.ConductorLicencia?.Trim();

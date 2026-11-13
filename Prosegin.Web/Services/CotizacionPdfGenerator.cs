@@ -220,7 +220,7 @@ public static class CotizacionPdfGenerator
         // Dates block on right
         double dateColW = 110;
         DrawInfoPair(gfx, "FECHA DE EMISIÓN",
-            cot.FechaEmision.ToLocalTime().ToString("dd/MM/yyyy", PeruCulture),
+            Prosegin.Web.HoraPeru.ALocal(cot.FechaEmision).ToString("dd/MM/yyyy", PeruCulture),
             rx - dateColW * 2 - 12, r1y, dateColW, f);
 
         DrawInfoPair(gfx, "CONDICIÓN DE PAGO",

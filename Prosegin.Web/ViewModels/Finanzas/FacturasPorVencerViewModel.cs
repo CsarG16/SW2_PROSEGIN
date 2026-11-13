@@ -44,7 +44,7 @@ public class RegistroPagosViewModel
     public FacturaPendientePagoViewModel? FacturaSeleccionada { get; set; }
     public string? Mensaje { get; set; }
     public bool BusquedaInvalida { get; set; }
-    public DateTime FechaPagoPredeterminada { get; set; } = DateTime.Today;
+    public DateTime FechaPagoPredeterminada { get; set; } = Prosegin.Web.HoraPeru.Hoy;
     public int Pagina { get; set; } = 1;
     public int TotalPaginas { get; set; } = 1;
     public int TotalFacturas { get; set; }

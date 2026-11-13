@@ -273,10 +273,10 @@ public static class CompraPdfGenerator
 
         // Fila 1
         DrawPair(gfx, "CLIENTE / SEÑOR(ES)", cliente.RazonSocial, lx, top + 10, w * 0.54, f);
-        DrawPair(gfx, "FECHA DE EMISIÓN", fechaEmision.ToLocalTime().ToString("dd/MM/yyyy", PeruCulture), colRightX, top + 10, 96, f);
+        DrawPair(gfx, "FECHA DE EMISIÓN", Prosegin.Web.HoraPeru.ALocal(fechaEmision).ToString("dd/MM/yyyy", PeruCulture), colRightX, top + 10, 96, f);
         DrawPair(gfx, "FECHA VENCIMIENTO",
             fechaVencimiento.HasValue
-                ? fechaVencimiento.Value.ToLocalTime().ToString("dd/MM/yyyy", PeruCulture)
+                ? Prosegin.Web.HoraPeru.ALocal(fechaVencimiento.Value).ToString("dd/MM/yyyy", PeruCulture)
                 : "—",
             colRightX + 104, top + 10, 100, f);
 
