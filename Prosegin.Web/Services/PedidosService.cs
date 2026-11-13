@@ -656,6 +656,10 @@ public class PedidosService : IPedidosService
             return EmitirGuiaRemisionResult.Fallido("Ingrese el nombre del conductor.");
         if (string.IsNullOrWhiteSpace(request.PlacaVehiculo))
             return EmitirGuiaRemisionResult.Fallido("Ingrese la placa del vehículo.");
+        if (string.IsNullOrWhiteSpace(request.ConductorDocumento)
+            || request.ConductorDocumento.Trim().Length != 8
+            || !request.ConductorDocumento.Trim().All(char.IsDigit))
+            return EmitirGuiaRemisionResult.Fallido("Ingrese un DNI válido de 8 dígitos para el conductor.");
 
         var orden = await ObtenerOrdenParaGuiaAsync(request.NumeroPedido, cancellationToken);
         if (orden == null)
